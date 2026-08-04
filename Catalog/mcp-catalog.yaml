@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 selection:
   select_exactly_one_primary_creator_or_domain_mcp: true
@@ -28,19 +28,28 @@ control_plane:
 modules:
   unity_graphics_mcp:
     kind: domain
-    status: specified
+    status: phase_3_editor_operational
     manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
     specification: Specs/UnityGraphicsMCP/spec.md
     use_when:
-      - visual direction implementation
-      - lighting GI reflection material atmosphere
-      - reference driven scene authoring
-      - graphics inspection validation bake and capture
+      - graphics project and scene inspection
+      - visual direction planning
+      - approval gated light camera reflection probe and volume mutation
+      - lighting GI reflection material atmosphere validation
+      - reference driven scene planning
     do_not_use_when:
       - shader compile error only
       - gameplay logic only
       - build failure only
+      - save bake or capture is required before phase_4
     default_tool_group: inspect
+    available_tool_groups:
+      - inspect
+      - plan
+      - mutate
+    unavailable_tool_groups:
+      - bake
+      - capture
 
   unity_cinematic_mcp:
     kind: domain
