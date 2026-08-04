@@ -2,42 +2,86 @@
 
 ## Current state
 
-このPackageは現在、Architecture、Catalog、Manifest、Workflow、Task定義だけを持つPhase 0です。
+Phase 1のRead-only C# Tool Sourceを実装しています。
 
-Unity EditorへToolを登録するC#実装、Unity MCP Bridge依存、asmdef、EditMode Testは未実装です。
+実装済みSource:
 
-`MCP_MANIFEST.yaml`内のToolはすべて`status: planned`であり、利用可能なToolとして公開してはなりません。
+- `graphics.inspect_project`
+- `graphics.inspect_scene`
+- `graphics.validate_scene`
+- Editor Session / Revision
+- In-memory Snapshot / Paging
+- Read-only Dirty Guard
+- Graphics Validation Rule
+- EditMode Test Source
 
-## First implementation target
+ただし、対象Unity EditorでのCompile、Tool Discovery、EditMode Testはまだ実行していません。現時点の状態は`source_complete_unverified`です。
 
-特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、PlatformをPackage全体の初期対象として固定しません。
+## Bridge dependency
 
-最初に実装する能力は次です。
+現在の実装は次のMCP Bridge APIへ接続します。
 
-- 対象Unity ProjectのRead-only環境検出
-- Project Contextと要求Targetの分離
-- Pipeline / Rendering Path / Platform別Capability解決
-- 実装済みBackendだけの選択
-- `UNSUPPORTED`と`UNVERIFIED`の区別
-- Editor-only Read-only Inspection
+- Package: `com.coplaydev.unity-mcp`
+- API確認Version: `10.1.2`
+- Assembly: `MCPForUnity.Editor`
+- Tool登録: `McpForUnityToolAttribute`
+- Entry Point: `HandleCommand(JObject)`
 
-実際に使用した検証環境は`Tests/Compatibility/verification-matrix.yaml`へ記録します。検証実績をPackage全体の対応条件とは扱いません。
+MyUnityMCPを導入するProjectでは、このBridge Packageを解決できるPackage Registryまたは導入経路が必要です。
 
-## Required implementation order
+## Implemented operation flow
 
-1. Unity MCP Bridge Versionと公式Tool登録APIを確定する。
-2. `graphics.inspect_project`でProject環境をRead-only取得する。
-3. Capability StatusとBackend選択を実装する。
-4. Editor-only Assembly境界を作成する。
-5. `graphics.inspect_scene`を実装する。
-6. Dirty Guardを含むEditMode Testを追加する。
-7. 検証環境をCompatibility Matrixへ記録する。
-8. 実装済みToolだけManifestのStatusを変更する。
+```text
+graphics.inspect_project
+→ Project EnvironmentをRead-only検出
+→ Pipeline / Renderer / Build Target / Packageを返す
 
-## Safety
+graphics.inspect_scene
+→ Loaded SceneをRead-only解析
+→ Snapshot IDとPageを返す
+→ 同じSnapshot IDとCursorで続きを取得
 
-- Read-only ToolはSceneやAssetをDirtyにしない。
-- Mutation、Bake、SaveをRead-only Toolへ含めない。
-- Project Profileを検出済み事実として扱わない。
+graphics.validate_scene
+→ Invariant / Policy / Heuristicを区別
+→ Severity / Confidence / Evidence / Object IDを返す
+```
+
+## Project environment policy
+
+特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、PlatformをPackage全体へ固定しません。
+
+- 対象Projectの検出済み事実を正とする。
+- Requested Targetを検出済み事実と混同しない。
+- `UNVERIFIED`を`UNSUPPORTED`として扱わない。
 - 未実装Backendへ黙ってFallbackしない。
-- Unity Editor未検証のコードを動作済みと表現しない。
+- 検証環境は`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+
+## Read-only safety
+
+Inspectionでは次を行いません。
+
+- `Renderer.material` / `Renderer.materials`の参照
+- `Volume.profile`の参照
+- `SerializedObject.ApplyModifiedProperties`
+- `EditorUtility.SetDirty`
+- `Undo.RecordObject`
+- Scene Save
+- Asset Save
+- Bake
+
+Tool実行前後でLoaded SceneのDirty状態とUndo Groupを比較し、変化を検出した場合は`READ_ONLY_CONTRACT_VIOLATION`を返します。
+
+## Verification required
+
+運用可能と判断する前に、対象Unity Projectで次を実行します。
+
+1. Package dependency解決
+2. Unity Editor Compile
+3. MCP Bridge Tool Discovery
+4. `graphics.inspect_project`実行
+5. `graphics.inspect_scene`実行
+6. `graphics.validate_scene`実行
+7. EditMode Test
+8. Compatibility Matrix更新
+
+未実行GateをPassedとして扱いません。
