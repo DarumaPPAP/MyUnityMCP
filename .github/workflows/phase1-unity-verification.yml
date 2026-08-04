@@ -29,51 +29,32 @@ jobs:
           persist-credentials: true
           ref: ${{ github.head_ref }}
 
-      - name: Apply Unity 6000 Scene handle compatibility fix
+      - name: Apply Phase 3A compatibility corrections
         run: |
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
 
-          path = Path("Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpMutation.cs")
-          source = path.read_text(encoding="utf-8")
-
-          apply_old = """\t\t\t\t\t\tScene scene = SceneManager.GetSceneByHandle(operation.TargetSceneHandle);\n\t\t\t\t\t\tGameObject gameObject = new GameObject(operation.Name);"""
-          apply_new = """\t\t\t\t\t\tScene scene;\n\t\t\t\t\t\tif (!TryResolveLoadedSceneByHandle(operation.TargetSceneHandle, out scene))\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tthrow new InvalidOperationException(\n\t\t\t\t\t\t\t\t\"LIGHT_CREATE対象SceneがLoaded Sceneとして解決できません。\");\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tGameObject gameObject = new GameObject(operation.Name);"""
-
-          validate_old = """\t\t\t\t\tScene scene = SceneManager.GetSceneByHandle(operation.TargetSceneHandle);\n\t\t\t\t\tif (!scene.IsValid() || !scene.isLoaded ||\n\t\t\t\t\t\tNormalizeSceneLabel(scene) != operation.TargetScenePath)"""
-          validate_new = """\t\t\t\t\tScene scene;\n\t\t\t\t\tif (!TryResolveLoadedSceneByHandle(operation.TargetSceneHandle, out scene) ||\n\t\t\t\t\t\tNormalizeSceneLabel(scene) != operation.TargetScenePath)"""
-
-          helper_anchor = """\t\tprivate static bool TryResolveLoadedScene(string path, out Scene scene)\n\t\t{"""
-          helper = """\t\tprivate static bool TryResolveLoadedSceneByHandle(int handle, out Scene scene)\n\t\t{\n\t\t\tfor (int index = 0; index < SceneManager.sceneCount; index++)\n\t\t\t{\n\t\t\t\tScene candidate = SceneManager.GetSceneAt(index);\n\t\t\t\tif (candidate.IsValid() && candidate.isLoaded && candidate.handle == handle)\n\t\t\t\t{\n\t\t\t\t\tscene = candidate;\n\t\t\t\t\treturn true;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tscene = default(Scene);\n\t\t\treturn false;\n\t\t}\n\n"""
-
-          replacements = 0
-          if apply_old in source:
-              source = source.replace(apply_old, apply_new, 1)
-              replacements += 1
-          if validate_old in source:
-              source = source.replace(validate_old, validate_new, 1)
-              replacements += 1
-          if "TryResolveLoadedSceneByHandle(int handle" not in source:
-              if helper_anchor not in source:
-                  raise SystemExit("Scene helper insertion anchor was not found.")
-              source = source.replace(helper_anchor, helper + helper_anchor, 1)
-              replacements += 1
-
+          source_path = Path("Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpMutation.cs")
+          source = source_path.read_text(encoding="utf-8")
           if "SceneManager.GetSceneByHandle" in source:
               raise SystemExit("Unsupported SceneManager.GetSceneByHandle call remains.")
+          if "TryResolveLoadedSceneByHandle(int handle" not in source:
+              raise SystemExit("Unity 6000 compatible Scene handle resolver is missing.")
 
-          path.write_text(source, encoding="utf-8", newline="\n")
-          print(f"Applied {replacements} compatibility edits.")
+          test_path = Path("Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs")
+          tests = test_path.read_text(encoding="utf-8")
+          tests = tests.replace("\t\t\tUnityGraphicsMcpMutationSession.ClearForTests();\n", "")
+          test_path.write_text(tests, encoding="utf-8", newline="\n")
           PY
 
-          if git diff --quiet -- Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpMutation.cs; then
-            echo "Compatibility fix is already committed."
+          if git diff --quiet -- Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs; then
+            echo "Phase 3A compatibility corrections are already committed."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpMutation.cs
-            git commit -m "fix: Unity 6000でLoaded Sceneをhandle解決"
+            git add Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs
+            git commit -m "test: 内部Mutation Sessionへの直接依存を除去"
             git push origin HEAD:${{ github.head_ref }}
           fi
 
