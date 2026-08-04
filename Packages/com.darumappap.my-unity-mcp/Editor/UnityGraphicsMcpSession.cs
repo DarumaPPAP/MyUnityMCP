@@ -13,14 +13,18 @@ using Object = UnityEngine.Object;
 namespace UnityGraphicsMcp
 {
 	/// <summary>
-	/// Unity Editor Session内のRevision、Snapshot、Read-only検証を所有します。
+	/// Unity Editor Session内のRevision、Snapshot、Plan、Read-only検証を所有します。
 	/// </summary>
 	public static class UnityGraphicsMcpSession
 	{
 		private const int MAX_SNAPSHOT_COUNT = 8;
+		private const int MAX_PLAN_COUNT = 8;
 		private static readonly TimeSpan SNAPSHOT_LIFETIME = TimeSpan.FromMinutes(10.0);
+		private static readonly TimeSpan PLAN_LIFETIME = TimeSpan.FromMinutes(10.0);
 		private static readonly Dictionary<string, UnityGraphicsMcpSceneSnapshot> _snapshots =
 			new Dictionary<string, UnityGraphicsMcpSceneSnapshot>();
+		private static readonly Dictionary<string, UnityGraphicsMcpDirectionPlan> _plans =
+			new Dictionary<string, UnityGraphicsMcpDirectionPlan>();
 
 		private static readonly int _mainThreadId = Thread.CurrentThread.ManagedThreadId;
 		private static readonly string _sessionId = Guid.NewGuid().ToString("N");
@@ -64,28 +68,7 @@ namespace UnityGraphicsMcp
 			}
 
 			RemoveExpiredSnapshots();
-
-			while (_snapshots.Count >= MAX_SNAPSHOT_COUNT)
-			{
-				string oldestId = null;
-				DateTime oldestTime = DateTime.MaxValue;
-
-				foreach (KeyValuePair<string, UnityGraphicsMcpSceneSnapshot> pair in _snapshots)
-				{
-					if (pair.Value.CreatedUtc < oldestTime)
-					{
-						oldestTime = pair.Value.CreatedUtc;
-						oldestId = pair.Key;
-					}
-				}
-
-				if (string.IsNullOrEmpty(oldestId))
-				{
-					break;
-				}
-
-				_snapshots.Remove(oldestId);
-			}
+			RemoveOldestSnapshotsWhenFull();
 
 			string snapshotId = _sessionId + ":scene:" + Guid.NewGuid().ToString("N");
 			snapshot.SnapshotId = snapshotId;
@@ -130,9 +113,68 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
+		public static string StorePlan(UnityGraphicsMcpDirectionPlan plan)
+		{
+			if (plan == null)
+			{
+				throw new ArgumentNullException(nameof(plan));
+			}
+
+			RemoveExpiredPlans();
+			RemoveOldestPlansWhenFull();
+
+			string planId = _sessionId + ":plan:" + Guid.NewGuid().ToString("N");
+			plan.PlanId = planId;
+			_plans[planId] = plan;
+			return planId;
+		}
+
+		public static bool TryGetPlan(
+			string planId,
+			long expectedRevision,
+			out UnityGraphicsMcpDirectionPlan plan,
+			out E_MCP_TOOL_STATUS failureStatus)
+		{
+			plan = null;
+			failureStatus = E_MCP_TOOL_STATUS.SUCCESS;
+
+			if (string.IsNullOrWhiteSpace(planId))
+			{
+				failureStatus = E_MCP_TOOL_STATUS.INVALID_REQUEST;
+				return false;
+			}
+
+			if (!planId.StartsWith(_sessionId + ":plan:", StringComparison.Ordinal))
+			{
+				failureStatus = E_MCP_TOOL_STATUS.SESSION_EXPIRED;
+				return false;
+			}
+
+			RemoveExpiredPlans();
+
+			if (!_plans.TryGetValue(planId, out plan))
+			{
+				failureStatus = E_MCP_TOOL_STATUS.SESSION_EXPIRED;
+				return false;
+			}
+
+			if (expectedRevision != _revision || plan.Revision != _revision)
+			{
+				failureStatus = E_MCP_TOOL_STATUS.STALE_SNAPSHOT;
+				return false;
+			}
+
+			return true;
+		}
+
 		public static void ClearSnapshots()
 		{
 			_snapshots.Clear();
+		}
+
+		public static void ClearPlans()
+		{
+			_plans.Clear();
 		}
 
 		private static Dictionary<int, bool> CaptureSceneDirtyState()
@@ -176,15 +218,17 @@ namespace UnityGraphicsMcp
 
 			foreach (KeyValuePair<string, UnityGraphicsMcpSceneSnapshot> pair in _snapshots)
 			{
-				if (pair.Value.CreatedUtc < threshold)
+				if (pair.Value.CreatedUtc >= threshold)
 				{
-					if (expiredIds == null)
-					{
-						expiredIds = new List<string>();
-					}
-
-					expiredIds.Add(pair.Key);
+					continue;
 				}
+
+				if (expiredIds == null)
+				{
+					expiredIds = new List<string>();
+				}
+
+				expiredIds.Add(pair.Key);
 			}
 
 			if (expiredIds == null)
@@ -198,10 +242,97 @@ namespace UnityGraphicsMcp
 			}
 		}
 
+		private static void RemoveExpiredPlans()
+		{
+			DateTime threshold = DateTime.UtcNow - PLAN_LIFETIME;
+			List<string> expiredIds = null;
+
+			foreach (KeyValuePair<string, UnityGraphicsMcpDirectionPlan> pair in _plans)
+			{
+				if (pair.Value.CreatedUtc >= threshold)
+				{
+					continue;
+				}
+
+				if (expiredIds == null)
+				{
+					expiredIds = new List<string>();
+				}
+
+				expiredIds.Add(pair.Key);
+			}
+
+			if (expiredIds == null)
+			{
+				return;
+			}
+
+			foreach (string expiredId in expiredIds)
+			{
+				_plans.Remove(expiredId);
+			}
+		}
+
+		private static void RemoveOldestSnapshotsWhenFull()
+		{
+			while (_snapshots.Count >= MAX_SNAPSHOT_COUNT)
+			{
+				string oldestId = null;
+				DateTime oldestTime = DateTime.MaxValue;
+
+				foreach (KeyValuePair<string, UnityGraphicsMcpSceneSnapshot> pair in _snapshots)
+				{
+					if (pair.Value.CreatedUtc < oldestTime)
+					{
+						oldestTime = pair.Value.CreatedUtc;
+						oldestId = pair.Key;
+					}
+				}
+
+				if (string.IsNullOrEmpty(oldestId))
+				{
+					break;
+				}
+
+				_snapshots.Remove(oldestId);
+			}
+		}
+
+		private static void RemoveOldestPlansWhenFull()
+		{
+			while (_plans.Count >= MAX_PLAN_COUNT)
+			{
+				string oldestId = null;
+				DateTime oldestTime = DateTime.MaxValue;
+
+				foreach (KeyValuePair<string, UnityGraphicsMcpDirectionPlan> pair in _plans)
+				{
+					if (pair.Value.CreatedUtc < oldestTime)
+					{
+						oldestTime = pair.Value.CreatedUtc;
+						oldestId = pair.Key;
+					}
+				}
+
+				if (string.IsNullOrEmpty(oldestId))
+				{
+					break;
+				}
+
+				_plans.Remove(oldestId);
+			}
+		}
+
+		private static void ClearTransientState()
+		{
+			ClearSnapshots();
+			ClearPlans();
+		}
+
 		private static void IncrementRevision()
 		{
 			_revision++;
-			ClearSnapshots();
+			ClearTransientState();
 		}
 
 		private static void OnSceneOpened(Scene scene, OpenSceneMode mode)
@@ -244,13 +375,13 @@ namespace UnityGraphicsMcp
 		private static void OnBeforeAssemblyReload()
 		{
 			_isReloading = true;
-			ClearSnapshots();
+			ClearTransientState();
 		}
 
 		private static void OnEditorQuitting()
 		{
 			_isReloading = true;
-			ClearSnapshots();
+			ClearTransientState();
 		}
 	}
 
@@ -273,8 +404,10 @@ namespace UnityGraphicsMcp
 		public bool HasViolation(out Dictionary<string, object> evidence)
 		{
 			evidence = new Dictionary<string, object>();
-			List<Dictionary<string, object>> changedScenes = new List<Dictionary<string, object>>();
-			List<Dictionary<string, object>> changedAssets = new List<Dictionary<string, object>>();
+			List<Dictionary<string, object>> changedScenes =
+				new List<Dictionary<string, object>>();
+			List<Dictionary<string, object>> changedAssets =
+				new List<Dictionary<string, object>>();
 
 			if (_sceneDirtyState.Count != SceneManager.sceneCount)
 			{
@@ -291,7 +424,8 @@ namespace UnityGraphicsMcp
 				}
 
 				bool beforeDirty;
-				if (!_sceneDirtyState.TryGetValue(scene.handle, out beforeDirty) || beforeDirty != scene.isDirty)
+				if (!_sceneDirtyState.TryGetValue(scene.handle, out beforeDirty) ||
+					beforeDirty != scene.isDirty)
 				{
 					changedScenes.Add(new Dictionary<string, object>
 					{
@@ -312,8 +446,11 @@ namespace UnityGraphicsMcp
 
 				bool afterDirty = EditorUtility.IsDirty(target);
 				bool beforeDirty;
-				bool existedBefore = _assetDirtyState.TryGetValue(target.GetInstanceID(), out beforeDirty);
-				if ((existedBefore && beforeDirty != afterDirty) || (!existedBefore && afterDirty))
+				bool existedBefore =
+					_assetDirtyState.TryGetValue(target.GetInstanceID(), out beforeDirty);
+
+				if ((existedBefore && beforeDirty != afterDirty) ||
+					(!existedBefore && afterDirty))
 				{
 					changedAssets.Add(new Dictionary<string, object>
 					{
@@ -326,6 +463,7 @@ namespace UnityGraphicsMcp
 			}
 
 			int currentUndoGroup = Undo.GetCurrentGroup();
+
 			if (changedScenes.Count > 0)
 			{
 				evidence["changedScenes"] = changedScenes;
