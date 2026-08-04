@@ -65,7 +65,48 @@ inspect → plan → mutate → bake → capture
 - `capture`は一時的Editor状態を復元する。
 - Automatic Saveは禁止。
 
-## 4. C# constraints
+## 4. Project environment resolution
+
+MyUnityMCP全体へ特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph設定、Target Platformを固定しない。
+
+BackendまたはCapabilityを選択する前に、対象Unity Projectから次をRead-onlyで取得する。
+
+- Unity Version
+- Render Pipeline Kind
+- Render Pipeline Package Version
+- Active RendererとRendering Path
+- RenderGraph Mode
+- Active Build Target
+- Installed Build Targets
+- Graphics API
+- Scripting Backend
+- 関連PackageとFeature Capability
+
+情報の優先順位は次とする。
+
+1. 対象Unity Projectから検出した事実
+2. 今回の依頼で明示されたTargetと制約
+3. Project固有Profile
+4. UnityAgentの既定Preference
+
+下位のProfileやPreferenceで、検出済みProject事実を上書きしない。
+
+環境状態は最低でも次を区別する。
+
+- `AVAILABLE`
+- `UNAVAILABLE`
+- `UNSUPPORTED`
+- `UNVERIFIED`
+- `PACKAGE_NOT_INSTALLED`
+- `VERSION_NOT_SUPPORTED`
+- `PROJECT_CONFIGURATION_REQUIRED`
+- `BACKEND_NOT_IMPLEMENTED`
+
+`UNVERIFIED`を`UNSUPPORTED`と扱わない。Projectに存在しないPipelineへ黙ってFallbackしない。
+
+検証に使用したUnity Version、Pipeline、PlatformはCompatibility Matrixへ記録し、MyUnityMCP全体の固定対応条件とは扱わない。
+
+## 5. C# constraints
 
 - Root Namespaceがない場合、Feature単位の単一階層namespaceを使用する。
 - `namespace Namespace.*`、`RootNamespace`、`CHANGE_ME`、先頭・末尾`.`を禁止する。
@@ -84,16 +125,17 @@ inspect → plan → mutate → bake → capture
 
 詳細なC#およびArchitecture規約は`DarumaPPAP/UnityAgent`の正本を参照します。
 
-## 5. Render Pipeline boundary
+## 6. Render Pipeline boundary
 
 - Visual IntentはPipeline非依存とする。
-- Unityへ適用するNative設定はBuilt-in、URP、HDRPで分離する。
-- PipelineとPlatformは別の解決軸とする。
-- 最初の実装対象はUnity 6000.3、URP 17、Forward、RenderGraph。
-- Built-inとHDRPは実装が存在するまでInterfaceや空Backendを作らない。
+- Unityへ適用するNative設定はBuilt-in、URP、HDRP、Custom SRPで分離する。
+- Pipeline、Rendering Path、Platformを別の解決軸とする。
+- Project Inspection後に利用可能なBackendだけを選択する。
+- 実装済みBackendがない場合は`BACKEND_NOT_IMPLEMENTED`を返す。
+- 二つ目の実在Backendが追加されるまで共通Pipeline Interfaceを作らない。
 - すべてのPipeline設定を一つのnullable設定型へ押し込めない。
 
-## 6. Mutation and evidence
+## 7. Mutation and evidence
 
 - Read-only ToolはScene、Asset、Timeline、Material、ProfileをDirtyにしない。
 - Scene、Prefab、MaterialをRaw YAMLで編集しない。
@@ -101,9 +143,9 @@ inspect → plan → mutate → bake → capture
 - BakeをMutationへ暗黙的に含めない。
 - Compile成功をRuntime、Visual、Performance、実機の成功と扱わない。
 - Human Reviewなしに`VISUAL_ACCEPTED`としない。
-- Editor結果だけでPlayerまたはNintendo Switchを保証しない。
+- Editor結果だけでPlayerまたはTarget Deviceを保証しない。
 
-## 7. Current status
+## 8. Current status
 
 現在はArchitecture、Catalog、Manifest、Workflow、Task定義を構築するPhase 0です。
 
