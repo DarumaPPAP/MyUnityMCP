@@ -119,8 +119,8 @@ MCP Bridgeの宣言API基準は`com.coplaydev.unity-mcp 10.1.2`、Unity CIで検
 - Bridge Tool Discovery: PASS
 - Direct Handler Invocation: PASS
 - EditMode: `9 / 9 PASS`
-- Workflow Run: `30909837287`
-- Evidence Artifact: `MyUnityMCP-Phase1-Unity-Evidence`
+- Workflow Run: `30911093647`
+- Evidence Artifact: `MyUnityMCP-Phase1-Unity-Evidence` (`8893204801`)
 
 この実績はPlayer、実機、すべてのUnity Version、すべてのRender Pipeline対応を意味しません。
 
