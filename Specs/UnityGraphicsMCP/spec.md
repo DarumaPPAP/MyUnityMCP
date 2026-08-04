@@ -1,7 +1,7 @@
 # UnityGraphicsMCP 仕様書
 
 - FeatureName: `UnityGraphicsMCP`
-- DocumentVersion: `2.0.0`
+- DocumentVersion: `2.1.0`
 - DesignStatus: `Draft`
 - ImplementationStatus: `Not Started`
 - VerificationStatus: `Not Run`
@@ -13,16 +13,46 @@
 
 UnityGraphicsMCPはGraphics領域の専門判断とTool Groupを所有する。完成目的のWorkflowはLiveCreator、MovieCreator等が所有する。
 
-## 2. 初期対象環境
+## 2. Project environment resolution
 
-- Unity: `6000.3`
-- Render Pipeline: `URP 17+`
-- Rendering Path: `Forward`
-- RenderGraph: `Enabled`
-- Primary Platform: `Nintendo Switch`
-- Secondary Platforms: Switch 2 / PS4 / PS5 / PC
+UnityGraphicsMCP全体へ特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph設定、Target Platformを固定しない。
 
-Built-inとHDRPはCapability仕様だけを登録し、実装が存在するまで空Backendや共通Interfaceを作らない。
+BackendまたはCapabilityを選択する前に、対象Unity Projectから最低限次をRead-onlyで取得する。
+
+- Unity Version
+- Render Pipeline Kind
+- Render Pipeline Package Version
+- Active Renderer
+- Rendering Path
+- RenderGraph Mode
+- Active Build Target
+- Installed Build Targets
+- Graphics API
+- Scripting Backend
+- Related Package Presence
+- Graphics Capability Summary
+
+情報の優先順位は次とする。
+
+1. 対象Unity Projectから検出した事実
+2. 今回の依頼で明示されたTargetと制約
+3. Project固有Profile
+4. UnityAgentの既定Preference
+
+検出済みProject事実をProfileや既定Preferenceで上書きしない。
+
+対応状態は最低でも次を区別する。
+
+- `AVAILABLE`
+- `UNAVAILABLE`
+- `UNSUPPORTED`
+- `UNVERIFIED`
+- `PACKAGE_NOT_INSTALLED`
+- `VERSION_NOT_SUPPORTED`
+- `PROJECT_CONFIGURATION_REQUIRED`
+- `BACKEND_NOT_IMPLEMENTED`
+
+検証実績がない環境を、根拠なく`UNSUPPORTED`と判定しない。
 
 ## 3. 対象領域
 
@@ -71,7 +101,7 @@ Built-inとHDRPはCapability仕様だけを登録し、実装が存在するま�
 - Box Projection / Influence / Blend / Importance
 - Baked / Custom / Realtime
 - Anchor Override
-- HDRP Planar ReflectionはHDRP実装時に追加する
+- Pipeline固有Reflection機能は対応Backend実装時に追加する
 
 ### Atmosphere and VFX
 
@@ -83,10 +113,10 @@ Built-inとHDRPはCapability仕様だけを登録し、実装が存在するま�
 ### Look and Rendering
 
 - Volume / Volume Profile / Effective Volume Stack
-- URP Post Process
+- Pipeline Native Post Process
 - Custom Volume Component
-- Renderer Data
-- RendererFeatureの存在、順序、Injection Point、Capability
+- Renderer Dataまたは同等のPipeline設定
+- RendererFeature / Custom Pass / CommandBuffer等の存在、順序、Injection Point、Capability
 - Render Scale
 - Motion Vector / Depth / Opaque TextureのCapability
 
@@ -137,7 +167,9 @@ inspect → plan → mutate → bake → capture → refine
 - Reason
 - Dependencies
 - Confidence
+- Pipeline impact
 - Platform impact
+- Verification level
 
 ## 6. Pipeline resolution
 
@@ -146,6 +178,7 @@ inspect → plan → mutate → bake → capture → refine
 - Visual Intent
 - Direction Plan
 - Expected Visual Result
+- Requested Target
 - Platform Budget
 
 ### Built-in
@@ -172,25 +205,42 @@ inspect → plan → mutate → bake → capture → refine
 - APV
 - Reflection Hierarchy / Planar Reflection
 
-Pipeline非対応機能は黙って無視せず、Fallback、見た目の差、Validation状態を返す。
+### Custom SRP
+
+- Pipeline AssetとRenderer実装を検出する
+- 専用Backendが存在しない場合は`BACKEND_NOT_IMPLEMENTED`を返す
+
+Pipeline非対応機能は黙って無視せず、Fallback候補、見た目の差、Validation状態を返す。ただし別Pipelineへ自動Fallbackしない。
 
 ## 7. Platform resolution
 
 PipelineとPlatformを別軸で解決する。
 
-### Nintendo Switch既定
+Platform方針は今回の依頼、Project固有Profile、UnityAgent Preferenceから取得する。特定PlatformをMyUnityMCP全体の既定値にしない。
 
-- Lightmap中心
-- Light Probeを標準Fallbackとする
-- APVは明示採用と実機検証を要求する
-- Baked Reflection Probeを優先する
-- Particle Systemを優先する
-- Realtime Light / Shadow / Decal / Transparent OverdrawへBudgetを設定する
-- RendererFeature追加時にFullscreen PassとGPU Costを記録する
+Projectが現在設定しているBuild Targetと、今回要求されたTargetが異なる場合は次を明示する。
 
-未計測の性能改善を断定しない。
+- Detected Build Target
+- Requested Target
+- Installed / Not Installed
+- Project Configuration Required
+- Target Device Verification State
 
-## 8. Tool contract
+未計測の性能改善を断定しない。Editor結果だけでPlayerまたはTarget Deviceを保証しない。
+
+## 8. Backend selection
+
+1. `graphics.inspect_project`でProject事実を取得する。
+2. Pipeline、Version、Renderer、Rendering Pathを解決する。
+3. 実装済みBackendとCapabilityを照合する。
+4. 選択されたBackendだけを読み込む。
+5. Backend未実装の場合は`BACKEND_NOT_IMPLEMENTED`を返す。
+
+最初の具象Backendは、開発時に利用可能な検証Projectに基づいて実装してよい。ただし、その環境をMyUnityMCP全体の固定対応条件とはしない。
+
+二つ目の実在Backendが追加されるまで共通Pipeline Interfaceを作らない。
+
+## 9. Tool contract
 
 ### inspect
 
@@ -220,7 +270,7 @@ PipelineとPlatformを別軸で解決する。
 
 現在は全Toolが`planned`であり、実装済みとして公開しない。
 
-## 9. Mutation requirements
+## 10. Mutation requirements
 
 - `expectedRevision`
 - Dry Run
@@ -232,20 +282,22 @@ PipelineとPlatformを別軸で解決する。
 - Pipeline Asset / Renderer Data変更の別承認
 - Bakeの別承認
 
-## 10. Bake dependency
+## 11. Bake dependency
 
 変更から次の無効化を判定する。
 
 - Lightmap
 - Light Probe
-- APV
+- APVまたはPipeline同等機能
 - Reflection Probe
 - Evaluation Capture
 
 一つの変更を理由に無条件の全Bakeを行わない。
 
-## 11. Validation
+## 12. Validation
 
+- Detected Project Context
+- Requested Target
 - Pipeline / Package / Renderer Capability
 - Light / Shadow
 - Lightmap / UV2 / LightingDataAsset
@@ -253,37 +305,56 @@ PipelineとPlatformを別軸で解決する。
 - Reflection Probe
 - Material / Decal / Particle
 - Volume / Post Process
-- RendererFeature
+- RendererFeature / Custom Pass
 - Timeline / Cinemachine Read-only state
 - Platform Budget
+- Compatibility Matrix
 - Visual Evidence要件
 
-## 12. Naming and architecture
+## 13. Compatibility evidence
+
+実際に検証した環境は`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+
+Matrixは対応条件ではなくEvidenceであり、次を分離して記録する。
+
+- Editor Compile
+- EditMode
+- PlayMode
+- Player
+- Target Device
+
+MatrixにEntryがない環境は`UNVERIFIED`とする。
+
+## 14. Naming and architecture
 
 - Namespaceは`UnityGraphicsMcp`。
 - enum型は`E_UPPER_SNAKE_CASE`。
 - private fieldは`_camelCase`。
-- URP-only段階ではPipeline Interfaceを作らない。
+- 一つのBackendしかない段階ではPipeline Interfaceを作らない。
 - Controller、Manager、Service、Profile、Adapter、追加asmdefをPattern目的で作らない。
 - 新規ファイルにはOwner、Lifetime、Consumers、Responsibility、Split Reasonを記録する。
 
-## 13. Non-goals
+## 15. Non-goals
 
 - Asset生成AIそのもの
 - TextureやModelの生成Model実装
 - 全Pipelineの初回同時実装
+- 特定Unity Version、Pipeline、Rendering Path、Platformの全体固定
 - Runtime MCP
 - 無承認Mutation
 - Automatic Save
 - 無条件の全Bake
 - AI単独のVisual Acceptance
 
-## 14. Acceptance criteria
+## 16. Acceptance criteria
 
+- Project事実とRequested Targetを分離できる。
+- 特定環境をRepository全体の固定前提にしない。
 - Read-only InspectionがSceneとAssetをDirtyにしない。
 - 参考画像または自然言語から理由付きDirection Planを生成できる。
-- PipelineとPlatformを別軸で解決できる。
-- Unsupported機能のFallbackとVisual Differenceを返せる。
+- Pipeline、Rendering Path、Platformを別軸で解決できる。
+- `UNSUPPORTED`と`UNVERIFIED`を区別できる。
+- Backend未実装時に黙って別PipelineへFallbackしない。
 - Mutation前にDiffと承認を要求できる。
 - Bake対象をDirty Dependencyから限定できる。
 - Capture後にEditor一時状態を復元できる。
