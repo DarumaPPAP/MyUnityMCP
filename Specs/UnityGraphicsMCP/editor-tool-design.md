@@ -1,13 +1,13 @@
 # UnityGraphicsMCP Unity Editor C# Tool実装設計
 
-- DocumentVersion: `3.0.0`
+- DocumentVersion: `4.0.0`
 - DesignStatus: `Implemented / Unity Editor CI Verified`
-- ImplementationStatus: `Phase 3A Light Mutation Complete`
-- VerificationStatus: `30 / 30 EditMode PASS`
+- ImplementationStatus: `Phase 3 Graphics Mutation Complete`
+- VerificationStatus: `46 / 46 EditMode PASS`
 
 ## 1. 目的
 
-対象Unity Projectを解析し、Project環境、Scene Graphics状態、Direction Plan、承認済みLight Mutationを機械可読Resultとして扱うEditor-only Toolを構築する。
+対象Unity Projectの環境、Scene Graphics状態、Direction Plan、承認済みGraphics Mutationを機械可読Resultとして扱うEditor-only Toolを構築する。
 
 特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをMyUnityMCP全体へ固定しない。
 
@@ -24,11 +24,14 @@
 - `graphics.compile_direction`
 - `graphics.preview_plan`
 - `graphics.prepare_light_plan`
+- `graphics.prepare_environment_plan`
 
 ### Mutation
 
 - `graphics.apply_plan`
 - `graphics.undo_last_transaction`
+- `graphics.apply_environment_plan`
+- `graphics.undo_last_environment_transaction`
 
 全Toolは`AutoRegister = false`とし、Activation PolicyまたはBridge設定から明示的に有効化する。
 
@@ -43,7 +46,7 @@
 - Response: `SuccessResponse` / `ErrorResponse`
 - Command Dispatch: Unity Main Thread
 
-MCP Bridge Packageへの直接依存は`UnityGraphicsMcpTools.cs`へ限定する。
+MCP Bridge固有依存はTool Entryへ閉じ込め、Inspection、Planning、Mutation本体をBridge Response型へ依存させない。
 
 ## 4. Physical architecture
 
@@ -53,15 +56,14 @@ MCP for Unity Bridge
 UnityGraphicsMcpTools.cs
         ↓
 UnityGraphicsMcpSession.cs
-        ├─ Snapshot / Direction Plan / Revision
+        ├─ Session / Revision
+        ├─ Snapshot / Direction Plan
         └─ Read-only Dirty Guard
         ↓
 UnityGraphicsMcpInspection.cs
-        ├─ UnityGraphicsMcpProjectInspection.cs
-        ├─ UnityGraphicsMcpSceneInspection.cs
-        ├─ UnityGraphicsMcpValidation.cs
-        ├─ UnityGraphicsMcpPlanning.cs
-        └─ UnityGraphicsMcpMutation.cs
+UnityGraphicsMcpPlanning.cs
+UnityGraphicsMcpMutation.cs
+UnityGraphicsMcpEnvironmentMutation.cs
         ↓
 Unity Editor API
 ```
@@ -78,203 +80,163 @@ Unity Editor API
 
 - Session ID
 - Revision
-- Snapshot / Direction Plan保持
-- TTL / Count上限
-- Hierarchy / Project / Undo / Scene Event監視
-- Compile / Reload / Play Mode遷移時の失効
-- Read-only Dirty Guard
-- Mutation完了後のRevision更新
+- Snapshot / Direction Plan Lifetime
+- Compile / Reload / Play Mode失効
+- Read-only Guard
+
+### `UnityGraphicsMcpInspection.cs`
+
+- Project Environment
+- Scene Snapshot
+- Graphics Validation
+- Tool Result Contract
 
 ### `UnityGraphicsMcpPlanning.cs`
 
-- 構造化Visual Intent
-- Direction Plan
-- Lighting / GI / Reflection / Atmosphere / Look / Platform Section
-- Created / Modified / Dirty / Bake候補のRead-only Preview
-- 自然言語・画像の意味理解をUnity C#側で偽装しない
+- Structured Visual Intent
+- Direction Recommendation
+- Plan ID / Expected Revision
+- Read-only Preview
 
 ### `UnityGraphicsMcpMutation.cs`
 
-- Explicit Light Operation Schema
-- Exact Before / After Preview
-- Approval Token Hash
-- Executable Plan TTL
-- Light Create / Update
-- Undo Group / Rollback
-- Latest Transaction検証
-- 外部変更後のUndo拒否
+- Light Operation Schema
+- Exact Diff
+- Approval Token
+- Light Transaction / Undo
 
-Capability単位の実装であり、任意のUnity Objectを書き換える汎用Mutation Backendではない。
+### `UnityGraphicsMcpEnvironmentMutation.cs`
 
-## 5. Environment resolution
+- Camera / Reflection Probe / Volume Operation Schema
+- Property / Field対応Volume Member Access
+- Multi-component Transaction / Rollback
+- Guarded Undo
 
-`graphics.inspect_project`はProjectから次をRead-only取得する。
+## 5. Read-only contract
 
-- Unity Version
-- Active / Installed Build Target
-- Graphics API
-- Scripting Backend
-- Color Space
-- Render Pipeline Kind / Asset / Package Version
-- Renderer Data / Feature Count
-- Rendering Path / RenderGraph ModeのRead-only推定
-- Loaded Scene
-- Relevant Package
+Inspection、Planning、Prepareの実行前後で次を比較する。
 
-優先順位:
+- Loaded Scene Dirty State
+- Persistent Asset Dirty State
+- Undo Group
 
-1. 対象Projectから検出した事実
-2. 今回明示されたTargetと制約
-3. Project Profile
-4. UnityAgent Preference
+Material確認に`renderer.material`を使用せず、`sharedMaterials`を使用する。Read-only ToolからAsset生成、Scene保存、Bakeを実行しない。
 
-下位情報で検出済みProject事実を上書きしない。
+違反時は`READ_ONLY_CONTRACT_VIOLATION`を返す。
 
-## 6. Read-only contract
+## 6. Session and revision
 
-Inspection、Validation、Direction Planning、Light Plan Preparationでは次を禁止する。
+Snapshot、Direction Plan、Executable PlanはEditor Session内だけで有効とする。
 
-- `Undo.RecordObject`
-- `EditorUtility.SetDirty`
-- `EditorSceneManager.MarkSceneDirty`
-- `SerializedObject.ApplyModifiedProperties`
-- `AssetDatabase.SaveAssets`
-- `AssetDatabase.Refresh`
-- `Renderer.material` / `Renderer.materials`
-- `Volume.profile`
-- Scene / Asset Save
-- Bake
+失効条件:
 
-実行前後でLoaded Scene、Scene Dirty、Persistent Asset Dirty、Undo Groupを比較する。違反時は状態を自動解除して隠さず、`READ_ONLY_CONTRACT_VIOLATION`を返す。
+- Domain Reload
+- Compile開始
+- Play Mode遷移
+- Editor終了
+- Revision変更
+- TTL超過
 
-## 7. Direction and executable plan
+大きなScene ResultはSnapshot IDとCursorで参照し、毎回全JSONを複製しない。
 
-```text
-compile_direction
-→ Session-local Direction Plan
-→ preview_plan
-→ prepare_light_plan
-→ Session-local Executable Light Plan
-```
+## 7. Planning contract
 
-Executable Light Plan:
+Unity C# Toolは自然言語や画像を独自解釈しない。UnityAgentまたはMCP Clientが構造化したVisual Intentを入力する。
 
-- 最大8件
-- TTL 10分
-- 一回使用
-- Expected Revisionを保持
-- Exact Diff Digestを保持
-- Approval Tokenは平文保存せずSHA-256 Hashだけ保持
-- Compile、Reload、Play Mode遷移で失効
+Direction PlanはProject Inspectionの検出事実とRequested Targetを別フィールドで保持する。
 
-## 8. Phase 3A mutation contract
+PrepareはUnity状態を変更せず、次を返す。
 
-`graphics.apply_plan`必須入力:
+- Exact Before / Requested After
+- Diff Digest
+- Approval Token
+- Expected Revision
+- Mutation / Save / Bake未実行の明示
 
-- `planId`
-- `expectedRevision`
-- `approvalToken`
+## 8. Mutation contract
+
+Apply必須条件:
+
+- Direction Planが現在Sessionに存在する
+- Executable Planが未使用
+- Expected Revision一致
+- Approval Token一致
+- Preview Baseline一致
 - `saveMode = NONE`
 
-適用順:
+Environment Planでは追加で次を要求する。
 
-1. Session / Plan存在確認
-2. Revision一致確認
-3. Approval Token照合
-4. Diff Digest再計算
-5. Target Light Baseline再照合
-6. Undo Group開始
-7. `LIGHT_CREATE` / `LIGHT_UPDATE`適用
-8. 対象SceneをDirty化
-9. 一つのUndo TransactionへCollapse
-10. Transaction IDと新Revisionを返す
+- Operation ID一意
+- 同一既存ComponentへのUpdateは一回
+- 指定Volume MemberをPrepare時に読み書き可能と確認
 
-例外時は`Undo.RevertAllDownToGroup`でTransaction全体をRollbackする。Scene / Assetは保存せず、Bakeも開始しない。
+Applyは一つのUnity Undo Groupへ集約する。途中例外時は`Undo.RevertAllDownToGroup`で全体Rollbackする。
 
-## 9. Light operation scope
+## 9. Undo contract
 
-対応:
+Undo前に次を確認する。
 
-- Directional
-- Point
-- Spot
-- Name
-- Color
-- Intensity
-- Range
-- Spot Angle
-- Shadows
-- Position
-- Euler Angles
-- Enabled
+- Transaction ID
+- Expected Revision
+- Transaction適用後State Digest
+- TransactionがUndo Stackの最新Groupであること
 
-`LIGHT_CREATE`では再現可能性のため主要値を明示必須とする。`LIGHT_UPDATE`では`inspect_scene`が返した`GlobalObjectId`を優先識別子として使用する。
+外部変更、新しいUndo Group、Session失効がある場合は拒否する。
 
-未対応:
+## 10. Supported Phase 3 operations
 
-- Delete
-- Area Light
-- Pipeline固有Light Component
-- Volume / Reflection Probe / Camera
-- Material / Renderer Feature
+### Light
 
-## 10. Undo contract
+- `LIGHT_CREATE`
+- `LIGHT_UPDATE`
 
-`graphics.undo_last_transaction`は次の場合だけ実行する。
+### Camera
 
-- transactionIdが直近MyUnityMCP Transactionと一致
-- Expected Revisionが現在値と一致
-- TransactionのUndo Groupが最新
-- 適用後Light状態が記録値と一致
-- 外部Hierarchy / Project / Undo変更がない
+- `CAMERA_CREATE`
+- `CAMERA_UPDATE`
 
-Undo後、Created Lightが削除され、Updated Lightが事前状態へ復元されたことを再検証する。検証失敗は成功として扱わない。
+### Reflection Probe
 
-## 11. Session and identity
+- `REFLECTION_PROBE_CREATE`
+- `REFLECTION_PROBE_UPDATE`
 
-Revision更新条件:
+### Volume
 
-- Hierarchy変更
-- Project変更
-- Undo / Redo
-- Scene Open / Close / Save
-- Active Scene変更
-- Play Mode遷移
-- Compile開始 / 終了
-- MyUnityMCP Mutation完了
+- `VOLUME_CREATE`
+- `VOLUME_UPDATE`
+- 既存`sharedProfile`参照割当
 
-Object ID優先順位:
+Volume Profile内部Override、Save、Bake、Captureは実装しない。
 
-1. `GlobalObjectId`
-2. Session限定Instance ID
+## 11. Test architecture
 
-GameObject名だけを識別子にしない。SnapshotとPlanには`UnityEngine.Object`参照を保持しない。
+Editor Test Assemblyから次を検証する。
 
-## 12. Verification
+- 11 Tool Discovery / Default Disable
+- Read-only Guard
+- Session / Revision / Cursor
+- Direction Compile / Preview
+- Approval / Baseline / Save Mode拒否
+- Light Create / Update / Undo
+- Camera Create / Update / Undo
+- Reflection Probe Create / Update / Undo
+- Volume Create / Update / sharedProfile / Undo
+- Property / Field API形状差
+- Duplicate Operation / Update Target拒否
+- Atomic Transaction / Rollback
+- External Change / Newer Undo Group拒否
+- Phase 1～2 Regression
 
-Unity `6000.0.75f1`のGitHub Actions環境で次を確認する。
+Test用に公開範囲を広げず、`InternalsVisibleTo("MyUnityMcp.Editor.Tests")`だけを使用する。
 
-- Package Resolve
-- Editor / Test Assembly Compile
-- 8 Tool Bridge Discovery
-- Default Disable
-- Direct Handler Invocation
-- Inspection / Planning Regression
-- Prepare Read-only Guard
-- Approval Token拒否
-- Stale Revision拒否
-- Light Create / Update
-- Atomic Undo
-- Preview後Target変更拒否
-- Undo前外部変更拒否
-- No Auto-save / No Bake
+## 12. Phase 4 extension boundary
 
-EditMode結果: `30 / 30 PASS`
+Save、Bake、Captureは既存Applyへ追加せず、独立Toolと別Approval Tokenで実装する。
 
-正確なWorkflow Run、Job、Artifactは`Tests/Compatibility/verification-matrix.yaml`を正本とする。PlayerとTarget DeviceはEditor-only Phase 3Aの完了条件外であり、未検証。
+- Save Plan
+- Dirty Dependency Set
+- Dependency限定Bake
+- Capture State Restore
+- Visual Evaluation / Refine
 
-## 13. Next design scope
-
-Phase 3Bでは、Phase 3AのPlan / Approval / Revision / Undo Contractを再利用し、Volume、Reflection Probe、Cameraを専用Operation Schemaで追加する。
-
-二つ目の実在BackendやTransportが必要になるまで、抽象Interfaceを先行追加しない。
+任意`SerializedProperty` Toolや空Backendを追加しない。

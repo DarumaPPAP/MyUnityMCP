@@ -1,36 +1,51 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 capabilities:
   graphics:
     owner: unity_graphics_mcp
-    status: specified
+    status: phase_3_operational
     modules:
+      - id: project_and_scene_inspection
+        status: implemented_editor_verified
+        mutation: false
+      - id: direction_planning
+        status: implemented_editor_verified
+        mutation: false
       - id: scene_composition
-        status: planned
+        status: inspection_only_editor_verified
+      - id: camera
+        status: create_update_editor_verified
       - id: material_and_surface
-        status: planned
+        status: inspection_only_editor_verified
       - id: direct_light_and_shadow
-        status: planned
+        status: create_update_editor_verified
       - id: lightmap_and_lighting_data
-        status: planned
+        status: inspection_and_validation_editor_verified
       - id: light_probe
-        status: planned
+        status: inspection_only_editor_verified
       - id: adaptive_probe_volume
-        status: planned
+        status: capability_detection_only
       - id: reflection_probe
-        status: planned
+        status: create_update_editor_verified
       - id: environment_and_fog
-        status: planned
+        status: inspection_only_editor_verified
       - id: decal
-        status: planned
+        status: inspection_only_editor_verified
       - id: particle_system
-        status: planned
+        status: inspection_only_editor_verified
       - id: volume_and_post_process
-        status: planned
+        status: volume_component_create_update_editor_verified
+        limitations:
+          - existing_shared_profile_assignment_only
+          - profile_override_mutation_not_implemented
       - id: renderer_feature_inspection
-        status: planned
+        status: inspection_only_editor_verified
+      - id: graphics_save
+        status: planned_phase_4
+      - id: graphics_bake
+        status: planned_phase_4
       - id: graphics_capture
-        status: planned
+        status: planned_phase_4
 
   cinematic:
     owner: unity_cinematic_mcp
@@ -74,3 +89,4 @@ rules:
   capability_does_not_own_cross_domain_workflow: true
   capability_does_not_make_visual_acceptance_decisions: true
   capability_source_is_not_loaded_during_normal_tool_use: true
+  generic_serialized_property_mutation_is_prohibited: true

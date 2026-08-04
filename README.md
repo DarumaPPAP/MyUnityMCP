@@ -18,7 +18,7 @@ Domain MCP
 Graphics / Cinematic / UI / Addressables / Profiler ...
         ↓
 Capability Module
-Light / Lightmap / Probe / Timeline / Cinemachine ...
+Light / Camera / Probe / Volume / Timeline / Cinemachine ...
         ↓
 Unity Editor API
 ```
@@ -51,12 +51,11 @@ Unity Version、Render Pipeline、Rendering Path、RenderGraph、Target Platform
 ## Current status
 
 ```text
-Phase 0  Architecture / Catalog               DONE
-Phase 1  Project / Scene Inspection           DONE
-Phase 2  Direction Planning                   DONE
-Phase 3A Approval-gated Light Mutation / Undo DONE
-Phase 3B Volume / Reflection Probe / Camera   PENDING
-Phase 4  Bake / Capture / Visual Refine       PENDING
+Phase 0  Architecture / Catalog                         DONE
+Phase 1  Project / Scene Inspection                     DONE
+Phase 2  Direction Planning                             DONE
+Phase 3  Approval-gated Graphics Mutation / Undo        DONE
+Phase 4  Save / Bake / Capture / Visual Refine          PENDING
 ```
 
 実装済みTool:
@@ -70,47 +69,69 @@ graphics.preview_plan
 graphics.prepare_light_plan
 graphics.apply_plan
 graphics.undo_last_transaction
+graphics.prepare_environment_plan
+graphics.apply_environment_plan
+graphics.undo_last_environment_transaction
 ```
 
 全Toolは`AutoRegister = false`で、明示Activationされた場合だけ公開します。
 
-## Phase 3A flow
+## Phase 3 flow
+
+Light:
 
 ```text
 inspect
 → compile_direction
 → preview_plan
 → prepare_light_plan
-→ 人間または上位AgentがExact Diffを確認
+→ Exact Diff確認・承認
 → apply_plan
 → undo_last_transaction
 ```
 
-`prepare_light_plan`は明示的な`LIGHT_CREATE` / `LIGHT_UPDATE`を検証し、Before / After、Diff Digest、一時Approval Tokenを発行します。
+Camera / Reflection Probe / Volume:
 
-`apply_plan`は次をすべて満たす場合だけLightを変更します。
+```text
+inspect
+→ compile_direction
+→ preview_plan
+→ prepare_environment_plan
+→ Exact Diff確認・承認
+→ apply_environment_plan
+→ undo_last_environment_transaction
+```
+
+Applyは次をすべて満たす場合だけ実行します。
 
 - Direction Planが現在Sessionに存在する
 - Expected Revisionが現在値と一致する
 - Approval Tokenが一致する
 - Preview時Baselineが適用直前状態と一致する
+- 同一Plan内でOperation IDとUpdate対象が重複しない
+- 対象Unity APIをPrepare時に読み書き可能と確認できる
 - `saveMode = NONE`
 
-変更は一つのUnity Undo Groupへ集約され、例外時はRollbackします。自動保存とBakeは行いません。直近Transaction後に外部変更が検出された場合、`undo_last_transaction`は安全のため拒否します。
+変更は一つのUnity Undo Groupへ集約し、例外時はTransaction全体をRollbackします。Undo時は対象State、Revision、Transaction ID、最新Undo Groupを再確認します。自動保存とBakeは行いません。
 
-## Phase 3A mutation scope
+## Phase 3 mutation scope
 
 対応:
 
 - Light Create / Update
-- Directional / Point / Spot
-- Name、Color、Intensity、Range、Spot Angle
-- Shadow、Transform、Enabled
+- Camera Create / Update
+- Reflection Probe Create / Update
+- Volume Create / Update
+- 既存Volume Profileの`sharedProfile`割当
+- Property / Field形状差を吸収したVolume APIアクセス
+- Atomic Transaction / Rollback / guarded Undo
 
 未対応:
 
 - Delete / Area Light
-- Volume / Reflection Probe / Camera Mutation
+- Camera Stack / Target Texture / URP・HDRP Additional Camera Data
+- Reflection Probe Bake
+- Volume Profile内部Overrideの作成・変更
 - Material / Renderer Feature Mutation
 - Save / Bake / Capture
 
@@ -118,9 +139,9 @@ inspect
 
 ## Verification
 
-Unity `6000.0.75f1`のGitHub Actions環境で、Package Resolve、Editor Compile、Bridge Discovery、直接Handler Invocation、Inspection、Planning、Light Mutation、Atomic Undo、安全拒否を含むEditMode Testを実行しています。
+Unity `6000.0.75f1`のGitHub Actions環境で、Package Resolve、Editor Compile、11 Tool Discovery、直接Handler Invocation、Inspection、Planning、Light／Camera／Reflection Probe／Volume Mutation、Atomic Undo、安全拒否を含むEditMode Testを実行しています。
 
-現在のPhase 3A Test結果は`30 / 30 PASS`です。正確なWorkflow RunとArtifactは`Tests/Compatibility/verification-matrix.yaml`を正本とします。
+Phase 1～3の総合結果は`46 / 46 PASS`です。正確なWorkflow RunとArtifactは`Tests/Compatibility/verification-matrix.yaml`を正本とします。
 
 このEvidenceは一つのEditor環境に対する実績であり、すべてのUnity Version、Pipeline、Player、Target Device対応を意味しません。
 
@@ -144,4 +165,4 @@ Tests/
 
 ## Next phase
 
-Phase 3Bでは、Phase 3AのTransaction Contractを変更せず、Volume、Reflection Probe、CameraをCapability単位で追加します。
+Phase 4では、Mutationとは別の明示承認境界としてSave、Dependency限定Bake、Capture、Visual Evaluation、Refine Loopを追加します。

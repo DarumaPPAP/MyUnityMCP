@@ -1,8 +1,8 @@
 {
   "name": "com.darumappap.my-unity-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "displayName": "My Unity MCP",
-  "description": "対象Unity Projectを解析し、Read-only Inspection、Direction Planning、承認制Light MutationとUndoを提供するUnity Editor向けMCP基盤です。Unity Version、Render Pipeline、Platformは対象Projectから解決します。",
+  "description": "対象Unity Projectを解析し、Read-only Inspection、Direction Planning、承認制Light・Camera・Reflection Probe・Volume MutationとUndoを提供するUnity Editor向けMCP基盤です。Unity Version、Render Pipeline、Platformは対象Projectから解決します。",
   "dependencies": {
     "com.coplaydev.unity-mcp": "10.1.2",
     "com.unity.nuget.newtonsoft-json": "3.0.2",

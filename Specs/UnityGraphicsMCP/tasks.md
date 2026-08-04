@@ -1,8 +1,8 @@
 # UnityGraphicsMCP Tasks
 
-- TaskPlanVersion: `3.0.0`
-- CurrentPhase: `Phase 3B Capability Expansion`
-- ImplementationStatus: `Phase 3A Light Mutation Operational Complete`
+- TaskPlanVersion: `4.0.0`
+- CurrentPhase: `Phase 4 Save / Bake / Capture`
+- ImplementationStatus: `Phase 3 Approval-gated Graphics Mutation Operational Complete`
 
 ## Status legend
 
@@ -82,7 +82,7 @@ Unity状態を変更せず、Created / Modified / Dirty / Bake Required / Unsupp
 - Stale Revision拒否
 - Project事実とRequested Targetを混同しない
 
-## Phase 3A: Light mutation transaction — DONE
+## Phase 3: Approval-gated graphics mutation — DONE
 
 ### UGMCP-030-001 Exact Light Plan — DONE
 
@@ -90,128 +90,137 @@ Tool:
 
 - `graphics.prepare_light_plan`
 
-実装:
+対応:
 
-- Phase 2 Direction Plan必須
 - `LIGHT_CREATE` / `LIGHT_UPDATE`
 - Directional / Point / Spot
-- 明示値のみ使用し、数値を推測しない
 - Exact Before / After Preview
 - Diff Digest
 - 10分TTLの一時Approval Token
-- Executable Plan最大8件
-- Read-only Guard
+- 明示値のみ使用し、数値を推測しない
 
-### UGMCP-030-002 Apply plan — DONE
+### UGMCP-030-002 Light Apply / Undo — DONE
 
 Tool:
 
 - `graphics.apply_plan`
-
-必須入力:
-
-- Executable Plan ID
-- Expected Revision
-- Approval Token
-- `saveMode = NONE`
-
-実装:
-
-- Plan / Revision / Token再検証
-- Preview時Light Baselineを適用直前に再照合
-- 一つのUnity Undo Groupへ集約
-- Light Create / Update
-- 対象SceneだけをDirty化
-- 例外時`Undo.RevertAllDownToGroup`でRollback
-- Plan一回使用
-- 自動保存なし
-- Bakeなし
-
-### UGMCP-030-003 Undo latest transaction — DONE
-
-Tool:
-
 - `graphics.undo_last_transaction`
 
 実装:
 
-- 直近MyUnityMCP Transactionのみ
-- Expected Revision一致必須
-- Undo Stackの最新Group必須
-- Transaction適用後状態の一致確認
-- 外部Hierarchy / Project / Undo変更後は拒否
-- Created Light削除とUpdated Light復元を実行後検証
+- Plan / Revision / Token / Baseline再検証
+- 一つのUnity Undo Groupへ集約
+- 例外時Rollback
+- Plan一回使用
+- 外部変更後のUndo拒否
+- 自動保存なし
+- Bakeなし
 
-### UGMCP-030-004 Bridge and EditMode tests — DONE
+### UGMCP-031-001 Exact Environment Plan — DONE
+
+Tool:
+
+- `graphics.prepare_environment_plan`
+
+対応Operation:
+
+- `CAMERA_CREATE` / `CAMERA_UPDATE`
+- `REFLECTION_PROBE_CREATE` / `REFLECTION_PROBE_UPDATE`
+- `VOLUME_CREATE` / `VOLUME_UPDATE`
+
+実装:
+
+- Camera、Reflection Probe、Volumeを同一Planへ混在可能
+- Exact Before / Requested After
+- Diff Digest / Approval Token
+- Operation ID重複拒否
+- 同一Componentへの複数Update拒否
+- Volume APIのProperty / Field差を吸収
+- 指定されたVolume MemberをPrepare時に読み書き可能か検証
+- 既存`sharedProfile`参照の割当
+- Profile内部Overrideの作成・変更は禁止
+
+### UGMCP-031-002 Environment Apply / Undo — DONE
+
+Tool:
+
+- `graphics.apply_environment_plan`
+- `graphics.undo_last_environment_transaction`
+
+実装:
+
+- Camera / Probe / VolumeのAtomic Transaction
+- 途中例外時に全体Rollback
+- Expected Revision / Approval / Baseline再検証
+- Transaction ID / Revision / 対象StateをUndo前に再確認
+- TransactionがUndo Stackの最新Groupでない場合は拒否
+- 外部変更後のUndo拒否
+- 自動保存なし
+- Bakeなし
+
+### UGMCP-031-003 Bridge and EditMode tests — DONE
 
 検証対象:
 
-- 8 ToolのBridge DiscoveryとDefault Disable契約
-- Phase 3A Handler Invocation
+- 11 ToolのBridge DiscoveryとDefault Disable契約
+- Phase 1 / Phase 2 / Phase 3A Regression
 - PrepareのRead-only保証
 - Approval Tokenなしの拒否
-- Stale Revision拒否
+- Stale Revision / Changed Baseline拒否
 - Automatic Save Mode拒否
-- Light Create
-- Light Update
+- Light Create / Update
+- Camera Create / Update
+- Reflection Probe Create / Update
+- Volume Create / Update / sharedProfile
+- Volume Property / Field API解決
+- Operation ID重複拒否
+- 同一Update対象重複拒否
+- Camera / Probe / Volume Atomic Transaction
 - Atomic Undo
-- Preview後Target変更の拒否
-- Undo前外部変更の拒否
+- 外部対象変更後のUndo拒否
+- 新しいUndo Group追加後のUndo拒否
 - No Auto-save / No Bake
-- Phase 1 / Phase 2 Regression
 
-Unity `6000.0.75f1`のGitHub Actions環境で`30 / 30 PASS`。最終RunとArtifactはCompatibility Matrixを正本とする。
+Unity `6000.0.75f1`のGitHub Actions環境で`46 / 46 PASS`。最終RunとArtifactはCompatibility Matrixを正本とする。
 
-## Phase 3A completion gate — PASSED
+## Phase 3 completion gate — PASSED
 
 1. Package dependency解決 — PASS
 2. Unity Editor Compile — PASS
-3. 8 ToolのBridge Discovery — PASS
+3. 11 ToolのBridge Discovery — PASS
 4. Direct Handler Invocation — PASS
-5. Exact Light Preview — PASS
+5. Exact Light / Environment Preview — PASS
 6. Approval Token Guard — PASS
-7. Stale Revision Guard — PASS
+7. Stale Revision / Baseline Guard — PASS
 8. Light Create / Update — PASS
-9. Exception Rollback Contract — PASS
-10. Atomic Undo — PASS
-11. External Change Undo Rejection — PASS
-12. Automatic Save禁止 — PASS
-13. Bake非実行 — PASS
-14. EditMode Test — 30 / 30 PASS
+9. Camera Create / Update — PASS
+10. Reflection Probe Create / Update — PASS
+11. Volume Create / Update / sharedProfile — PASS
+12. Property / Field API Resolution — PASS
+13. Duplicate Operation / Target Rejection — PASS
+14. Exception Rollback Contract — PASS
+15. Atomic Undo — PASS
+16. External Change Undo Rejection — PASS
+17. Newer Undo Group Rejection — PASS
+18. Automatic Save禁止 — PASS
+19. Bake非実行 — PASS
+20. EditMode Test — 46 / 46 PASS
 
-## Phase 3B: Capability expansion — PENDING
+## Deferred graphics mutation scope
 
-Phase 3AのTransaction Contractを変更せず、Capability単位で追加する。
+Phase 3へ無理に含めず、実際のGoalと必要性を確認して独立計画する。
 
-候補順:
-
-1. Volume
-2. Reflection Probe
-3. Camera
-
-各Capabilityで必要な条件:
-
-- 専用Operation Schema
-- Exact Preview
-- Approval Token
-- Expected Revision
-- Undo / Rollback
-- No Auto-save
-- Pipeline Capability Status
-- EditMode Test
-
-任意のUnity Objectを操作できる汎用`SerializedProperty` Mutation Toolは作らない。
-
-## Phase 3C: Renderer and material mutation — PENDING
-
-- Shared Material参照の維持
-- Material AssetとScene Overrideの所有分離
+- Material Asset / Scene Overrideの所有分離
+- Shared Material参照維持
 - Render Queue / Shader / Keywordの安全差分
 - Renderer FeatureのPipeline別Capability Gate
 - Variant / Build影響の明示
 
-## Phase 4: Bake and capture — PENDING
+任意のUnity Objectを操作できる汎用`SerializedProperty` Mutation Toolは作らない。
 
+## Phase 4: Save, bake and capture — PENDING
+
+- 明示Save Plan / Approval
 - Dirty Dependency Set
 - `graphics.bake_dependencies`
 - `graphics.capture_evaluation`
@@ -224,6 +233,7 @@ Phase 3AのTransaction Contractを変更せず、Capability単位で追加する
 
 実際のGoalと不足Capabilityに応じて選択する。
 
+- Deferred Renderer / Material Mutation
 - UnityCinematicMCP
 - LiveCreator / MovieCreator実行化
 - UnityProfilerMCP
