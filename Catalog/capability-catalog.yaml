@@ -1,0 +1,76 @@
+schema_version: "1.0"
+
+capabilities:
+  graphics:
+    owner: unity_graphics_mcp
+    status: specified
+    modules:
+      - id: scene_composition
+        status: planned
+      - id: material_and_surface
+        status: planned
+      - id: direct_light_and_shadow
+        status: planned
+      - id: lightmap_and_lighting_data
+        status: planned
+      - id: light_probe
+        status: planned
+      - id: adaptive_probe_volume
+        status: planned
+      - id: reflection_probe
+        status: planned
+      - id: environment_and_fog
+        status: planned
+      - id: decal
+        status: planned
+      - id: particle_system
+        status: planned
+      - id: volume_and_post_process
+        status: planned
+      - id: renderer_feature_inspection
+        status: planned
+      - id: graphics_capture
+        status: planned
+
+  cinematic:
+    owner: unity_cinematic_mcp
+    status: planned
+    modules:
+      - id: timeline
+        status: planned
+      - id: cinemachine
+        status: planned
+      - id: shot_and_continuity
+        status: planned
+      - id: animation_binding
+        status: planned
+      - id: signal
+        status: planned
+
+  ui:
+    owner: unity_ui_mcp
+    status: planned
+    modules:
+      - id: ugui
+        status: planned
+      - id: ui_toolkit
+        status: planned
+      - id: safe_area
+        status: planned
+
+  addressables:
+    owner: unity_addressables_mcp
+    status: planned
+    modules:
+      - id: groups_and_labels
+        status: planned
+      - id: dependency_analysis
+        status: planned
+      - id: content_update
+        status: planned
+
+rules:
+  capability_is_not_a_separate_mcp_server_by_default: true
+  capability_does_not_own_cross_domain_workflow: true
+  capability_does_not_make_visual_acceptance_decisions: true
+  capability_source_is_not_loaded_during_normal_tool_use: true
