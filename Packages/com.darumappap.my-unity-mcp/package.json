@@ -1,8 +1,8 @@
 {
   "name": "com.darumappap.my-unity-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "displayName": "My Unity MCP",
-  "description": "対象Unity ProjectをRead-onlyで解析し、Creator Workflow、Domain MCP、Capability Moduleを必要時だけ有効化するUnity Editor向けMCP基盤です。Phase 1ではProject、Scene、Graphics Validation Toolを実装しています。",
+  "description": "対象Unity Projectを解析し、Read-only Inspection、Direction Planning、承認制Light MutationとUndoを提供するUnity Editor向けMCP基盤です。Unity Version、Render Pipeline、Platformは対象Projectから解決します。",
   "dependencies": {
     "com.coplaydev.unity-mcp": "10.1.2",
     "com.unity.nuget.newtonsoft-json": "3.0.2",

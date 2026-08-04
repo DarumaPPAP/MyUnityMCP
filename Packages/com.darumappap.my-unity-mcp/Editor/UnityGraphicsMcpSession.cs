@@ -15,7 +15,7 @@ namespace UnityGraphicsMcp
 	/// <summary>
 	/// Unity Editor Session内のRevision、Snapshot、Plan、Read-only検証を所有します。
 	/// </summary>
-	public static class UnityGraphicsMcpSession
+	public static partial class UnityGraphicsMcpSession
 	{
 		private const int MAX_SNAPSHOT_COUNT = 8;
 		private const int MAX_PLAN_COUNT = 8;
@@ -175,6 +175,14 @@ namespace UnityGraphicsMcp
 		public static void ClearPlans()
 		{
 			_plans.Clear();
+		}
+
+		/// <summary>
+		/// MyUnityMCPが所有するMutation完了後にRevisionを一度進め、古いRead-only結果を失効させます。
+		/// </summary>
+		public static void NotifyMutationApplied()
+		{
+			IncrementRevision();
 		}
 
 		private static Dictionary<int, bool> CaptureSceneDirtyState()

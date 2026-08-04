@@ -1,4 +1,4 @@
-schema_version: "1.2"
+schema_version: "1.3"
 
 purpose:
   - record_actual_verification_evidence
@@ -13,8 +13,8 @@ rules:
   one_project_result_does_not_define_package_wide_support: true
 
 source_status:
-  package_version: "0.2.0"
-  phase: phase_1_read_only_complete
+  package_version: "0.3.0"
+  phase: phase_3a_light_mutation_complete
   bridge_api_review:
     package: com.coplaydev.unity-mcp
     declared_version: "10.1.2"
@@ -24,12 +24,17 @@ source_status:
     - graphics.inspect_project
     - graphics.inspect_scene
     - graphics.validate_scene
+    - graphics.compile_direction
+    - graphics.preview_plan
+    - graphics.prepare_light_plan
+    - graphics.apply_plan
+    - graphics.undo_last_transaction
   static_review: passed
   unity_editor_compile: passed
   bridge_tool_discovery: passed
-  editmode: passed_9_of_9
-  player: not_run_not_required_for_phase_1_editor_tools
-  target_device: not_run_not_required_for_phase_1_editor_tools
+  editmode: passed_30_of_30
+  player: not_run_not_required_for_phase_3a_editor_tools
+  target_device: not_run_not_required_for_phase_3a_editor_tools
 
 required_fields_per_environment_entry:
   - verification_id
@@ -103,3 +108,80 @@ environment_entries:
       notes:
         - This proves the Phase 1 Editor-only tools compile and pass their contract tests in one verified environment.
         - It does not prove Player, device, every Unity version, or every render pipeline compatibility.
+
+  - verification_id: MUMCP-PHASE3A-CI-20260804-001
+    date: "2026-08-04"
+    scope: phase_1_to_phase_3a_editor_tools
+    host:
+      runner: github_actions_ubuntu_24_04
+      execution_mode: batchmode_nographics
+    unity_version: 6000.0.75f1
+    unity_revision: 26349cd2a5c8
+    render_pipeline_kind: BUILT_IN
+    render_pipeline_package_version: not_installed
+    rendering_path: not_applicable_to_verification_scene
+    render_graph_mode: not_applicable
+    active_build_target: StandaloneLinux64
+    graphics_apis:
+      - OpenGLCore
+      - llvmpipe_software_renderer
+    tool_group:
+      - inspect
+      - plan
+      - mutate_light
+    package_resolution: passed
+    editor_compile: passed
+    bridge_tool_discovery:
+      status: passed
+      discovered_tools:
+        - graphics.inspect_project
+        - graphics.inspect_scene
+        - graphics.validate_scene
+        - graphics.compile_direction
+        - graphics.preview_plan
+        - graphics.prepare_light_plan
+        - graphics.apply_plan
+        - graphics.undo_last_transaction
+      auto_register: false
+      direct_handler_invocation: passed
+    editmode:
+      status: passed
+      total: 30
+      passed: 30
+      failed: 0
+      skipped: 0
+      inconclusive: 0
+      duration_seconds: 0.9585175
+    inspection_and_planning_regression: passed
+    mutation_contract:
+      exact_light_diff_preview: passed
+      approval_token_guard: passed
+      expected_revision_guard: passed
+      preview_baseline_recheck: passed
+      light_create: passed
+      light_update: passed
+      atomic_undo: passed
+      external_change_undo_rejection: passed
+      automatic_save: prohibited_and_tested
+      bake: not_implemented_and_not_invoked
+      exception_rollback_contract: passed
+    workflow_security:
+      repository_write_permission: not_granted
+      checkout_credentials_persisted: false
+    player: not_run_not_required_for_phase_3a_editor_tools
+    target_device: not_run_not_required_for_phase_3a_editor_tools
+    external_mcp_client_connection: not_run_not_required_for_phase_3a_editor_tools
+    evidence:
+      workflow: Phase 3A Unity Verification
+      workflow_run_id: 30925771413
+      workflow_job_id: 92047676254
+      artifact_name: MyUnityMCP-Phase3A-Unity-Evidence
+      artifact_id: 8899136821
+      artifact_sha256: 6da2a3f25008030f4b0057faab54988861d2c9c9b7390c0e1f22bb555c0225b0
+      verified_source_commit: f42688aa2c2d4b8b966f41d76ea300fdecd958f5
+    interpretation:
+      global_support_claim: false
+      notes:
+        - This proves the eight Phase 1 through Phase 3A Editor tools compile and pass their contract tests in one verified environment.
+        - The verified mutation scope is limited to explicit Light create and update operations with approval, revision, rollback, and latest-transaction Undo guards.
+        - It does not prove Player, target device, external MCP client networking, every Unity version, or every render pipeline compatibility.

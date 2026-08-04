@@ -213,6 +213,108 @@ namespace UnityGraphicsMcp
 		}
 	}
 
+	[McpForUnityTool(
+		"graphics.prepare_light_plan",
+		Description = "Direction Planへ明示的なLIGHT_CREATE / LIGHT_UPDATEを関連付け、正確な差分と承認TokenをRead-onlyで発行します。",
+		AutoRegister = false,
+		Group = "core")]
+	public static class GraphicsPrepareLightPlanTool
+	{
+		public sealed class Parameters
+		{
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
+
+			[ToolParameter("graphics.compile_directionが返したDirection Plan ID。", Required = true)]
+			public string directionPlanId { get; set; }
+
+			[ToolParameter("Direction Planが前提とするEditor Revision。", Required = true)]
+			public long? expectedRevision { get; set; }
+
+			[ToolParameter("明示的なLIGHT_CREATE / LIGHT_UPDATE操作。曖昧な自然言語からUnity側で数値を推測しません。", Required = true)]
+			public UnityGraphicsMcpLightOperationInput[] lightOperations { get; set; }
+		}
+
+		public static object HandleCommand(JObject @params)
+		{
+			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
+				@params,
+				parameters => UnityGraphicsMcpInspection.PrepareLightPlan(
+					parameters.requestId,
+					parameters.directionPlanId,
+					parameters.expectedRevision,
+					parameters.lightOperations));
+		}
+	}
+
+	[McpForUnityTool(
+		"graphics.apply_plan",
+		Description = "prepare_light_planでPreview・承認されたExecutable Planを、一つのUnity Undo Transactionとして適用します。自動保存とBakeは行いません。",
+		AutoRegister = false,
+		Group = "core")]
+	public static class GraphicsApplyPlanTool
+	{
+		public sealed class Parameters
+		{
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
+
+			[ToolParameter("graphics.prepare_light_planが返したExecutable Plan ID。", Required = true)]
+			public string planId { get; set; }
+
+			[ToolParameter("graphics.prepare_light_planが返したexpectedRevision。", Required = true)]
+			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Preview確認後に使用する一時承認Token。", Required = true)]
+			public string approvalToken { get; set; }
+
+			[ToolParameter("Phase 3AではNONEのみ。Scene / Assetを自動保存しません。", Required = true)]
+			public string saveMode { get; set; }
+		}
+
+		public static object HandleCommand(JObject @params)
+		{
+			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
+				@params,
+				parameters => UnityGraphicsMcpInspection.ApplyPlan(
+					parameters.requestId,
+					parameters.planId,
+					parameters.expectedRevision,
+					parameters.approvalToken,
+					parameters.saveMode));
+		}
+	}
+
+	[McpForUnityTool(
+		"graphics.undo_last_transaction",
+		Description = "直近のMyUnityMCP Light TransactionがUndo Stackの最新で、適用後状態から変化していない場合だけUnity Undoで復元します。",
+		AutoRegister = false,
+		Group = "core")]
+	public static class GraphicsUndoLastTransactionTool
+	{
+		public sealed class Parameters
+		{
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
+
+			[ToolParameter("graphics.apply_planが返したTransaction ID。", Required = true)]
+			public string transactionId { get; set; }
+
+			[ToolParameter("graphics.apply_planが返したrevision。", Required = true)]
+			public long? expectedRevision { get; set; }
+		}
+
+		public static object HandleCommand(JObject @params)
+		{
+			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
+				@params,
+				parameters => UnityGraphicsMcpInspection.UndoLastTransaction(
+					parameters.requestId,
+					parameters.transactionId,
+					parameters.expectedRevision));
+		}
+	}
+
 	internal static class UnityGraphicsMcpToolBridge
 	{
 		public static object Execute<T>(
