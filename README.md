@@ -81,17 +81,30 @@ inspect → plan → mutate → bake → capture
 
 ## Current status
 
-現在はPhase 0です。
+現在はPhase 1のRead-only C# Tool Sourceまで構築済みです。
 
-- Architecture: 作成済み
-- Catalog: 作成済み
-- LiveCreator / MovieCreator Workflow: 仕様作成済み
-- UnityGraphicsMCP: 仕様作成済み
-- UPM Package: 骨格作成済み
-- Unity Editor Tool C#実装: 未着手
-- Unity Compile / EditMode / Player / Target Device検証: 未実行
+- Architecture / Catalog / Workflow: 作成済み
+- UnityGraphicsMCP仕様: 作成済み
+- `graphics.inspect_project`: Source実装済み・Unity未検証
+- `graphics.inspect_scene`: Source実装済み・Unity未検証
+- `graphics.validate_scene`: Source実装済み・Unity未検証
+- Session / Revision / Snapshot / Paging: Source実装済み
+- Read-only Dirty Guard: Source実装済み
+- EditMode Test: Source実装済み・未実行
+- Unity Compile / Bridge Discovery / Player / Target Device: 未実行
+- Plan / Mutation / Bake / Capture: 未着手
 
-仕様やManifestの存在を、MCP Toolが動作する証拠として扱いません。
+Sourceの存在だけを運用可能性の証拠とは扱いません。対象Unity ProjectでCompile、Tool Discovery、EditMode Testを通過した後にCompatibility Matrixへ実績を記録します。
+
+## Phase 1 tools
+
+```text
+graphics.inspect_project
+graphics.inspect_scene
+graphics.validate_scene
+```
+
+MCP BridgeのAPI確認基準は`com.coplaydev.unity-mcp 10.1.2`です。
 
 ## Repository map
 
@@ -103,19 +116,19 @@ Specs/
 Workflows/
 Packages/
   com.darumappap.my-unity-mcp/
+    Editor/
+    Tests/Editor/
 Tests/
   Compatibility/
 ```
 
-## First implementation milestone
+## Next gate
 
-最初のMilestoneは特定のUnity Version、Pipeline、Rendering Path、Platformではなく、次の能力です。
+次は対象Unity ProjectへPackageを導入し、以下を検証します。
 
-- 対象ProjectのRead-only環境検出
-- Project Contextと要求Targetの分離
-- Capability / Backend解決
-- `UNSUPPORTED` / `UNVERIFIED` / `PROJECT_CONFIGURATION_REQUIRED`の区別
-- Editor-only Read-only Inspection
-- 実装済みBackendだけの選択的公開
-
-最初に利用できる検証Projectの環境はCompatibility Matrixへ記録し、MyUnityMCP全体の対応条件とは扱いません。
+1. Package dependency解決
+2. Unity Editor Compile
+3. MCP Tool Discovery
+4. Read-only Tool実行
+5. EditMode Test
+6. Compatibility Matrix更新
