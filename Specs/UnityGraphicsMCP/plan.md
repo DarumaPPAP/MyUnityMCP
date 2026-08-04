@@ -1,27 +1,25 @@
 # UnityGraphicsMCP 実装計画
 
-- PlanVersion: `2.1.0`
-- Status: `Draft`
-- CurrentPhase: `Phase 0`
+- PlanVersion: `4.0.0`
+- Status: `Phase 3 Implemented and Unity Verified`
+- CurrentPhase: `Phase 4 Save / Bake / Capture`
 
 ## 1. Goal
 
-UnityAgentMCP配下で必要時だけActivationされる最初のDomain MCPとして、対象Unity Projectの環境をRead-onlyで検出し、利用可能なGraphics BackendとCapabilityを解決してからInspectionを行う。
+UnityAgentMCP配下で必要時だけActivationされるGraphics Domain MCPとして、対象Unity Projectの事実をRead-onlyで取得し、Visual Directionを構造化Planへ変換し、明示承認された限定OperationだけをUnity Undo Transactionとして適用する。
 
-特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph設定、Target PlatformをMyUnityMCP全体の初期前提にしない。
+特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをRepository全体の固定前提にしない。
 
 ## 2. Scope classification
 
 分類は`Project Infrastructure`とする。
 
-理由:
-
 - Unity Editor外部Agentとの契約境界を持つ
-- Scene、Asset、Lighting Data、Renderer設定等を横断する
-- Read / Mutation / Bake / Captureの異なる安全境界を持つ
-- Unity Version、Pipeline、Rendering Path、Platformの実在Variationを持つ
+- Scene、Asset、Graphics設定を横断する
+- Inspection、Planning、Mutation、Save、Bake、Captureで安全境界が異なる
+- Unity Version、Pipeline、PlatformのVariationを対象Projectから解決する
 
-ただし、実装が一つしかない段階で複数Backend Interfaceを作らない。
+実在する複数Backendがない段階で抽象Interfaceや空Moduleを増やさない。
 
 ## 3. Ownership and lifetime
 
@@ -29,222 +27,159 @@ UnityAgentMCP配下で必要時だけActivationされる最初のDomain MCPと�
 
 - Owner: MyUnityMCP
 - Lifetime: MCP接続Session
-- Responsibility: Selection、Activation、Gate、Shared Transaction Contract
-- Consumers: AI Host、Creator Workflow、Domain MCP
+- Responsibility: Selection、Activation、権限、実行順序
 
 ### UnityGraphicsMCP
 
 - Owner: MyUnityMCP
 - Lifetime: 選択されたMCP Session
-- Responsibility: Graphics Domain判断、Tool Group、Project Context、Pipeline / Platform解決
-- Consumers: UnityAgentMCP、LiveCreator、MovieCreator、WorldCreator
+- Responsibility: Project Inspection、Direction Planning、Graphics Transaction
 
-### Graphics Capability Module
+### Graphics Capability Operation
 
 - Owner: UnityGraphicsMCP
-- Lifetime: Tool Invocation
-- Responsibility: 限定されたUnity Editor API操作
-- Consumers: UnityGraphicsMCPだけ
+- Lifetime: Prepare PlanからApply / Undoまで
+- Responsibility: Light、Camera、Reflection Probe、Volumeの限定操作
 
-### Generated Unity Asset
+### Generated / Modified Unity Data
 
 - Owner: 対象Unity Project
-- Lifetime: Project Asset
-- Responsibility: 実際のScene / Material / Timeline等
-- Consumers: 対象ゲームProject
+- Lifetime: Project Asset / Scene
+- Responsibility: 実際のScene、Component、Profile参照
 
-## 4. Change axes
-
-- Unity Version
-- Render Pipeline Kind
-- Render Pipeline Package Version
-- Active Renderer
-- Rendering Path
-- RenderGraph Mode
-- Active / Requested Platform
-- Graphics API
-- Scripting Backend
-- Tool Group
-- Capability Module
-- Read / Write権限
-- Scene / Asset Ownership
-- Visual Intent
-- Bake Dependency
-- Evidence Level
-
-## 5. Environment information model
+## 4. Environment information model
 
 次を混在させない。
 
-### Detected Project Facts
-
-対象Unity ProjectからRead-onlyで取得した事実。
-
-### Requested Target
-
-今回の依頼で指定されたPlatform、品質目標、禁止事項。
-
-### Project Profile
-
-Project固有だが、現在のEditor状態から検出されていない補助情報。
-
-### UnityAgent Preference
-
-ユーザー個人の既定方針。
+1. Detected Project Facts
+2. Explicit Requested Target
+3. Project-specific Profile
+4. UnityAgent Preference
 
 優先順位:
 
 ```text
 Detected Project Facts
 → Explicit Requested Target
-→ Project Profile
+→ Project-specific Profile
 → UnityAgent Preference
 ```
 
-下位情報で上位情報を上書きしない。
+`UNVERIFIED`を`UNSUPPORTED`へ変換せず、未対応BackendへSilent Fallbackしない。
 
-## 6. Selected architecture
-
-### Phase 0
-
-宣言的なCatalog、Manifest、Workflow、Spec、Environment Resolution Contractだけを作る。未検証C#は追加しない。
-
-### Phase 1A: Bridge and environment inspection
-
-一つのEditor-only UPM Packageへ次を実装する。
+## 5. Implemented architecture
 
 ```text
-Packages/com.darumappap.my-unity-mcp/
-├─ package.json
-├─ MCP_MANIFEST.yaml
-├─ Editor/
-│  ├─ UnityAgentMcpTools.cs
-│  ├─ UnityMcpEditorSession.cs
-│  ├─ UnityGraphicsMcpInspection.cs
-│  └─ MyUnityMcp.Editor.asmdef
-└─ Tests/Editor/
+inspect_project / inspect_scene / validate_scene
+        ↓
+compile_direction
+        ↓
+preview_plan
+        ↓
+prepare_light_plan または prepare_environment_plan
+        ↓
+Exact Diff + Approval Token + Expected Revision
+        ↓
+apply_plan または apply_environment_plan
+        ↓
+Guarded Undo
 ```
 
-最初に`graphics.inspect_project`をPipeline非依存で実装し、対象Projectの環境とCapability Statusを返す。
+### Read-only boundary
 
-### Phase 1B: First concrete backend
+Inspection、Direction Compile、Preview、Prepareは次を変更しない。
 
-1. 利用可能な検証ProjectをInspectする。
-2. 検出された環境に対応する最初の具象Backendを実装する。
-3. 実際の検証結果をCompatibility Matrixへ記録する。
-4. その環境をMyUnityMCP全体の固定対応条件とは扱わない。
+- Scene Dirty State
+- Persistent Asset Dirty State
+- Undo Group
+- Material Instance
 
-最初の具象Backendは開発環境によって決まり、仕様上は固定しない。
+### Mutation boundary
 
-### Phase 2以降
+Applyは次をすべて満たす場合だけ実行する。
 
-実在する責務分離理由が発生した時点で、Graphics Inspection、Mutation Transaction、Bake、Capture等を分割する。
+- Direction Planが現在Sessionに存在する
+- Expected Revisionが一致する
+- Approval Tokenが一致する
+- Preview Baselineが適用直前状態と一致する
+- Operation IDとUpdate対象がPlan内で一意
+- 指定Unity APIをPrepare時に読み書き可能と確認済み
+- `saveMode = NONE`
 
-二つ目の実在Backendが追加された時点で、実際に共通する操作だけをInterfaceへ抽出する。
+複数Operationは一つのUndo Groupへ集約し、途中例外時は全体Rollbackする。
 
-## 7. Capability status
+### Undo boundary
 
-最低限次を使用する。
+Undoは次を再確認する。
 
-- `AVAILABLE`
-- `UNAVAILABLE`
-- `UNSUPPORTED`
-- `UNVERIFIED`
-- `PACKAGE_NOT_INSTALLED`
-- `VERSION_NOT_SUPPORTED`
-- `PROJECT_CONFIGURATION_REQUIRED`
-- `BACKEND_NOT_IMPLEMENTED`
+- Transaction ID
+- Expected Revision
+- 対象Componentの適用後State Digest
+- TransactionがUndo Stackの最新Groupであること
 
-`UNVERIFIED`を`UNSUPPORTED`と扱わない。
+外部変更や新しいUndo操作が存在する場合は拒否する。
 
-## 8. Rejected alternatives
+## 6. Phase 3 implemented capabilities
 
-### 特定Project環境をPackage全体へ固定
+### Light
 
-不採用理由:
+- `LIGHT_CREATE`
+- `LIGHT_UPDATE`
+- Directional / Point / Spot
+- Color、Intensity、Range、Spot Angle、Shadow、Transform、Enabled
 
-- ProjectごとにUnity Version、Pipeline、Rendering Path、Platformが異なる
-- Project Profileと製品対応条件が混同される
-- 新しいProjectへ導入するたびに設計変更が必要になる
+### Camera
 
-### 全Domain MCPを最初から別Package化
+- `CAMERA_CREATE`
+- `CAMERA_UPDATE`
+- Projection、FOV、Orthographic Size、Clip Plane、Culling Mask、Clear、HDR、MSAA、Transform、Enabled
 
-不採用理由:
+### Reflection Probe
 
-- 空Moduleを量産する
-- asmdefと依存が増える
-- Domain ReloadとVersion管理が複雑になる
-- 実在するOwnership差がまだない
+- `REFLECTION_PROBE_CREATE`
+- `REFLECTION_PROBE_UPDATE`
+- Mode、Refresh、Time Slicing、Importance、Intensity、Box Projection、Size、Center、Blend、Resolution、Culling Mask
 
-### CapabilityごとにMCP Serverを作成
+### Volume
 
-不採用理由:
+- `VOLUME_CREATE`
+- `VOLUME_UPDATE`
+- Global、Priority、Blend Distance、Weight、Enabled
+- 既存`sharedProfile`参照の割当
+- Unity Version差による公開Property / Field形状を吸収
 
-- Light、Probe、Volume等は一つのGraphics依頼で同時利用する
-- TransactionとSnapshot共有が難しくなる
-- Tool選択数が増える
+Volume Profile内部Overrideの作成・変更はPhase 3対象外とする。
 
-### 全Pipeline共通Settings型
+## 7. Intentionally excluded from Phase 3
 
-不採用理由:
+- Delete Operation
+- Area Light
+- Camera Stack / Target Texture
+- URP / HDRP Additional Camera Data
+- Reflection Probe Bake
+- Volume Profile内部Override
+- Material / Renderer Feature Mutation
+- Scene / Asset Save
+- Bake
+- Capture / Visual Acceptance
+- 任意`SerializedProperty` Mutation
 
-- Pipeline固有設定がnullableで混在する
-- Capability差を隠す
-- Version差分に弱い
+## 8. File responsibilities
 
-### 最初からPipeline Interfaceを作成
+| Path | Responsibility |
+|---|---|
+| `Editor/UnityGraphicsMcpInspection.cs` | Project / Scene InspectionとValidation |
+| `Editor/UnityGraphicsMcpPlanning.cs` | Direction CompileとPlan Preview |
+| `Editor/UnityGraphicsMcpMutation.cs` | Light Prepare / Apply / Undo |
+| `Editor/UnityGraphicsMcpEnvironmentMutation.cs` | Camera / Probe / Volume Prepare / Apply / Undo |
+| `Editor/UnityGraphicsMcpSession.cs` | Session、Revision、Snapshot、Plan Lifetime |
+| `Editor/UnityGraphicsMcpTools.cs` | MCP Bridge Entry |
+| `Tests/Editor/` | Read-only、Planning、Mutation Contract Test |
+| `Tests/Compatibility/verification-matrix.yaml` | 実測Evidence |
 
-不採用理由:
+Feature-local DTO、Enum、Helperは最も近いPrimary Typeと同一ファイルへ保持し、責務分離理由がない小ファイルを量産しない。
 
-- 初期実装は一つの具象Backendから始まる
-- 実装が一つしかない
-- 実際の共通操作がまだ確定していない
-
-## 9. Initial file plan
-
-| Path | Primary responsibility | Owner | Lifetime | Consumers | Split reason |
-|---|---|---|---|---|---|
-| `Catalog/mcp-catalog.yaml` | Domain MCP選択 | MyUnityMCP | Repository | UnityAgentMCP | 複数MCPを横断する独立契約 |
-| `Catalog/creator-catalog.yaml` | Creator選択 | MyUnityMCP | Repository | UnityAgentMCP | Workflow種別の独立契約 |
-| `Catalog/capability-catalog.yaml` | Capability所有関係 | MyUnityMCP | Repository | Domain MCP | Module所有権の独立契約 |
-| `Specs/UnityAgentMCP/spec.md` | Control Plane仕様 | MyUnityMCP | Repository | 実装者・Reviewer | MCP横断仕様 |
-| `Specs/UnityGraphicsMCP/spec.md` | Graphics Domain仕様 | UnityGraphicsMCP | Repository | 実装者・Creator | Domain固有仕様 |
-| `Specs/UnityGraphicsMCP/plan.md` | Architecture Decision | UnityGraphicsMCP | Repository | 実装者・Reviewer | ファイル計画の正本 |
-| `Specs/UnityGraphicsMCP/editor-tool-design.md` | Editor C# Tool設計 | UnityGraphicsMCP | Repository | 実装者 | Main Thread、Snapshot、環境解決の独立設計 |
-| `Specs/UnityGraphicsMCP/tasks.md` | Task境界 | UnityGraphicsMCP | Repository | 実装者 | 実装進行の独立契約 |
-| `Packages/.../MCP_MANIFEST.yaml` | Tool Group、環境解決、Capability公開 | UnityGraphicsMCP | Package Version | UnityAgentMCP | Sourceを読まない選択契約 |
-| `Tests/Compatibility/verification-matrix.yaml` | 実際の検証実績 | MyUnityMCP | Test Evidence | Reviewer | 対応条件と検証実績の分離 |
-| `Workflows/LiveCreator.yaml` | Live制作工程 | LiveCreator | Workflow Version | UnityAgentMCP | 複数Domainを横断 |
-| `Workflows/MovieCreator.yaml` | Movie制作工程 | MovieCreator | Workflow Version | UnityAgentMCP | 複数Domainを横断 |
-| `Tests/Routing/cases.yaml` | MCP誤選択防止 | MyUnityMCP | Test Run | Reviewer | Routingの独立検証価値 |
-
-## 10. Types kept in the same file
-
-初期C#実装では次を最も近いPrimary Typeと同一ファイルへ保持する。
-
-- Feature-local enum
-- Tool Result
-- Request DTO
-- Revision State
-- Tool Group State
-- private helper class
-
-Tool SchemaのPublic Contractが安定し、複数Toolから共有されるまで別ファイルへ分離しない。
-
-## 11. Intentionally not created types
-
-- `UnityMcpManager`
-- `UnityMcpService`
-- `UnityMcpController`
-- `UnityMcpCoordinator`
-- 1実装だけの`IGraphicsPipelineAdapter`
-- `ILightModule`
-- `ITimelineModule`
-- 空のPipeline Backend
-- Runtime Assembly
-- Capabilityごとのasmdef
-
-## 12. Dependency direction
+## 9. Dependency direction
 
 ```text
 UnityAgent Policy
@@ -253,92 +188,57 @@ UnityAgentMCP
     ↓
 Creator Workflow
     ↓
-Domain MCP
+UnityGraphicsMCP
     ↓
-Capability Module
+限定Capability Operation
     ↓
 Unity Editor API
 ```
 
 逆方向依存を禁止する。
 
-- Capability ModuleはCreatorを知らない。
-- Domain MCPは特定Creatorへ依存しない。
-- CreatorはUnity Editor APIを直接呼ばない。
-- UnityAgentはPackage Sourceを通常利用時に読まない。
+## 10. Verification gate
 
-## 13. Data and execution flow
+Phase 3完了条件:
 
-```text
-Catalog Entry
-→ Selected Manifest
-→ Project Environment Inspection
-→ Backend / Capability Resolution
-→ Scene Snapshot
-→ Visual Intent / Direction Plan
-→ Dry Run Diff
-→ Approved Mutation
-→ Dirty Dependency
-→ Approved Bake
-→ Capture
-→ Human Review
-```
+- Package Resolve
+- Unity Editor Compile
+- 11 Tool Bridge Discovery
+- Direct Handler Invocation
+- Phase 1～2 Regression
+- Light Create / Update / Undo
+- Camera Create / Update / Undo
+- Reflection Probe Create / Update / Undo
+- Volume Create / Update / sharedProfile / Undo
+- Approval / Revision / Baseline Guard
+- Duplicate Operation / Update Target Rejection
+- Property / Field API Resolution
+- Atomic Transaction / Rollback
+- External Change Undo Rejection
+- Newer Undo Group Rejection
+- No Auto-save / No Bake
 
-Snapshot、Plan、Transaction、CaptureはIDで参照し、大きなJSONを毎回Contextへ複製しない。
+実測結果と環境条件はCompatibility Matrixを正本とし、一環境の成功をPackage全体の対応保証へ拡張しない。
 
-## 14. Serialization contracts
+## 11. Phase 4 plan
 
-- GameObject名だけで対象を識別しない。
-- GlobalObjectId、Asset GUID、Local File ID、Scene GUID等を優先する。
-- Tool ResultはSchema Versionを持つ。
-- Detected ProjectとRequested Targetを別フィールドにする。
-- Planは`expectedRevision`を持つ。
-- Unsupported / Unverified / Fallback / Skipped / Failedを区別する。
-- Save Modeを明示する。
+Phase 4はMutationと別の承認境界として実装する。
 
-## 15. Validation plan
+1. Save Planと明示承認
+2. Dirty Dependency Set
+3. Dependency限定Bake
+4. Capture時の一時Editor State管理と復元
+5. Visual Evaluation
+6. Human Reviewを含むRefine Loop
 
-### Phase 0
+Save、Bake、CaptureをPhase 3 Applyへ暗黙統合しない。
 
-- CatalogとManifestの参照整合性
-- WorkflowとDomain ID整合性
-- UnityAgent側Routeとの整合性
-- 固定Project環境がGlobal Contractへ残っていないこと
-- Namespace / Enum規約
-- File Plan / Split Reason
-
-### Phase 1A
-
-- MCP Bridge API確認
-- Package Structure
-- 導入先ProjectでのCompile
-- `graphics.inspect_project`のRead-only保証
-- Unknown FactとCapability Status
-- Project Profileが検出済み事実を上書きしないこと
-
-### Phase 1B
-
-- 最初の具象BackendのCompile
-- EditMode Test
-- Inspect後にScene / AssetがDirtyでないこと
-- Compatibility Matrix Entry
-
-### Phase 2以降
-
-- Mutation Diff
-- Undo / Revert
-- Domain Reload中断
-- Bake Dependency
-- Capture状態復元
-- Player / Target Device Evidence
-
-## 16. Re-evaluation conditions
+## 12. Re-evaluation conditions
 
 次の場合にArchitectureを再評価する。
 
 - 二つ目のPipeline Backendが実際に追加される
-- Domain MCPごとに異なるPackage依存が発生する
-- Tool登録APIの外部境界が複数実装を要求する
-- 一つのC#ファイルが複数OwnerまたはLifetimeを持つ
-- Mutation TransactionがInspectionから独立した複雑性を持つ
+- Domainごとに異なるPackage依存が発生する
+- Material / Renderer Mutationの所有境界が確定する
+- Save / Bake / Captureが独立Transaction Storeを要求する
 - Physical Server分離が必要なSecurityまたはDeployment要件が発生する
