@@ -1,344 +1,271 @@
 # UnityGraphicsMCP Tasks
 
-- TaskPlanVersion: `2.1.0`
-- CurrentPhase: `Phase 0`
-- ImplementationStatus: `Not Started`
+- TaskPlanVersion: `2.2.0`
+- CurrentPhase: `Phase 1 Verification`
+- ImplementationStatus: `Read-only Source Complete / Unity Unverified`
+
+## Status legend
+
+- `DONE`: Sourceまたは仕様の完了条件を満たした。
+- `SOURCE_DONE`: Sourceは存在するがUnity Compileまたは実行検証前。
+- `PENDING`: 未着手または前提Gate待ち。
+- `BLOCKED`: 必須依存または承認待ち。
 
 ## Phase 0: Governance and repository bootstrap
 
-### UGMCP-000-001 Repository policy
+### UGMCP-000-001 Repository policy — DONE
 
-- `AGENTS.md`を追加する。
-- UnityAgent、MyUnityMCP、対象Unity Projectの所有境界を定義する。
+- UnityAgent、MyUnityMCP、対象Unity Projectの所有境界を定義。
 - 特定Project環境をMyUnityMCP全体へ固定しない。
 
-Acceptance:
+### UGMCP-000-002 Catalog — DONE
 
-- MCP本体の正本がMyUnityMCPである。
-- Project固有生成AssetをMyUnityMCPへ保存しない。
-- Unity Version、Pipeline、Rendering Path、Platformは対象Projectから解決する。
+- MCP / Creator / Capability Catalogを定義。
+- 未選択ManifestとSourceの非読込を規定。
 
-### UGMCP-000-002 Catalog
+### UGMCP-000-003 Control Plane specification — DONE
 
-- `mcp-catalog.yaml`
-- `creator-catalog.yaml`
-- `capability-catalog.yaml`
+- Creator、Domain MCP、Capability Moduleの責務を分離。
+- Tool Group GateとProject事実の優先順位を定義。
 
-Acceptance:
-
-- Primary CreatorまたはDomain MCPを一つ選択できる。
-- Conditional Domain MCP上限が定義される。
-- 未選択ManifestとSourceの非読込が明記される。
-
-### UGMCP-000-003 Control Plane specification
-
-- `Specs/UnityAgentMCP/spec.md`
-
-Acceptance:
-
-- Creator、Domain MCP、Capability Moduleの責務が分離される。
-- Tool Group Gateが定義される。
-- Project事実とRequested Targetの優先順位が定義される。
-
-### UGMCP-000-004 Graphics specification
+### UGMCP-000-004 Graphics specification — DONE
 
 - `spec.md`
 - `plan.md`
 - `editor-tool-design.md`
 - `tasks.md`
 
-Acceptance:
+### UGMCP-000-005 Creator workflows — DONE
 
-- Project Environment Resolutionが明示される。
-- 特定Unity Version、Pipeline、Rendering Path、PlatformがGlobal Contractではない。
-- 空Backendを要求しない。
-- NamespaceとEnum命名がUnityAgent規約に一致する。
+- LiveCreator / MovieCreatorを`specified_not_executable`で定義。
 
-### UGMCP-000-005 Creator workflows
-
-- LiveCreator
-- MovieCreator
-
-Acceptance:
-
-- CreatorはDomain MCPを要求するだけでUnity APIを直接操作しない。
-- Workflowは`specified_not_executable`であり、実装済みと表現しない。
-
-### UGMCP-000-006 Package skeleton
+### UGMCP-000-006 Package skeleton — DONE
 
 - `package.json`
 - `MCP_MANIFEST.yaml`
 - Documentation
 
-Acceptance:
+### UGMCP-000-007 Routing tests — DONE
 
-- C# Tool未実装が明記される。
-- Packageを導入してもUnity機能を変更しない。
-- Package Manifestに固定Project環境を持たない。
+### UGMCP-000-008 Compatibility matrix — DONE
 
-### UGMCP-000-007 Routing tests
-
-Acceptance:
-
-- Live制作、Graphics Inspection、Shader-only、Mutation、Bake、Source Read Guardを検証するCaseがある。
-
-### UGMCP-000-008 Compatibility matrix
-
-- `Tests/Compatibility/verification-matrix.yaml`
-
-Acceptance:
-
-- 検証実績とGlobal Support Contractが分離される。
-- Empty Matrixを未検証として扱う。
-- `UNVERIFIED`と`UNSUPPORTED`を区別する。
+Environment EntryはUnity検証を実行するまで空とする。
 
 ## Phase 1A: Bridge and project environment inspection
 
-### UGMCP-010-001 Unity MCP API confirmation
+### UGMCP-010-001 Unity MCP API confirmation — DONE
 
-- 使用するUnity MCP Bridge Versionを導入先Projectから確定する。
-- Tool登録API、Schema、Image Result、Main Thread Contractを公式Sourceで確認する。
+確認基準:
 
-Stop:
+- Package: `com.coplaydev.unity-mcp`
+- Version: `10.1.2`
+- Assembly: `MCPForUnity.Editor`
+- Tool Attribute: `McpForUnityToolAttribute`
+- Parameter Attribute: `ToolParameterAttribute`
+- Command Entry: `HandleCommand(JObject)`
+- Responses: `SuccessResponse` / `ErrorResponse`
 
-- Package VersionまたはAPIが未確定。
+未確認:
 
-### UGMCP-010-002 Package assembly
+- 対象ProjectでのPackage解決
+- Tool Discovery実行
+- MCP ClientからのInvocation
 
-- Editor-only asmdefを必要最小限で作成する。
-- Runtime Assemblyは作らない。
-- 導入先ProjectのUnity VersionとPackage依存を検出してAssembly参照を確定する。
+### UGMCP-010-002 Package assembly — SOURCE_DONE
 
-Acceptance:
+追加済み:
 
-- 導入先の検証ProjectでCompileできる。
-- MCP Bridge未導入時のPackage依存方針が明確である。
-- 一つの検証Projectの成功をPackage全体の対応保証としない。
+- `Editor/MyUnityMcp.Editor.asmdef`
+- `Tests/Editor/MyUnityMcp.Editor.Tests.asmdef`
+- MCP Bridge / Newtonsoft / Test Framework依存
 
-### UGMCP-010-003 Project environment resolution
+Acceptance残件:
+
+- 対象Unity ProjectでCompile
+- Package dependency解決
+
+### UGMCP-010-003 Project environment resolution — SOURCE_DONE
 
 Tool:
 
 - `graphics.inspect_project`
 
-Output:
+実装済み出力:
 
 - Unity Version
-- Pipeline Kind / Package Version
-- Active Renderer / Rendering Path
-- RenderGraph Mode
-- Active / Installed Build Target
+- Active Build Target
+- Installed Build Targets
 - Graphics API
 - Scripting Backend
-- Related Package Presence
-- Capability Summary
-- Detected Project Facts
-- Requested Target
+- Pipeline Kind / Asset / Package Version
+- Renderer Data / Feature Count
+- Rendering PathのRead-only推定
+- RenderGraph ModeのRead-only推定
+- Loaded Scene
+- Relevant Package
 
-Acceptance:
+Acceptance残件:
 
-- Project / AssetをDirtyにしない。
-- ProfileやPreferenceで検出済みProject事実を上書きしない。
-- Unknown Factを推測しない。
-- `UNSUPPORTED`と`UNVERIFIED`を区別する。
+- Unity Compile
+- 実Projectでの出力確認
+- Version差異確認
 
-### UGMCP-010-004 Capability and backend selection
+### UGMCP-010-004 Capability and backend selection — SOURCE_DONE
 
-Acceptance:
+現在のPhase 1はPipeline Package型へ直接依存せず、Project検出とSerialized Capability Inspectionを行う。
 
-- Project Inspection後にBackendを選択する。
-- 実装済みBackendだけを公開する。
-- Backend未実装時は`BACKEND_NOT_IMPLEMENTED`を返す。
-- 別Pipelineへ黙ってFallbackしない。
+- 別PipelineへSilent Fallbackしない。
+- 不明値は`UNKNOWN`または未検証状態として返す。
+- 二つ目の実在Backendがないため共通Backend Interfaceは作成しない。
 
-### UGMCP-010-005 Editor session
+### UGMCP-010-005 Editor session — SOURCE_DONE
 
-- Main Thread Queue
+実装済み:
+
 - Session ID
 - Revision
-- Snapshot
-- Cancellation
-- Domain Reload / Compile / PlayMode遷移中断
+- In-memory Snapshot
+- Snapshot TTL / Count上限
+- Cursor Paging
+- Hierarchy / Project / Undo / Scene EventによるRevision更新
+- Compile / Domain Reload / Editor終了時の無効化
+- Read-only Dirty Guard
 
-Acceptance:
+制限:
 
-- Worker ThreadからのTool CallをMain Threadへ移す。
-- 古いSnapshotを`SESSION_EXPIRED`または`STALE_SNAPSHOT`として拒否する。
+- MCP BridgeがMain ThreadでCommandを実行する前提。
+- Worker Thread Queueは、実際に非Main Thread Callが確認された場合に追加する。
 
-## Phase 1B: First concrete backend and scene inspection
+## Phase 1B: Scene inspection and validation
 
-### UGMCP-011-001 First concrete backend
-
-- 利用可能な検証Projectで検出されたPipelineへ対応する。
-- 最初のBackendを仕様上固定しない。
-
-Acceptance:
-
-- Backend固有Package依存がPipeline非依存Coreへ漏れない。
-- 実際の検証環境をCompatibility Matrixへ記録する。
-- 一つのBackendしかない段階で共通Pipeline Interfaceを作らない。
-
-### UGMCP-011-002 Inspect scene
+### UGMCP-011-001 Read-only scene inspection — SOURCE_DONE
 
 Tool:
 
 - `graphics.inspect_scene`
 
-Scope:
+実装済みSection:
 
 - Camera
 - Light
-- Lightmap
-- Light Probe
-- Pipeline対応時のProbe Volume
+- Lightmap / LightingDataAsset
+- Light Probe / Light Probe Proxy Volume
 - Reflection Probe
-- Material Summary
+- Renderer / Shared Material / Shader Summary
+- Volume Capability
 - Decal Capability
-- Particle
-- Volume / Post Process Capability
-- Renderer Feature / Custom Pass Capability
-- Timeline / Cinemachine read-only state
+- Probe Volume Capability
+- Particle System
+- VFX Graph Capability
+- PlayableDirector
+- Cinemachine Capability
+- Renderer Feature
 
-Acceptance:
+安全方針:
 
-- SceneをDirtyにしない。
-- 大きな結果はSnapshot IDで参照する。
-- 未対応CapabilityをFailureとして捏造しない。
+- `Renderer.sharedMaterials`のみ使用。
+- `Volume.sharedProfile`相当のみRead-only取得。
+- Serialized Propertyへ書き込まない。
+- SnapshotへUnityEngine.Objectを保持しない。
 
-### UGMCP-011-003 Validate scene
+### UGMCP-011-002 Validate scene — SOURCE_DONE
 
 Tool:
 
 - `graphics.validate_scene`
 
-Acceptance:
+実装済みRule:
 
-- Severity、Evidence、Confidence、Affected Object IDを返す。
-- Invariant、Policy、Heuristicを区別する。
-- 未確認事項をFailureとして捏造しない。
+- Missing Shared Material
+- Missing Shader
+- Lightmap Index範囲外
+- Enabled VolumeのShared Profileなし
+- Lightmapあり / LightingDataAsset未確認のHeuristic
+- URP Renderer Data解決失敗
 
-### UGMCP-011-004 EditMode tests
+返却契約:
 
-- Read-only Dirty Guard
-- Missing Object
-- Duplicate Name
-- Unsupported Capability
-- Unverified Environment
-- Project Profile Override Guard
-- Domain Reload
+- Rule ID
+- Invariant / Policy / Heuristic
+- Severity
+- Confidence
+- Affected Object ID
+- Evidence
 
-### UGMCP-011-005 Verification matrix update
+### UGMCP-011-003 EditMode tests — SOURCE_DONE
 
-Acceptance:
+追加済みTest Source:
 
-- Editor Compile、EditMode、Player、Target Deviceを別Gateで記録する。
-- 未実行GateをPassedと記録しない。
+- `inspect_project`のDirty非変更
+- Camera / Light Inspection
+- Renderer Material非インスタンス化
+- Lightmap Index範囲外検出
+- Snapshot Cursor範囲外拒否
 
-## Phase 2: Planning
+実行状態:
+
+- Not Run
+
+### UGMCP-011-004 Verification matrix update — PENDING
+
+対象Unity Projectで次を別Gateとして記録する。
+
+- Editor Compile
+- Bridge Tool Discovery
+- EditMode
+- Player
+- Target Device
+
+## Phase 1 completion gate
+
+以下がすべて通るまでPhase 1をOperational Completeとしない。
+
+1. Package dependency解決
+2. Unity Editor Compile
+3. 3 ToolのBridge Discovery
+4. `graphics.inspect_project`実行
+5. `graphics.inspect_scene`実行
+6. `graphics.validate_scene`実行
+7. EditMode Test成功
+8. Read-only Dirty Guard成功
+9. Compatibility Matrix Environment Entry追加
+
+## Phase 2: Planning — PENDING
 
 ### UGMCP-020-001 Visual Intent
 
-- 参考画像と自然言語をPipeline非依存Intentへ変換する。
+参考画像と自然言語をPipeline非依存Intentへ変換する。
 
 ### UGMCP-020-002 Compile direction
 
-Tool:
+Tool: `graphics.compile_direction`
 
-- `graphics.compile_direction`
-
-Acceptance:
-
-- Lighting / GI / Reflection / Atmosphere / Look / Platform Planを返す。
-- 推奨値にRange、Reason、Dependency、Confidence、Verification Levelを含める。
+- Lighting / GI / Reflection / Atmosphere / Look / Platform Plan
+- Range / Reason / Dependency / Confidence / Verification Level
 
 ### UGMCP-020-003 Preview plan
 
-Tool:
+Tool: `graphics.preview_plan`
 
-- `graphics.preview_plan`
+Unity状態を変更せず、Created / Modified / Dirty / Bake Required / Unsupported / Unverifiedを返す。
 
-Acceptance:
+## Phase 3: Mutation — PENDING
 
-- Created / Modified / Dirty / Bake Required / Unsupported / Unverified / Fallbackを返す。
-- Unity状態を変更しない。
-
-## Phase 3: Mutation
-
-### UGMCP-030-001 Transaction contract
-
-- Plan ID
-- Expected Revision
-- Diff
-- Undo
-- Save Mode
-
-### UGMCP-030-002 Apply plan
-
-Tool:
-
+- Transaction Contract
 - `graphics.apply_plan`
-
-Acceptance:
-
-- 承認済みPlanだけを適用する。
-- Automatic Saveしない。
-- Bakeを同時実行しない。
-
-### UGMCP-030-003 Undo transaction
-
-Tool:
-
 - `graphics.undo_transaction`
+- Automatic Save禁止
+- Bakeを同時実行しない
 
-Acceptance:
+## Phase 4: Bake and capture — PENDING
 
-- 対象Transactionだけを戻す。
-
-## Phase 4: Bake and capture
-
-### UGMCP-040-001 Dirty dependency
-
-- Lightmap
-- Light Probe
-- Pipeline固有Probe Volume
-- Reflection Probe
-- Capture
-
-### UGMCP-040-002 Bake dependencies
-
-Tool:
-
+- Dirty Dependency
 - `graphics.bake_dependencies`
-
-Acceptance:
-
-- 別承認を要求する。
-- 無条件の全Bakeを行わない。
-- Pipeline APIが部分Bake非対応の場合は明示する。
-
-### UGMCP-040-003 Capture evaluation
-
-Tool:
-
 - `graphics.capture_evaluation`
-
-Acceptance:
-
-- 一時状態を復元する。
-- Capture生成をVisual Acceptanceにしない。
-
-### UGMCP-040-004 Refine direction
-
-Tool:
-
 - `graphics.refine_direction`
+- Human ReviewなしのVisual Acceptance禁止
 
-Acceptance:
-
-- 修正Planを返す。
-- 自動適用しない。
-
-## Phase 5: Domain expansion
+## Phase 5: Domain expansion — PENDING
 
 優先順位は実際の利用Goalと不足Capabilityから決める。
 
