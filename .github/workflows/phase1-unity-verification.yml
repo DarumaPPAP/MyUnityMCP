@@ -19,44 +19,14 @@ jobs:
     name: Compile, Bridge Discovery and EditMode
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
-          persist-credentials: true
-          ref: ${{ github.head_ref }}
-
-      - name: Apply Phase 3A compatibility corrections
-        run: |
-          set -euo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          source_path = Path("Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpMutation.cs")
-          source = source_path.read_text(encoding="utf-8")
-          if "SceneManager.GetSceneByHandle" in source:
-              raise SystemExit("Unsupported SceneManager.GetSceneByHandle call remains.")
-          if "TryResolveLoadedSceneByHandle(int handle" not in source:
-              raise SystemExit("Unity 6000 compatible Scene handle resolver is missing.")
-
-          test_path = Path("Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs")
-          tests = test_path.read_text(encoding="utf-8")
-          tests = tests.replace("\t\t\tUnityGraphicsMcpMutationSession.ClearForTests();\n", "")
-          test_path.write_text(tests, encoding="utf-8", newline="\n")
-          PY
-
-          if git diff --quiet -- Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs; then
-            echo "Phase 3A compatibility corrections are already committed."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpMutationTests.cs
-            git commit -m "test: 内部Mutation Sessionへの直接依存を除去"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+          persist-credentials: false
 
       - name: Require Unity license secrets
         id: license
