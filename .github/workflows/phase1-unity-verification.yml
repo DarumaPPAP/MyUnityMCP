@@ -37,12 +37,39 @@ jobs:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         run: |
           set -euo pipefail
-          if [ -n "$UNITY_LICENSE" ] || { [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; }; then
+
+          has_license=false
+          has_email=false
+          has_password=false
+          has_serial=false
+
+          [ -n "$UNITY_LICENSE" ] && has_license=true
+          [ -n "$UNITY_EMAIL" ] && has_email=true
+          [ -n "$UNITY_PASSWORD" ] && has_password=true
+          [ -n "$UNITY_SERIAL" ] && has_serial=true
+
+          {
+            echo "## Unity secret presence"
+            echo
+            echo "- UNITY_LICENSE: $has_license"
+            echo "- UNITY_EMAIL: $has_email"
+            echo "- UNITY_PASSWORD: $has_password"
+            echo "- UNITY_SERIAL: $has_serial"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$has_license" = true ] && [ "$has_email" = true ] && [ "$has_password" = true ]; then
+            echo "mode=personal" >> "$GITHUB_OUTPUT"
             echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "::error::Unity license secrets are not configured. Phase 1 cannot be marked complete because Unity did not compile or run tests."
+          if [ "$has_email" = true ] && [ "$has_password" = true ] && [ "$has_serial" = true ]; then
+            echo "mode=serial" >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "::error::Unity license secrets are incomplete or unavailable. Personal requires UNITY_LICENSE + UNITY_EMAIL + UNITY_PASSWORD. Serial licensing requires UNITY_EMAIL + UNITY_PASSWORD + UNITY_SERIAL."
           exit 1
 
       - name: Cache Unity Library
