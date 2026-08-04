@@ -1,7 +1,8 @@
 {
   "name": "MyUnityMcp.Editor.Tests",
   "references": [
-    "MyUnityMcp.Editor"
+    "MyUnityMcp.Editor",
+    "MCPForUnity.Editor"
   ],
   "includePlatforms": [
     "Editor"
