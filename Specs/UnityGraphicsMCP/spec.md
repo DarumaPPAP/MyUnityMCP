@@ -1,361 +1,263 @@
 # UnityGraphicsMCP 仕様書
 
 - FeatureName: `UnityGraphicsMCP`
-- DocumentVersion: `2.1.0`
-- DesignStatus: `Draft`
-- ImplementationStatus: `Not Started`
-- VerificationStatus: `Not Run`
+- DocumentVersion: `4.0.0`
+- DesignStatus: `Phase 3 Stable`
+- ImplementationStatus: `Phase 1-3 Implemented`
+- VerificationStatus: `Unity Editor CI 46 / 46 PASS`
 - PrimaryNamespace: `UnityGraphicsMcp`
 
 ## 1. 目的
 
-参考画像、自然言語、既存Scene、Render Pipeline、Target PlatformからVisual Intentを作成し、Unityの画作りを解析、提案、適用、Bake、撮影、再調整できるDomain MCPを構築する。
+対象Unity ProjectのGraphics状態を解析し、構造化Visual IntentからDirection Planを作成し、明示承認された限定Operationだけを安全なUnity Undo Transactionとして適用する。
 
-UnityGraphicsMCPはGraphics領域の専門判断とTool Groupを所有する。完成目的のWorkflowはLiveCreator、MovieCreator等が所有する。
+UnityGraphicsMCPはGraphics領域の判断、Project Context、Plan、Mutation Contractを所有する。完成目的のWorkflowはLiveCreator、MovieCreator等が所有する。
 
 ## 2. Project environment resolution
 
-UnityGraphicsMCP全体へ特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph設定、Target Platformを固定しない。
+Unity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをPackage全体へ固定しない。
 
-BackendまたはCapabilityを選択する前に、対象Unity Projectから最低限次をRead-onlyで取得する。
+Capability選択前に対象Projectから次をRead-onlyで取得する。
 
 - Unity Version
-- Render Pipeline Kind
-- Render Pipeline Package Version
-- Active Renderer
-- Rendering Path
-- RenderGraph Mode
-- Active Build Target
-- Installed Build Targets
-- Graphics API
-- Scripting Backend
-- Related Package Presence
-- Graphics Capability Summary
+- Render Pipeline Kind / Package Version
+- Active Renderer / Rendering Path / RenderGraph Mode
+- Active / Installed Build Targets
+- Graphics API / Scripting Backend
+- 関連PackageとCapability
 
-情報の優先順位は次とする。
+優先順位:
 
-1. 対象Unity Projectから検出した事実
-2. 今回の依頼で明示されたTargetと制約
-3. Project固有Profile
-4. UnityAgentの既定Preference
+1. Detected Project Facts
+2. Explicit Requested Target and Constraints
+3. Project-specific Profile
+4. UnityAgent Preference
 
-検出済みProject事実をProfileや既定Preferenceで上書きしない。
+`UNVERIFIED`を`UNSUPPORTED`として扱わず、未実装BackendへSilent Fallbackしない。
 
-対応状態は最低でも次を区別する。
+## 3. Tool contract
 
-- `AVAILABLE`
-- `UNAVAILABLE`
-- `UNSUPPORTED`
-- `UNVERIFIED`
-- `PACKAGE_NOT_INSTALLED`
-- `VERSION_NOT_SUPPORTED`
-- `PROJECT_CONFIGURATION_REQUIRED`
-- `BACKEND_NOT_IMPLEMENTED`
-
-検証実績がない環境を、根拠なく`UNSUPPORTED`と判定しない。
-
-## 3. 対象領域
-
-### Scene Composition
-
-- Foreground / Midground / Background
-- Hero / Support / Landmark / Depth Cue
-- Set Dressing
-- Layer / Rendering Layer / Static Flag / LOD
-
-### Surface
-
-- Material
-- Shader Property
-- Base Color / Metallic / Smoothness / Specular
-- Normal / Detail / Emission
-- Render Queue / Surface Type / Blend / Cull / ZWrite
-- Decal
-
-### Direct Lighting
-
-- Directional / Point / Spot / Baked Area Light
-- Key / Fill / Rim / Practical / Motivated / Accent
-- Color / Temperature / Intensity / Range
-- Cookie
-- Shadow / Bias / Normal Bias
-- Culling Mask / Rendering Layer Mask
-- Lightmap Bake Type
-
-### Indirect Lighting
-
-- Lighting Settings
-- Lightmap
-- LightingDataAsset
-- Scale In Lightmap
-- UV2 / Texel Density / Atlas
-- Light Probe
-- Light Probe Proxy Volume
-- Adaptive Probe Volumes
-- Baking Set / Scenario / Streaming / Invalid Probe / Leak
-
-### Reflection
-
-- Environment Reflection
-- Reflection Probe
-- Box Projection / Influence / Blend / Importance
-- Baked / Custom / Realtime
-- Anchor Override
-- Pipeline固有Reflection機能は対応Backend実装時に追加する
-
-### Atmosphere and VFX
-
-- Skybox / Ambient / Fog / Wind / Time of Day
-- Particle System
-- VFX Graph Capability判定
-- Decal
-
-### Look and Rendering
-
-- Volume / Volume Profile / Effective Volume Stack
-- Pipeline Native Post Process
-- Custom Volume Component
-- Renderer Dataまたは同等のPipeline設定
-- RendererFeature / Custom Pass / CommandBuffer等の存在、順序、Injection Point、Capability
-- Render Scale
-- Motion Vector / Depth / Opaque TextureのCapability
-
-### Initial cinematic bridge
-
-UnityCinematicMCPが未実装の間だけ、次のRead-only InspectionとPlan入力を許可する。
-
-- PlayableDirector
-- Timeline Asset / Track / Clip / Binding
-- Cinemachine Brain / Camera / Blend
-- Camera State
-
-TimelineやCinemachineのMutation OwnershipはUnityCinematicMCP実装後に移管する。
-
-## 4. Operation flow
-
-```text
-inspect → plan → mutate → bake → capture → refine
-```
-
-- `inspect`は状態を変更しない。
-- `plan`はVisual Intent、Direction Plan、Pipeline Native Plan、Platform Budgetを生成する。
-- `mutate`は承認済みPlanだけを適用する。
-- `bake`はDirty Dependencyだけを処理する。
-- `capture`はColor、Depth、Object ID等のEvidenceを取得する。
-- `refine`は修正Planを作るが自動適用しない。
-
-## 5. Visual Intent
-
-「幻想的」「切ない」「華やか」等を直接Unityの単一数値へ変換しない。
-
-最低限次を中間表現として持つ。
-
-- Emotional intent
-- Composition hierarchy
-- Camera language
-- Lighting hierarchy
-- Color script
-- Material and reflection intent
-- Atmospheric depth
-- Motion energy
-- Performance priority
-
-提案値は次を持つ。
-
-- Recommended value
-- Allowed range
-- Reason
-- Dependencies
-- Confidence
-- Pipeline impact
-- Platform impact
-- Verification level
-
-## 6. Pipeline resolution
-
-### Common
-
-- Visual Intent
-- Direction Plan
-- Expected Visual Result
-- Requested Target
-- Platform Budget
-
-### Built-in
-
-- Lightmap / Light Probe / Reflection Probe
-- Post Processing StackまたはProject固有Image Effect
-- Projector Decal
-- CommandBuffer / OnRenderImage等
-
-### URP
-
-- URP Volume
-- Decal Renderer Feature
-- RendererFeature / RenderGraph
-- Lightmap / Light Probe / APV
-- Reflection Probe
-
-### HDRP
-
-- HDRP Volume
-- Visual Environment / Fog
-- Decal Projector
-- Custom Pass
-- APV
-- Reflection Hierarchy / Planar Reflection
-
-### Custom SRP
-
-- Pipeline AssetとRenderer実装を検出する
-- 専用Backendが存在しない場合は`BACKEND_NOT_IMPLEMENTED`を返す
-
-Pipeline非対応機能は黙って無視せず、Fallback候補、見た目の差、Validation状態を返す。ただし別Pipelineへ自動Fallbackしない。
-
-## 7. Platform resolution
-
-PipelineとPlatformを別軸で解決する。
-
-Platform方針は今回の依頼、Project固有Profile、UnityAgent Preferenceから取得する。特定PlatformをMyUnityMCP全体の既定値にしない。
-
-Projectが現在設定しているBuild Targetと、今回要求されたTargetが異なる場合は次を明示する。
-
-- Detected Build Target
-- Requested Target
-- Installed / Not Installed
-- Project Configuration Required
-- Target Device Verification State
-
-未計測の性能改善を断定しない。Editor結果だけでPlayerまたはTarget Deviceを保証しない。
-
-## 8. Backend selection
-
-1. `graphics.inspect_project`でProject事実を取得する。
-2. Pipeline、Version、Renderer、Rendering Pathを解決する。
-3. 実装済みBackendとCapabilityを照合する。
-4. 選択されたBackendだけを読み込む。
-5. Backend未実装の場合は`BACKEND_NOT_IMPLEMENTED`を返す。
-
-最初の具象Backendは、開発時に利用可能な検証Projectに基づいて実装してよい。ただし、その環境をMyUnityMCP全体の固定対応条件とはしない。
-
-二つ目の実在Backendが追加されるまで共通Pipeline Interfaceを作らない。
-
-## 9. Tool contract
-
-### inspect
+### Inspection
 
 - `graphics.inspect_project`
 - `graphics.inspect_scene`
-- `graphics.inspect_frame`
 - `graphics.validate_scene`
 
-### plan
+InspectionはScene Dirty、Persistent Asset Dirty、Undo Group、Material Instanceを変更しない。
+
+### Planning
 
 - `graphics.compile_direction`
 - `graphics.preview_plan`
 
-### mutate
+Unity C#側で自然言語や画像の意味理解を偽装しない。UnityAgentまたはMCP ClientがVisual Intentを構造化する。
 
-- `graphics.apply_plan`
-- `graphics.undo_transaction`
+Direction Planは次を持つ。
 
-### bake
-
-- `graphics.bake_dependencies`
-
-### capture
-
-- `graphics.capture_evaluation`
-- `graphics.refine_direction`
-
-現在は全Toolが`planned`であり、実装済みとして公開しない。
-
-## 10. Mutation requirements
-
-- `expectedRevision`
-- Dry Run
-- Machine-readable Diff
-- Undo / Revert
-- Save Policy
-- Created / Modified / Dirty一覧
-- Project Settings変更の別承認
-- Pipeline Asset / Renderer Data変更の別承認
-- Bakeの別承認
-
-## 11. Bake dependency
-
-変更から次の無効化を判定する。
-
-- Lightmap
-- Light Probe
-- APVまたはPipeline同等機能
-- Reflection Probe
-- Evaluation Capture
-
-一つの変更を理由に無条件の全Bakeを行わない。
-
-## 12. Validation
-
+- Session-local Plan ID
+- Expected Revision
 - Detected Project Context
-- Requested Target
-- Pipeline / Package / Renderer Capability
-- Light / Shadow
-- Lightmap / UV2 / LightingDataAsset
-- Light Probe / APV
-- Reflection Probe
-- Material / Decal / Particle
-- Volume / Post Process
-- RendererFeature / Custom Pass
-- Timeline / Cinemachine Read-only state
-- Platform Budget
-- Compatibility Matrix
-- Visual Evidence要件
+- Visual Intent
+- Recommendation / Range / Reason / Dependency
+- Confidence / Pipeline Impact / Platform Impact / Verification Level
 
-## 13. Compatibility evidence
+### Light Mutation
 
-実際に検証した環境は`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+- `graphics.prepare_light_plan`
+- `graphics.apply_plan`
+- `graphics.undo_last_transaction`
 
-Matrixは対応条件ではなくEvidenceであり、次を分離して記録する。
+対応Operation:
 
+- `LIGHT_CREATE`
+- `LIGHT_UPDATE`
+
+対応Light Type:
+
+- Directional
+- Point
+- Spot
+
+### Environment Mutation
+
+- `graphics.prepare_environment_plan`
+- `graphics.apply_environment_plan`
+- `graphics.undo_last_environment_transaction`
+
+対応Operation:
+
+- `CAMERA_CREATE`
+- `CAMERA_UPDATE`
+- `REFLECTION_PROBE_CREATE`
+- `REFLECTION_PROBE_UPDATE`
+- `VOLUME_CREATE`
+- `VOLUME_UPDATE`
+
+全Toolは`AutoRegister = false`とし、明示Activation時だけ公開する。
+
+## 4. Mutation approval contract
+
+PrepareはRead-onlyで次を生成する。
+
+- Exact Before / Requested After
+- Diff Digest
+- Executable Plan ID
+- 10分TTLの一時Approval Token
+- Expected Revision
+- Created / Modified / Dirty候補
+- Save / Bake非実行の明示
+
+Applyは次をすべて満たす場合だけ実行する。
+
+- Direction Planが現在Sessionに存在する
+- Executable Planが未使用かつ有効期限内
+- Expected Revisionが一致する
+- Approval Tokenが一致する
+- Preview Baselineが適用直前状態と一致する
+- Operation IDがPlan内で一意
+- 同一既存ComponentへのUpdateが一回だけ
+- 必要Unity APIをPrepare時に読み書き可能と確認済み
+- `saveMode = NONE`
+
+自然言語から数値を推測せず、明示値だけを適用する。
+
+## 5. Transaction and Undo contract
+
+- 一つのPlanを一つのUnity Undo Groupへ集約する
+- Camera、Reflection Probe、Volumeは同一Environment Transactionへ混在可能
+- 途中例外時は`Undo.RevertAllDownToGroup`で全体Rollbackする
+- Planは一回だけ使用可能
+- Mutationは対象SceneをDirtyにするが保存しない
+- Bakeを実行しない
+
+Undo前に次を再確認する。
+
+- Transaction ID
+- Expected Revision
+- 対象Componentの適用後State Digest
+- TransactionがUndo Stackの最新Groupであること
+
+外部変更や新しいUndo操作が存在する場合はUndoを拒否する。
+
+## 6. Phase 3 capability scope
+
+### Light
+
+- Type
+- Name
+- Color / Intensity
+- Range / Spot Angle
+- Shadow
+- Transform
+- Enabled
+
+### Camera
+
+- Projection
+- Field of View / Orthographic Size
+- Near / Far Clip
+- Culling Mask
+- Clear Flags / Background Color
+- Depth
+- HDR / MSAA
+- Transform
+- Enabled
+
+### Reflection Probe
+
+- Mode / Refresh Mode / Time Slicing
+- Importance / Intensity
+- Box Projection
+- Size / Center / Blend Distance
+- Resolution / Culling Mask
+- Transform
+- Enabled
+
+### Volume
+
+- Is Global
+- Priority
+- Blend Distance
+- Weight
+- Enabled
+- 既存`sharedProfile`参照の割当
+
+Render Pipelines CoreのVersion差でVolume Memberが公開Propertyまたは公開Fieldになる差を吸収する。指定MemberをPrepare時に読み書き可能か検証する。
+
+## 7. Explicit exclusions
+
+Phase 3では次を実装しない。
+
+- Delete Operation
+- Area Light
+- Camera Stack / Target Texture
+- URP / HDRP Additional Camera Data
+- Reflection Probe Bake
+- Volume Profile内部Overrideの作成・変更
+- Material / Renderer Feature Mutation
+- Scene / Asset Save
+- Bake / Capture / Visual Refine
+- 任意`SerializedProperty` Mutation
+
+## 8. Pipeline and platform policy
+
+Pipeline共通APIで扱えるCapabilityを先に使用する。Pipeline固有設定が必要な場合は、対象ProjectでPackage、Version、APIを検出し、実装済みBackendがなければ`BACKEND_NOT_IMPLEMENTED`を返す。
+
+PipelineとPlatformを別軸で扱う。Editor成功だけでPlayerまたはTarget Deviceを保証しない。
+
+## 9. Compatibility evidence
+
+実測Evidenceは`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+
+MatrixはPackage全体の対応保証ではなく、次を分離した検証実績である。
+
+- Package Resolve
 - Editor Compile
+- Bridge Discovery
+- Direct Handler Invocation
 - EditMode
-- PlayMode
 - Player
 - Target Device
 
-MatrixにEntryがない環境は`UNVERIFIED`とする。
+Entryがない環境は`UNVERIFIED`とする。
 
-## 14. Naming and architecture
+## 10. Naming and architecture
 
-- Namespaceは`UnityGraphicsMcp`。
-- enum型は`E_UPPER_SNAKE_CASE`。
-- private fieldは`_camelCase`。
-- 一つのBackendしかない段階ではPipeline Interfaceを作らない。
-- Controller、Manager、Service、Profile、Adapter、追加asmdefをPattern目的で作らない。
-- 新規ファイルにはOwner、Lifetime、Consumers、Responsibility、Split Reasonを記録する。
+- Namespaceは`UnityGraphicsMcp`
+- enum型は`E_UPPER_SNAKE_CASE`
+- private fieldは`_camelCase`
+- 一つの実装しかない段階でInterfaceを作らない
+- Controller、Manager、Service、AdapterをPattern目的で作らない
+- Runtime AssemblyやCapabilityごとのasmdefを増やさない
+- Feature-local DTOとHelperは最も近いPrimary Typeと同一ファイルに置く
 
-## 15. Non-goals
+## 11. Phase 3 acceptance criteria
 
-- Asset生成AIそのもの
-- TextureやModelの生成Model実装
-- 全Pipelineの初回同時実装
-- 特定Unity Version、Pipeline、Rendering Path、Platformの全体固定
-- Runtime MCP
-- 無承認Mutation
-- Automatic Save
-- 無条件の全Bake
-- AI単独のVisual Acceptance
+- InspectionとPrepareがUnity状態をDirtyにしない
+- Project事実とRequested Targetを分離する
+- 11 ToolをBridgeからDiscoveryできる
+- 全ToolがDefault Disableである
+- Light Create / Update / Undoが成立する
+- Camera Create / Update / Undoが成立する
+- Reflection Probe Create / Update / Undoが成立する
+- Volume Create / Update / sharedProfile / Undoが成立する
+- Approval / Revision / Baseline Guardが成立する
+- Duplicate Operation / Update Targetを拒否する
+- Property / Field API差を解決する
+- 複合TransactionがAtomicである
+- 外部変更後のUndoを拒否する
+- 新しいUndo Group追加後のUndoを拒否する
+- Automatic SaveとBakeを実行しない
 
-## 16. Acceptance criteria
+## 12. Phase 4 boundary
 
-- Project事実とRequested Targetを分離できる。
-- 特定環境をRepository全体の固定前提にしない。
-- Read-only InspectionがSceneとAssetをDirtyにしない。
-- 参考画像または自然言語から理由付きDirection Planを生成できる。
-- Pipeline、Rendering Path、Platformを別軸で解決できる。
-- `UNSUPPORTED`と`UNVERIFIED`を区別できる。
-- Backend未実装時に黙って別PipelineへFallbackしない。
-- Mutation前にDiffと承認を要求できる。
-- Bake対象をDirty Dependencyから限定できる。
-- Capture後にEditor一時状態を復元できる。
-- Human ReviewなしにVisual Acceptedと判定しない。
+Phase 4では次をMutationとは別の明示承認境界として追加する。
+
+- Save Plan
+- Dirty Dependency Set
+- Dependency限定Bake
+- Capture時の一時Editor State復元
+- Visual Evaluation
+- Human Reviewを含むRefine Loop
+
+Human ReviewなしにVisual Acceptedと判定しない。
