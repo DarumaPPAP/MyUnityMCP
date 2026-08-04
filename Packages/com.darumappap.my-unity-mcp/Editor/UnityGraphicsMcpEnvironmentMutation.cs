@@ -13,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
@@ -921,7 +922,17 @@ namespace UnityGraphicsMcp
 
 		private static void AddEnvironmentIssue(List<UnityGraphicsMcpIssue> issues, string id, string message, string target)
 		{
-			issues.Add(new UnityGraphicsMcpIssue { id = id, severity = "ERROR", category = "INVARIANT", message = message, target = target });
+			issues.Add(new UnityGraphicsMcpIssue
+			{
+				code = id,
+				message = message,
+				evidence = new Dictionary<string, object>
+				{
+					{ "severity", "ERROR" },
+					{ "category", "INVARIANT" },
+					{ "target", target }
+				}
+			});
 		}
 	}
 
