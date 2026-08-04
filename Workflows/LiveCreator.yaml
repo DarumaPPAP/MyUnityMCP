@@ -1,7 +1,10 @@
 schema_version: "1.0"
 id: live_creator
 kind: workflow
-status: specified
+status: specified_not_executable
+blocked_by:
+  - unity_graphics_mcp_not_implemented
+  - unity_cinematic_mcp_not_implemented
 
 use_when:
   - live stage production
