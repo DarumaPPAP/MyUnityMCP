@@ -2,9 +2,9 @@
 
 ## Current state
 
-Phase 1のRead-only C# Tool Sourceを実装しています。
+Phase 1のRead-only Unity Editor Toolは実装・Unity検証まで完了しています。
 
-実装済みSource:
+実装済み:
 
 - `graphics.inspect_project`
 - `graphics.inspect_scene`
@@ -12,22 +12,25 @@ Phase 1のRead-only C# Tool Sourceを実装しています。
 - Editor Session / Revision
 - In-memory Snapshot / Paging
 - Read-only Dirty Guard
+- Project Environment / Requested Target分離
+- Capability / Backend Status解決
 - Graphics Validation Rule
-- EditMode Test Source
+- EditMode Test
 
-ただし、対象Unity EditorでのCompile、Tool Discovery、EditMode Testはまだ実行していません。現時点の状態は`source_complete_unverified`です。
+Unity CIでPackage Resolve、Editor Compile、Bridge Tool Discovery、直接Handler Invocation、9件のEditMode Testを確認しました。検証実績は`Tests/Compatibility/verification-matrix.yaml`へ記録しています。
 
 ## Bridge dependency
 
 現在の実装は次のMCP Bridge APIへ接続します。
 
 - Package: `com.coplaydev.unity-mcp`
-- API確認Version: `10.1.2`
+- 宣言API基準: `10.1.2`
+- Unity検証Commit: `9f84072c38906e3ca903f14f6a8edc1a1c9012c3`
 - Assembly: `MCPForUnity.Editor`
 - Tool登録: `McpForUnityToolAttribute`
 - Entry Point: `HandleCommand(JObject)`
 
-MyUnityMCPを導入するProjectでは、このBridge Packageを解決できるPackage Registryまたは導入経路が必要です。
+MyUnityMCPを導入するProjectでは、このBridge Packageを解決できるPackage RegistryまたはGit Package導入経路が必要です。
 
 ## Tool activation
 
@@ -36,20 +39,20 @@ Phase 1の3Toolはすべて`AutoRegister = false`です。
 ```text
 Package導入
 → Unity Compile
-→ EditMode Test
 → Bridge Tool Discovery
-→ Phase 1 Toolを明示的にEnable
+→ 必要なPhase 1 Toolを明示的にEnable
 → MCP Clientを再接続
 ```
 
-検証前に`core` Toolとして常時公開しません。現段階ではMCP for UnityのTool設定から明示的に有効化し、将来はUnityAgentMCPのActivation Policyから制御します。
+未選択Toolや未実装Toolを常時公開しません。現段階ではMCP for UnityのTool設定から明示的に有効化し、将来はUnityAgentMCPのActivation Policyから制御します。
 
 ## Implemented operation flow
 
 ```text
 graphics.inspect_project
 → Project EnvironmentをRead-only検出
-→ Pipeline / Renderer / Build Target / Packageを返す
+→ Requested Targetと分離
+→ Pipeline / Renderer / Build Target / Capabilityを返す
 
 graphics.inspect_scene
 → Loaded SceneをRead-only解析
@@ -69,7 +72,7 @@ graphics.validate_scene
 - Requested Targetを検出済み事実と混同しない。
 - `UNVERIFIED`を`UNSUPPORTED`として扱わない。
 - 未実装Backendへ黙ってFallbackしない。
-- 検証環境は`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+- 検証環境はCompatibility Matrixへ実績として記録する。
 
 ## Read-only safety
 
@@ -84,20 +87,28 @@ Inspectionでは次を行いません。
 - Asset Save
 - Bake
 
-Tool実行前後でLoaded SceneのDirty状態とUndo Groupを比較し、変化を検出した場合は`READ_ONLY_CONTRACT_VIOLATION`を返します。
+Tool実行前後でLoaded Scene、Persistent Asset、Undo Groupの状態を比較します。Renderer Materialをインスタンス化しないこともEditMode Testで検証しています。
 
-## Verification required
+## Verified environment
 
-運用可能と判断する前に、対象Unity Projectで次を実行します。
+- Unity: `6000.0.75f1`
+- Host: GitHub Actions Ubuntu 24.04
+- Render Pipeline: Built-inの最小検証Project
+- Package Resolve: PASS
+- Editor Compile: PASS
+- Bridge Discovery: PASS
+- Direct Handler Invocation: PASS
+- EditMode: `9 / 9 PASS`
 
-1. Package dependency解決
-2. Unity Editor Compile
-3. EditMode Test
-4. MCP Bridge Tool Discovery
-5. Phase 1 Toolの明示Enable
-6. `graphics.inspect_project`実行
-7. `graphics.inspect_scene`実行
-8. `graphics.validate_scene`実行
-9. Compatibility Matrix更新
+この実績は一つの検証環境に対するEvidenceであり、Unity VersionやPipelineの固定要件ではありません。PlayerとTarget DeviceはEditor-onlyのPhase 1完了条件外で、未検証です。
 
-未実行GateをPassedとして扱いません。
+## Next phase
+
+Phase 2ではRead-only Plan Toolを追加します。
+
+```text
+graphics.compile_direction
+graphics.preview_plan
+```
+
+Mutation、Undo、Bake、CaptureはPlan Contractが安定するまで公開しません。
