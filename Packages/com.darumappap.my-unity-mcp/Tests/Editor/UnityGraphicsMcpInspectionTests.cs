@@ -14,11 +14,6 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpTestAsset : ScriptableObject
-	{
-		public int value;
-	}
-
 	public sealed class UnityGraphicsMcpInspectionTests
 	{
 		private const string TEMP_ASSET_PATH = "Assets/MyUnityMcpPhase1Temp.asset";
