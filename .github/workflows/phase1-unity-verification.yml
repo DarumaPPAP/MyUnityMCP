@@ -72,6 +72,20 @@ jobs:
           echo "::error::Unity license secrets are incomplete or unavailable. Personal requires UNITY_LICENSE + UNITY_EMAIL + UNITY_PASSWORD. Serial licensing requires UNITY_EMAIL + UNITY_PASSWORD + UNITY_SERIAL."
           exit 1
 
+      - name: Free disk space for Unity Docker image
+        run: |
+          set -euo pipefail
+          echo "Disk usage before cleanup:"
+          df -h /
+          docker system prune --all --force || true
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          echo "Disk usage after cleanup:"
+          df -h /
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
