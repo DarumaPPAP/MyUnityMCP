@@ -7,15 +7,16 @@ verified_level: specification_only
 control_plane:
   id: unity_agent_mcp
   status: specified
-  specification: ../../../Specs/UnityAgentMCP/spec.md
+  implementation_status: not_started
+  specification: ../../Specs/UnityAgentMCP/spec.md
 
 registered_domains:
   - id: unity_graphics_mcp
     status: specified
     implementation_status: not_started
-    specification: ../../../Specs/UnityGraphicsMCP/spec.md
-    plan: ../../../Specs/UnityGraphicsMCP/plan.md
-    tasks: ../../../Specs/UnityGraphicsMCP/tasks.md
+    specification: ../../Specs/UnityGraphicsMCP/spec.md
+    plan: ../../Specs/UnityGraphicsMCP/plan.md
+    tasks: ../../Specs/UnityGraphicsMCP/tasks.md
 
 planned_domains:
   - unity_cinematic_mcp
@@ -28,11 +29,15 @@ planned_domains:
 
 creator_workflows:
   - id: live_creator
-    status: specified
-    path: ../../../Workflows/LiveCreator.yaml
+    status: specified_not_executable
+    path: ../../Workflows/LiveCreator.yaml
+    blocked_by:
+      - unity_cinematic_mcp_not_implemented
   - id: movie_creator
-    status: specified
-    path: ../../../Workflows/MovieCreator.yaml
+    status: specified_not_executable
+    path: ../../Workflows/MovieCreator.yaml
+    blocked_by:
+      - unity_cinematic_mcp_not_implemented
 
 tool_groups:
   inspect:
@@ -82,6 +87,7 @@ tool_groups:
       - graphics.refine_direction
 
 availability:
+  package_is_executable: false
   expose_unimplemented_tools: false
   expose_selected_tool_group_only: true
   load_package_source_during_normal_use: false
