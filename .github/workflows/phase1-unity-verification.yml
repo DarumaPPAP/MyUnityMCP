@@ -1,0 +1,118 @@
+name: Phase 1 Unity Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**
+      - TestProjects/MyUnityMCPPhase1/**
+      - .github/workflows/phase1-unity-verification.yml
+  workflow_dispatch: {}
+
+concurrency:
+  group: phase1-unity-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  editmode:
+    name: Compile, Bridge Discovery and EditMode
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: Require Unity license secrets
+        id: license
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$UNITY_LICENSE" ] || { [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; }; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "::error::Unity license secrets are not configured. Phase 1 cannot be marked complete because Unity did not compile or run tests."
+          exit 1
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: TestProjects/MyUnityMCPPhase1/Library
+          key: MyUnityMCP-Phase1-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPPhase1/Packages/manifest.json') }}
+          restore-keys: |
+            MyUnityMCP-Phase1-6000.0.75f1-
+
+      - name: Run Phase 1 EditMode tests
+        id: tests
+        continue-on-error: true
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPPhase1
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+          customParameters: -testFilter UnityGraphicsMcp.UnityGraphicsMcpInspectionTests
+
+      - name: Verify NUnit result
+        if: always() && steps.license.outputs.available == 'true'
+        env:
+          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          set -euo pipefail
+          results_xml=$(find "$ARTIFACTS_PATH" -name '*.xml' 2>/dev/null | head -1 || true)
+          if [ -z "$results_xml" ]; then
+            echo "::error::Unity produced no NUnit XML. Compile or Editor startup may have failed."
+            exit 1
+          fi
+
+          python3 - "$results_xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          total = int(root.attrib.get("total", "0"))
+          passed = int(root.attrib.get("passed", "0"))
+          failed = int(root.attrib.get("failed", "0"))
+          skipped = int(root.attrib.get("skipped", "0"))
+          inconclusive = int(root.attrib.get("inconclusive", "0"))
+
+          print(f"Phase 1 results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
+          if total <= 0:
+              raise SystemExit("No Phase 1 test was executed.")
+          if failed != 0 or inconclusive != 0:
+              for case in root.iter("test-case"):
+                  if case.attrib.get("result") == "Failed":
+                      name = case.attrib.get("fullname") or case.attrib.get("name") or "<unknown>"
+                      message = case.findtext("failure/message") or ""
+                      print(f"FAILED: {name}: {message}")
+              raise SystemExit(1)
+          PY
+
+          if [ "$TEST_OUTCOME" != "success" ]; then
+            echo "::error::game-ci test runner outcome was $TEST_OUTCOME."
+            exit 1
+          fi
+
+      - name: Upload Unity evidence
+        if: always() && steps.license.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyUnityMCP-Phase1-Unity-Evidence
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          if-no-files-found: error
