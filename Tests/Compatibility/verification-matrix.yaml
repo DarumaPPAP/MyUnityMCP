@@ -1,4 +1,4 @@
-schema_version: "1.3"
+schema_version: "1.4"
 
 purpose:
   - record_actual_verification_evidence
@@ -13,8 +13,8 @@ rules:
   one_project_result_does_not_define_package_wide_support: true
 
 source_status:
-  package_version: "0.3.0"
-  phase: phase_3a_light_mutation_complete
+  package_version: "0.4.0"
+  phase: phase_3_graphics_mutation_complete
   bridge_api_review:
     package: com.coplaydev.unity-mcp
     declared_version: "10.1.2"
@@ -29,12 +29,15 @@ source_status:
     - graphics.prepare_light_plan
     - graphics.apply_plan
     - graphics.undo_last_transaction
+    - graphics.prepare_environment_plan
+    - graphics.apply_environment_plan
+    - graphics.undo_last_environment_transaction
   static_review: passed
   unity_editor_compile: passed
-  bridge_tool_discovery: passed
-  editmode: passed_30_of_30
-  player: not_run_not_required_for_phase_3a_editor_tools
-  target_device: not_run_not_required_for_phase_3a_editor_tools
+  bridge_tool_discovery: passed_11_tools
+  editmode: passed_46_of_46
+  player: not_run_not_required_for_phase_3_editor_tools
+  target_device: not_run_not_required_for_phase_3_editor_tools
 
 required_fields_per_environment_entry:
   - verification_id
@@ -183,5 +186,102 @@ environment_entries:
       global_support_claim: false
       notes:
         - This proves the eight Phase 1 through Phase 3A Editor tools compile and pass their contract tests in one verified environment.
-        - The verified mutation scope is limited to explicit Light create and update operations with approval, revision, rollback, and latest-transaction Undo guards.
-        - It does not prove Player, target device, external MCP client networking, every Unity version, or every render pipeline compatibility.
+        - The verified mutation scope is limited to explicit Light create and update operations with approval, revision, rollback, and guarded Undo.
+
+  - verification_id: MUMCP-PHASE3-CI-20260805-001
+    date: "2026-08-05"
+    scope: phase_1_to_phase_3_editor_tools
+    host:
+      runner: github_actions_ubuntu_24_04
+      execution_mode: batchmode_nographics
+    unity_version: 6000.0.75f1
+    unity_revision: 26349cd2a5c8
+    render_pipeline_kind: BUILT_IN
+    render_pipeline_package_version: core_17.0.4_optional_volume_api
+    rendering_path: not_applicable_to_verification_scene
+    render_graph_mode: not_applicable
+    active_build_target: StandaloneLinux64
+    graphics_apis:
+      - OpenGLCore
+      - llvmpipe_software_renderer
+    tool_group:
+      - inspect
+      - plan
+      - mutate_light
+      - mutate_environment
+    package_resolution: passed
+    editor_compile: passed
+    bridge_tool_discovery:
+      status: passed
+      discovered_tool_count: 11
+      discovered_tools:
+        - graphics.inspect_project
+        - graphics.inspect_scene
+        - graphics.validate_scene
+        - graphics.compile_direction
+        - graphics.preview_plan
+        - graphics.prepare_light_plan
+        - graphics.apply_plan
+        - graphics.undo_last_transaction
+        - graphics.prepare_environment_plan
+        - graphics.apply_environment_plan
+        - graphics.undo_last_environment_transaction
+      auto_register: false
+      direct_handler_invocation: passed
+    editmode:
+      status: passed
+      total: 46
+      passed: 46
+      failed: 0
+      skipped: 0
+      inconclusive: 0
+    inspection_and_planning_regression: passed
+    mutation_contract:
+      exact_light_diff_preview: passed
+      exact_environment_diff_preview: passed
+      approval_token_guard: passed
+      expected_revision_guard: passed
+      preview_baseline_recheck: passed
+      light_create: passed
+      light_update: passed
+      camera_create: passed
+      camera_update: passed
+      reflection_probe_create: passed
+      reflection_probe_update: passed
+      volume_create: passed
+      volume_update: passed
+      volume_shared_profile_assignment: passed
+      volume_property_field_api_resolution: passed
+      duplicate_operation_id_rejection: passed
+      duplicate_update_target_rejection: passed
+      atomic_multi_component_transaction: passed
+      exception_rollback_contract: passed
+      atomic_undo: passed
+      external_change_undo_rejection: passed
+      newer_undo_group_rejection: passed
+      automatic_save: prohibited_and_tested
+      bake: not_implemented_and_not_invoked
+    workflow_reliability:
+      unity_docker_disk_cleanup: passed
+      minimum_contract_test_count_gate: 46
+    workflow_security:
+      repository_write_permission: not_granted
+      checkout_credentials_persisted: false
+    player: not_run_not_required_for_phase_3_editor_tools
+    target_device: not_run_not_required_for_phase_3_editor_tools
+    external_mcp_client_connection: not_run_not_required_for_phase_3_editor_tools
+    evidence:
+      workflow: Phase 3 Unity Verification
+      workflow_run_id: 30960279351
+      workflow_job_id: 92162486873
+      artifact_name: MyUnityMCP-Phase3-Unity-Evidence
+      artifact_id: 8912789269
+      artifact_sha256: 6693ad25a51b6b6a404f9fd376294157cdfbf01e22d27c9e681b2220f75d496e
+      verified_source_commit: 1f6f41392125a2166d72aad910be71bd02b03b16
+    interpretation:
+      global_support_claim: false
+      notes:
+        - This proves the eleven Phase 1 through Phase 3 Editor tools compile and pass 46 contract tests in one verified environment.
+        - The verified mutation scope is explicit Light, Camera, Reflection Probe, and Volume create/update with approval, revision, baseline, rollback, and guarded Undo.
+        - Render Pipelines Core was installed only in the verification project to exercise optional Volume capability; it is not a mandatory package dependency.
+        - This does not prove Player, target device, external MCP client networking, every Unity version, or every render pipeline compatibility.
