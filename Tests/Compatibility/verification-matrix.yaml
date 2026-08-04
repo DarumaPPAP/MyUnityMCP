@@ -1,4 +1,4 @@
-schema_version: "1.1"
+schema_version: "1.2"
 
 purpose:
   - record_actual_verification_evidence
@@ -14,21 +14,22 @@ rules:
 
 source_status:
   package_version: "0.2.0"
-  phase: phase_1_read_only
+  phase: phase_1_read_only_complete
   bridge_api_review:
     package: com.coplaydev.unity-mcp
-    version: "10.1.2"
-    status: confirmed_from_source
+    declared_version: "10.1.2"
+    verified_commit: 9f84072c38906e3ca903f14f6a8edc1a1c9012c3
+    status: source_and_unity_verified
   implemented_tools:
     - graphics.inspect_project
     - graphics.inspect_scene
     - graphics.validate_scene
-  static_review: in_progress
-  unity_editor_compile: not_run
-  bridge_tool_discovery: not_run
-  editmode: not_run
-  player: not_run
-  target_device: not_run
+  static_review: passed
+  unity_editor_compile: passed
+  bridge_tool_discovery: passed
+  editmode: passed_9_of_9
+  player: not_run_not_required_for_phase_1_editor_tools
+  target_device: not_run_not_required_for_phase_1_editor_tools
 
 required_fields_per_environment_entry:
   - verification_id
@@ -48,4 +49,57 @@ required_fields_per_environment_entry:
   - target_device
   - evidence
 
-environment_entries: []
+environment_entries:
+  - verification_id: MUMCP-PHASE1-CI-20260804-001
+    date: "2026-08-04"
+    scope: phase_1_read_only_editor_tools
+    host:
+      runner: github_actions_ubuntu_24_04
+      execution_mode: batchmode_nographics
+    unity_version: 6000.0.75f1
+    unity_revision: 26349cd2a5c8
+    render_pipeline_kind: BUILT_IN
+    render_pipeline_package_version: not_installed
+    rendering_path: not_applicable_to_verification_scene
+    render_graph_mode: not_applicable
+    active_build_target: StandaloneLinux64
+    graphics_apis:
+      - OpenGLCore
+      - llvmpipe_software_renderer
+    tool_group: inspect
+    package_resolution: passed
+    editor_compile: passed
+    bridge_tool_discovery:
+      status: passed
+      discovered_tools:
+        - graphics.inspect_project
+        - graphics.inspect_scene
+        - graphics.validate_scene
+      auto_register: false
+    editmode:
+      status: passed
+      total: 9
+      passed: 9
+      failed: 0
+      skipped: 0
+      inconclusive: 0
+    read_only_contract:
+      scene_dirty_guard: passed
+      persistent_asset_dirty_guard: passed
+      material_instance_guard: passed
+    project_context_separation: passed
+    player: not_run_not_required_for_phase_1_editor_tools
+    target_device: not_run_not_required_for_phase_1_editor_tools
+    evidence:
+      workflow: Phase 1 Unity Verification
+      workflow_run_id: 30909837287
+      workflow_job_id: 91993536157
+      artifact_name: MyUnityMCP-Phase1-Unity-Evidence
+      artifact_id: 8892693112
+      artifact_sha256: 0987753fe277d732c589fdc1d90eff63a8a0f23a55088ae7f7e86a4f63e57a5c
+      verified_source_commit: 7dc03fd5678d23b7df487892d14492b50295a0ac
+    interpretation:
+      global_support_claim: false
+      notes:
+        - This proves the Phase 1 Editor-only tools compile and pass their contract tests in one verified environment.
+        - It does not prove Player, device, every Unity version, or every render pipeline compatibility.
