@@ -9,7 +9,7 @@ namespace UnityGraphicsMcp
 {
 	[McpForUnityTool(
 		"graphics.inspect_project",
-		Description = "対象Unity ProjectのVersion、Pipeline、Renderer、Build Target、Graphics API、関連PackageをRead-onlyで取得します。",
+		Description = "対象Unity Projectの検出済み事実と、今回要求されたTargetを分離してRead-onlyで取得します。",
 		AutoRegister = false,
 		Group = "core")]
 	public static class GraphicsInspectProjectTool
@@ -18,13 +18,22 @@ namespace UnityGraphicsMcp
 		{
 			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
 			public string requestId { get; set; }
+
+			[ToolParameter("今回の依頼で明示されたTarget Platform。ProjectのActive Build Targetとは別に保持します。", Required = false)]
+			public string[] requestedPlatforms { get; set; }
+
+			[ToolParameter("今回の依頼で明示された品質方針または禁止事項。検出済みProject事実を上書きしません。", Required = false)]
+			public string[] requestedConstraints { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
 		{
 			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
 				@params,
-				parameters => UnityGraphicsMcpInspection.InspectProject(parameters.requestId));
+				parameters => UnityGraphicsMcpInspection.InspectProject(
+					parameters.requestId,
+					parameters.requestedPlatforms,
+					parameters.requestedConstraints));
 		}
 	}
 
