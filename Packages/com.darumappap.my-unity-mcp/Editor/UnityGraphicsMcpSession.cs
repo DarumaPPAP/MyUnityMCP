@@ -6,7 +6,9 @@ using System.Threading;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace UnityGraphicsMcp
 {
@@ -48,7 +50,10 @@ namespace UnityGraphicsMcp
 
 		public static UnityGraphicsMcpReadOnlyGuard BeginReadOnlyGuard()
 		{
-			return new UnityGraphicsMcpReadOnlyGuard(CaptureSceneDirtyState(), Undo.GetCurrentGroup());
+			return new UnityGraphicsMcpReadOnlyGuard(
+				CaptureSceneDirtyState(),
+				CaptureAssetDirtyState(),
+				Undo.GetCurrentGroup());
 		}
 
 		public static string StoreSnapshot(UnityGraphicsMcpSceneSnapshot snapshot)
@@ -146,6 +151,24 @@ namespace UnityGraphicsMcp
 			return states;
 		}
 
+		private static Dictionary<int, bool> CaptureAssetDirtyState()
+		{
+			Dictionary<int, bool> states = new Dictionary<int, bool>();
+			Object[] loadedObjects = Resources.FindObjectsOfTypeAll<Object>();
+
+			foreach (Object target in loadedObjects)
+			{
+				if (target == null || !EditorUtility.IsPersistent(target))
+				{
+					continue;
+				}
+
+				states[target.GetInstanceID()] = EditorUtility.IsDirty(target);
+			}
+
+			return states;
+		}
+
 		private static void RemoveExpiredSnapshots()
 		{
 			DateTime threshold = DateTime.UtcNow - SNAPSHOT_LIFETIME;
@@ -234,11 +257,16 @@ namespace UnityGraphicsMcp
 	public sealed class UnityGraphicsMcpReadOnlyGuard
 	{
 		private readonly Dictionary<int, bool> _sceneDirtyState;
+		private readonly Dictionary<int, bool> _assetDirtyState;
 		private readonly int _undoGroup;
 
-		internal UnityGraphicsMcpReadOnlyGuard(Dictionary<int, bool> sceneDirtyState, int undoGroup)
+		internal UnityGraphicsMcpReadOnlyGuard(
+			Dictionary<int, bool> sceneDirtyState,
+			Dictionary<int, bool> assetDirtyState,
+			int undoGroup)
 		{
 			_sceneDirtyState = sceneDirtyState;
+			_assetDirtyState = assetDirtyState;
 			_undoGroup = undoGroup;
 		}
 
@@ -246,6 +274,7 @@ namespace UnityGraphicsMcp
 		{
 			evidence = new Dictionary<string, object>();
 			List<Dictionary<string, object>> changedScenes = new List<Dictionary<string, object>>();
+			List<Dictionary<string, object>> changedAssets = new List<Dictionary<string, object>>();
 
 			if (_sceneDirtyState.Count != SceneManager.sceneCount)
 			{
@@ -273,10 +302,38 @@ namespace UnityGraphicsMcp
 				}
 			}
 
+			Object[] loadedObjects = Resources.FindObjectsOfTypeAll<Object>();
+			foreach (Object target in loadedObjects)
+			{
+				if (target == null || !EditorUtility.IsPersistent(target))
+				{
+					continue;
+				}
+
+				bool afterDirty = EditorUtility.IsDirty(target);
+				bool beforeDirty;
+				bool existedBefore = _assetDirtyState.TryGetValue(target.GetInstanceID(), out beforeDirty);
+				if ((existedBefore && beforeDirty != afterDirty) || (!existedBefore && afterDirty))
+				{
+					changedAssets.Add(new Dictionary<string, object>
+					{
+						{ "asset", target.name },
+						{ "assetPath", AssetDatabase.GetAssetPath(target) },
+						{ "beforeDirty", existedBefore ? (object)beforeDirty : null },
+						{ "afterDirty", afterDirty }
+					});
+				}
+			}
+
 			int currentUndoGroup = Undo.GetCurrentGroup();
 			if (changedScenes.Count > 0)
 			{
 				evidence["changedScenes"] = changedScenes;
+			}
+
+			if (changedAssets.Count > 0)
+			{
+				evidence["changedAssets"] = changedAssets;
 			}
 
 			if (currentUndoGroup != _undoGroup)
@@ -286,6 +343,7 @@ namespace UnityGraphicsMcp
 			}
 
 			return changedScenes.Count > 0 ||
+				changedAssets.Count > 0 ||
 				currentUndoGroup != _undoGroup ||
 				_sceneDirtyState.Count != SceneManager.sceneCount;
 		}
