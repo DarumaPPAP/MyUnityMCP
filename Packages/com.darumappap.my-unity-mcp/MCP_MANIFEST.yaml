@@ -46,6 +46,9 @@ tool_groups:
   inspect:
     mutation: false
     status: source_complete_unverified
+    bridge_group: core
+    auto_register: false
+    activation: explicit_after_verification
     tools:
       graphics.inspect_project:
         status: source_complete_unverified
@@ -105,12 +108,14 @@ bridge:
   response_contract:
     - SuccessResponse
     - ErrorResponse
+  command_dispatch: unity_main_thread
   compile_verified: false
   runtime_connection_verified: false
 
 availability:
   source_is_implemented: true
   package_is_executable: unverified
+  phase_1_tools_enabled_by_default: false
   expose_unimplemented_tools: false
   expose_selected_tool_group_only: true
   load_package_source_during_normal_use: false
