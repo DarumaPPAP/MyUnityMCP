@@ -1,96 +1,99 @@
 # UnityGraphicsMCP Unity Editor C# Tool実装設計
 
-- DocumentVersion: `1.0.0`
-- DesignStatus: `Draft`
-- ImplementationStatus: `Not Started`
+- DocumentVersion: `1.1.0`
+- DesignStatus: `Implemented / Verification Pending`
+- ImplementationStatus: `Phase 1 Read-only Source Complete`
+- VerificationStatus: `Unity Compile / Bridge Discovery / EditMode Not Run`
 
 ## 1. 目的
 
-対象Unity ProjectをRead-onlyで解析し、そのProjectで利用可能なGraphics BackendとCapabilityを解決した上で、必要なToolだけを公開するEditor-only C#基盤を設計する。
+対象Unity ProjectをRead-onlyで解析し、Project環境、Scene Graphics状態、確定的不整合を機械可読Resultとして返すEditor-only C# Toolを構築する。
 
-特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph設定、Target PlatformをMyUnityMCP全体へ固定しない。
+特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをMyUnityMCP全体へ固定しない。
 
-## 2. Initial tool scope
+## 2. Phase 1 Tool
 
-最初に実装するToolは次の三つとする。
+Source実装済み:
 
 - `graphics.inspect_project`
 - `graphics.inspect_scene`
 - `graphics.validate_scene`
 
-`graphics.inspect_frame`、Mutation、Bake、Captureは別OwnerとLifetimeを持つため後続Phaseへ分離する。
+後続Phase:
 
-## 3. Environment resolution
+- `graphics.inspect_frame`
+- Plan / Preview
+- Mutation / Undo
+- Bake
+- Capture / Refine
 
-### 3.1 Detected project facts
+## 3. Bridge contract
 
-`graphics.inspect_project`は最低限次を取得する。
+Source API確認基準:
+
+- Package: `com.coplaydev.unity-mcp`
+- Version: `10.1.2`
+- Assembly: `MCPForUnity.Editor`
+- Tool Attribute: `McpForUnityToolAttribute`
+- Parameter Attribute: `ToolParameterAttribute`
+- Entry Point: `public static object HandleCommand(JObject)`
+- Response: `SuccessResponse` / `ErrorResponse`
+- Command Dispatch: Unity Main Thread
+
+Phase 1 Toolは`AutoRegister = false`とする。
+
+理由:
+
+- Bridgeの`core` Groupへ所属させても初期公開しない。
+- Unity CompileとEditMode Test前に利用可能Toolとして見せない。
+- 将来UnityAgentMCPのActivation Policyから明示的に有効化できる境界を残す。
+
+## 4. Environment resolution
+
+`graphics.inspect_project`は次をProjectからRead-onlyで取得する。
 
 - Unity Version
-- Render Pipeline Kind
-- Render Pipeline Package Version
-- Active Renderer
-- Rendering Path
-- RenderGraph Mode
-- Active Build Target
-- Installed Build Targets
+- Active / Installed Build Target
 - Graphics API
 - Scripting Backend
-- Related Package Presence
-- Backend Capability Summary
+- Color Space
+- Render Pipeline Kind
+- Render Pipeline Asset
+- Pipeline Package Version
+- Renderer Data
+- Renderer Feature Count
+- Rendering PathのRead-only推定
+- RenderGraph ModeのRead-only推定
+- Loaded Scene
+- Relevant Package
 
-### 3.2 Requested target
+優先順位:
 
-ユーザーまたはCreatorから渡されたTarget Platform、品質方針、禁止事項は、検出済みProject事実とは別のDTOへ保持する。
-
-Projectが現在設定しているPlatformと、今回要求されたTargetが異なる場合は自動で同一視しない。
-
-### 3.3 Information precedence
-
-1. 対象Unity Projectから検出した事実
+1. 対象Projectから検出した事実
 2. 今回明示されたTargetと制約
-3. Project固有Profile
-4. UnityAgentの既定Preference
+3. Project Profile
+4. UnityAgent Preference
 
-下位情報で上位情報を上書きしない。
-
-## 4. Capability status
-
-```csharp
-public enum E_MCP_CAPABILITY_STATUS
-{
-    AVAILABLE,
-    UNAVAILABLE,
-    UNSUPPORTED,
-    UNVERIFIED,
-    PACKAGE_NOT_INSTALLED,
-    VERSION_NOT_SUPPORTED,
-    PROJECT_CONFIGURATION_REQUIRED,
-    BACKEND_NOT_IMPLEMENTED
-}
-```
-
-- `UNVERIFIED`は検証実績がない状態であり、`UNSUPPORTED`ではない。
-- 対象Pipelineを検出できてもBackend実装が存在しない場合は`BACKEND_NOT_IMPLEMENTED`を返す。
-- 別Pipelineへ黙ってFallbackしない。
+下位情報で検出済みProject事実を上書きしない。
 
 ## 5. Physical architecture
 
 ```text
-Unity MCP Bridge
-    ↓
-UnityAgentMcpTools
-    ↓
-UnityMcpEditorSession
-    ↓
-UnityGraphicsMcpInspection
-    ↓
-Detected Backend Capability
-    ↓
+MCP for Unity Bridge
+        ↓
+UnityGraphicsMcpTools.cs
+        ↓
+UnityGraphicsMcpSession.cs
+        ↓
+UnityGraphicsMcpInspection.cs
+        ├─ UnityGraphicsMcpProjectInspection.cs
+        ├─ UnityGraphicsMcpSceneInspection.cs
+        └─ UnityGraphicsMcpValidation.cs
+        ↓
 Unity Editor API
 ```
 
-### `UnityAgentMcpTools.cs`
+### `UnityGraphicsMcpTools.cs`
 
 Owner: MCP外部境界
 
@@ -98,16 +101,17 @@ Lifetime: 一つのTool Call
 
 Responsibility:
 
-- Tool登録
-- Request Schema検証
-- Main Thread Sessionへの委譲
-- Result Schema変換
+- Tool Attribute
+- Parameter Schema
+- JObject変換
+- Success / Error Response変換
+- Phase 1 ToolのDefault Disable
 
 Split Reason:
 
-- Unity MCP Bridge Packageへの外部依存を隔離するため
+- MCP Bridge Package依存をGraphics解析から隔離する。
 
-### `UnityMcpEditorSession.cs`
+### `UnityGraphicsMcpSession.cs`
 
 Owner: Unity Editor Session
 
@@ -115,50 +119,95 @@ Lifetime: Domain ReloadまたはEditor終了まで
 
 Responsibility:
 
-- Main Thread Queue
 - Session ID
 - Revision
-- Snapshot
-- Cancellation
-- Compile / Domain Reload / PlayMode遷移時の中断
+- In-memory Snapshot
+- Snapshot TTL / Count上限
+- Hierarchy / Project / Undo / Scene Event監視
+- Compile / Domain Reload / PlayMode遷移時のSnapshot無効化
+- Read-only Dirty Guard
 
 Split Reason:
 
-- Tool Callより長い状態とEditor Lifecycleを所有するため
+- Tool Callを越えて生存するEditor Lifecycleと状態を所有する。
 
 ### `UnityGraphicsMcpInspection.cs`
 
-Owner: UnityGraphicsMCP
+Owner: Graphics Read-only Operation
 
 Lifetime: 一つのInspection
 
 Responsibility:
 
-- Project環境検出
-- Scene Graphics解析
-- Capability解決
-- Validation
-- Pipeline固有読取処理への委譲
+- 共通Result Schema
+- Tool Status
+- Inspection実行順
+- Snapshot Paging
+- Read-only Guard適用
+- Exception境界
 
 Split Reason:
 
-- Graphics専門判断とUnity API読取を所有するため
+- Project / Scene / Validationへ共通するOperation契約を所有する。
 
-## 6. Backend strategy
+### `UnityGraphicsMcpProjectInspection.cs`
 
-初期実装で特定Pipelineを製品要件として固定しない。
+Owner: Target Project Facts
 
-1. Pipeline非依存のProject Inspectionを先に実装する。
-2. 対象ProjectからPipelineとVersionを検出する。
-3. 利用可能な検証Projectに対応する最初の具象Backendを実装する。
-4. その検証環境をCompatibility Matrixへ記録する。
-5. 二つ目の実在Backendが追加されるまで共通Interfaceを抽出しない。
+Lifetime: 一つのProject Inspection
 
-最初の具象Backendは開発時に利用可能な検証Projectで決まり、MyUnityMCP全体の固定対応条件にはしない。
+Responsibility:
 
-## 7. Read-only contract
+- Pipeline非依存Project環境取得
+- Serialized PropertyによるRenderer Capability読取
+- Package / Build Target / Graphics API取得
+- GlobalObjectIdと値正規化の共通Helper
 
-Inspectionでは次を禁止する。
+Split Reason:
+
+- Project環境とPackage境界はScene Hierarchy走査とは異なる変更軸を持つ。
+
+### `UnityGraphicsMcpSceneInspection.cs`
+
+Owner: Loaded Scene Snapshot
+
+Lifetime: Snapshot TTLまで
+
+Responsibility:
+
+- Scene Hierarchy走査
+- Camera / Light / Probe / Renderer / Material Summary
+- Volume / Decal / Probe Volume / VFX / CinemachineのCapability読取
+- Lightmap / Renderer Feature状態
+- Unity Objectを含まないSnapshot DTO生成
+
+Split Reason:
+
+- 大規模Scene走査、Paging、Snapshot Sizeを独立して最適化する必要がある。
+
+### `UnityGraphicsMcpValidation.cs`
+
+Owner: Graphics Validation Rule
+
+Lifetime: 一つのValidation
+
+Responsibility:
+
+- Invariant / Policy / Heuristic分類
+- Severity / Confidence / Evidence
+- Missing Material / Shader
+- Lightmap Index
+- Volume Profile
+- LightingDataAsset Heuristic
+- Renderer Data整合性
+
+Split Reason:
+
+- Rule追加頻度とTest価値がScene Snapshot構造と異なる。
+
+## 6. Read-only contract
+
+禁止API:
 
 - `Undo.RecordObject`
 - `EditorUtility.SetDirty`
@@ -168,89 +217,119 @@ Inspectionでは次を禁止する。
 - `AssetDatabase.Refresh`
 - `Renderer.material` / `Renderer.materials`
 - `Volume.profile`
-- AssetまたはSceneを生成・保存するAPI
+- Scene / Asset Save
+- Bake
 
-Tool実行前後でLoaded SceneのDirty状態、対象AssetのDirty状態、Revision、Undo Groupを比較する。
+実行前後で次を比較する。
 
-違反を検出した場合は成功Resultを返さず、`READ_ONLY_CONTRACT_VIOLATION`として記録する。Dirtyを自動解除して隠さない。
+- Loaded Scene Count
+- Scene Dirty状態
+- Undo Group
 
-## 8. Main Thread and lifecycle
+違反時は`READ_ONLY_CONTRACT_VIOLATION`を返し、Dirty状態を自動解除して隠さない。
 
-- Unity API操作はEditor Main Threadで実行する。
-- 初期版はSingle Flightとする。
-- Assembly Reload、Compile開始、Editor終了、PlayMode遷移開始で実行中Requestを中断する。
-- Domain Reload後の古いSnapshotは`SESSION_EXPIRED`を返す。
-- Scan中にRevisionが変わった場合は`STALE_DURING_SCAN`とする。
+## 7. Session and revision
 
-## 9. Snapshot and identity
+Revision更新条件:
 
-Scene全体の巨大JSONを毎回返さず、Summary、Snapshot ID、Revision、Cursorを返す。
+- Hierarchy変更
+- Project変更
+- Undo / Redo
+- Scene Open / Close / Save
+- Active Scene変更
+- Play Mode遷移
+- Compile開始 / 終了
 
-Object識別は次を優先する。
+Snapshot:
 
-1. GlobalObjectId
-2. Asset GUID + Local File ID
-3. Scene GUID + GlobalObjectId
-4. Session限定Instance ID
+- Editor Memoryだけに保存
+- 最大8件
+- TTL 10分
+- Domain Reloadで破棄
+- Revision不一致で`STALE_SNAPSHOT`
+- 別Session IDで`SESSION_EXPIRED`
+
+## 8. Object identity
+
+優先:
+
+1. `GlobalObjectId`
+2. Session限定Instance ID
 
 GameObject名だけを識別子にしない。
 
-## 10. Project inspection result
+Snapshotには`UnityEngine.Object`、`SerializedObject`、Scene参照、Material参照を保持しない。
 
-ResultはDetected ProjectとRequested Targetを分離する。
+## 9. Scene inspection scope
 
-```json
-{
-  "detectedProject": {
-    "unityVersion": "...",
-    "renderPipelineKind": "...",
-    "renderingPath": "...",
-    "activeBuildTarget": "..."
-  },
-  "requestedTarget": {
-    "platforms": ["..."],
-    "constraints": ["..."]
-  },
-  "capabilities": [],
-  "verificationState": "UNVERIFIED"
-}
-```
+実装済みSection:
 
-## 11. Compatibility evidence
+- `CAMERA`
+- `LIGHT`
+- `LIGHTMAP`
+- `LIGHT_PROBE`
+- `APV`
+- `REFLECTION_PROBE`
+- `RENDERER_MATERIAL`
+- `VOLUME`
+- `DECAL`
+- `PARTICLE`
+- `VFX`
+- `CINEMATIC`
+- `RENDERER_FEATURE`
+
+Package固有型は直接Assembly参照せず、型名と公開MemberをRead-onlyで解析する。
+
+## 10. Validation rules
+
+実装済み:
+
+- `GFX-MATERIAL-001`: Missing Shared Material
+- `GFX-MATERIAL-002`: Missing Shader
+- `GFX-LIGHTMAP-001`: Lightmap Index範囲外
+- `GFX-LIGHTMAP-002`: Lightmapあり / LightingDataAsset未確認
+- `GFX-VOLUME-001`: Enabled VolumeのShared Profileなし
+- `GFX-PIPELINE-001`: URP Renderer Data解決失敗
+
+HeuristicはConfirmed Errorへ昇格させない。
+
+## 11. Test source
+
+実装済み:
+
+- Project Inspection後のScene Dirty非変更
+- Camera / Light Snapshot
+- Renderer Material非インスタンス化
+- Lightmap Index範囲外検出
+- Snapshot Cursor範囲外拒否
+
+実行状態:
+
+- Unity Editor未接続のためNot Run
+
+## 12. Compatibility evidence
 
 検証結果は`Tests/Compatibility/verification-matrix.yaml`へ記録する。
 
-Matrixは次を表す。
+Source Completeは次を保証しない。
 
-- どのUnity VersionでCompileしたか
-- どのPipeline / Rendering Pathで検証したか
-- Editor / EditMode / Player / Target Deviceの各Gate
-- 証拠Path
+- Unity Compile
+- Bridge Tool Discovery
+- EditMode成功
+- Player成功
+- Target Device成功
 
-Matrix Entryが存在しない環境は`UNVERIFIED`であり、即座に`UNSUPPORTED`とはしない。
+Environment Entryがない環境は`UNVERIFIED`であり、`UNSUPPORTED`ではない。
 
-## 12. Initial production files
+## 13. Phase 1 completion gate
 
-```text
-Packages/com.darumappap.my-unity-mcp/
-├─ Editor/
-│  ├─ UnityAgentMcpTools.cs
-│  ├─ UnityMcpEditorSession.cs
-│  ├─ UnityGraphicsMcpInspection.cs
-│  └─ MyUnityMcp.Editor.asmdef
-└─ Tests/Editor/
-   ├─ UnityGraphicsMcpInspectionTests.cs
-   └─ MyUnityMcp.Editor.Tests.asmdef
-```
+1. Package dependency解決
+2. Unity Editor Compile
+3. 3 ToolのDiscovery
+4. 明示的Tool Enable
+5. 各ToolのMCP Invocation
+6. EditMode Test成功
+7. Read-only Dirty Guard成功
+8. Compatibility Matrix更新
 
-Runtime Assembly、空Backend、Capabilityごとのasmdefは作らない。
-
-## 13. Implementation gates
-
-1. Unity MCP Bridge APIを対象Projectで確認する。
-2. `graphics.inspect_project`をPipeline非依存で実装する。
-3. Capability StatusとResult Schemaを実装する。
-4. Main Thread / Domain Reload / Dirty Guard Testを通す。
-5. 最初の具象Backendを実装する。
-6. Compatibility Matrixへ実際の検証結果を記録する。
-7. 実装済みToolだけManifestで公開する。
+すべて通るまで`Operational Complete`としない。

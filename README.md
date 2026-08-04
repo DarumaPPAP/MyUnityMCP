@@ -81,17 +81,48 @@ inspect → plan → mutate → bake → capture
 
 ## Current status
 
-現在はPhase 0です。
+Phase 1のRead-only Unity Editor Toolは実装・Unity検証まで完了しています。
 
-- Architecture: 作成済み
-- Catalog: 作成済み
-- LiveCreator / MovieCreator Workflow: 仕様作成済み
-- UnityGraphicsMCP: 仕様作成済み
-- UPM Package: 骨格作成済み
-- Unity Editor Tool C#実装: 未着手
-- Unity Compile / EditMode / Player / Target Device検証: 未実行
+- Architecture / Catalog / Workflow: 作成済み
+- UnityGraphicsMCP仕様: 作成済み
+- `graphics.inspect_project`: 実装・Bridge Discovery・直接Invocation検証済み
+- `graphics.inspect_scene`: 実装・Snapshot / Paging・Read-only検証済み
+- `graphics.validate_scene`: 実装・Rule検証済み
+- Session / Revision / Snapshot / Paging: 実装済み
+- Read-only Dirty Guard: Scene / Persistent Assetで検証済み
+- Renderer Material非インスタンス化: 検証済み
+- Unity Editor Compile: 成功
+- EditMode Test: 9 / 9成功
+- Player / Target Device: Phase 1 Editor Toolの完了条件外、未実行
+- Plan / Mutation / Bake / Capture: 未着手
 
-仕様やManifestの存在を、MCP Toolが動作する証拠として扱いません。
+検証環境は一つの実績であり、Package全体の固定対応条件ではありません。詳細は`Tests/Compatibility/verification-matrix.yaml`を正本とします。
+
+## Phase 1 tools
+
+```text
+graphics.inspect_project
+graphics.inspect_scene
+graphics.validate_scene
+```
+
+3Toolは`AutoRegister = false`で、明示的にActivationした場合だけ公開します。未実装Toolは公開しません。
+
+MCP Bridgeの宣言API基準は`com.coplaydev.unity-mcp 10.1.2`、Unity CIで検証したBridge SourceはCommit `9f84072c38906e3ca903f14f6a8edc1a1c9012c3`です。
+
+## Verified Phase 1 evidence
+
+- Unity: `6000.0.75f1`
+- Host: GitHub Actions Ubuntu 24.04
+- Package Resolve: PASS
+- Editor Compile: PASS
+- Bridge Tool Discovery: PASS
+- Direct Handler Invocation: PASS
+- EditMode: `9 / 9 PASS`
+- Workflow Run: `30911093647`
+- Evidence Artifact: `MyUnityMCP-Phase1-Unity-Evidence` (`8893204801`)
+
+この実績はPlayer、実機、すべてのUnity Version、すべてのRender Pipeline対応を意味しません。
 
 ## Repository map
 
@@ -103,19 +134,21 @@ Specs/
 Workflows/
 Packages/
   com.darumappap.my-unity-mcp/
+    Editor/
+    Tests/Editor/
+TestProjects/
+  MyUnityMCPPhase1/
 Tests/
   Compatibility/
 ```
 
-## First implementation milestone
+## Next phase
 
-最初のMilestoneは特定のUnity Version、Pipeline、Rendering Path、Platformではなく、次の能力です。
+Phase 2ではUnity状態を変更せず、Visual Intentを技術Planへ変換する次のToolを設計・実装します。
 
-- 対象ProjectのRead-only環境検出
-- Project Contextと要求Targetの分離
-- Capability / Backend解決
-- `UNSUPPORTED` / `UNVERIFIED` / `PROJECT_CONFIGURATION_REQUIRED`の区別
-- Editor-only Read-only Inspection
-- 実装済みBackendだけの選択的公開
+```text
+graphics.compile_direction
+graphics.preview_plan
+```
 
-最初に利用できる検証Projectの環境はCompatibility Matrixへ記録し、MyUnityMCP全体の対応条件とは扱いません。
+Mutation、Undo、Bake、CaptureはPhase 2のPlan Contractが安定した後に開放します。
