@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 package_id: com.darumappap.my-unity-mcp
 version: "0.1.0"
 implementation_status: not_started
@@ -17,6 +17,7 @@ registered_domains:
     specification: ../../Specs/UnityGraphicsMCP/spec.md
     plan: ../../Specs/UnityGraphicsMCP/plan.md
     tasks: ../../Specs/UnityGraphicsMCP/tasks.md
+    editor_tool_design: ../../Specs/UnityGraphicsMCP/editor-tool-design.md
 
 planned_domains:
   - unity_cinematic_mcp
@@ -32,11 +33,13 @@ creator_workflows:
     status: specified_not_executable
     path: ../../Workflows/LiveCreator.yaml
     blocked_by:
+      - unity_graphics_mcp_not_implemented
       - unity_cinematic_mcp_not_implemented
   - id: movie_creator
     status: specified_not_executable
     path: ../../Workflows/MovieCreator.yaml
     blocked_by:
+      - unity_graphics_mcp_not_implemented
       - unity_cinematic_mcp_not_implemented
 
 tool_groups:
@@ -92,19 +95,57 @@ availability:
   expose_selected_tool_group_only: true
   load_package_source_during_normal_use: false
 
-supported_environment:
-  first_milestone:
-    unity: "6000.3"
-    render_pipeline: URP
-    render_pipeline_version: "17+"
-    rendering_path: Forward
-    render_graph: true
-    primary_platform: Nintendo Switch
+environment_resolution:
+  source_of_truth: target_unity_project
+  inspect_before_backend_selection: true
+  fixed_default_environment: prohibited
 
-pipeline_status:
-  BuiltIn: specification_only
-  Universal: first_implementation_target
-  HighDefinition: specification_only
+  required_facts:
+    - unity_version
+    - render_pipeline_kind
+    - render_pipeline_package_version
+    - active_renderer
+    - rendering_path
+    - render_graph_mode
+    - active_build_target
+    - installed_build_targets
+    - graphics_apis
+    - scripting_backend
+    - relevant_package_capabilities
+
+  precedence:
+    - detected_target_project_facts
+    - explicit_request_targets_and_constraints
+    - project_specific_profile
+    - unity_agent_default_preferences
+
+  unknown_fact_policy:
+    assume_default: false
+    return_unresolved_capability: true
+    block_native_api_selection_when_required: true
+
+backend_selection:
+  select_after_project_inspection: true
+  load_only_selected_implemented_backend: true
+  silent_fallback: prohibited
+  backend_interface_requires_multiple_real_implementations: true
+
+capability_status:
+  values:
+    - AVAILABLE
+    - UNAVAILABLE
+    - UNSUPPORTED
+    - UNVERIFIED
+    - PACKAGE_NOT_INSTALLED
+    - VERSION_NOT_SUPPORTED
+    - PROJECT_CONFIGURATION_REQUIRED
+    - BACKEND_NOT_IMPLEMENTED
+  unverified_is_not_unsupported: true
+
+verification:
+  matrix_path: ../../Tests/Compatibility/verification-matrix.yaml
+  verified_environment_is_evidence_not_global_support_contract: true
+  empty_matrix_means_not_verified: true
 
 safety:
   inspect_must_not_dirty_unity_state: true

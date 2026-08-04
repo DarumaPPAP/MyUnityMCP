@@ -2,8 +2,7 @@
   "name": "com.darumappap.my-unity-mcp",
   "version": "0.1.0",
   "displayName": "My Unity MCP",
-  "description": "UnityAgentの方針に従い、Creator Workflow、Domain MCP、Capability Moduleを必要時だけ有効化するUnity Editor向けMCP基盤です。現在は仕様・Manifest段階で、Unity Tool実装は未着手です。",
-  "unity": "6000.0",
+  "description": "対象Unity ProjectをRead-onlyで解析し、Creator Workflow、Domain MCP、Capability Moduleを必要時だけ有効化するUnity Editor向けMCP基盤です。現在は仕様・Manifest段階で、Unity Tool実装は未着手です。",
   "author": {
     "name": "DarumaPPAP"
   },

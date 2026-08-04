@@ -39,6 +39,27 @@ MCPが生成・変更するScene、Prefab、Material、Timeline、Volume Profile
 
 UnityAgentはユーザー固有のコーディング規約、Architecture方針、Visual Direction、Route、Context Pack、Task Contract、Knowledge Contractを所有します。
 
+## Project environment resolution
+
+MyUnityMCPはUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをRepository全体の固定前提にしません。
+
+```text
+対象Unity ProjectをInspect
+→ 検出したProject事実を確定
+→ ユーザーが今回指定したTargetと比較
+→ 利用可能なBackend / Capabilityだけを選択
+→ 未対応・未検証・未設定を区別して返す
+```
+
+情報の優先順位は次です。
+
+1. 対象Unity Projectから検出した事実
+2. 今回の依頼で明示されたTargetと制約
+3. Project固有Profile
+4. UnityAgentの既定Preference
+
+`UNVERIFIED`を`UNSUPPORTED`として扱わず、Project事実をProfileや個人既定値で上書きしません。
+
 ## On-demand activation
 
 通常はCatalogの短いEntryだけを参照します。
@@ -68,7 +89,7 @@ inspect → plan → mutate → bake → capture
 - UnityGraphicsMCP: 仕様作成済み
 - UPM Package: 骨格作成済み
 - Unity Editor Tool C#実装: 未着手
-- Unity Compile / EditMode / Player / Switch検証: 未実行
+- Unity Compile / EditMode / Player / Target Device検証: 未実行
 
 仕様やManifestの存在を、MCP Toolが動作する証拠として扱いません。
 
@@ -83,14 +104,18 @@ Workflows/
 Packages/
   com.darumappap.my-unity-mcp/
 Tests/
+  Compatibility/
 ```
 
 ## First implementation milestone
 
-- Unity 6000.3
-- URP 17+
-- Forward
-- RenderGraph
-- Nintendo Switch優先
-- Editor-only
-- Read-only Inspectionから開始
+最初のMilestoneは特定のUnity Version、Pipeline、Rendering Path、Platformではなく、次の能力です。
+
+- 対象ProjectのRead-only環境検出
+- Project Contextと要求Targetの分離
+- Capability / Backend解決
+- `UNSUPPORTED` / `UNVERIFIED` / `PROJECT_CONFIGURATION_REQUIRED`の区別
+- Editor-only Read-only Inspection
+- 実装済みBackendだけの選択的公開
+
+最初に利用できる検証Projectの環境はCompatibility Matrixへ記録し、MyUnityMCP全体の対応条件とは扱いません。

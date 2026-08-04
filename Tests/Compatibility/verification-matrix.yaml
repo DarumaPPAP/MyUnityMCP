@@ -1,0 +1,31 @@
+schema_version: "1.0"
+
+purpose:
+  - record_actual_verification_evidence
+  - keep_verification_separate_from_global_support_contract
+
+rules:
+  empty_matrix_means_not_verified: true
+  unverified_is_not_unsupported: true
+  editor_success_does_not_imply_player_success: true
+  player_success_does_not_imply_target_device_success: true
+  one_project_result_does_not_define_package_wide_support: true
+
+required_fields_per_entry:
+  - verification_id
+  - date
+  - unity_version
+  - render_pipeline_kind
+  - render_pipeline_package_version
+  - rendering_path
+  - render_graph_mode
+  - active_build_target
+  - graphics_apis
+  - tool_group
+  - editor_compile
+  - editmode
+  - player
+  - target_device
+  - evidence
+
+entries: []
