@@ -1,12 +1,12 @@
 # UnityGraphicsMCP Tasks
 
-- TaskPlanVersion: `2.2.0`
-- CurrentPhase: `Phase 1 Verification`
-- ImplementationStatus: `Read-only Source Complete / Unity Unverified`
+- TaskPlanVersion: `2.3.0`
+- CurrentPhase: `Phase 2 Planning`
+- ImplementationStatus: `Phase 1 Read-only Operational Complete`
 
 ## Status legend
 
-- `DONE`: Sourceまたは仕様の完了条件を満たした。
+- `DONE`: Source、Unity Compile、必要な実行検証を含む完了条件を満たした。
 - `SOURCE_DONE`: Sourceは存在するがUnity Compileまたは実行検証前。
 - `PENDING`: 未着手または前提Gate待ち。
 - `BLOCKED`: 必須依存または承認待ち。
@@ -49,42 +49,36 @@
 
 ### UGMCP-000-008 Compatibility matrix — DONE
 
-Environment EntryはUnity検証を実行するまで空とする。
+- Phase 1 Unity CI実績をEnvironment Entryとして記録。
+- 一つの検証実績をPackage全体の固定対応条件として扱わない。
 
 ## Phase 1A: Bridge and project environment inspection
 
 ### UGMCP-010-001 Unity MCP API confirmation — DONE
 
-確認基準:
+確認・検証済み:
 
 - Package: `com.coplaydev.unity-mcp`
-- Version: `10.1.2`
+- 宣言API基準: `10.1.2`
+- Unity検証Commit: `9f84072c38906e3ca903f14f6a8edc1a1c9012c3`
 - Assembly: `MCPForUnity.Editor`
 - Tool Attribute: `McpForUnityToolAttribute`
 - Parameter Attribute: `ToolParameterAttribute`
 - Command Entry: `HandleCommand(JObject)`
 - Responses: `SuccessResponse` / `ErrorResponse`
+- Command Registry Discovery: PASS
+- Direct Handler Invocation: PASS
 
-未確認:
+外部MCP ClientからのNetwork接続はPhase 1 CI対象外で、未検証。
 
-- 対象ProjectでのPackage解決
-- Tool Discovery実行
-- MCP ClientからのInvocation
+### UGMCP-010-002 Package assembly — DONE
 
-### UGMCP-010-002 Package assembly — SOURCE_DONE
+- Editor Assembly Compile: PASS
+- EditMode Test Assembly Compile: PASS
+- Bridge / Newtonsoft / Test Framework依存解決: PASS
+- Unity Package metadata / GUID固定: DONE
 
-追加済み:
-
-- `Editor/MyUnityMcp.Editor.asmdef`
-- `Tests/Editor/MyUnityMcp.Editor.Tests.asmdef`
-- MCP Bridge / Newtonsoft / Test Framework依存
-
-Acceptance残件:
-
-- 対象Unity ProjectでCompile
-- Package dependency解決
-
-### UGMCP-010-003 Project environment resolution — SOURCE_DONE
+### UGMCP-010-003 Project environment resolution — DONE
 
 Tool:
 
@@ -103,24 +97,19 @@ Tool:
 - RenderGraph ModeのRead-only推定
 - Loaded Scene
 - Relevant Package
+- Detected Project Facts
+- Requested Target / Constraint
 
-Acceptance残件:
+Detected ProjectとRequested Targetの分離をEditMode Testで確認済み。
 
-- Unity Compile
-- 実Projectでの出力確認
-- Version差異確認
+### UGMCP-010-004 Capability and backend selection — DONE
 
-### UGMCP-010-004 Capability and backend selection — SOURCE_DONE
+- Pipeline Package型へ直接固定依存しないRead-only検出。
+- 別PipelineへのSilent Fallback禁止。
+- `UNVERIFIED`と`UNSUPPORTED`を分離。
+- 二つ目の実在Backendがないため共通Backend Interfaceを作らない。
 
-現在のPhase 1はPipeline Package型へ直接依存せず、Project検出とSerialized Capability Inspectionを行う。
-
-- 別PipelineへSilent Fallbackしない。
-- 不明値は`UNKNOWN`または未検証状態として返す。
-- 二つ目の実在Backendがないため共通Backend Interfaceは作成しない。
-
-### UGMCP-010-005 Editor session — SOURCE_DONE
-
-実装済み:
+### UGMCP-010-005 Editor session — DONE
 
 - Session ID
 - Revision
@@ -128,17 +117,14 @@ Acceptance残件:
 - Snapshot TTL / Count上限
 - Cursor Paging
 - Hierarchy / Project / Undo / Scene EventによるRevision更新
-- Compile / Domain Reload / Editor終了時の無効化
+- Compile / Domain Reload / Play Mode遷移 / Editor終了時の無効化
 - Read-only Dirty Guard
 
-制限:
-
-- MCP BridgeがMain ThreadでCommandを実行する前提。
-- Worker Thread Queueは、実際に非Main Thread Callが確認された場合に追加する。
+MCP BridgeのMain Thread Command DispatchをSourceとUnity実行で確認済み。Worker Thread Queueは実際の必要性が確認されるまで追加しない。
 
 ## Phase 1B: Scene inspection and validation
 
-### UGMCP-011-001 Read-only scene inspection — SOURCE_DONE
+### UGMCP-011-001 Read-only scene inspection — DONE
 
 Tool:
 
@@ -161,14 +147,14 @@ Tool:
 - Cinemachine Capability
 - Renderer Feature
 
-安全方針:
+安全検証:
 
-- `Renderer.sharedMaterials`のみ使用。
-- `Volume.sharedProfile`相当のみRead-only取得。
-- Serialized Propertyへ書き込まない。
-- SnapshotへUnityEngine.Objectを保持しない。
+- Scene Dirty非変更: PASS
+- Persistent Asset Dirty非変更: PASS
+- Renderer Material非インスタンス化: PASS
+- Snapshot Cursor範囲外拒否: PASS
 
-### UGMCP-011-002 Validate scene — SOURCE_DONE
+### UGMCP-011-002 Validate scene — DONE
 
 Tool:
 
@@ -183,52 +169,53 @@ Tool:
 - Lightmapあり / LightingDataAsset未確認のHeuristic
 - URP Renderer Data解決失敗
 
-返却契約:
+Lightmap Index範囲外RuleをEditMode Testで確認済み。
 
-- Rule ID
-- Invariant / Policy / Heuristic
-- Severity
-- Confidence
-- Affected Object ID
-- Evidence
+### UGMCP-011-003 EditMode tests — DONE
 
-### UGMCP-011-003 EditMode tests — SOURCE_DONE
+Unity `6000.0.75f1`のGitHub Actions環境で実行。
 
-追加済みTest Source:
+- Total: 9
+- Passed: 9
+- Failed: 0
+- Skipped: 0
+- Inconclusive: 0
 
-- `inspect_project`のDirty非変更
+検証内容:
+
+- 3 ToolのBridge Discovery
+- Default Disable契約
+- Bridge Handler Invocation
+- Scene Dirty Guard
+- Persistent Asset Dirty Guard
+- Detected Project / Requested Target分離
 - Camera / Light Inspection
 - Renderer Material非インスタンス化
-- Lightmap Index範囲外検出
-- Snapshot Cursor範囲外拒否
+- Snapshot Cursor検証
+- Lightmap Validation
 
-実行状態:
+### UGMCP-011-004 Verification matrix update — DONE
 
-- Not Run
+Evidence:
 
-### UGMCP-011-004 Verification matrix update — PENDING
+- Workflow Run: `30909837287`
+- Job: `91993536157`
+- Artifact: `MyUnityMCP-Phase1-Unity-Evidence`
+- Artifact ID: `8892693112`
 
-対象Unity Projectで次を別Gateとして記録する。
+PlayerとTarget DeviceはEditor-only Phase 1の完了条件外であり、未実行と明示する。
 
-- Editor Compile
-- Bridge Tool Discovery
-- EditMode
-- Player
-- Target Device
+## Phase 1 completion gate — PASSED
 
-## Phase 1 completion gate
-
-以下がすべて通るまでPhase 1をOperational Completeとしない。
-
-1. Package dependency解決
-2. Unity Editor Compile
-3. 3 ToolのBridge Discovery
-4. `graphics.inspect_project`実行
-5. `graphics.inspect_scene`実行
-6. `graphics.validate_scene`実行
-7. EditMode Test成功
-8. Read-only Dirty Guard成功
-9. Compatibility Matrix Environment Entry追加
+1. Package dependency解決 — PASS
+2. Unity Editor Compile — PASS
+3. 3 ToolのBridge Discovery — PASS
+4. `graphics.inspect_project` Bridge Invocation — PASS
+5. `graphics.inspect_scene`実行 — PASS
+6. `graphics.validate_scene`実行 — PASS
+7. EditMode Test成功 — 9 / 9 PASS
+8. Read-only Dirty Guard成功 — PASS
+9. Compatibility Matrix Environment Entry追加 — DONE
 
 ## Phase 2: Planning — PENDING
 
