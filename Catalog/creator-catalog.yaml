@@ -1,0 +1,66 @@
+schema_version: "1.0"
+
+selection:
+  select_creator_when_goal_is_completed_experience: true
+  select_domain_mcp_when_goal_is_bounded_technical_operation: true
+  creator_must_not_call_capability_module_directly: true
+
+creators:
+  live_creator:
+    kind: workflow
+    status: specified
+    workflow: Workflows/LiveCreator.yaml
+    use_when:
+      - live stage production
+      - idol concert production
+      - music synchronized camera lighting and VFX
+    required_domains:
+      - unity_graphics_mcp
+      - unity_cinematic_mcp
+    conditional_domains:
+      - unity_animation_mcp
+      - unity_audio_mcp
+      - unity_profiler_mcp
+      - unity_build_mcp
+    completion_owner:
+      - stage_visual_coherence
+      - character_first_presentation
+      - music_and_camera_workflow
+      - capture_and_review_sequence
+
+  movie_creator:
+    kind: workflow
+    status: specified
+    workflow: Workflows/MovieCreator.yaml
+    use_when:
+      - cutscene production
+      - narrative movie production
+      - shot list blocking lighting camera and final capture
+    required_domains:
+      - unity_graphics_mcp
+      - unity_cinematic_mcp
+    conditional_domains:
+      - unity_animation_mcp
+      - unity_audio_mcp
+      - unity_profiler_mcp
+    completion_owner:
+      - narrative_visual_intent
+      - shot_sequence
+      - continuity
+      - capture_and_review_sequence
+
+  world_creator:
+    kind: workflow
+    status: planned
+    use_when:
+      - environment and world production
+      - set dressing lighting GI material atmosphere
+    required_domains:
+      - unity_graphics_mcp
+
+rules:
+  creator_owns_what_and_order: true
+  domain_mcp_owns_how: true
+  capability_module_owns_bounded_unity_api_operation: true
+  creator_does_not_mutate_unity_directly: true
+  creator_does_not_duplicate_domain_technical_rules: true
