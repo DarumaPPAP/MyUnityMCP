@@ -10,6 +10,7 @@ namespace UnityGraphicsMcp
 	[McpForUnityTool(
 		"graphics.inspect_project",
 		Description = "対象Unity ProjectのVersion、Pipeline、Renderer、Build Target、Graphics API、関連PackageをRead-onlyで取得します。",
+		AutoRegister = false,
 		Group = "core")]
 	public static class GraphicsInspectProjectTool
 	{
@@ -30,6 +31,7 @@ namespace UnityGraphicsMcp
 	[McpForUnityTool(
 		"graphics.inspect_scene",
 		Description = "Loaded SceneのCamera、Light、Probe、Renderer、Material、Volume等をRead-onlyでSnapshot化し、Pagingして返します。",
+		AutoRegister = false,
 		Group = "core")]
 	public static class GraphicsInspectSceneTool
 	{
@@ -71,6 +73,7 @@ namespace UnityGraphicsMcp
 	[McpForUnityTool(
 		"graphics.validate_scene",
 		Description = "Loaded SceneのGraphics不整合をRead-onlyで検証し、Invariant、Policy、Heuristicを区別して返します。",
+		AutoRegister = false,
 		Group = "core")]
 	public static class GraphicsValidateSceneTool
 	{
