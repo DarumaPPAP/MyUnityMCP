@@ -2,26 +2,24 @@
 
 ## Current state
 
-Phase 1のRead-only Unity Editor Toolは実装・Unity検証まで完了しています。
+Phase 1のInspection、Phase 2のDirection Planning、Phase 3Aの承認制Light Mutationまで実装・Unity Editor CI検証済みです。
 
-実装済み:
+実装済みTool:
 
-- `graphics.inspect_project`
-- `graphics.inspect_scene`
-- `graphics.validate_scene`
-- Editor Session / Revision
-- In-memory Snapshot / Paging
-- Read-only Dirty Guard
-- Project Environment / Requested Target分離
-- Capability / Backend Status解決
-- Graphics Validation Rule
-- EditMode Test
+```text
+graphics.inspect_project
+graphics.inspect_scene
+graphics.validate_scene
+graphics.compile_direction
+graphics.preview_plan
+graphics.prepare_light_plan
+graphics.apply_plan
+graphics.undo_last_transaction
+```
 
-Unity CIでPackage Resolve、Editor Compile、Bridge Tool Discovery、直接Handler Invocation、9件のEditMode Testを確認しました。検証実績は`Tests/Compatibility/verification-matrix.yaml`へ記録しています。
+全Toolは`AutoRegister = false`です。Package導入だけでは外部公開されず、必要なToolを明示的にActivationします。
 
 ## Bridge dependency
-
-現在の実装は次のMCP Bridge APIへ接続します。
 
 - Package: `com.coplaydev.unity-mcp`
 - 宣言API基準: `10.1.2`
@@ -32,62 +30,89 @@ Unity CIでPackage Resolve、Editor Compile、Bridge Tool Discovery、直接Hand
 
 MyUnityMCPを導入するProjectでは、このBridge Packageを解決できるPackage RegistryまたはGit Package導入経路が必要です。
 
-## Tool activation
-
-Phase 1の3Toolはすべて`AutoRegister = false`です。
-
-```text
-Package導入
-→ Unity Compile
-→ Bridge Tool Discovery
-→ 必要なPhase 1 Toolを明示的にEnable
-→ MCP Clientを再接続
-```
-
-未選択Toolや未実装Toolを常時公開しません。現段階ではMCP for UnityのTool設定から明示的に有効化し、将来はUnityAgentMCPのActivation Policyから制御します。
-
-## Implemented operation flow
+## Operation flow
 
 ```text
 graphics.inspect_project
-→ Project EnvironmentをRead-only検出
-→ Requested Targetと分離
-→ Pipeline / Renderer / Build Target / Capabilityを返す
+→ Project EnvironmentとCapabilityを検出
 
-graphics.inspect_scene
-→ Loaded SceneをRead-only解析
-→ Snapshot IDとPageを返す
-→ 同じSnapshot IDとCursorで続きを取得
+graphics.inspect_scene / graphics.validate_scene
+→ Scene状態とGraphics不整合をRead-onlyで取得
 
-graphics.validate_scene
-→ Invariant / Policy / Heuristicを区別
-→ Severity / Confidence / Evidence / Object IDを返す
+graphics.compile_direction
+→ 構造化Visual IntentからDirection Planを作成
+
+graphics.preview_plan
+→ 抽象Planが要求するCreated / Modified / Dirty / Bake候補をRead-only予告
+
+graphics.prepare_light_plan
+→ 明示的なLIGHT_CREATE / LIGHT_UPDATEを検証
+→ 正確なBefore / After、Diff Digest、Approval Tokenを発行
+
+graphics.apply_plan
+→ Plan ID、Expected Revision、Approval Tokenを再検証
+→ 一つのUnity Undo Transactionとして適用
+
+graphics.undo_last_transaction
+→ 直近Transactionで外部変更がない場合だけ復元
 ```
+
+## Phase 3A mutation scope
+
+対応:
+
+- `LIGHT_CREATE`
+- `LIGHT_UPDATE`
+- Directional / Point / Spot
+- Name
+- Color
+- Intensity
+- Range
+- Spot Angle
+- Shadow
+- Position / Euler Angles
+- Enabled
+
+未対応:
+
+- Light削除
+- Area Light
+- Volume / Reflection Probe / Camera Mutation
+- Material / Renderer Feature Mutation
+- Scene / Asset Save
+- Lighting Bake
+- Capture / Visual Refine
+
+Unity C#側で自然言語からLightの数値を推測しません。UnityAgentまたはMCP Clientが明示値を構造化し、`prepare_light_plan`で正確な差分へ変換します。
+
+## Safety contract
+
+- Phase 2 Direction Plan必須
+- Exact Preview必須
+- 一時Approval Token必須
+- Expected Revision一致必須
+- Preview時Baselineを適用直前に再照合
+- 全操作を一つのUndo Groupへ集約
+- 例外時はUndo Group単位でRollback
+- 直近Transaction以外の自動Undo禁止
+- Transaction後に外部変更があればUndo拒否
+- `saveMode = NONE`のみ
+- 自動保存禁止
+- Bake禁止
+- Silent Fallback禁止
+
+InspectionとPlanningではScene、Persistent Asset、Undo Groupを変更しません。Mutationでは対象SceneをDirtyにしますが、保存は利用者の明示操作へ残します。
 
 ## Project environment policy
 
 特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、PlatformをPackage全体へ固定しません。
 
-- 対象Projectの検出済み事実を正とする。
-- Requested Targetを検出済み事実と混同しない。
-- `UNVERIFIED`を`UNSUPPORTED`として扱わない。
-- 未実装Backendへ黙ってFallbackしない。
-- 検証環境はCompatibility Matrixへ実績として記録する。
+1. 対象Projectから検出した事実
+2. 今回の依頼で明示されたTargetと制約
+3. Project固有Profile
+4. UnityAgentの既定Preference
 
-## Read-only safety
-
-Inspectionでは次を行いません。
-
-- `Renderer.material` / `Renderer.materials`の参照
-- `Volume.profile`の参照
-- `SerializedObject.ApplyModifiedProperties`
-- `EditorUtility.SetDirty`
-- `Undo.RecordObject`
-- Scene Save
-- Asset Save
-- Bake
-
-Tool実行前後でLoaded Scene、Persistent Asset、Undo Groupの状態を比較します。Renderer Materialをインスタンス化しないこともEditMode Testで検証しています。
+この順序で解決します。`UNVERIFIED`を`UNSUPPORTED`として扱わず、未実装Backendへ黙ってFallbackしません。
 
 ## Verified environment
 
@@ -98,17 +123,18 @@ Tool実行前後でLoaded Scene、Persistent Asset、Undo Groupの状態を比�
 - Editor Compile: PASS
 - Bridge Discovery: PASS
 - Direct Handler Invocation: PASS
-- EditMode: `9 / 9 PASS`
+- EditMode: `30 / 30 PASS`
 
-この実績は一つの検証環境に対するEvidenceであり、Unity VersionやPipelineの固定要件ではありません。PlayerとTarget DeviceはEditor-onlyのPhase 1完了条件外で、未検証です。
+検証実績は`Tests/Compatibility/verification-matrix.yaml`を正本とします。この実績は一つのEditor環境に対するEvidenceであり、すべてのUnity Version、Pipeline、Player、実機対応を意味しません。
 
 ## Next phase
 
-Phase 2ではRead-only Plan Toolを追加します。
+Phase 3Bでは、同じTransaction Contractを維持したまま次のCapabilityを段階追加します。
 
 ```text
-graphics.compile_direction
-graphics.preview_plan
+Volume
+Reflection Probe
+Camera
 ```
 
-Mutation、Undo、Bake、CaptureはPlan Contractが安定するまで公開しません。
+汎用的な任意`SerializedProperty`書換えToolは追加しません。
