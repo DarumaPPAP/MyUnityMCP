@@ -81,20 +81,22 @@ inspect → plan → mutate → bake → capture
 
 ## Current status
 
-現在はPhase 1のRead-only C# Tool Sourceまで構築済みです。
+Phase 1のRead-only Unity Editor Toolは実装・Unity検証まで完了しています。
 
 - Architecture / Catalog / Workflow: 作成済み
 - UnityGraphicsMCP仕様: 作成済み
-- `graphics.inspect_project`: Source実装済み・Unity未検証
-- `graphics.inspect_scene`: Source実装済み・Unity未検証
-- `graphics.validate_scene`: Source実装済み・Unity未検証
-- Session / Revision / Snapshot / Paging: Source実装済み
-- Read-only Dirty Guard: Source実装済み
-- EditMode Test: Source実装済み・未実行
-- Unity Compile / Bridge Discovery / Player / Target Device: 未実行
+- `graphics.inspect_project`: 実装・Bridge Discovery・直接Invocation検証済み
+- `graphics.inspect_scene`: 実装・Snapshot / Paging・Read-only検証済み
+- `graphics.validate_scene`: 実装・Rule検証済み
+- Session / Revision / Snapshot / Paging: 実装済み
+- Read-only Dirty Guard: Scene / Persistent Assetで検証済み
+- Renderer Material非インスタンス化: 検証済み
+- Unity Editor Compile: 成功
+- EditMode Test: 9 / 9成功
+- Player / Target Device: Phase 1 Editor Toolの完了条件外、未実行
 - Plan / Mutation / Bake / Capture: 未着手
 
-Sourceの存在だけを運用可能性の証拠とは扱いません。対象Unity ProjectでCompile、Tool Discovery、EditMode Testを通過した後にCompatibility Matrixへ実績を記録します。
+検証環境は一つの実績であり、Package全体の固定対応条件ではありません。詳細は`Tests/Compatibility/verification-matrix.yaml`を正本とします。
 
 ## Phase 1 tools
 
@@ -104,7 +106,23 @@ graphics.inspect_scene
 graphics.validate_scene
 ```
 
-MCP BridgeのAPI確認基準は`com.coplaydev.unity-mcp 10.1.2`です。
+3Toolは`AutoRegister = false`で、明示的にActivationした場合だけ公開します。未実装Toolは公開しません。
+
+MCP Bridgeの宣言API基準は`com.coplaydev.unity-mcp 10.1.2`、Unity CIで検証したBridge SourceはCommit `9f84072c38906e3ca903f14f6a8edc1a1c9012c3`です。
+
+## Verified Phase 1 evidence
+
+- Unity: `6000.0.75f1`
+- Host: GitHub Actions Ubuntu 24.04
+- Package Resolve: PASS
+- Editor Compile: PASS
+- Bridge Tool Discovery: PASS
+- Direct Handler Invocation: PASS
+- EditMode: `9 / 9 PASS`
+- Workflow Run: `30909837287`
+- Evidence Artifact: `MyUnityMCP-Phase1-Unity-Evidence`
+
+この実績はPlayer、実機、すべてのUnity Version、すべてのRender Pipeline対応を意味しません。
 
 ## Repository map
 
@@ -118,17 +136,19 @@ Packages/
   com.darumappap.my-unity-mcp/
     Editor/
     Tests/Editor/
+TestProjects/
+  MyUnityMCPPhase1/
 Tests/
   Compatibility/
 ```
 
-## Next gate
+## Next phase
 
-次は対象Unity ProjectへPackageを導入し、以下を検証します。
+Phase 2ではUnity状態を変更せず、Visual Intentを技術Planへ変換する次のToolを設計・実装します。
 
-1. Package dependency解決
-2. Unity Editor Compile
-3. MCP Tool Discovery
-4. Read-only Tool実行
-5. EditMode Test
-6. Compatibility Matrix更新
+```text
+graphics.compile_direction
+graphics.preview_plan
+```
+
+Mutation、Undo、Bake、CaptureはPhase 2のPlan Contractが安定した後に開放します。
