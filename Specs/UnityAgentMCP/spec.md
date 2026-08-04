@@ -1,7 +1,7 @@
 # UnityAgentMCP 仕様書
 
 - FeatureName: `UnityAgentMCP`
-- DocumentVersion: `1.0.0`
+- DocumentVersion: `1.1.0`
 - DesignStatus: `Draft`
 - ImplementationStatus: `Not Started`
 - VerificationStatus: `Not Run`
@@ -10,7 +10,7 @@
 
 UnityAgentのユーザー固有規約・感性・Domain Knowledgeを受け取り、依頼ごとに必要なCreator、Domain MCP、Tool Groupだけを選択してUnity Editorへ接続するControl Planeを構築する。
 
-UnityAgentMCPはUnity操作を直接実装せず、専門Moduleの選択、Activation、権限、共有Transaction、結果統合を所有する。
+UnityAgentMCPはUnity操作を直接実装せず、専門Moduleの選択、Activation、権限、共有Transaction、Project Context、結果統合を所有する。
 
 ## 2. 論理階層
 
@@ -43,6 +43,7 @@ Unity Editor API
 - CreatorまたはPrimary Domain MCP選択
 - Conditional Domain MCP追加
 - Manifest遅延読込
+- Project Environment Resolution
 - Tool Group段階公開
 - Approval Gate
 - Shared Snapshot / Revision / Transaction契約
@@ -105,6 +106,7 @@ com.darumappap.my-unity-mcp
 - 選択されたCreator Workflow
 - 選択されたDomain MCP Manifest
 - 現在必要なTool Group Schema
+- 選択されたBackend Capability
 
 ### 通常利用では読まない
 
@@ -112,10 +114,51 @@ com.darumappap.my-unity-mcp
 - 全Tool Schema
 - MCP Package C# Source
 - 未選択DomainのKnowledge
+- 未選択Pipeline BackendのSource
 
 Package Sourceを読むのはMCP実装、MCPバグ修正、Schema監査、Unity Version移行、Security Reviewだけとする。
 
-## 6. Tool Group contract
+## 6. Project environment resolution contract
+
+UnityAgentMCPは、Unity Version、Render Pipeline、Rendering Path、RenderGraph、Platformを固定既定値として扱わない。
+
+Backend選択前に対象Unity ProjectをRead-onlyでInspectし、Detected Project Factsを作成する。
+
+### Detected Project Facts
+
+- Unity Version
+- Pipeline Kind / Package Version
+- Active Renderer / Rendering Path
+- RenderGraph Mode
+- Active / Installed Build Target
+- Graphics API
+- Scripting Backend
+- Package Presence
+- Capability Summary
+
+### Requested Target
+
+- 今回要求されたPlatform
+- 品質優先度
+- 性能Budget
+- 禁止変更
+- 必須Evidence
+
+### Precedence
+
+```text
+Detected Project Facts
+→ Explicit Requested Target
+→ Project-specific Profile
+→ UnityAgent Default Preference
+```
+
+- Project ProfileとPreferenceは補助情報であり、検出済み事実を上書きしない。
+- Requested TargetとDetected Build Targetが異なる場合は差異をResultへ残す。
+- `UNVERIFIED`と`UNSUPPORTED`を区別する。
+- Backend未実装時に別Pipelineへ黙ってFallbackしない。
+
+## 7. Tool Group contract
 
 ```text
 inspect → plan → mutate → bake → capture
@@ -160,7 +203,7 @@ inspect → plan → mutate → bake → capture
 - Capture後に元状態を復元する
 - Capture生成をVisual Acceptanceと扱わない
 
-## 7. Ownership
+## 8. Ownership
 
 | 対象 | 正本 |
 |---|---|
@@ -170,7 +213,7 @@ inspect → plan → mutate → bake → capture
 | 美的基準 | `DarumaPPAP/Beautiful-Definition` |
 | 汎用Graph / Retry / Budget | `DarumaPPAP/Unity-Graph-Engineering` |
 
-## 8. Safety requirements
+## 9. Safety requirements
 
 - Read-only ToolはUnity状態を変更しない。
 - Project Settings、Renderer Data、Pipeline Asset変更は別承認を要求する。
@@ -179,23 +222,28 @@ inspect → plan → mutate → bake → capture
 - Tool Resultは機械可読Resultと人間向けSummaryを返す。
 - Domain Reload、Compile開始、Editor終了時に未完了Transactionを中断できること。
 - MCPの自己申告だけをEvidenceにしない。
+- 一つのVerification Matrix EntryをPackage全体の対応保証としない。
 
-## 9. Non-goals
+## 10. Non-goals
 
 - UnityAgentMCP自身へのGraphics、Timeline、UI等の専門処理実装
 - 初回から複数の物理MCP Serverを起動すること
 - 全Domain MCPの空実装
+- 特定Unity Version、Pipeline、Rendering Path、Platformの全体固定
 - Runtime MCP
 - 無承認Mutation
 - Automatic Save
 - Human ReviewなしのVisual Acceptance
 
-## 10. Acceptance criteria
+## 11. Acceptance criteria
 
 - CatalogからPrimary CreatorまたはDomain MCPを一つ選択できる。
 - 未選択Manifest、Tool Schema、Package Sourceを読み込まない。
+- Project Contextを検出してからBackendを選択できる。
+- Detected Project FactsとRequested Targetを分離できる。
+- `UNVERIFIED`と`UNSUPPORTED`を区別できる。
 - Tool Groupを段階公開できる。
 - MutationとBakeを別Gateとして扱える。
 - Creator、Domain MCP、Capability ModuleのOwnershipが重複しない。
 - MyUnityMCPと対象Unity Projectの成果物境界が明確である。
-- 未実装Toolを利用可能として公開しない。
+- 未実装ToolまたはBackendを利用可能として公開しない。
