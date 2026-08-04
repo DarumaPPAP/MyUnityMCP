@@ -709,7 +709,13 @@ namespace UnityGraphicsMcp
 				{
 					if (operation.Operation == "LIGHT_CREATE")
 					{
-						Scene scene = SceneManager.GetSceneByHandle(operation.TargetSceneHandle);
+						Scene scene;
+						if (!TryResolveLoadedSceneByHandle(operation.TargetSceneHandle, out scene))
+						{
+							throw new InvalidOperationException(
+								"LIGHT_CREATE対象SceneがLoaded Sceneとして解決できません。");
+						}
+
 						GameObject gameObject = new GameObject(operation.Name);
 						if (gameObject.scene.handle != scene.handle)
 						{
@@ -1117,8 +1123,8 @@ namespace UnityGraphicsMcp
 			{
 				if (operation.Operation == "LIGHT_CREATE")
 				{
-					Scene scene = SceneManager.GetSceneByHandle(operation.TargetSceneHandle);
-					if (!scene.IsValid() || !scene.isLoaded ||
+					Scene scene;
+					if (!TryResolveLoadedSceneByHandle(operation.TargetSceneHandle, out scene) ||
 						NormalizeSceneLabel(scene) != operation.TargetScenePath)
 					{
 						issues.Add(CreateMutationIssue(
@@ -1552,6 +1558,22 @@ namespace UnityGraphicsMcp
 				operation.Position.HasValue ||
 				operation.EulerAngles.HasValue ||
 				operation.Enabled.HasValue;
+		}
+
+		private static bool TryResolveLoadedSceneByHandle(int handle, out Scene scene)
+		{
+			for (int index = 0; index < SceneManager.sceneCount; index++)
+			{
+				Scene candidate = SceneManager.GetSceneAt(index);
+				if (candidate.IsValid() && candidate.isLoaded && candidate.handle == handle)
+				{
+					scene = candidate;
+					return true;
+				}
+			}
+
+			scene = default(Scene);
+			return false;
 		}
 
 		private static bool TryResolveLoadedScene(string path, out Scene scene)
