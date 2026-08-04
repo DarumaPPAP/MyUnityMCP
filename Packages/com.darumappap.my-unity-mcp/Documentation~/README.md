@@ -29,6 +29,21 @@ Phase 1のRead-only C# Tool Sourceを実装しています。
 
 MyUnityMCPを導入するProjectでは、このBridge Packageを解決できるPackage Registryまたは導入経路が必要です。
 
+## Tool activation
+
+Phase 1の3Toolはすべて`AutoRegister = false`です。
+
+```text
+Package導入
+→ Unity Compile
+→ EditMode Test
+→ Bridge Tool Discovery
+→ Phase 1 Toolを明示的にEnable
+→ MCP Clientを再接続
+```
+
+検証前に`core` Toolとして常時公開しません。現段階ではMCP for UnityのTool設定から明示的に有効化し、将来はUnityAgentMCPのActivation Policyから制御します。
+
 ## Implemented operation flow
 
 ```text
@@ -77,11 +92,12 @@ Tool実行前後でLoaded SceneのDirty状態とUndo Groupを比較し、変化�
 
 1. Package dependency解決
 2. Unity Editor Compile
-3. MCP Bridge Tool Discovery
-4. `graphics.inspect_project`実行
-5. `graphics.inspect_scene`実行
-6. `graphics.validate_scene`実行
-7. EditMode Test
-8. Compatibility Matrix更新
+3. EditMode Test
+4. MCP Bridge Tool Discovery
+5. Phase 1 Toolの明示Enable
+6. `graphics.inspect_project`実行
+7. `graphics.inspect_scene`実行
+8. `graphics.validate_scene`実行
+9. Compatibility Matrix更新
 
 未実行GateをPassedとして扱いません。
