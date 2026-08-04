@@ -105,6 +105,114 @@ namespace UnityGraphicsMcp
 		}
 	}
 
+	[McpForUnityTool(
+		"graphics.compile_direction",
+		Description = "構造化Visual Intentと対象Project事実から、Pipeline非依存のDirection PlanをRead-onlyで生成します。",
+		AutoRegister = false,
+		Group = "core")]
+	public static class GraphicsCompileDirectionTool
+	{
+		public sealed class Parameters
+		{
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
+
+			[ToolParameter("制作Goalまたは自然言語によるVisual Direction。", Required = false)]
+			public string goal { get; set; }
+
+			[ToolParameter("参考画像を外部Visionまたは人間が観察して構造化した記述。Unity側では画像解析を行いません。", Required = false)]
+			public string[] referenceObservations { get; set; }
+
+			[ToolParameter("感情・印象の意図。例: 幻想的、切ない、華やか。", Required = false)]
+			public string[] emotionalIntent { get; set; }
+
+			[ToolParameter("Hero / Support / Landmark / Foreground / Midground / Background等の構図階層。", Required = false)]
+			public string[] compositionHierarchy { get; set; }
+
+			[ToolParameter("画角、Lens、Camera movement、Shot language等。", Required = false)]
+			public string[] cameraLanguage { get; set; }
+
+			[ToolParameter("Key / Fill / Rim / Practical / Motivated等のLighting階層。", Required = false)]
+			public string[] lightingHierarchy { get; set; }
+
+			[ToolParameter("色相、明度、彩度、温度、時間変化等のColor Script。", Required = false)]
+			public string[] colorScript { get; set; }
+
+			[ToolParameter("Material、Specular、Reflection、Roughness等の意図。", Required = false)]
+			public string[] materialReflectionIntent { get; set; }
+
+			[ToolParameter("Fog、Aerial Perspective、Depth Cue等のAtmospheric Depth。", Required = false)]
+			public string[] atmosphericDepth { get; set; }
+
+			[ToolParameter("静的、穏やか、激しい等のMotion Energy。", Required = false)]
+			public string[] motionEnergy { get; set; }
+
+			[ToolParameter("Frame Time、Memory、Resolution、Quality等のPerformance Priority。", Required = false)]
+			public string[] performancePriorities { get; set; }
+
+			[ToolParameter("今回のPlan対象Platform。ProjectのActive Build Targetとは別に保持します。", Required = false)]
+			public string[] requestedPlatforms { get; set; }
+
+			[ToolParameter("禁止事項、維持条件、品質制約。", Required = false)]
+			public string[] requestedConstraints { get; set; }
+
+			[ToolParameter("呼び出し元が前提とするEditor Revision。省略時は現在Revisionを使用します。", Required = false)]
+			public long? expectedRevision { get; set; }
+		}
+
+		public static object HandleCommand(JObject @params)
+		{
+			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
+				@params,
+				parameters => UnityGraphicsMcpInspection.CompileDirection(
+					parameters.requestId,
+					parameters.goal,
+					parameters.referenceObservations,
+					parameters.emotionalIntent,
+					parameters.compositionHierarchy,
+					parameters.cameraLanguage,
+					parameters.lightingHierarchy,
+					parameters.colorScript,
+					parameters.materialReflectionIntent,
+					parameters.atmosphericDepth,
+					parameters.motionEnergy,
+					parameters.performancePriorities,
+					parameters.requestedPlatforms,
+					parameters.requestedConstraints,
+					parameters.expectedRevision));
+		}
+	}
+
+	[McpForUnityTool(
+		"graphics.preview_plan",
+		Description = "保存済みDirection Planが生むCreated / Modified / Dirty / Bake / Unsupported / Unverified候補を、Unity状態を変更せずに返します。",
+		AutoRegister = false,
+		Group = "core")]
+	public static class GraphicsPreviewPlanTool
+	{
+		public sealed class Parameters
+		{
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
+
+			[ToolParameter("graphics.compile_directionが返したPlan ID。", Required = true)]
+			public string planId { get; set; }
+
+			[ToolParameter("graphics.compile_directionが返したexpectedRevision。", Required = true)]
+			public long? expectedRevision { get; set; }
+		}
+
+		public static object HandleCommand(JObject @params)
+		{
+			return UnityGraphicsMcpToolBridge.Execute<Parameters>(
+				@params,
+				parameters => UnityGraphicsMcpInspection.PreviewPlan(
+					parameters.requestId,
+					parameters.planId,
+					parameters.expectedRevision));
+		}
+	}
+
 	internal static class UnityGraphicsMcpToolBridge
 	{
 		public static object Execute<T>(
