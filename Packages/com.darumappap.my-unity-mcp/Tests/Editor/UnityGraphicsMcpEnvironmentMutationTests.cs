@@ -15,6 +15,8 @@ namespace UnityGraphicsMcp
 	public sealed class UnityGraphicsMcpEnvironmentMutationTests
 	{
 		private const string TEMP_SCENE_PATH = "Assets/MyUnityMcpPhase3BTemporaryScene.unity";
+		private const string TEMP_PROFILE_A_PATH = "Assets/MyUnityMcpPhase3BProfileA.asset";
+		private const string TEMP_PROFILE_B_PATH = "Assets/MyUnityMcpPhase3BProfileB.asset";
 
 		[SetUp]
 		public void SetUp()
@@ -35,6 +37,8 @@ namespace UnityGraphicsMcp
 			Undo.ClearAll();
 			EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
+			AssetDatabase.DeleteAsset(TEMP_PROFILE_A_PATH);
+			AssetDatabase.DeleteAsset(TEMP_PROFILE_B_PATH);
 		}
 
 		[Test]
@@ -72,10 +76,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyEnvironmentPlan_RejectsMissingApproval()
 		{
-			Dictionary<string, object> executable = PrepareSingle(
-				"phase3b-missing-approval",
-				CreateCameraOperation("camera-create"));
-
+			Dictionary<string, object> executable = PrepareSingle("phase3b-missing-approval", CreateCameraOperation("camera-create"));
 			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.ApplyEnvironmentPlan(
 				"phase3b-missing-approval-result",
 				executable["planId"] as string,
@@ -84,16 +85,13 @@ namespace UnityGraphicsMcp
 				"NONE");
 
 			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
-			Assert.That(UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(0));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
 		}
 
 		[Test]
 		public void ApplyEnvironmentPlan_RejectsAutomaticSave()
 		{
-			Dictionary<string, object> executable = PrepareSingle(
-				"phase3b-save-mode",
-				CreateCameraOperation("camera-create"));
-
+			Dictionary<string, object> executable = PrepareSingle("phase3b-save-mode", CreateCameraOperation("camera-create"));
 			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.ApplyEnvironmentPlan(
 				"phase3b-save-mode-result",
 				executable["planId"] as string,
@@ -108,26 +106,19 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyAndUndo_CreatesCamera()
 		{
-			Dictionary<string, object> executable = PrepareSingle(
-				"phase3b-camera-create",
-				CreateCameraOperation("camera-create"));
+			Dictionary<string, object> executable = PrepareSingle("phase3b-camera-create", CreateCameraOperation("camera-create"));
 			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-camera-apply", executable);
 
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
-			Camera[] cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+			Camera[] cameras = FindAll<Camera>();
 			Assert.That(cameras.Length, Is.EqualTo(1));
 			Assert.That(cameras[0].fieldOfView, Is.EqualTo(52.0f));
 			Assert.That(cameras[0].allowHDR, Is.True);
 			Assert.That(SceneManager.GetActiveScene().path, Is.Empty);
 
-			Dictionary<string, object> applyData = ResultData(applyResult);
-			UnityGraphicsMcpToolResult undoResult = UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
-				"phase3b-camera-undo",
-				applyData["transactionId"] as string,
-				Convert.ToInt64(applyData["revision"]));
-
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-camera-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
-			Assert.That(UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(0));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
 		}
 
 		[Test]
@@ -136,32 +127,36 @@ namespace UnityGraphicsMcp
 			GameObject gameObject = new GameObject("Existing Camera");
 			Camera camera = gameObject.AddComponent<Camera>();
 			camera.fieldOfView = 60.0f;
+			camera.enabled = true;
 			SaveScene();
-			string objectId = GlobalObjectId.GetGlobalObjectIdSlow(camera).ToString();
-			Dictionary<string, object> direction = CompileDirection("phase3b-camera-update-direction");
-			UnityGraphicsMcpEnvironmentOperationInput operation = new UnityGraphicsMcpEnvironmentOperationInput
-			{
-				operationId = "camera-update",
-				operation = "CAMERA_UPDATE",
-				targetObjectId = objectId,
-				fieldOfView = 38.0f,
-				position = Vector(1.0f, 2.0f, 3.0f),
-				enabled = false
-			};
-			Dictionary<string, object> executable = ResultData(Prepare("phase3b-camera-update-prepare", direction, new[] { operation }));
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-camera-update-apply", executable);
 
+			Dictionary<string, object> direction = CompileDirection("phase3b-camera-update-direction");
+			Dictionary<string, object> executable = ResultData(Prepare(
+				"phase3b-camera-update-prepare",
+				direction,
+				new[]
+				{
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "camera-update",
+						operation = "CAMERA_UPDATE",
+						targetObjectId = ObjectId(camera),
+						fieldOfView = 38.0f,
+						position = Vector(1.0f, 2.0f, 3.0f),
+						enabled = false
+					}
+				}));
+
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-camera-update-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Assert.That(camera.fieldOfView, Is.EqualTo(38.0f));
+			Assert.That(camera.transform.position, Is.EqualTo(new Vector3(1.0f, 2.0f, 3.0f)));
 			Assert.That(camera.enabled, Is.False);
-			Dictionary<string, object> applyData = ResultData(applyResult);
-			UnityGraphicsMcpToolResult undoResult = UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
-				"phase3b-camera-update-undo",
-				applyData["transactionId"] as string,
-				Convert.ToInt64(applyData["revision"]));
 
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-camera-update-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(camera.fieldOfView, Is.EqualTo(60.0f));
+			Assert.That(camera.transform.position, Is.EqualTo(Vector3.zero));
 			Assert.That(camera.enabled, Is.True);
 		}
 
@@ -185,28 +180,68 @@ namespace UnityGraphicsMcp
 					resolution = 128,
 					enabled = true
 				});
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-probe-apply", executable);
 
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-probe-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
-			ReflectionProbe[] probes = UnityEngine.Object.FindObjectsByType<ReflectionProbe>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+			ReflectionProbe[] probes = FindAll<ReflectionProbe>();
 			Assert.That(probes.Length, Is.EqualTo(1));
 			Assert.That(probes[0].importance, Is.EqualTo(5));
 			Assert.That(probes[0].boxProjection, Is.True);
 
-			Dictionary<string, object> applyData = ResultData(applyResult);
-			UnityGraphicsMcpToolResult undoResult = UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
-				"phase3b-probe-undo",
-				applyData["transactionId"] as string,
-				Convert.ToInt64(applyData["revision"]));
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-probe-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
-			Assert.That(UnityEngine.Object.FindObjectsByType<ReflectionProbe>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(0));
+			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void ApplyAndUndo_UpdatesReflectionProbe()
+		{
+			GameObject gameObject = new GameObject("Existing Probe");
+			ReflectionProbe probe = gameObject.AddComponent<ReflectionProbe>();
+			probe.importance = 1;
+			probe.intensity = 0.5f;
+			probe.boxProjection = false;
+			probe.size = new Vector3(4.0f, 4.0f, 4.0f);
+			SaveScene();
+
+			Dictionary<string, object> direction = CompileDirection("phase3b-probe-update-direction");
+			Dictionary<string, object> executable = ResultData(Prepare(
+				"phase3b-probe-update-prepare",
+				direction,
+				new[]
+				{
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "probe-update",
+						operation = "REFLECTION_PROBE_UPDATE",
+						targetObjectId = ObjectId(probe),
+						importance = 8,
+						intensity = 1.75f,
+						boxProjection = true,
+						size = Vector(10.0f, 6.0f, 8.0f),
+						center = Vector(0.0f, 2.0f, 0.0f)
+					}
+				}));
+
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-probe-update-apply", executable);
+			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
+			Assert.That(probe.importance, Is.EqualTo(8));
+			Assert.That(probe.intensity, Is.EqualTo(1.75f));
+			Assert.That(probe.boxProjection, Is.True);
+			Assert.That(probe.size, Is.EqualTo(new Vector3(10.0f, 6.0f, 8.0f)));
+
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-probe-update-undo", applyResult);
+			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
+			Assert.That(probe.importance, Is.EqualTo(1));
+			Assert.That(probe.intensity, Is.EqualTo(0.5f));
+			Assert.That(probe.boxProjection, Is.False);
+			Assert.That(probe.size, Is.EqualTo(new Vector3(4.0f, 4.0f, 4.0f)));
 		}
 
 		[Test]
 		public void ApplyAndUndo_CreatesVolume_WhenCorePackageIsAvailable()
 		{
-			Type volumeType = Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false);
-			Assert.That(volumeType, Is.Not.Null, "Phase 3B Verification ProjectにはRender Pipelines Core Packageが必要です。");
+			Type volumeType = RequireVolumeType();
 			Dictionary<string, object> executable = PrepareSingle(
 				"phase3b-volume-create",
 				new UnityGraphicsMcpEnvironmentOperationInput
@@ -220,22 +255,74 @@ namespace UnityGraphicsMcp
 					blendDistance = 0.0f,
 					enabled = true
 				});
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-volume-apply", executable);
 
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-volume-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Component volume = FindComponent(volumeType);
 			Assert.That(volume, Is.Not.Null);
-			Assert.That((bool)GetProperty(volume, "isGlobal"), Is.True);
-			Assert.That(Convert.ToSingle(GetProperty(volume, "priority")), Is.EqualTo(10.0f));
-			Assert.That(Convert.ToSingle(GetProperty(volume, "weight")), Is.EqualTo(0.75f));
+			Assert.That((bool)GetMemberValue(volume, "isGlobal"), Is.True);
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(10.0f));
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "weight")), Is.EqualTo(0.75f));
 
-			Dictionary<string, object> applyData = ResultData(applyResult);
-			UnityGraphicsMcpToolResult undoResult = UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
-				"phase3b-volume-undo",
-				applyData["transactionId"] as string,
-				Convert.ToInt64(applyData["revision"]));
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-volume-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(FindComponent(volumeType), Is.Null);
+		}
+
+		[Test]
+		public void ApplyAndUndo_UpdatesVolumeAndSharedProfile()
+		{
+			Type volumeType = RequireVolumeType();
+			Type profileType = RequireVolumeProfileType();
+			ScriptableObject profileA = CreateProfile(profileType, TEMP_PROFILE_A_PATH);
+			ScriptableObject profileB = CreateProfile(profileType, TEMP_PROFILE_B_PATH);
+			GameObject gameObject = new GameObject("Existing Volume");
+			Component volume = gameObject.AddComponent(volumeType);
+			SetMemberValue(volume, "isGlobal", false);
+			SetMemberValue(volume, "priority", 1.0f);
+			SetMemberValue(volume, "blendDistance", 2.0f);
+			SetMemberValue(volume, "weight", 0.25f);
+			SetMemberValue(volume, "sharedProfile", profileA);
+			((Behaviour)volume).enabled = true;
+			SaveScene();
+
+			Dictionary<string, object> direction = CompileDirection("phase3b-volume-update-direction");
+			Dictionary<string, object> executable = ResultData(Prepare(
+				"phase3b-volume-update-prepare",
+				direction,
+				new[]
+				{
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "volume-update",
+						operation = "VOLUME_UPDATE",
+						targetObjectId = ObjectId(volume),
+						isGlobal = true,
+						priority = 12.0f,
+						blendDistance = 0.5f,
+						weight = 0.9f,
+						sharedProfileAssetPath = TEMP_PROFILE_B_PATH,
+						enabled = false
+					}
+				}));
+
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-volume-update-apply", executable);
+			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
+			Assert.That((bool)GetMemberValue(volume, "isGlobal"), Is.True);
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(12.0f));
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "blendDistance")), Is.EqualTo(0.5f));
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "weight")), Is.EqualTo(0.9f));
+			Assert.That(GetMemberValue(volume, "sharedProfile"), Is.SameAs(profileB));
+			Assert.That(((Behaviour)volume).enabled, Is.False);
+
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-volume-update-undo", applyResult);
+			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
+			Assert.That((bool)GetMemberValue(volume, "isGlobal"), Is.False);
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(1.0f));
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "blendDistance")), Is.EqualTo(2.0f));
+			Assert.That(Convert.ToSingle(GetMemberValue(volume, "weight")), Is.EqualTo(0.25f));
+			Assert.That(GetMemberValue(volume, "sharedProfile"), Is.SameAs(profileA));
+			Assert.That(((Behaviour)volume).enabled, Is.True);
 		}
 
 		[Test]
@@ -254,7 +341,7 @@ namespace UnityGraphicsMcp
 					{
 						operationId = "camera-update",
 						operation = "CAMERA_UPDATE",
-						targetObjectId = GlobalObjectId.GetGlobalObjectIdSlow(camera).ToString(),
+						targetObjectId = ObjectId(camera),
 						fieldOfView = 40.0f
 					}
 				}));
@@ -268,8 +355,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyEnvironmentPlan_IsAtomicAcrossCameraProbeAndVolume()
 		{
-			Type volumeType = Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false);
-			Assert.That(volumeType, Is.Not.Null);
+			Type volumeType = RequireVolumeType();
 			Dictionary<string, object> direction = CompileDirection("phase3b-atomic-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
 				"phase3b-atomic-prepare",
@@ -293,21 +379,106 @@ namespace UnityGraphicsMcp
 						weight = 1.0f
 					}
 				}));
+
 			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-atomic-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
-			Assert.That(UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(1));
-			Assert.That(UnityEngine.Object.FindObjectsByType<ReflectionProbe>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(1));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(1));
+			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(1));
 			Assert.That(FindComponent(volumeType), Is.Not.Null);
 
-			Dictionary<string, object> applyData = ResultData(applyResult);
-			UnityGraphicsMcpToolResult undoResult = UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
-				"phase3b-atomic-undo",
-				applyData["transactionId"] as string,
-				Convert.ToInt64(applyData["revision"]));
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-atomic-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
-			Assert.That(UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(0));
-			Assert.That(UnityEngine.Object.FindObjectsByType<ReflectionProbe>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length, Is.EqualTo(0));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
+			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(0));
 			Assert.That(FindComponent(volumeType), Is.Null);
+		}
+
+		[Test]
+		public void PrepareEnvironmentPlan_RejectsDuplicateOperationId()
+		{
+			Dictionary<string, object> direction = CompileDirection("phase3b-duplicate-id-direction");
+			UnityGraphicsMcpToolResult result = Prepare(
+				"phase3b-duplicate-id-prepare",
+				direction,
+				new[]
+				{
+					CreateCameraOperation("duplicate"),
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "duplicate",
+						operation = "REFLECTION_PROBE_CREATE"
+					}
+				});
+
+			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void PrepareEnvironmentPlan_RejectsMultipleUpdatesToSameComponent()
+		{
+			GameObject gameObject = new GameObject("Duplicate Target Camera");
+			Camera camera = gameObject.AddComponent<Camera>();
+			SaveScene();
+			Dictionary<string, object> direction = CompileDirection("phase3b-duplicate-target-direction");
+			string objectId = ObjectId(camera);
+
+			UnityGraphicsMcpToolResult result = Prepare(
+				"phase3b-duplicate-target-prepare",
+				direction,
+				new[]
+				{
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "camera-fov",
+						operation = "CAMERA_UPDATE",
+						targetObjectId = objectId,
+						fieldOfView = 40.0f
+					},
+					new UnityGraphicsMcpEnvironmentOperationInput
+					{
+						operationId = "camera-position",
+						operation = "CAMERA_UPDATE",
+						targetObjectId = objectId,
+						position = Vector(1.0f, 2.0f, 3.0f)
+					}
+				});
+
+			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
+			Assert.That(camera.fieldOfView, Is.EqualTo(60.0f));
+		}
+
+		[Test]
+		public void UndoLastEnvironmentTransaction_RejectsExternalTargetChange()
+		{
+			Dictionary<string, object> executable = PrepareSingle("phase3b-external-change", CreateCameraOperation("camera-create"));
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-external-change-apply", executable);
+			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
+			Camera camera = FindAll<Camera>()[0];
+			camera.fieldOfView = 23.0f;
+
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-external-change-undo", applyResult);
+			Assert.That(undoResult.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
+			Assert.That(camera, Is.Not.Null);
+			Assert.That(camera.fieldOfView, Is.EqualTo(23.0f));
+		}
+
+		[Test]
+		public void UndoLastEnvironmentTransaction_RejectsNewerUndoGroup()
+		{
+			Dictionary<string, object> executable = PrepareSingle("phase3b-newer-undo", CreateCameraOperation("camera-create"));
+			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-newer-undo-apply", executable);
+			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
+
+			UnityGraphicsMcpTestAsset marker = ScriptableObject.CreateInstance<UnityGraphicsMcpTestAsset>();
+			Undo.IncrementCurrentGroup();
+			Undo.RecordObject(marker, "Unrelated Newer Undo Group");
+			marker.value = 10;
+
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-newer-undo-result", applyResult);
+			Assert.That(undoResult.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
+			Assert.That(FindAll<Camera>().Length, Is.EqualTo(1));
+			UnityEngine.Object.DestroyImmediate(marker);
 		}
 
 		private static Dictionary<string, object> PrepareSingle(string requestId, UnityGraphicsMcpEnvironmentOperationInput operation)
@@ -338,6 +509,15 @@ namespace UnityGraphicsMcp
 				Convert.ToInt64(executable["expectedRevision"]),
 				executable["approvalToken"] as string,
 				"NONE");
+		}
+
+		private static UnityGraphicsMcpToolResult UndoEnvironment(string requestId, UnityGraphicsMcpToolResult applyResult)
+		{
+			Dictionary<string, object> applyData = ResultData(applyResult);
+			return UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(
+				requestId,
+				applyData["transactionId"] as string,
+				Convert.ToInt64(applyData["revision"]));
 		}
 
 		private static Dictionary<string, object> CompileDirection(string requestId)
@@ -393,6 +573,16 @@ namespace UnityGraphicsMcp
 			Assert.That(EditorSceneManager.SaveScene(SceneManager.GetActiveScene(), TEMP_SCENE_PATH), Is.True);
 		}
 
+		private static string ObjectId(UnityEngine.Object target)
+		{
+			return GlobalObjectId.GetGlobalObjectIdSlow(target).ToString();
+		}
+
+		private static T[] FindAll<T>() where T : UnityEngine.Object
+		{
+			return UnityEngine.Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+		}
+
 		private static Component FindComponent(Type type)
 		{
 			UnityEngine.Object[] objects = Resources.FindObjectsOfTypeAll(type);
@@ -404,11 +594,55 @@ namespace UnityGraphicsMcp
 			return null;
 		}
 
-		private static object GetProperty(object target, string propertyName)
+		private static Type RequireVolumeType()
 		{
-			PropertyInfo property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-			Assert.That(property, Is.Not.Null);
-			return property.GetValue(target, null);
+			Type type = Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false);
+			Assert.That(type, Is.Not.Null, "Phase 3 Verification ProjectにはRender Pipelines Core Packageが必要です。");
+			return type;
+		}
+
+		private static Type RequireVolumeProfileType()
+		{
+			Type type = Type.GetType("UnityEngine.Rendering.VolumeProfile, Unity.RenderPipelines.Core.Runtime", false);
+			Assert.That(type, Is.Not.Null, "VolumeProfile APIを解決できません。");
+			return type;
+		}
+
+		private static ScriptableObject CreateProfile(Type profileType, string assetPath)
+		{
+			ScriptableObject profile = ScriptableObject.CreateInstance(profileType);
+			AssetDatabase.CreateAsset(profile, assetPath);
+			AssetDatabase.SaveAssets();
+			return profile;
+		}
+
+		private static object GetMemberValue(object target, string memberName)
+		{
+			const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+			PropertyInfo property = target.GetType().GetProperty(memberName, flags);
+			if (property != null)
+			{
+				return property.GetValue(target, null);
+			}
+
+			FieldInfo field = target.GetType().GetField(memberName, flags);
+			Assert.That(field, Is.Not.Null, target.GetType().FullName + "." + memberName + "を公開PropertyまたはFieldとして解決できません。");
+			return field.GetValue(target);
+		}
+
+		private static void SetMemberValue(object target, string memberName, object value)
+		{
+			const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+			PropertyInfo property = target.GetType().GetProperty(memberName, flags);
+			if (property != null && property.CanWrite)
+			{
+				property.SetValue(target, value, null);
+				return;
+			}
+
+			FieldInfo field = target.GetType().GetField(memberName, flags);
+			Assert.That(field, Is.Not.Null, target.GetType().FullName + "." + memberName + "を書き込めません。");
+			field.SetValue(target, value);
 		}
 
 		private static Dictionary<string, object> ResultData(UnityGraphicsMcpToolResult result)
