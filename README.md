@@ -25,104 +25,104 @@ Unity Editor API
 
 ## Ownership
 
-このRepositoryは次を所有します。
+このRepositoryはUnityAgentMCP、Creator Workflow、Domain MCP、Capability Module、Catalog、Manifest、UPM Package、MCP固有仕様とTestを所有します。
 
-- UnityAgentMCP Control Plane
-- Creator Workflow
-- Domain MCP
-- Capability Module
-- MCP Catalog / Manifest / Tool Schema
-- UPM Package
-- MCP固有仕様とTest
-
-MCPが生成・変更するScene、Prefab、Material、Timeline、Volume Profile等は対象Unity Projectが所有します。
-
-UnityAgentはユーザー固有のコーディング規約、Architecture方針、Visual Direction、Route、Context Pack、Task Contract、Knowledge Contractを所有します。
+MCPが生成・変更するScene、Prefab、Material、Timeline、Volume Profile等は対象Unity Projectが所有します。UnityAgentはユーザー固有の規約、Visual Direction、Route、Context、Knowledgeを所有します。
 
 ## Project environment resolution
 
-MyUnityMCPはUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをRepository全体の固定前提にしません。
+Unity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをRepository全体の固定前提にしません。
 
 ```text
 対象Unity ProjectをInspect
 → 検出したProject事実を確定
-→ ユーザーが今回指定したTargetと比較
+→ 今回指定されたTargetと比較
 → 利用可能なBackend / Capabilityだけを選択
 → 未対応・未検証・未設定を区別して返す
 ```
 
-情報の優先順位は次です。
+優先順位:
 
 1. 対象Unity Projectから検出した事実
-2. 今回の依頼で明示されたTargetと制約
+2. 今回明示されたTargetと制約
 3. Project固有Profile
 4. UnityAgentの既定Preference
 
-`UNVERIFIED`を`UNSUPPORTED`として扱わず、Project事実をProfileや個人既定値で上書きしません。
-
-## On-demand activation
-
-通常はCatalogの短いEntryだけを参照します。
-
-```text
-Catalog
-→ 選択Manifest
-→ 必要Tool Group
-→ Tool実行
-```
-
-全Manifest、全Tool Schema、Package C# Sourceを毎回読み込みません。
-
-Tool Groupは次の順序で段階公開します。
-
-```text
-inspect → plan → mutate → bake → capture
-```
-
 ## Current status
 
-Phase 1のRead-only Unity Editor Toolは実装・Unity検証まで完了しています。
+```text
+Phase 0  Architecture / Catalog               DONE
+Phase 1  Project / Scene Inspection           DONE
+Phase 2  Direction Planning                   DONE
+Phase 3A Approval-gated Light Mutation / Undo DONE
+Phase 3B Volume / Reflection Probe / Camera   PENDING
+Phase 4  Bake / Capture / Visual Refine       PENDING
+```
 
-- Architecture / Catalog / Workflow: 作成済み
-- UnityGraphicsMCP仕様: 作成済み
-- `graphics.inspect_project`: 実装・Bridge Discovery・直接Invocation検証済み
-- `graphics.inspect_scene`: 実装・Snapshot / Paging・Read-only検証済み
-- `graphics.validate_scene`: 実装・Rule検証済み
-- Session / Revision / Snapshot / Paging: 実装済み
-- Read-only Dirty Guard: Scene / Persistent Assetで検証済み
-- Renderer Material非インスタンス化: 検証済み
-- Unity Editor Compile: 成功
-- EditMode Test: 9 / 9成功
-- Player / Target Device: Phase 1 Editor Toolの完了条件外、未実行
-- Plan / Mutation / Bake / Capture: 未着手
-
-検証環境は一つの実績であり、Package全体の固定対応条件ではありません。詳細は`Tests/Compatibility/verification-matrix.yaml`を正本とします。
-
-## Phase 1 tools
+実装済みTool:
 
 ```text
 graphics.inspect_project
 graphics.inspect_scene
 graphics.validate_scene
+graphics.compile_direction
+graphics.preview_plan
+graphics.prepare_light_plan
+graphics.apply_plan
+graphics.undo_last_transaction
 ```
 
-3Toolは`AutoRegister = false`で、明示的にActivationした場合だけ公開します。未実装Toolは公開しません。
+全Toolは`AutoRegister = false`で、明示Activationされた場合だけ公開します。
 
-MCP Bridgeの宣言API基準は`com.coplaydev.unity-mcp 10.1.2`、Unity CIで検証したBridge SourceはCommit `9f84072c38906e3ca903f14f6a8edc1a1c9012c3`です。
+## Phase 3A flow
 
-## Verified Phase 1 evidence
+```text
+inspect
+→ compile_direction
+→ preview_plan
+→ prepare_light_plan
+→ 人間または上位AgentがExact Diffを確認
+→ apply_plan
+→ undo_last_transaction
+```
 
-- Unity: `6000.0.75f1`
-- Host: GitHub Actions Ubuntu 24.04
-- Package Resolve: PASS
-- Editor Compile: PASS
-- Bridge Tool Discovery: PASS
-- Direct Handler Invocation: PASS
-- EditMode: `9 / 9 PASS`
-- Workflow Run: `30911093647`
-- Evidence Artifact: `MyUnityMCP-Phase1-Unity-Evidence` (`8893204801`)
+`prepare_light_plan`は明示的な`LIGHT_CREATE` / `LIGHT_UPDATE`を検証し、Before / After、Diff Digest、一時Approval Tokenを発行します。
 
-この実績はPlayer、実機、すべてのUnity Version、すべてのRender Pipeline対応を意味しません。
+`apply_plan`は次をすべて満たす場合だけLightを変更します。
+
+- Direction Planが現在Sessionに存在する
+- Expected Revisionが現在値と一致する
+- Approval Tokenが一致する
+- Preview時Baselineが適用直前状態と一致する
+- `saveMode = NONE`
+
+変更は一つのUnity Undo Groupへ集約され、例外時はRollbackします。自動保存とBakeは行いません。直近Transaction後に外部変更が検出された場合、`undo_last_transaction`は安全のため拒否します。
+
+## Phase 3A mutation scope
+
+対応:
+
+- Light Create / Update
+- Directional / Point / Spot
+- Name、Color、Intensity、Range、Spot Angle
+- Shadow、Transform、Enabled
+
+未対応:
+
+- Delete / Area Light
+- Volume / Reflection Probe / Camera Mutation
+- Material / Renderer Feature Mutation
+- Save / Bake / Capture
+
+任意の`SerializedProperty`を書き換える汎用Toolは提供しません。
+
+## Verification
+
+Unity `6000.0.75f1`のGitHub Actions環境で、Package Resolve、Editor Compile、Bridge Discovery、直接Handler Invocation、Inspection、Planning、Light Mutation、Atomic Undo、安全拒否を含むEditMode Testを実行しています。
+
+現在のPhase 3A Test結果は`30 / 30 PASS`です。正確なWorkflow RunとArtifactは`Tests/Compatibility/verification-matrix.yaml`を正本とします。
+
+このEvidenceは一つのEditor環境に対する実績であり、すべてのUnity Version、Pipeline、Player、Target Device対応を意味しません。
 
 ## Repository map
 
@@ -144,11 +144,4 @@ Tests/
 
 ## Next phase
 
-Phase 2ではUnity状態を変更せず、Visual Intentを技術Planへ変換する次のToolを設計・実装します。
-
-```text
-graphics.compile_direction
-graphics.preview_plan
-```
-
-Mutation、Undo、Bake、CaptureはPhase 2のPlan Contractが安定した後に開放します。
+Phase 3Bでは、Phase 3AのTransaction Contractを変更せず、Volume、Reflection Probe、CameraをCapability単位で追加します。
