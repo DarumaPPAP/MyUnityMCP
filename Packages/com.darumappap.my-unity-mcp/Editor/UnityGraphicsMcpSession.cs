@@ -34,6 +34,7 @@ namespace UnityGraphicsMcp
 		{
 			EditorApplication.hierarchyChanged += IncrementRevision;
 			EditorApplication.projectChanged += IncrementRevision;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 			Undo.undoRedoPerformed += IncrementRevision;
 			EditorSceneManager.sceneOpened += OnSceneOpened;
 			EditorSceneManager.sceneClosed += OnSceneClosed;
@@ -196,6 +197,11 @@ namespace UnityGraphicsMcp
 		}
 
 		private static void OnActiveSceneChanged(Scene previousScene, Scene nextScene)
+		{
+			IncrementRevision();
+		}
+
+		private static void OnPlayModeStateChanged(PlayModeStateChange state)
 		{
 			IncrementRevision();
 		}
