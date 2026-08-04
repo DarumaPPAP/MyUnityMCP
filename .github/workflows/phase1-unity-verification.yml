@@ -1,4 +1,4 @@
-name: Phase 2 Unity Verification
+name: Phase 3A Unity Verification
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: phase2-unity-${{ github.head_ref || github.ref }}
+  group: phase3a-unity-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -76,12 +76,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: TestProjects/MyUnityMCPPhase1/Library
-          key: MyUnityMCP-Phase2-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPPhase1/Packages/manifest.json') }}
+          key: MyUnityMCP-Phase3A-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPPhase1/Packages/manifest.json') }}
           restore-keys: |
+            MyUnityMCP-Phase3A-6000.0.75f1-
             MyUnityMCP-Phase2-6000.0.75f1-
             MyUnityMCP-Phase1-6000.0.75f1-
 
-      - name: Run Phase 2 EditMode tests
+      - name: Run Phase 3A EditMode tests
         id: tests
         continue-on-error: true
         uses: game-ci/unity-test-runner@v4
@@ -120,9 +121,9 @@ jobs:
           skipped = int(root.attrib.get("skipped", "0"))
           inconclusive = int(root.attrib.get("inconclusive", "0"))
 
-          print(f"Phase 2 results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
+          print(f"Phase 3A results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
           if total <= 0:
-              raise SystemExit("No Phase 2 test was executed.")
+              raise SystemExit("No Phase 3A test was executed.")
           if failed != 0 or inconclusive != 0:
               for case in root.iter("test-case"):
                   if case.attrib.get("result") == "Failed":
@@ -141,6 +142,6 @@ jobs:
         if: always() && steps.license.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: MyUnityMCP-Phase2-Unity-Evidence
+          name: MyUnityMCP-Phase3A-Unity-Evidence
           path: ${{ steps.tests.outputs.artifactsPath }}
           if-no-files-found: error
