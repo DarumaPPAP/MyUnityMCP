@@ -1,17 +1,36 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 purpose:
   - record_actual_verification_evidence
   - keep_verification_separate_from_global_support_contract
 
 rules:
-  empty_matrix_means_not_verified: true
+  empty_environment_entries_mean_not_verified: true
   unverified_is_not_unsupported: true
+  source_complete_does_not_imply_compile_success: true
   editor_success_does_not_imply_player_success: true
   player_success_does_not_imply_target_device_success: true
   one_project_result_does_not_define_package_wide_support: true
 
-required_fields_per_entry:
+source_status:
+  package_version: "0.2.0"
+  phase: phase_1_read_only
+  bridge_api_review:
+    package: com.coplaydev.unity-mcp
+    version: "10.1.2"
+    status: confirmed_from_source
+  implemented_tools:
+    - graphics.inspect_project
+    - graphics.inspect_scene
+    - graphics.validate_scene
+  static_review: in_progress
+  unity_editor_compile: not_run
+  bridge_tool_discovery: not_run
+  editmode: not_run
+  player: not_run
+  target_device: not_run
+
+required_fields_per_environment_entry:
   - verification_id
   - date
   - unity_version
@@ -23,9 +42,10 @@ required_fields_per_entry:
   - graphics_apis
   - tool_group
   - editor_compile
+  - bridge_tool_discovery
   - editmode
   - player
   - target_device
   - evidence
 
-entries: []
+environment_entries: []
