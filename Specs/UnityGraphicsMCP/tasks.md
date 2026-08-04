@@ -198,10 +198,11 @@ Unity `6000.0.75f1`のGitHub Actions環境で実行。
 
 Evidence:
 
-- Workflow Run: `30909837287`
-- Job: `91993536157`
+- Workflow Run: `30911093647`
+- Job: `91997756278`
 - Artifact: `MyUnityMCP-Phase1-Unity-Evidence`
-- Artifact ID: `8892693112`
+- Artifact ID: `8893204801`
+- Artifact SHA256: `0b16d108db37f1d92a77db21dfcb81f0b9cc321b22d6daf09439f7b15e0cec0e`
 
 PlayerとTarget DeviceはEditor-only Phase 1の完了条件外であり、未実行と明示する。
 
