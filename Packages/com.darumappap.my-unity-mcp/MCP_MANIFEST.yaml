@@ -194,11 +194,9 @@ verification:
     direct_handler_invocation: passed
     player: not_required_for_phase_1_editor_tools
     target_device: not_required_for_phase_1_editor_tools
-  latest_evidence:
-    workflow_run_id: 30909837287
-    workflow_job_id: 91993536157
-    artifact_id: 8892693112
-    artifact_sha256: 0987753fe277d732c589fdc1d90eff63a8a0f23a55088ae7f7e86a4f63e57a5c
+  evidence_source:
+    kind: compatibility_matrix
+    verification_id: MUMCP-PHASE1-CI-20260804-001
 
 safety:
   inspect_must_not_dirty_unity_state: true
