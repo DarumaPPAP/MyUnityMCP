@@ -25,14 +25,12 @@ namespace UnityGraphicsMcp
 			EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpMutationSession.ClearForTests();
 			Undo.ClearAll();
 		}
 
 		[TearDown]
 		public void TearDown()
 		{
-			UnityGraphicsMcpMutationSession.ClearForTests();
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
 			Undo.ClearAll();
