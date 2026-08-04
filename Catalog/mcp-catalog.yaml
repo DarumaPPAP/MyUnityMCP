@@ -1,0 +1,109 @@
+schema_version: "1.0"
+
+selection:
+  select_exactly_one_primary_creator_or_domain_mcp: true
+  conditional_domain_mcp_limit: 2
+  load_all_manifests: false
+  load_all_tool_schemas: false
+  load_package_source_by_default: false
+
+control_plane:
+  id: unity_agent_mcp
+  kind: control_plane
+  status: specified
+  specification: Specs/UnityAgentMCP/spec.md
+  owns:
+    - creator_and_domain_selection
+    - activation_levels
+    - tool_group_gates
+    - shared_transaction_contract
+    - result_integration
+  does_not_own:
+    - graphics_operations
+    - cinematic_operations
+    - ui_operations
+    - addressables_operations
+    - profiling_analysis
+
+modules:
+  unity_graphics_mcp:
+    kind: domain
+    status: specified
+    manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
+    specification: Specs/UnityGraphicsMCP/spec.md
+    use_when:
+      - visual direction implementation
+      - lighting GI reflection material atmosphere
+      - reference driven scene authoring
+      - graphics inspection validation bake and capture
+    do_not_use_when:
+      - shader compile error only
+      - gameplay logic only
+      - build failure only
+    default_tool_group: inspect
+
+  unity_cinematic_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - Timeline Cinemachine shot camera language
+      - cutscene authoring
+      - animation binding and signals
+    do_not_use_when:
+      - static look development only
+
+  unity_ui_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - uGUI UI Toolkit layout safe area input
+
+  unity_addressables_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - Addressables groups labels dependencies content update
+
+  unity_animation_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - Animator AnimationClip Rig Playable state machine
+
+  unity_audio_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - AudioMixer BGM SE Timeline and beat synchronization
+
+  unity_profiler_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - CPU GPU memory overdraw before after target device evidence
+
+  unity_build_mcp:
+    kind: domain
+    status: planned
+    use_when:
+      - Player Settings IL2CPP build target and platform validation
+
+activation:
+  normal_use_loads:
+    - compact_catalog_entry
+    - selected_manifest
+    - selected_tool_group_schema
+  normal_use_does_not_load:
+    - every_manifest
+    - every_tool_schema
+    - package_source
+    - unrelated_domain_knowledge
+
+source_read_policy:
+  normal_tool_use: prohibited
+  selected_package_implementation: allowed
+  selected_package_bug_fix: allowed
+  selected_schema_audit: allowed
+  selected_unity_version_migration: allowed
+  security_review: allowed
+  all_package_scan: prohibited

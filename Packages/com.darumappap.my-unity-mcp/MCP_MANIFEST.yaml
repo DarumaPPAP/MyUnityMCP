@@ -1,0 +1,114 @@
+schema_version: "1.0"
+package_id: com.darumappap.my-unity-mcp
+version: "0.1.0"
+implementation_status: not_started
+verified_level: specification_only
+
+control_plane:
+  id: unity_agent_mcp
+  status: specified
+  implementation_status: not_started
+  specification: ../../Specs/UnityAgentMCP/spec.md
+
+registered_domains:
+  - id: unity_graphics_mcp
+    status: specified
+    implementation_status: not_started
+    specification: ../../Specs/UnityGraphicsMCP/spec.md
+    plan: ../../Specs/UnityGraphicsMCP/plan.md
+    tasks: ../../Specs/UnityGraphicsMCP/tasks.md
+
+planned_domains:
+  - unity_cinematic_mcp
+  - unity_ui_mcp
+  - unity_addressables_mcp
+  - unity_animation_mcp
+  - unity_audio_mcp
+  - unity_profiler_mcp
+  - unity_build_mcp
+
+creator_workflows:
+  - id: live_creator
+    status: specified_not_executable
+    path: ../../Workflows/LiveCreator.yaml
+    blocked_by:
+      - unity_cinematic_mcp_not_implemented
+  - id: movie_creator
+    status: specified_not_executable
+    path: ../../Workflows/MovieCreator.yaml
+    blocked_by:
+      - unity_cinematic_mcp_not_implemented
+
+tool_groups:
+  inspect:
+    mutation: false
+    status: planned
+    tools:
+      - graphics.inspect_project
+      - graphics.inspect_scene
+      - graphics.inspect_frame
+      - graphics.validate_scene
+
+  plan:
+    mutation: false
+    status: planned
+    tools:
+      - graphics.compile_direction
+      - graphics.preview_plan
+
+  mutate:
+    mutation: true
+    status: planned
+    explicit_approval_required: true
+    prerequisites:
+      - approved_plan
+      - expected_revision
+      - diff
+      - undo_contract
+    tools:
+      - graphics.apply_plan
+      - graphics.undo_transaction
+
+  bake:
+    mutation: true
+    expensive: true
+    status: planned
+    explicit_approval_required: true
+    prerequisites:
+      - dirty_dependency_set
+    tools:
+      - graphics.bake_dependencies
+
+  capture:
+    mutation: temporary_editor_state
+    status: planned
+    tools:
+      - graphics.capture_evaluation
+      - graphics.refine_direction
+
+availability:
+  package_is_executable: false
+  expose_unimplemented_tools: false
+  expose_selected_tool_group_only: true
+  load_package_source_during_normal_use: false
+
+supported_environment:
+  first_milestone:
+    unity: "6000.3"
+    render_pipeline: URP
+    render_pipeline_version: "17+"
+    rendering_path: Forward
+    render_graph: true
+    primary_platform: Nintendo Switch
+
+pipeline_status:
+  BuiltIn: specification_only
+  Universal: first_implementation_target
+  HighDefinition: specification_only
+
+safety:
+  inspect_must_not_dirty_unity_state: true
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  silent_fallback: prohibited
+  visual_acceptance_requires_human_review: true

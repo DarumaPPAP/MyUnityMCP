@@ -1,0 +1,88 @@
+version: 1
+cases:
+  - id: MYMCP-ROUTE-001
+    prompt: "華やかなアイドルライブを作って。キャラを背景に埋もれさせないで。"
+    expected_primary_kind: creator
+    expected_primary: live_creator
+    expected_required_domains:
+      - unity_graphics_mcp
+      - unity_cinematic_mcp
+    expected_initial_tool_groups:
+      - inspect
+      - plan
+    must_not_expose:
+      - mutate
+      - bake
+    must_not_load:
+      - package_source
+      - every_domain_manifest
+
+  - id: MYMCP-ROUTE-002
+    prompt: "このSceneのLightmapとProbe構成を変更せずに調査して。"
+    expected_primary_kind: domain
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - inspect
+    must_not_load:
+      - live_creator
+      - movie_creator
+      - package_source
+
+  - id: MYMCP-ROUTE-003
+    prompt: "このShaderのCompile Errorを直して。"
+    expected_primary: none
+    reason: "Shader-only作業は現在のMyUnityMCP Domain範囲外でありUnityAgent既存Routeを使用する。"
+    must_not_load:
+      - unity_graphics_mcp
+      - creator_workflows
+
+  - id: MYMCP-ROUTE-004
+    prompt: "承認済みPlanをSceneへ適用して。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - mutate
+    requires:
+      - approved_plan
+      - expected_revision
+      - explicit_mutation_permission
+      - diff
+      - undo_contract
+    must_not:
+      - automatic_save
+      - automatic_bake
+
+  - id: MYMCP-ROUTE-005
+    prompt: "変更でDirtyになったLightingだけBakeして。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - bake
+    requires:
+      - explicit_bake_permission
+      - dirty_dependency_set
+    must_not:
+      - unconditional_full_bake
+
+  - id: MYMCP-ROUTE-006
+    prompt: "映画的な8秒の振り返りカットを作るPlanを出して。"
+    expected_primary_kind: creator
+    expected_primary: movie_creator
+    expected_required_domains:
+      - unity_graphics_mcp
+      - unity_cinematic_mcp
+    expected_initial_tool_groups:
+      - inspect
+      - plan
+    must_not_expose:
+      - mutate
+      - bake
+
+  - id: MYMCP-ROUTE-007
+    prompt: "参考画像に合わせたScene Planを作って。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - inspect
+      - plan
+    must_not_load:
+      - Packages_source
+      - unselected_tool_schemas
+      - unrelated_domain_knowledge
