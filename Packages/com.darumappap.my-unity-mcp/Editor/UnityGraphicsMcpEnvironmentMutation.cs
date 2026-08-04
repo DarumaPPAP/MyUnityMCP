@@ -29,7 +29,6 @@ namespace UnityGraphicsMcp
 		public UnityGraphicsMcpVector3Input position { get; set; }
 		public UnityGraphicsMcpVector3Input eulerAngles { get; set; }
 		public bool? enabled { get; set; }
-
 		public string projection { get; set; }
 		public float? fieldOfView { get; set; }
 		public float? orthographicSize { get; set; }
@@ -41,7 +40,6 @@ namespace UnityGraphicsMcp
 		public float? depth { get; set; }
 		public bool? allowHdr { get; set; }
 		public bool? allowMsaa { get; set; }
-
 		public string probeMode { get; set; }
 		public string refreshMode { get; set; }
 		public string timeSlicingMode { get; set; }
@@ -52,7 +50,6 @@ namespace UnityGraphicsMcp
 		public UnityGraphicsMcpVector3Input center { get; set; }
 		public float? blendDistance { get; set; }
 		public int? resolution { get; set; }
-
 		public bool? isGlobal { get; set; }
 		public float? priority { get; set; }
 		public float? weight { get; set; }
@@ -121,10 +118,7 @@ namespace UnityGraphicsMcp
 		public static string StorePlan(UnityGraphicsMcpExecutableEnvironmentPlan plan)
 		{
 			RemoveExpiredPlans();
-			while (_plans.Count >= MAX_PLAN_COUNT)
-			{
-				_plans.Remove(_plans.OrderBy(pair => pair.Value.CreatedUtc).First().Key);
-			}
+			while (_plans.Count >= MAX_PLAN_COUNT) _plans.Remove(_plans.OrderBy(pair => pair.Value.CreatedUtc).First().Key);
 			plan.PlanId = UnityGraphicsMcpSession.SessionId + ":environment-plan:" + Guid.NewGuid().ToString("N");
 			plan.CreatedUtc = DateTime.UtcNow;
 			plan.ExpiresUtc = plan.CreatedUtc + PLAN_LIFETIME;
@@ -132,13 +126,7 @@ namespace UnityGraphicsMcp
 			return plan.PlanId;
 		}
 
-		public static bool TryGetPlan(
-			string planId,
-			long expectedRevision,
-			string approvalToken,
-			out UnityGraphicsMcpExecutableEnvironmentPlan plan,
-			out E_MCP_TOOL_STATUS status,
-			out string message)
+		public static bool TryGetPlan(string planId, long expectedRevision, string approvalToken, out UnityGraphicsMcpExecutableEnvironmentPlan plan, out E_MCP_TOOL_STATUS status, out string message)
 		{
 			plan = null;
 			status = E_MCP_TOOL_STATUS.SUCCESS;
@@ -171,15 +159,8 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		public static void Consume(UnityGraphicsMcpExecutableEnvironmentPlan plan)
-		{
-			plan.Consumed = true;
-		}
-
-		public static void SetLatestTransaction(UnityGraphicsMcpEnvironmentTransaction transaction)
-		{
-			_latestTransaction = transaction;
-		}
+		public static void Consume(UnityGraphicsMcpExecutableEnvironmentPlan plan) { plan.Consumed = true; }
+		public static void SetLatestTransaction(UnityGraphicsMcpEnvironmentTransaction transaction) { _latestTransaction = transaction; }
 
 		public static bool TryGetLatestTransaction(string transactionId, out UnityGraphicsMcpEnvironmentTransaction transaction, out string message)
 		{
@@ -198,15 +179,8 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		public static void MarkUndone()
-		{
-			if (_latestTransaction != null) _latestTransaction.Undone = true;
-		}
-
-		public static void ClearForTests()
-		{
-			Clear();
-		}
+		public static void MarkUndone() { if (_latestTransaction != null) _latestTransaction.Undone = true; }
+		public static void ClearForTests() { Clear(); }
 
 		public static string HashText(string value)
 		{
@@ -236,29 +210,17 @@ namespace UnityGraphicsMcp
 	{
 		private const int MAX_ENVIRONMENT_OPERATION_COUNT = 48;
 
-		public static UnityGraphicsMcpToolResult PrepareEnvironmentPlan(
-			string requestId,
-			string directionPlanId,
-			long? expectedRevision,
-			UnityGraphicsMcpEnvironmentOperationInput[] operations)
+		public static UnityGraphicsMcpToolResult PrepareEnvironmentPlan(string requestId, string directionPlanId, long? expectedRevision, UnityGraphicsMcpEnvironmentOperationInput[] operations)
 		{
 			return ExecuteReadOnly("graphics.prepare_environment_plan", requestId, delegate
 			{
-				if (!expectedRevision.HasValue)
-				{
-					return CreateResult("graphics.prepare_environment_plan", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。", null);
-				}
-
+				if (!expectedRevision.HasValue) return CreateResult("graphics.prepare_environment_plan", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。", null);
 				UnityGraphicsMcpDirectionPlan directionPlan;
 				E_MCP_TOOL_STATUS directionStatus;
 				if (!UnityGraphicsMcpSession.TryGetPlan(directionPlanId, expectedRevision.Value, out directionPlan, out directionStatus))
-				{
 					return CreateResult("graphics.prepare_environment_plan", requestId, directionStatus, "Direction Planは現在のEditor SessionまたはRevisionでは利用できません。", null);
-				}
 				if (operations == null || operations.Length == 0 || operations.Length > MAX_ENVIRONMENT_OPERATION_COUNT)
-				{
 					return CreateResult("graphics.prepare_environment_plan", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "1～48件のEnvironment Operationを指定してください。", null);
-				}
 
 				List<UnityGraphicsMcpPreparedEnvironmentOperation> prepared = new List<UnityGraphicsMcpPreparedEnvironmentOperation>();
 				List<UnityGraphicsMcpIssue> issues = new List<UnityGraphicsMcpIssue>();
@@ -286,17 +248,10 @@ namespace UnityGraphicsMcp
 				UnityGraphicsMcpEnvironmentMutationSession.StorePlan(plan);
 				return CreateResult("graphics.prepare_environment_plan", requestId, E_MCP_TOOL_STATUS.SUCCESS, "Environment操作をRead-onlyで検証し、承認待ちPlanを作成しました。", new Dictionary<string, object>
 				{
-					{ "directionPlanId", directionPlanId },
-					{ "planId", plan.PlanId },
-					{ "expectedRevision", plan.Revision },
-					{ "approvalToken", approvalToken },
-					{ "approvalTokenExpiresUtc", plan.ExpiresUtc.ToString("O") },
-					{ "diffDigest", plan.DiffDigest },
-					{ "operations", BuildEnvironmentOperationPreviews(plan.Operations) },
-					{ "saveMode", "NONE" },
-					{ "mutationApplied", false },
-					{ "savePerformed", false },
-					{ "bakePerformed", false }
+					{ "directionPlanId", directionPlanId }, { "planId", plan.PlanId }, { "expectedRevision", plan.Revision },
+					{ "approvalToken", approvalToken }, { "approvalTokenExpiresUtc", plan.ExpiresUtc.ToString("O") },
+					{ "diffDigest", plan.DiffDigest }, { "operations", BuildEnvironmentOperationPreviews(plan.Operations) },
+					{ "saveMode", "NONE" }, { "mutationApplied", false }, { "savePerformed", false }, { "bakePerformed", false }
 				});
 			});
 		}
@@ -307,17 +262,13 @@ namespace UnityGraphicsMcp
 			{
 				if (!expectedRevision.HasValue) return CreateResult("graphics.apply_environment_plan", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。", null);
 				if (!string.Equals(string.IsNullOrWhiteSpace(saveMode) ? "NONE" : saveMode.Trim(), "NONE", StringComparison.OrdinalIgnoreCase))
-				{
 					return CreateResult("graphics.apply_environment_plan", requestId, E_MCP_TOOL_STATUS.UNSUPPORTED, "Phase 3Bで利用できるsaveModeはNONEだけです。", null);
-				}
 
 				UnityGraphicsMcpExecutableEnvironmentPlan plan;
 				E_MCP_TOOL_STATUS status;
 				string message;
 				if (!UnityGraphicsMcpEnvironmentMutationSession.TryGetPlan(planId, expectedRevision.Value, approvalToken, out plan, out status, out message))
-				{
 					return CreateResult("graphics.apply_environment_plan", requestId, status, message, null);
-				}
 				List<UnityGraphicsMcpIssue> issues = new List<UnityGraphicsMcpIssue>();
 				if (!ValidateEnvironmentPlanStillMatches(plan, issues) || !string.Equals(plan.DiffDigest, BuildEnvironmentPlanDigest(plan), StringComparison.Ordinal))
 				{
@@ -337,19 +288,12 @@ namespace UnityGraphicsMcp
 					{
 						Component component = ApplyEnvironmentOperation(operation);
 						Dictionary<string, object> after = CaptureEnvironmentState(component, operation.ComponentKind);
-						targets.Add(new UnityGraphicsMcpEnvironmentTransactionTarget
-						{
-							InstanceId = component.GetInstanceID(),
-							ComponentKind = operation.ComponentKind,
-							AfterDigest = HashEnvironmentDictionary(after)
-						});
+						targets.Add(new UnityGraphicsMcpEnvironmentTransactionTarget { InstanceId = component.GetInstanceID(), ComponentKind = operation.ComponentKind, AfterDigest = HashEnvironmentDictionary(after) });
 						applied.Add(new Dictionary<string, object>
 						{
-							{ "operationId", operation.OperationId },
-							{ "operation", operation.Operation },
+							{ "operationId", operation.OperationId }, { "operation", operation.Operation },
 							{ "objectId", GlobalObjectId.GetGlobalObjectIdSlow(component).ToString() },
-							{ "componentKind", operation.ComponentKind },
-							{ "after", after }
+							{ "componentKind", operation.ComponentKind }, { "after", after }
 						});
 					}
 					Undo.CollapseUndoOperations(undoGroup);
@@ -358,21 +302,13 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpEnvironmentTransaction transaction = new UnityGraphicsMcpEnvironmentTransaction
 					{
 						TransactionId = UnityGraphicsMcpSession.SessionId + ":environment-transaction:" + Guid.NewGuid().ToString("N"),
-						PlanId = plan.PlanId,
-						UndoGroup = undoGroup,
-						PostRevision = UnityGraphicsMcpSession.Revision,
-						Targets = targets
+						PlanId = plan.PlanId, UndoGroup = undoGroup, PostRevision = UnityGraphicsMcpSession.Revision, Targets = targets
 					};
 					UnityGraphicsMcpEnvironmentMutationSession.SetLatestTransaction(transaction);
 					return CreateResult("graphics.apply_environment_plan", requestId, E_MCP_TOOL_STATUS.SUCCESS, "Environment Planを一つのUnity Undo Transactionとして適用しました。", new Dictionary<string, object>
 					{
-						{ "planId", plan.PlanId },
-						{ "transactionId", transaction.TransactionId },
-						{ "revision", transaction.PostRevision },
-						{ "appliedOperations", applied },
-						{ "undoAvailable", true },
-						{ "savePerformed", false },
-						{ "bakePerformed", false }
+						{ "planId", plan.PlanId }, { "transactionId", transaction.TransactionId }, { "revision", transaction.PostRevision },
+						{ "appliedOperations", applied }, { "undoAvailable", true }, { "savePerformed", false }, { "bakePerformed", false }
 					});
 				}
 				catch (Exception exception)
@@ -391,27 +327,19 @@ namespace UnityGraphicsMcp
 				UnityGraphicsMcpEnvironmentTransaction transaction;
 				string message;
 				if (!UnityGraphicsMcpEnvironmentMutationSession.TryGetLatestTransaction(transactionId, out transaction, out message))
-				{
 					return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, message, null);
-				}
 				if (expectedRevision.Value != UnityGraphicsMcpSession.Revision || transaction.PostRevision != UnityGraphicsMcpSession.Revision)
-				{
 					return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.STALE_SNAPSHOT, "Transaction後にEditor Revisionが変更されたためUndoを拒否しました。", null);
-				}
 				if (!TransactionTargetsStillMatch(transaction))
-				{
 					return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "Transaction適用後に対象Componentが外部変更されたためUndoを拒否しました。", null);
-				}
 
 				Undo.PerformUndo();
 				UnityGraphicsMcpSession.NotifyMutationApplied();
 				UnityGraphicsMcpEnvironmentMutationSession.MarkUndone();
 				return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.SUCCESS, "直近Phase 3B TransactionをUndoしました。", new Dictionary<string, object>
 				{
-					{ "transactionId", transaction.TransactionId },
-					{ "revision", UnityGraphicsMcpSession.Revision },
-					{ "savePerformed", false },
-					{ "bakePerformed", false }
+					{ "transactionId", transaction.TransactionId }, { "revision", UnityGraphicsMcpSession.Revision },
+					{ "savePerformed", false }, { "bakePerformed", false }
 				});
 			});
 		}
@@ -436,9 +364,7 @@ namespace UnityGraphicsMcp
 				case "REFLECTION_PROBE_UPDATE": kind = "REFLECTION_PROBE"; create = false; break;
 				case "VOLUME_CREATE": kind = "VOLUME"; create = true; break;
 				case "VOLUME_UPDATE": kind = "VOLUME"; create = false; break;
-				default:
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-002", "未対応Operationです。", operation);
-					return false;
+				default: AddEnvironmentIssue(issues, "GFX-PHASE3B-002", "未対応Operationです。", operation); return false;
 			}
 			if (kind == "VOLUME" && ResolveEnvironmentVolumeType() == null)
 			{
@@ -470,14 +396,9 @@ namespace UnityGraphicsMcp
 			if (!TryBuildRequestedEnvironmentValues(input, kind, out values, issues)) return false;
 			prepared = new UnityGraphicsMcpPreparedEnvironmentOperation
 			{
-				OperationId = input.operationId.Trim(),
-				Operation = operation,
-				ComponentKind = kind,
-				TargetObjectId = create ? null : input.targetObjectId,
-				TargetInstanceId = create ? 0 : target.GetInstanceID(),
-				TargetSceneHandle = targetScene.handle,
-				TargetScenePath = targetScene.path,
-				RequestedValues = values,
+				OperationId = input.operationId.Trim(), Operation = operation, ComponentKind = kind,
+				TargetObjectId = create ? null : input.targetObjectId, TargetInstanceId = create ? 0 : target.GetInstanceID(),
+				TargetSceneHandle = targetScene.handle, TargetScenePath = targetScene.path, RequestedValues = values,
 				BaselinePreview = create ? null : CaptureEnvironmentState((Component)target, kind)
 			};
 			prepared.BaselineDigest = create ? BuildEnvironmentCreateBaselineDigest(targetScene, kind) : HashEnvironmentDictionary(prepared.BaselinePreview);
@@ -626,7 +547,6 @@ namespace UnityGraphicsMcp
 				Undo.RecordObject(component.transform, "Update " + operation.ComponentKind + " Transform");
 				Undo.RecordObject(component.gameObject, "Update " + operation.ComponentKind + " Name");
 			}
-
 			ApplyCommonEnvironmentValues(component, operation.RequestedValues);
 			if (operation.ComponentKind == "CAMERA") ApplyCameraValues((Camera)component, operation.RequestedValues);
 			else if (operation.ComponentKind == "REFLECTION_PROBE") ApplyReflectionProbeValues((ReflectionProbe)component, operation.RequestedValues);
@@ -706,42 +626,28 @@ namespace UnityGraphicsMcp
 			Behaviour behaviour = component as Behaviour;
 			Dictionary<string, object> state = new Dictionary<string, object>
 			{
-				{ "objectId", GlobalObjectId.GetGlobalObjectIdSlow(component).ToString() },
-				{ "name", component.gameObject.name },
-				{ "scenePath", component.gameObject.scene.path },
-				{ "position", component.transform.position },
-				{ "eulerAngles", component.transform.eulerAngles },
-				{ "enabled", behaviour == null || behaviour.enabled }
+				{ "objectId", GlobalObjectId.GetGlobalObjectIdSlow(component).ToString() }, { "name", component.gameObject.name },
+				{ "scenePath", component.gameObject.scene.path }, { "position", component.transform.position },
+				{ "eulerAngles", component.transform.eulerAngles }, { "enabled", behaviour == null || behaviour.enabled }
 			};
 			if (kind == "CAMERA")
 			{
 				Camera camera = (Camera)component;
 				state["projection"] = camera.orthographic ? "ORTHOGRAPHIC" : "PERSPECTIVE";
-				state["fieldOfView"] = camera.fieldOfView;
-				state["orthographicSize"] = camera.orthographicSize;
-				state["nearClipPlane"] = camera.nearClipPlane;
-				state["farClipPlane"] = camera.farClipPlane;
-				state["cullingMask"] = camera.cullingMask;
-				state["clearFlags"] = camera.clearFlags.ToString();
-				state["backgroundColor"] = camera.backgroundColor;
-				state["depth"] = camera.depth;
-				state["allowHdr"] = camera.allowHDR;
-				state["allowMsaa"] = camera.allowMSAA;
+				state["fieldOfView"] = camera.fieldOfView; state["orthographicSize"] = camera.orthographicSize;
+				state["nearClipPlane"] = camera.nearClipPlane; state["farClipPlane"] = camera.farClipPlane;
+				state["cullingMask"] = camera.cullingMask; state["clearFlags"] = camera.clearFlags.ToString();
+				state["backgroundColor"] = camera.backgroundColor; state["depth"] = camera.depth;
+				state["allowHdr"] = camera.allowHDR; state["allowMsaa"] = camera.allowMSAA;
 			}
 			else if (kind == "REFLECTION_PROBE")
 			{
 				ReflectionProbe probe = (ReflectionProbe)component;
-				state["probeMode"] = probe.mode.ToString();
-				state["refreshMode"] = probe.refreshMode.ToString();
-				state["timeSlicingMode"] = probe.timeSlicingMode.ToString();
-				state["importance"] = probe.importance;
-				state["intensity"] = probe.intensity;
-				state["boxProjection"] = probe.boxProjection;
-				state["size"] = probe.size;
-				state["center"] = probe.center;
-				state["blendDistance"] = probe.blendDistance;
-				state["resolution"] = probe.resolution;
-				state["cullingMask"] = probe.cullingMask;
+				state["probeMode"] = probe.mode.ToString(); state["refreshMode"] = probe.refreshMode.ToString();
+				state["timeSlicingMode"] = probe.timeSlicingMode.ToString(); state["importance"] = probe.importance;
+				state["intensity"] = probe.intensity; state["boxProjection"] = probe.boxProjection; state["size"] = probe.size;
+				state["center"] = probe.center; state["blendDistance"] = probe.blendDistance;
+				state["resolution"] = probe.resolution; state["cullingMask"] = probe.cullingMask;
 			}
 			else
 			{
@@ -770,13 +676,9 @@ namespace UnityGraphicsMcp
 		{
 			return operations.Select(operation => new Dictionary<string, object>
 			{
-				{ "operationId", operation.OperationId },
-				{ "operation", operation.Operation },
-				{ "componentKind", operation.ComponentKind },
-				{ "targetObjectId", operation.TargetObjectId },
-				{ "targetScenePath", operation.TargetScenePath },
-				{ "before", operation.BaselinePreview },
-				{ "requestedAfter", operation.RequestedValues }
+				{ "operationId", operation.OperationId }, { "operation", operation.Operation }, { "componentKind", operation.ComponentKind },
+				{ "targetObjectId", operation.TargetObjectId }, { "targetScenePath", operation.TargetScenePath },
+				{ "before", operation.BaselinePreview }, { "requestedAfter", operation.RequestedValues }
 			}).ToList();
 		}
 
@@ -785,9 +687,7 @@ namespace UnityGraphicsMcp
 			StringBuilder builder = new StringBuilder();
 			builder.Append(plan.DirectionPlanId).Append('|').Append(plan.Revision);
 			foreach (UnityGraphicsMcpPreparedEnvironmentOperation operation in plan.Operations)
-			{
 				builder.Append('|').Append(operation.OperationId).Append('|').Append(operation.Operation).Append('|').Append(operation.TargetObjectId).Append('|').Append(operation.TargetSceneHandle).Append('|').Append(operation.BaselineDigest).Append('|').Append(HashEnvironmentDictionary(operation.RequestedValues));
-			}
 			return UnityGraphicsMcpEnvironmentMutationSession.HashText(builder.ToString());
 		}
 
@@ -873,45 +773,34 @@ namespace UnityGraphicsMcp
 			return volumeType != null && target != null && volumeType.IsInstanceOfType(target);
 		}
 
-		private static Type ResolveEnvironmentVolumeType()
+		private static Type ResolveEnvironmentVolumeType() { return Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false); }
+		private static Type ResolveEnvironmentVolumeProfileType() { return Type.GetType("UnityEngine.Rendering.VolumeProfile, Unity.RenderPipelines.Core.Runtime", false); }
+
+		private static object GetEnvironmentPropertyValue(object target, string memberName)
 		{
-			return Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false);
+			PropertyInfo property = target.GetType().GetProperty(memberName, BindingFlags.Instance | BindingFlags.Public);
+			if (property != null && property.CanRead) return property.GetValue(target, null);
+			FieldInfo field = target.GetType().GetField(memberName, BindingFlags.Instance | BindingFlags.Public);
+			return field == null ? null : field.GetValue(target);
 		}
 
-		private static Type ResolveEnvironmentVolumeProfileType()
+		private static void SetEnvironmentProperty(object target, string memberName, Dictionary<string, object> values)
 		{
-			return Type.GetType("UnityEngine.Rendering.VolumeProfile, Unity.RenderPipelines.Core.Runtime", false);
+			if (!values.ContainsKey(memberName)) return;
+			PropertyInfo property = target.GetType().GetProperty(memberName, BindingFlags.Instance | BindingFlags.Public);
+			if (property != null && property.CanWrite)
+			{
+				property.SetValue(target, Convert.ChangeType(values[memberName], property.PropertyType, CultureInfo.InvariantCulture), null);
+				return;
+			}
+			FieldInfo field = target.GetType().GetField(memberName, BindingFlags.Instance | BindingFlags.Public);
+			if (field == null) throw new InvalidOperationException(target.GetType().FullName + "." + memberName + " APIを解決できません。");
+			field.SetValue(target, Convert.ChangeType(values[memberName], field.FieldType, CultureInfo.InvariantCulture));
 		}
 
-		private static object GetEnvironmentPropertyValue(object target, string propertyName)
-		{
-			PropertyInfo property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-			return property == null || !property.CanRead ? null : property.GetValue(target, null);
-		}
-
-		private static void SetEnvironmentProperty(object target, string propertyName, Dictionary<string, object> values)
-		{
-			if (!values.ContainsKey(propertyName)) return;
-			PropertyInfo property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-			if (property == null || !property.CanWrite) throw new InvalidOperationException(target.GetType().FullName + "." + propertyName + " APIを解決できません。");
-			property.SetValue(target, Convert.ChangeType(values[propertyName], property.PropertyType, CultureInfo.InvariantCulture), null);
-		}
-
-		private static Vector3 ToEnvironmentVector3(UnityGraphicsMcpVector3Input input)
-		{
-			return new Vector3(input.x, input.y, input.z);
-		}
-
-		private static Color ToEnvironmentColor(UnityGraphicsMcpColorInput input)
-		{
-			return new Color(input.r, input.g, input.b, input.a);
-		}
-
-		private static string GetEnvironmentString(Dictionary<string, object> values, string key)
-		{
-			object value;
-			return values.TryGetValue(key, out value) ? value as string : null;
-		}
+		private static Vector3 ToEnvironmentVector3(UnityGraphicsMcpVector3Input input) { return new Vector3(input.x, input.y, input.z); }
+		private static Color ToEnvironmentColor(UnityGraphicsMcpColorInput input) { return new Color(input.r, input.g, input.b, input.a); }
+		private static string GetEnvironmentString(Dictionary<string, object> values, string key) { object value; return values.TryGetValue(key, out value) ? value as string : null; }
 
 		private static string DefaultEnvironmentObjectName(string kind)
 		{
@@ -926,12 +815,7 @@ namespace UnityGraphicsMcp
 			{
 				code = id,
 				message = message,
-				evidence = new Dictionary<string, object>
-				{
-					{ "severity", "ERROR" },
-					{ "category", "INVARIANT" },
-					{ "target", target }
-				}
+				evidence = new Dictionary<string, object> { { "severity", "ERROR" }, { "category", "INVARIANT" }, { "target", target } }
 			});
 		}
 	}
@@ -946,10 +830,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Environment Operation。", Required = true)] public UnityGraphicsMcpEnvironmentOperationInput[] operations { get; set; }
 		}
-		public static object HandleCommand(JObject @params)
-		{
-			return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.PrepareEnvironmentPlan(parameters.requestId, parameters.directionPlanId, parameters.expectedRevision, parameters.operations));
-		}
+		public static object HandleCommand(JObject @params) { return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.PrepareEnvironmentPlan(parameters.requestId, parameters.directionPlanId, parameters.expectedRevision, parameters.operations)); }
 	}
 
 	[McpForUnityTool("graphics.apply_environment_plan", Description = "承認済みEnvironment Planを一つのUnity Undo Transactionとして適用します。", AutoRegister = false, Group = "core")]
@@ -963,10 +844,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Approval Token。", Required = true)] public string approvalToken { get; set; }
 			[ToolParameter("Phase 3BではNONEのみ。", Required = false)] public string saveMode { get; set; }
 		}
-		public static object HandleCommand(JObject @params)
-		{
-			return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.ApplyEnvironmentPlan(parameters.requestId, parameters.planId, parameters.expectedRevision, parameters.approvalToken, parameters.saveMode));
-		}
+		public static object HandleCommand(JObject @params) { return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.ApplyEnvironmentPlan(parameters.requestId, parameters.planId, parameters.expectedRevision, parameters.approvalToken, parameters.saveMode)); }
 	}
 
 	[McpForUnityTool("graphics.undo_last_environment_transaction", Description = "対象Stateが適用直後から変化していない場合だけ、直近Phase 3B Transactionを一括Undoします。", AutoRegister = false, Group = "core")]
@@ -978,10 +856,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Transaction ID。", Required = true)] public string transactionId { get; set; }
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
 		}
-		public static object HandleCommand(JObject @params)
-		{
-			return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(parameters.requestId, parameters.transactionId, parameters.expectedRevision));
-		}
+		public static object HandleCommand(JObject @params) { return UnityGraphicsMcpToolBridge.Execute<Parameters>(@params, parameters => UnityGraphicsMcpInspection.UndoLastEnvironmentTransaction(parameters.requestId, parameters.transactionId, parameters.expectedRevision)); }
 	}
 }
 
