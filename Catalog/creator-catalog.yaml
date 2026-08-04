@@ -4,12 +4,16 @@ selection:
   select_creator_when_goal_is_completed_experience: true
   select_domain_mcp_when_goal_is_bounded_technical_operation: true
   creator_must_not_call_capability_module_directly: true
+  creator_is_executable_only_when_all_required_domains_are_available: true
 
 creators:
   live_creator:
     kind: workflow
-    status: specified
+    status: specified_not_executable
     workflow: Workflows/LiveCreator.yaml
+    blocked_by:
+      - unity_graphics_mcp_not_implemented
+      - unity_cinematic_mcp_not_implemented
     use_when:
       - live stage production
       - idol concert production
@@ -30,8 +34,11 @@ creators:
 
   movie_creator:
     kind: workflow
-    status: specified
+    status: specified_not_executable
     workflow: Workflows/MovieCreator.yaml
+    blocked_by:
+      - unity_graphics_mcp_not_implemented
+      - unity_cinematic_mcp_not_implemented
     use_when:
       - cutscene production
       - narrative movie production
@@ -64,3 +71,4 @@ rules:
   capability_module_owns_bounded_unity_api_operation: true
   creator_does_not_mutate_unity_directly: true
   creator_does_not_duplicate_domain_technical_rules: true
+  unavailable_creator_returns_blocking_domains_instead_of_faking_execution: true
