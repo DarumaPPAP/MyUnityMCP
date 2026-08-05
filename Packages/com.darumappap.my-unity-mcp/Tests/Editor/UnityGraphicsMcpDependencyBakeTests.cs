@@ -107,7 +107,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-missing-approval",
+					"dependency-bake-missing-approval",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					null,
@@ -136,7 +136,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-changed-baseline",
+					"dependency-bake-changed-baseline",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -166,7 +166,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-apply",
+					"dependency-bake-apply",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -194,7 +194,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareBakePlan(
-					"phase4b-apv",
+					"dependency-bake-apv",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -229,7 +229,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareBakePlan(
-					"phase4b-clean",
+					"dependency-bake-clean",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -272,7 +272,7 @@ namespace UnityGraphicsMcp
 		private static UnityGraphicsMcpToolResult PrepareLightmapBake()
 		{
 			return UnityGraphicsMcpInspection.PrepareBakePlan(
-				"phase4b-prepare",
+				"dependency-bake-prepare",
 				UnityGraphicsMcpSession.Revision,
 				new[]
 				{

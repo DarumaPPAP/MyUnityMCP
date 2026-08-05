@@ -981,9 +981,9 @@ namespace UnityGraphicsMcp
 
 	public static partial class UnityGraphicsMcpInspection
 	{
-		private const string PHASE4D_APV_BAKE_MODE = "EXPLICIT_APV_BAKING_SET";
-		private const int PHASE4D_MIN_TIMEOUT_SECONDS = 30;
-		private const int PHASE4D_MAX_TIMEOUT_SECONDS = 86400;
+		private const string APV_BAKE_MODE = "EXPLICIT_APV_BAKING_SET";
+		private const int MIN_APV_TIMEOUT_SECONDS = 30;
+		private const int MAX_APV_TIMEOUT_SECONDS = 86400;
 
 		public static UnityGraphicsMcpToolResult PrepareApvBakePlan(
 			string requestId,
@@ -1133,8 +1133,8 @@ namespace UnityGraphicsMcp
 					}
 
 					int timeoutSeconds = input.timeoutSeconds ?? 3600;
-					if (timeoutSeconds < PHASE4D_MIN_TIMEOUT_SECONDS ||
-						timeoutSeconds > PHASE4D_MAX_TIMEOUT_SECONDS)
+					if (timeoutSeconds < MIN_APV_TIMEOUT_SECONDS ||
+						timeoutSeconds > MAX_APV_TIMEOUT_SECONDS)
 					{
 						return CreateResult(
 							"graphics.prepare_apv_bake_plan",
@@ -1192,7 +1192,7 @@ namespace UnityGraphicsMcp
 							{ "approvalTokenExpiresUtc", plan.ExpiresUtc.ToString("O", CultureInfo.InvariantCulture) },
 							{ "expectedRevision", plan.Revision },
 							{ "diffDigest", plan.DiffDigest },
-							{ "bakeMode", PHASE4D_APV_BAKE_MODE },
+							{ "bakeMode", APV_BAKE_MODE },
 							{ "pipelineKind", plan.PipelineKind },
 							{ "pipelineAssetType", plan.PipelineAssetType },
 							{ "bakingSetAssetPath", plan.BakingSetAssetPath },
@@ -1238,7 +1238,7 @@ namespace UnityGraphicsMcp
 					}
 					if (!string.Equals(
 						bakeMode == null ? string.Empty : bakeMode.Trim(),
-						PHASE4D_APV_BAKE_MODE,
+						APV_BAKE_MODE,
 						StringComparison.OrdinalIgnoreCase))
 					{
 						return CreateResult(

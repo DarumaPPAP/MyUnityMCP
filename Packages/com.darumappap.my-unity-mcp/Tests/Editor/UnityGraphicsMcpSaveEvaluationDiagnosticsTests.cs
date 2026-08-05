@@ -35,7 +35,7 @@ namespace UnityGraphicsMcp
 			{
 				UnityGraphicsMcpToolResult result =
 					UnityGraphicsMcpInspection.CaptureEvaluation(
-						"phase4-capture-diagnostics",
+						"save-evaluation-capture-diagnostics",
 						GlobalObjectId.GetGlobalObjectIdSlow(camera).ToString(),
 						UnityGraphicsMcpSession.Revision,
 						64,
@@ -43,7 +43,7 @@ namespace UnityGraphicsMcp
 						"diagnostics");
 
 				Debug.Log(
-					"PHASE4_CAPTURE_DIAGNOSTICS status=" + result.status +
+					"SAVE_EVALUATION_CAPTURE_DIAGNOSTICS status=" + result.status +
 					" summary=" + result.summary +
 					" data=" + FormatValue(result.data));
 			}

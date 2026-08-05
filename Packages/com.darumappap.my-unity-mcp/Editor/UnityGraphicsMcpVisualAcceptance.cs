@@ -292,7 +292,7 @@ namespace UnityGraphicsMcp
 
 	public static partial class UnityGraphicsMcpInspection
 	{
-		private const int PHASE4D_MAX_ACCEPTANCE_CRITERIA = 32;
+		private const int MAX_ACCEPTANCE_CRITERIA = 32;
 
 		public static UnityGraphicsMcpToolResult PrepareAcceptanceProfile(
 			string requestId,
@@ -326,7 +326,7 @@ namespace UnityGraphicsMcp
 						string.IsNullOrWhiteSpace(input.profileName) ||
 						input.criteria == null ||
 						input.criteria.Length == 0 ||
-						input.criteria.Length > PHASE4D_MAX_ACCEPTANCE_CRITERIA ||
+						input.criteria.Length > MAX_ACCEPTANCE_CRITERIA ||
 						!IsApvVisualAcceptanceScore(input.minimumPassScore))
 					{
 						return CreateResult(

@@ -100,7 +100,7 @@ namespace UnityGraphicsMcp
 			ConfigureApvEnvironment(new[] { TEMP_SCENE_PATH }, new[] { "Day" });
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareApvBakePlan(
-					"phase4d-apv-no-revision",
+					"apv-visual-acceptance-apv-no-revision",
 					null,
 					CreateApvInput(new[] { TEMP_SCENE_PATH }, "Day"));
 			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
@@ -157,7 +157,7 @@ namespace UnityGraphicsMcp
 				CreateApvInput(new[] { TEMP_SCENE_PATH }, "Day")));
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.StartApvBake(
-					"phase4d-apv-no-approval",
+					"apv-visual-acceptance-apv-no-approval",
 					plan["planId"] as string,
 					Convert.ToInt64(plan["expectedRevision"]),
 					null,
@@ -186,7 +186,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.TickForTests();
 			UnityGraphicsMcpToolResult completed =
 				UnityGraphicsMcpInspection.GetApvBakeStatus(
-					"phase4d-apv-status",
+					"apv-visual-acceptance-apv-status",
 					startedData["jobId"] as string);
 			Dictionary<string, object> completedData = ResultData(completed);
 			Assert.That(completed.status, Is.EqualTo(E_MCP_TOOL_STATUS.SUCCESS.ToString()));
@@ -209,7 +209,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> started = ResultData(StartApv(plan));
 			UnityGraphicsMcpToolResult cancelled =
 				UnityGraphicsMcpInspection.CancelApvBake(
-					"phase4d-apv-cancel",
+					"apv-visual-acceptance-apv-cancel",
 					started["jobId"] as string);
 			Dictionary<string, object> data = ResultData(cancelled);
 			Assert.That(data["jobStatus"], Is.EqualTo(E_GRAPHICS_APV_JOB_STATUS.CANCELLED.ToString()));
@@ -232,7 +232,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> started = ResultData(StartApv(plan));
 			UnityGraphicsMcpToolResult cancelled =
 				UnityGraphicsMcpInspection.CancelApvBake(
-					"phase4d-apv-partial",
+					"apv-visual-acceptance-apv-partial",
 					started["jobId"] as string);
 			Dictionary<string, object> data = ResultData(cancelled);
 			Assert.That(data["jobStatus"], Is.EqualTo(E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()));
@@ -387,7 +387,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-refine",
+					"apv-visual-acceptance-refine",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -414,7 +414,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-refine-pass",
+					"apv-visual-acceptance-refine-pass",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -432,13 +432,13 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult savePlanResult =
 				UnityGraphicsMcpInspection.PrepareSavePlan(
-					"phase4d-loop-save-plan",
+					"apv-visual-acceptance-loop-save-plan",
 					UnityGraphicsMcpSession.Revision,
 					new[] { new UnityGraphicsMcpSaveTargetInput { scenePath = TEMP_SCENE_PATH } });
 			Dictionary<string, object> savePlan = ResultData(savePlanResult);
 			UnityGraphicsMcpToolResult saveResult =
 				UnityGraphicsMcpInspection.ApplySavePlan(
-					"phase4d-loop-save",
+					"apv-visual-acceptance-loop-save",
 					savePlan["planId"] as string,
 					Convert.ToInt64(savePlan["expectedRevision"]),
 					savePlan["approvalToken"] as string,
@@ -472,7 +472,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult refine =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-loop-refine",
+					"apv-visual-acceptance-loop-refine",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -542,7 +542,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpApvBakePlanInput input)
 		{
 			return UnityGraphicsMcpInspection.PrepareApvBakePlan(
-				"phase4d-apv-prepare",
+				"apv-visual-acceptance-apv-prepare",
 				UnityGraphicsMcpSession.Revision,
 				input);
 		}
@@ -551,7 +551,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> plan)
 		{
 			return UnityGraphicsMcpInspection.StartApvBake(
-				"phase4d-apv-start",
+				"apv-visual-acceptance-apv-start",
 				plan["planId"] as string,
 				Convert.ToInt64(plan["expectedRevision"]),
 				plan["approvalToken"] as string,
@@ -604,7 +604,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpAcceptanceProfileInput input)
 		{
 			return UnityGraphicsMcpInspection.PrepareAcceptanceProfile(
-				"phase4d-profile",
+				"apv-visual-acceptance-profile",
 				UnityGraphicsMcpSession.Revision,
 				input);
 		}
@@ -646,7 +646,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpPerformanceMeasurementInput performance)
 		{
 			return UnityGraphicsMcpInspection.EvaluateCapture(
-				"phase4d-evaluate",
+				"apv-visual-acceptance-evaluate",
 				capture.CaptureId,
 				UnityGraphicsMcpSession.Revision,
 				capture.EvidenceDigest,
@@ -666,7 +666,7 @@ namespace UnityGraphicsMcp
 					CameraSceneHandle = SceneManager.GetActiveScene().handle,
 					CameraScenePath = SceneManager.GetActiveScene().path,
 					CameraBaselineDigest = "camera-digest",
-					EvidenceDigest = "phase4d-evidence-digest-" + Guid.NewGuid().ToString("N"),
+					EvidenceDigest = "apv-visual-acceptance-evidence-digest-" + Guid.NewGuid().ToString("N"),
 					BundlePath = "Library/MyUnityMCP/ApvVisualAcceptanceTests",
 					Width = 1280,
 					Height = 720,
@@ -728,7 +728,7 @@ namespace UnityGraphicsMcp
 				CreatedUtc = DateTime.UtcNow,
 				ProjectContext = new Dictionary<string, object>
 				{
-					{ "test", "phase4d" }
+					{ "test", "apv-visual-acceptance" }
 				},
 				VisualIntent = new Dictionary<string, object>
 				{

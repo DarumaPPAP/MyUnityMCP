@@ -142,7 +142,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CaptureEvidence(
-					"phase4c-invalid-channel",
+					"capture-evidence-invalid-channel",
 					ObjectId(camera),
 					UnityGraphicsMcpSession.Revision,
 					64,
@@ -164,7 +164,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CaptureEvidence(
-					"phase4c-stale",
+					"capture-evidence-stale",
 					ObjectId(camera),
 					UnityGraphicsMcpSession.Revision + 1,
 					64,
@@ -194,13 +194,13 @@ namespace UnityGraphicsMcp
 			{
 				UnityGraphicsMcpToolResult result =
 					UnityGraphicsMcpInspection.CaptureEvidence(
-						"phase4c-capture",
+						"capture-evidence-capture",
 						ObjectId(camera),
 						UnityGraphicsMcpSession.Revision,
 						64,
 						64,
 						new[] { "COLOR", "LINEAR_DEPTH", "OBJECT_ID" },
-						"phase4c-test",
+						"capture-evidence-test",
 						32);
 
 				Assert.That(
@@ -282,7 +282,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-digest",
+					"capture-evidence-review-digest",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest-b",
@@ -305,7 +305,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-confirm",
+					"capture-evidence-review-confirm",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -328,7 +328,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-accepted-adjustment",
+					"capture-evidence-review-accepted-adjustment",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -351,7 +351,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult accepted =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-accepted",
+					"capture-evidence-review-accepted",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -376,7 +376,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult second =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-second",
+					"capture-evidence-review-second",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -430,7 +430,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromVisualReview(
-					"phase4c-refine",
+					"capture-evidence-refine",
 					direction["planId"] as string,
 					review["reviewId"] as string,
 					Convert.ToInt64(
@@ -468,7 +468,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> review =
 				ResultData(
 					UnityGraphicsMcpInspection.SubmitVisualReview(
-						"phase4c-review-final",
+						"capture-evidence-review-final",
 						captureId,
 						UnityGraphicsMcpSession.Revision,
 						"digest",
@@ -480,7 +480,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromVisualReview(
-					"phase4c-refine-accepted",
+					"capture-evidence-refine-accepted",
 					direction["planId"] as string,
 					review["reviewId"] as string,
 					Convert.ToInt64(
@@ -500,7 +500,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-revision",
+					"capture-evidence-review-revision",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -637,7 +637,7 @@ namespace UnityGraphicsMcp
 				string digest)
 		{
 			return UnityGraphicsMcpInspection.SubmitVisualReview(
-				"phase4c-review-adjustment",
+				"capture-evidence-review-adjustment",
 				captureId,
 				UnityGraphicsMcpSession.Revision,
 				digest,
@@ -652,7 +652,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CompileDirection(
-					"phase4c-direction",
+					"capture-evidence-direction",
 					"Capture EvidenceをHuman Reviewして画作りを調整する。",
 					new[] { "Heroが中央に配置されている。" },
 					new[] { "ドラマチック" },

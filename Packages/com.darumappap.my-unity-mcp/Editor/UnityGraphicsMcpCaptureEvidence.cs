@@ -369,12 +369,12 @@ namespace UnityGraphicsMcp
 	/// </summary>
 	public static partial class UnityGraphicsMcpInspection
 	{
-		private const string PHASE4C_CAPTURE_SHADER =
+		private const string CAPTURE_EVIDENCE_SHADER =
 			"Hidden/MyUnityMCP/CaptureEvidence";
-		private const string PHASE4C_ACCEPTANCE_CONFIRMATION =
+		private const string VISUAL_ACCEPTANCE_CONFIRMATION =
 			"VISUAL_ACCEPTED";
-		private const int DEFAULT_PHASE4C_RENDERER_LIMIT = 4096;
-		private const int MAX_PHASE4C_RENDERER_LIMIT = 16384;
+		private const int DEFAULT_CAPTURE_RENDERER_LIMIT = 4096;
+		private const int MAX_CAPTURE_RENDERER_LIMIT = 16384;
 
 		public static UnityGraphicsMcpToolResult CaptureEvidence(
 			string requestId,
@@ -456,8 +456,8 @@ namespace UnityGraphicsMcp
 					}
 
 					int rendererLimit = maxRendererCount ??
-						DEFAULT_PHASE4C_RENDERER_LIMIT;
-					if (rendererLimit < 1 || rendererLimit > MAX_PHASE4C_RENDERER_LIMIT)
+						DEFAULT_CAPTURE_RENDERER_LIMIT;
+					if (rendererLimit < 1 || rendererLimit > MAX_CAPTURE_RENDERER_LIMIT)
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -494,7 +494,7 @@ namespace UnityGraphicsMcp
 						normalizedChannels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.LINEAR_DEPTH) ||
 						normalizedChannels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.OBJECT_ID);
 					Shader evidenceShader = requiresEvidenceShader
-						? Shader.Find(PHASE4C_CAPTURE_SHADER)
+						? Shader.Find(CAPTURE_EVIDENCE_SHADER)
 						: null;
 					if (requiresEvidenceShader && evidenceShader == null)
 					{
@@ -505,7 +505,7 @@ namespace UnityGraphicsMcp
 							"Capture Evidence Shaderを解決できません。",
 							new Dictionary<string, object>
 							{
-								{ "shader", PHASE4C_CAPTURE_SHADER }
+								{ "shader", CAPTURE_EVIDENCE_SHADER }
 							});
 					}
 
@@ -628,7 +628,7 @@ namespace UnityGraphicsMcp
 					{
 						if (!string.Equals(
 							acceptanceConfirmation,
-							PHASE4C_ACCEPTANCE_CONFIRMATION,
+							VISUAL_ACCEPTANCE_CONFIRMATION,
 							StringComparison.Ordinal))
 						{
 							return CreateResult(
