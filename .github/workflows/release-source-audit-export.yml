@@ -1,9 +1,9 @@
 name: Release Source Audit Export
 
 on:
-  push:
+  pull_request:
     branches:
-      - release/v1.0.0
+      - main
     paths:
       - .github/workflows/release-source-audit-export.yml
   workflow_dispatch: {}
