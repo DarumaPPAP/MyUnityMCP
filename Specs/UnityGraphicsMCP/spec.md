@@ -4,7 +4,7 @@
 - DocumentVersion: `4.1.0`
 - DesignStatus: `Phase 4B Stable`
 - ImplementationStatus: `Phase 1-4B Implemented`
-- VerificationStatus: `Unity Editor CI 63 / 63 PASS`
+- VerificationStatus: `Unity Editor CI 62 / 62 PASS`
 - PrimaryNamespace: `UnityGraphicsMcp`
 
 ## 1. 目的
@@ -261,6 +261,6 @@ PipelineとPlatformを別軸で扱う。Editor成功だけでPlayerまたはTarg
 - Editor Compile
 - 17 Tool Bridge Discovery
 - Direct Handler Invocation
-- EditMode `63 / 63 PASS`
+- EditMode `62 / 62 PASS`
 
 EntryがないPlayer / Target Device環境は`UNVERIFIED`とする。
