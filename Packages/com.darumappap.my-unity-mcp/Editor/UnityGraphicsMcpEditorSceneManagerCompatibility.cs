@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 
+using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -22,6 +23,30 @@ namespace UnityGraphicsMcp
 				null,
 				new[] { typeof(Scene) },
 				null);
+
+		public static event Action<Scene, OpenSceneMode> sceneOpened
+		{
+			add => UnityEditor.SceneManagement.EditorSceneManager.sceneOpened += value;
+			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneOpened -= value;
+		}
+
+		public static event Action<Scene> sceneClosed
+		{
+			add => UnityEditor.SceneManagement.EditorSceneManager.sceneClosed += value;
+			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneClosed -= value;
+		}
+
+		public static event Action<Scene> sceneSaved
+		{
+			add => UnityEditor.SceneManagement.EditorSceneManager.sceneSaved += value;
+			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneSaved -= value;
+		}
+
+		public static event Action<Scene, Scene> activeSceneChangedInEditMode
+		{
+			add => UnityEditor.SceneManagement.EditorSceneManager.activeSceneChangedInEditMode += value;
+			remove => UnityEditor.SceneManagement.EditorSceneManager.activeSceneChangedInEditMode -= value;
+		}
 
 		public static Scene NewScene(
 			NewSceneSetup setup,
