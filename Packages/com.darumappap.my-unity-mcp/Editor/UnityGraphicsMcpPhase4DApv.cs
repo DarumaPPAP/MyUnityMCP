@@ -101,6 +101,7 @@ namespace UnityGraphicsMcp
 		public bool CancellationInvoked { get; set; }
 		public bool MutationRevisionNotified { get; set; }
 		public bool BackendStarted { get; set; }
+		public bool Finalizing { get; set; }
 		public UnityGraphicsMcpApvBakePlan Plan { get; set; }
 		public UnityGraphicsMcpApvBackendState BackendState { get; set; }
 		public Dictionary<string, string> OutputBefore { get; set; } =
@@ -333,7 +334,7 @@ namespace UnityGraphicsMcp
 
 		private static void TickJob(UnityGraphicsMcpApvBakeJob job)
 		{
-			if (job == null || IsTerminal(job.Status))
+			if (job == null || job.Finalizing || IsTerminal(job.Status))
 			{
 				return;
 			}
@@ -393,68 +394,75 @@ namespace UnityGraphicsMcp
 
 		private static void FinalizeJob(UnityGraphicsMcpApvBakeJob job)
 		{
-			if (IsTerminal(job.Status))
+			if (job.Finalizing || IsTerminal(job.Status))
 			{
 				return;
 			}
 
+			job.Finalizing = true;
 			try
 			{
-				if (StartOverrideForTests == null)
+				try
 				{
-					UnityGraphicsMcpApvReflectionBackend.Restore(job.BackendState);
+					if (StartOverrideForTests == null)
+					{
+						UnityGraphicsMcpApvReflectionBackend.Restore(job.BackendState);
+					}
+				}
+				catch (Exception exception)
+				{
+					if (string.IsNullOrWhiteSpace(job.FailureCode))
+					{
+						job.FailureCode = "APV_EDITOR_STATE_RESTORE_FAILED";
+						job.FailureMessage = exception.Message;
+					}
+				}
+
+				job.OutputAfter = CaptureOutputSnapshot(job.Plan);
+				job.OutputDiff = BuildOutputDiff(job.OutputBefore, job.OutputAfter);
+				job.CompletedStages.Add("OUTPUT_DIFF_CAPTURED");
+				job.CompletedUtc = DateTime.UtcNow;
+
+				bool hasOutput = job.OutputDiff.Count > 0;
+				if (job.CancellationRequested)
+				{
+					job.Status = hasOutput
+						? E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()
+						: E_GRAPHICS_APV_JOB_STATUS.CANCELLED.ToString();
+					if (string.IsNullOrWhiteSpace(job.FailureCode))
+					{
+						job.FailureCode = "APV_BAKE_CANCELLED";
+						job.FailureMessage = "APV BakeはCancellation契約により停止されました。";
+					}
+				}
+				else if (!string.IsNullOrWhiteSpace(job.FailureCode))
+				{
+					job.Status = hasOutput
+						? E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()
+						: E_GRAPHICS_APV_JOB_STATUS.FAILED.ToString();
+				}
+				else if (!hasOutput)
+				{
+					job.Status = E_GRAPHICS_APV_JOB_STATUS.FAILED.ToString();
+					job.FailureCode = "APV_BAKE_NO_OUTPUT_DIFF";
+					job.FailureMessage =
+						"APV Bake終了後に明示Output Root内の追加または変更Assetを確認できませんでした。";
+				}
+				else
+				{
+					job.Status = E_GRAPHICS_APV_JOB_STATUS.SUCCEEDED.ToString();
+					job.CompletedStages.Add("APV_BAKE_COMPLETED");
+				}
+
+				if (hasOutput && !job.MutationRevisionNotified)
+				{
+					job.MutationRevisionNotified = true;
+					UnityGraphicsMcpSession.NotifyMutationApplied();
 				}
 			}
-			catch (Exception exception)
+			finally
 			{
-				if (string.IsNullOrWhiteSpace(job.FailureCode))
-				{
-					job.FailureCode = "APV_EDITOR_STATE_RESTORE_FAILED";
-					job.FailureMessage = exception.Message;
-				}
-			}
-
-			AssetDatabase.Refresh();
-			job.OutputAfter = CaptureOutputSnapshot(job.Plan);
-			job.OutputDiff = BuildOutputDiff(job.OutputBefore, job.OutputAfter);
-			job.CompletedStages.Add("OUTPUT_DIFF_CAPTURED");
-			job.CompletedUtc = DateTime.UtcNow;
-
-			bool hasOutput = job.OutputDiff.Count > 0;
-			if (job.CancellationRequested)
-			{
-				job.Status = hasOutput
-					? E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()
-					: E_GRAPHICS_APV_JOB_STATUS.CANCELLED.ToString();
-				if (string.IsNullOrWhiteSpace(job.FailureCode))
-				{
-					job.FailureCode = "APV_BAKE_CANCELLED";
-					job.FailureMessage = "APV BakeはCancellation契約により停止されました。";
-				}
-			}
-			else if (!string.IsNullOrWhiteSpace(job.FailureCode))
-			{
-				job.Status = hasOutput
-					? E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()
-					: E_GRAPHICS_APV_JOB_STATUS.FAILED.ToString();
-			}
-			else if (!hasOutput)
-			{
-				job.Status = E_GRAPHICS_APV_JOB_STATUS.FAILED.ToString();
-				job.FailureCode = "APV_BAKE_NO_OUTPUT_DIFF";
-				job.FailureMessage =
-					"APV Bake終了後に明示Output Root内の追加または変更Assetを確認できませんでした。";
-			}
-			else
-			{
-				job.Status = E_GRAPHICS_APV_JOB_STATUS.SUCCEEDED.ToString();
-				job.CompletedStages.Add("APV_BAKE_COMPLETED");
-			}
-
-			if (hasOutput && !job.MutationRevisionNotified)
-			{
-				job.MutationRevisionNotified = true;
-				UnityGraphicsMcpSession.NotifyMutationApplied();
+				job.Finalizing = false;
 			}
 		}
 
@@ -700,7 +708,7 @@ namespace UnityGraphicsMcp
 			if (instance == null || backendType == null)
 			{
 				throw new InvalidOperationException(
-					"ProbeReferenceVolume.instanceまたはAPV Backendを解決できません。";
+					"ProbeReferenceVolume.instanceまたはAPV Backendを解決できません。");
 			}
 
 			MethodInfo setActive = referenceType.GetMethod(
@@ -715,7 +723,7 @@ namespace UnityGraphicsMcp
 			if (setActive == null || scenario == null || !scenario.CanWrite)
 			{
 				throw new InvalidOperationException(
-					"APV Baking SetまたはLighting Scenarioを明示設定できません。";
+					"APV Baking SetまたはLighting Scenarioを明示設定できません。");
 			}
 
 			UnityGraphicsMcpApvBackendState state = new UnityGraphicsMcpApvBackendState
