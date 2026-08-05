@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 
-using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
@@ -24,25 +24,25 @@ namespace UnityGraphicsMcp
 				new[] { typeof(Scene) },
 				null);
 
-		public static event Action<Scene, OpenSceneMode> sceneOpened
+		public static event UnityEditor.SceneManagement.EditorSceneManager.SceneOpenedCallback sceneOpened
 		{
 			add => UnityEditor.SceneManagement.EditorSceneManager.sceneOpened += value;
 			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneOpened -= value;
 		}
 
-		public static event Action<Scene> sceneClosed
+		public static event UnityEditor.SceneManagement.EditorSceneManager.SceneClosedCallback sceneClosed
 		{
 			add => UnityEditor.SceneManagement.EditorSceneManager.sceneClosed += value;
 			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneClosed -= value;
 		}
 
-		public static event Action<Scene> sceneSaved
+		public static event UnityEditor.SceneManagement.EditorSceneManager.SceneSavedCallback sceneSaved
 		{
 			add => UnityEditor.SceneManagement.EditorSceneManager.sceneSaved += value;
 			remove => UnityEditor.SceneManagement.EditorSceneManager.sceneSaved -= value;
 		}
 
-		public static event Action<Scene, Scene> activeSceneChangedInEditMode
+		public static event UnityAction<Scene, Scene> activeSceneChangedInEditMode
 		{
 			add => UnityEditor.SceneManagement.EditorSceneManager.activeSceneChangedInEditMode += value;
 			remove => UnityEditor.SceneManagement.EditorSceneManager.activeSceneChangedInEditMode -= value;
