@@ -56,7 +56,7 @@ namespace UnityGraphicsMcp
 
 	public sealed class UnityGraphicsMcpToolResult
 	{
-		public string schemaVersion { get; set; } = "1.0";
+		public string schemaVersion { get; set; } = "1.1";
 		public string tool { get; set; }
 		public string requestId { get; set; }
 		public string sessionId { get; set; }
@@ -64,6 +64,8 @@ namespace UnityGraphicsMcp
 		public string status { get; set; }
 		public string summary { get; set; }
 		public object data { get; set; }
+		public UnityGraphicsMcpStructuredError error { get; set; }
+		public UnityGraphicsMcpExecutionMetadata execution { get; set; }
 		public List<UnityGraphicsMcpIssue> issues { get; set; } = new List<UnityGraphicsMcpIssue>();
 
 		public bool IsSuccessful =>

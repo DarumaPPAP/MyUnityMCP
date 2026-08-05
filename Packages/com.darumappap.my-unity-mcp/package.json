@@ -1,8 +1,8 @@
 {
   "name": "com.darumappap.my-unity-mcp",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "displayName": "My Unity MCP",
-  "description": "対象Unity Projectを解析し、Read-only Inspection、Direction Planning、承認制Graphics Mutation・Save・限定Bake、Color・Depth・Object ID Capture Evidence、APV Bake Job、およびAcceptance ProfileによるVisual Evaluationと構造化Refineを提供するUnity Editor向けMCP基盤です。Unity Version、Render Pipeline、Platformは対象Projectから解決します。",
+  "description": "対象Unity Projectを解析し、Read-only Inspection、Direction Planning、承認制Graphics Mutation・Save・限定Bake、Capture Evidence、APV Bake、Visual Evaluation、構造化Refine、および長時間AI制作向けのTimeout・Cancellation・Progress・Structured Log・Execution History・Tool Call Trace・Recovery Contractを提供するUnity Editor向けMCP基盤です。",
   "dependencies": {
     "com.coplaydev.unity-mcp": "10.1.2",
     "com.unity.nuget.newtonsoft-json": "3.0.2",

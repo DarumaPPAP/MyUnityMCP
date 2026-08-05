@@ -1074,6 +1074,30 @@ namespace UnityGraphicsMcp
 						return unsupported;
 					}
 
+					bool supportedPipeline = string.Equals(
+						environment.PipelineKind,
+						"URP",
+						StringComparison.Ordinal) ||
+						string.Equals(
+							environment.PipelineKind,
+							"HDRP",
+							StringComparison.Ordinal);
+					if (!supportedPipeline)
+					{
+						return CreateResult(
+							"graphics.prepare_apv_bake_plan",
+							requestId,
+							E_MCP_TOOL_STATUS.UNSUPPORTED,
+							"APV BakeはURPまたはHDRP Pipelineでのみ準備できます。",
+							new Dictionary<string, object>
+							{
+								{ "failureCode", "UNSUPPORTED_PIPELINE" },
+								{ "pipelineKind", environment.PipelineKind },
+								{ "pipelineAssetType", environment.PipelineAssetType },
+								{ "supportedPipelines", new[] { "URP", "HDRP" } }
+							});
+					}
+
 					List<string> explicitScenes = input.scenePaths
 						.Where(value => !string.IsNullOrWhiteSpace(value))
 						.Select(NormalizeSaveEvaluationSceneAssetPath)
