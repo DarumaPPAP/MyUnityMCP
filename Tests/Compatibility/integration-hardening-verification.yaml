@@ -1,6 +1,7 @@
 schema_version: "1.0"
 package_version: "0.8.0"
-verification_status: pending_ci
+verification_status: passed
+verified_at_utc: "2026-08-05T19:46:16Z"
 
 scope:
   - canonical_end_to_end_workflow
@@ -28,30 +29,43 @@ canonical_workflow:
 
 fault_injection:
   plan_after_scene_change:
+    result: passed
     expected: stale_snapshot_and_no_additional_mutation
   scene_close:
+    result: passed
     expected: interrupted_and_no_automatic_save
   domain_reload:
+    result: passed
     expected: interrupted_and_transient_ids_invalid
   compile_started:
+    result: passed
     expected: interrupted_and_transient_ids_invalid
   play_mode_transition:
+    result: passed
     expected: interrupted_and_editor_mutation_stopped
   approval_token_mismatch:
+    result: passed
     expected: rejected_and_no_mutation
   plan_expired:
+    result: passed
     expected: session_expired_and_no_mutation
   bake_output_missing:
+    result: passed
     expected: failed_and_no_scene_damage
   camera_deleted:
+    result: passed
     expected: rejected_and_no_capture_state_leak
   unsupported_pipeline:
-    expected: unsupported_and_backend_not_invoked
+    result: passed
+    expected: rejected_before_plan_creation_and_backend_not_invoked
   multi_scene_configuration_changed:
+    result: passed
     expected: interrupted_and_baseline_invalid
   mcp_client_disconnected:
+    result: passed
     expected: interrupted_and_history_queryable
   unity_restart:
+    result: passed
     expected: recovered_as_interrupted_and_not_auto_resumed
 
 operational_contract:
@@ -74,24 +88,33 @@ operational_contract:
 large_scene_contract:
   generated_light_count: 400
   maximum_inspection_seconds: 20
+  measured_test_duration_seconds: 0.137104
   scene_dirty_must_not_change: true
+  result: passed
 
 completion_gate:
-  editor_compile: pending_ci
-  bridge_tool_count: pending_ci
-  editmode_total: pending_ci
+  semantic_naming_guard: passed
+  editor_compile: passed
+  unity_version: "6000.0.75f1"
+  bridge_tool_count: 32
+  editmode_total: 125
+  editmode_passed: 125
   editmode_failed: 0
   editmode_skipped: 0
   editmode_inconclusive: 0
-  canonical_end_to_end: pending_ci
-  major_faults_scene_safe: pending_ci
-  structured_retry_procedure: pending_ci
-  support_matrix_fixed: pending_ci
+  hardening_contract_total: 26
+  canonical_end_to_end: passed
+  major_faults_scene_safe: passed
+  structured_retry_procedure: passed
+  support_matrix_fixed: passed
 
 evidence:
-  workflow_run_id: pending
-  workflow_job_id: pending
+  workflow_run_id: 31040160503
+  workflow_job_id: 92422306908
   artifact_name: MyUnityMCP-Unity-Editor-Evidence
-  artifact_id: pending
-  artifact_sha256: pending
-  verified_source_commit: pending
+  artifact_id: 8944534182
+  artifact_sha256: cd954d70e08f371a19b57651907dfa7b70fc1027cb6ea01ac8c5c78895d7702a
+  verified_source_commit: 355b97dd5243ca385b5cf26693354b6dd0d9e969
+  nunit_start_utc: "2026-08-05T19:46:06Z"
+  nunit_end_utc: "2026-08-05T19:46:16Z"
+  nunit_duration_seconds: 9.2998047
