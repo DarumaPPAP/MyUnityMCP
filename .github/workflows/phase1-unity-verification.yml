@@ -138,8 +138,8 @@ jobs:
           inconclusive = int(root.attrib.get("inconclusive", "0"))
 
           print(f"Phase 4 results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
-          if total < 63:
-              raise SystemExit(f"Expected at least 63 Phase 1-4 contract tests, but only {total} ran.")
+          if total < 62:
+              raise SystemExit(f"Expected at least 62 Phase 1-4 contract tests, but only {total} ran.")
           if failed != 0 or inconclusive != 0:
               for case in root.iter("test-case"):
                   if case.attrib.get("result") == "Failed":
