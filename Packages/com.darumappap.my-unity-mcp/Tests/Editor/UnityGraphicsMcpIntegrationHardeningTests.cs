@@ -116,7 +116,8 @@ namespace UnityGraphicsMcp
 					"success",
 					new Dictionary<string, object>()));
 
-			Assert.That(response, Is.TypeOf<SuccessResponse>());
+			Assert.That(response, Is.Not.Null);
+			Assert.That(response.GetType().Name, Is.EqualTo("SuccessResponse"));
 			List<UnityGraphicsMcpExecutionRecord> history =
 				UnityGraphicsMcpExecutionHardening.GetHistory(null, 10);
 			Assert.That(history.Count, Is.EqualTo(1));
