@@ -1,4 +1,4 @@
-name: Phase 4 Unity Verification
+name: Phase 4C Unity Verification
 
 on:
   pull_request:
@@ -11,12 +11,12 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: phase4-unity-${{ github.head_ref || github.ref }}
+  group: phase4c-unity-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
   editmode:
-    name: Compile, 17 Tool Discovery and EditMode
+    name: Compile, 20 Tool Discovery and 78 EditMode Contracts
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -90,15 +90,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: TestProjects/MyUnityMCPPhase1/Library
-          key: MyUnityMCP-Phase4-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPPhase1/Packages/manifest.json') }}
+          key: MyUnityMCP-Phase4C-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPPhase1/Packages/manifest.json') }}
           restore-keys: |
+            MyUnityMCP-Phase4C-6000.0.75f1-
             MyUnityMCP-Phase4-6000.0.75f1-
             MyUnityMCP-Phase3-6000.0.75f1-
             MyUnityMCP-Phase3A-6000.0.75f1-
             MyUnityMCP-Phase2-6000.0.75f1-
             MyUnityMCP-Phase1-6000.0.75f1-
 
-      - name: Run Phase 4 EditMode tests
+      - name: Run Phase 4C EditMode tests
         id: tests
         continue-on-error: true
         uses: game-ci/unity-test-runner@v4
@@ -113,7 +114,7 @@ jobs:
           testMode: editmode
           customParameters: -testFilter UnityGraphicsMcp
 
-      - name: Verify Phase 4 NUnit result
+      - name: Verify Phase 4C NUnit result
         if: always() && steps.license.outputs.available == 'true'
         env:
           ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
@@ -137,15 +138,15 @@ jobs:
           skipped = int(root.attrib.get("skipped", "0"))
           inconclusive = int(root.attrib.get("inconclusive", "0"))
 
-          print(f"Phase 4 results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
-          if total < 62:
-              raise SystemExit(f"Expected at least 62 Phase 1-4 contract tests, but only {total} ran.")
-          if failed != 0 or inconclusive != 0:
+          print(f"Phase 4C results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
+          if total < 78:
+              raise SystemExit(f"Expected at least 78 Phase 1-4C contract tests, but only {total} ran.")
+          if failed != 0 or skipped != 0 or inconclusive != 0:
               for case in root.iter("test-case"):
-                  if case.attrib.get("result") == "Failed":
+                  if case.attrib.get("result") != "Passed":
                       name = case.attrib.get("fullname") or case.attrib.get("name") or "<unknown>"
                       message = case.findtext("failure/message") or ""
-                      print(f"FAILED: {name}: {message}")
+                      print(f"NON-PASS: {name}: {message}")
               raise SystemExit(1)
           PY
 
@@ -154,10 +155,10 @@ jobs:
             exit 1
           fi
 
-      - name: Upload Phase 4 Unity evidence
+      - name: Upload Phase 4C Unity evidence
         if: always() && steps.license.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: MyUnityMCP-Phase4-Unity-Evidence
+          name: MyUnityMCP-Phase4C-Unity-Evidence
           path: ${{ steps.tests.outputs.artifactsPath }}
           if-no-files-found: error
