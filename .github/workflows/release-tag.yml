@@ -1,0 +1,38 @@
+name: MyUnityMCP Release Tag
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main release commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify release contract and publish version tag
+        run: |
+          set -euo pipefail
+          version=$(cat VERSION)
+          tag="v${version}"
+          python3 Tests/Release/verify_release_contract.py --mode pr
+          git fetch origin --tags --force
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            if [ "$(git rev-parse "$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::error::$tag already points to a different commit."
+              exit 1
+            fi
+            echo "$tag already points to the current main commit."
+            exit 0
+          fi
+          git tag -a "$tag" -m "MyUnityMCP ${tag}"
+          git push origin "$tag"
