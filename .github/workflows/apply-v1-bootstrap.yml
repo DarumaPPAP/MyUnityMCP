@@ -24,7 +24,7 @@ jobs:
           persist-credentials: true
           fetch-depth: 1
 
-      - name: Reconstruct and apply release migration
+      - name: Reconstruct, apply and validate release migration
         run: |
           set -euo pipefail
           mkdir -p Tools
@@ -52,16 +52,14 @@ jobs:
           path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + chr(10), encoding='utf-8')
           PY
 
-          python3 Tests/Release/verify_release_contract.py --mode pr
-
-      - name: Remove migration-only assets
-        run: |
           rm -rf .release-bootstrap
           rm -f Tools/apply-v1-bootstrap.py
           rm -f Tools/apply-v1-release.py
           rm -f .github/workflows/apply-v1-bootstrap.yml
           rm -f .github/workflows/apply-v1-release.yml
           rm -f .github/workflows/release-source-audit-export.yml
+
+          python3 Tests/Release/verify_release_contract.py --mode pr
 
       - name: Commit v1 release preparation
         run: |
