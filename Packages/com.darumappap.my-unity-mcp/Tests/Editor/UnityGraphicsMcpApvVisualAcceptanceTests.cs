@@ -14,14 +14,14 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4DTests
+	public sealed class UnityGraphicsMcpApvVisualAcceptanceTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4DTemporaryScene.unity";
+			"Assets/MyUnityMcpApvVisualAcceptanceTemporaryScene.unity";
 		private const string FAKE_BAKING_SET_PATH =
-			"Assets/MyUnityMcpPhase4DTests/FakeBakingSet.asset";
+			"Assets/MyUnityMcpApvVisualAcceptanceTests/FakeBakingSet.asset";
 		private const string MAP_RELATIVE_PATH =
-			"Library/MyUnityMCP/Phase4DTests/object-id-map.json";
+			"Library/MyUnityMCP/ApvVisualAcceptanceTests/object-id-map.json";
 
 		[SetUp]
 		public void SetUp()
@@ -31,11 +31,11 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
-			UnityGraphicsMcpPhase4DApvSession.ClearForTests();
-			UnityGraphicsMcpPhase4DAcceptanceSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.ClearForTests();
+			UnityGraphicsMcpVisualAcceptanceSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 			DeleteMapFile();
@@ -46,11 +46,11 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
-			UnityGraphicsMcpPhase4DApvSession.ClearForTests();
-			UnityGraphicsMcpPhase4DAcceptanceSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.ClearForTests();
+			UnityGraphicsMcpVisualAcceptanceSession.ClearForTests();
 			Undo.ClearAll();
 			EditorSceneManager.NewScene(
 				NewSceneSetup.EmptyScene,
@@ -60,7 +60,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversSevenPhase4DTools_AndKeepsThemDisabled()
+		public void Bridge_DiscoversSevenApvVisualAcceptanceTools_AndKeepsThemDisabled()
 		{
 			CommandRegistry.Initialize();
 			string[] names =
@@ -100,7 +100,7 @@ namespace UnityGraphicsMcp
 			ConfigureApvEnvironment(new[] { TEMP_SCENE_PATH }, new[] { "Day" });
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareApvBakePlan(
-					"phase4d-apv-no-revision",
+					"apv-visual-acceptance-apv-no-revision",
 					null,
 					CreateApvInput(new[] { TEMP_SCENE_PATH }, "Day"));
 			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
@@ -157,7 +157,7 @@ namespace UnityGraphicsMcp
 				CreateApvInput(new[] { TEMP_SCENE_PATH }, "Day")));
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.StartApvBake(
-					"phase4d-apv-no-approval",
+					"apv-visual-acceptance-apv-no-approval",
 					plan["planId"] as string,
 					Convert.ToInt64(plan["expectedRevision"]),
 					null,
@@ -183,10 +183,10 @@ namespace UnityGraphicsMcp
 			Assert.That(startedData["jobStatus"], Is.EqualTo(E_GRAPHICS_APV_JOB_STATUS.RUNNING.ToString()));
 
 			running = false;
-			UnityGraphicsMcpPhase4DApvSession.TickForTests();
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.TickForTests();
 			UnityGraphicsMcpToolResult completed =
 				UnityGraphicsMcpInspection.GetApvBakeStatus(
-					"phase4d-apv-status",
+					"apv-visual-acceptance-apv-status",
 					startedData["jobId"] as string);
 			Dictionary<string, object> completedData = ResultData(completed);
 			Assert.That(completed.status, Is.EqualTo(E_MCP_TOOL_STATUS.SUCCESS.ToString()));
@@ -209,7 +209,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> started = ResultData(StartApv(plan));
 			UnityGraphicsMcpToolResult cancelled =
 				UnityGraphicsMcpInspection.CancelApvBake(
-					"phase4d-apv-cancel",
+					"apv-visual-acceptance-apv-cancel",
 					started["jobId"] as string);
 			Dictionary<string, object> data = ResultData(cancelled);
 			Assert.That(data["jobStatus"], Is.EqualTo(E_GRAPHICS_APV_JOB_STATUS.CANCELLED.ToString()));
@@ -232,7 +232,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> started = ResultData(StartApv(plan));
 			UnityGraphicsMcpToolResult cancelled =
 				UnityGraphicsMcpInspection.CancelApvBake(
-					"phase4d-apv-partial",
+					"apv-visual-acceptance-apv-partial",
 					started["jobId"] as string);
 			Dictionary<string, object> data = ResultData(cancelled);
 			Assert.That(data["jobStatus"], Is.EqualTo(E_GRAPHICS_APV_JOB_STATUS.PARTIAL.ToString()));
@@ -387,7 +387,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-refine",
+					"apv-visual-acceptance-refine",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -414,7 +414,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-refine-pass",
+					"apv-visual-acceptance-refine-pass",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -424,7 +424,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ClosedLoop_ChangeSaveBakeCaptureEvaluateAndRefine_Completes()
 		{
-			GameObject target = new GameObject("Phase4D Closed Loop Target");
+			GameObject target = new GameObject("ApvVisualAcceptance Closed Loop Target");
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH, false), Is.True);
 			target.transform.position = Vector3.one;
@@ -432,13 +432,13 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult savePlanResult =
 				UnityGraphicsMcpInspection.PrepareSavePlan(
-					"phase4d-loop-save-plan",
+					"apv-visual-acceptance-loop-save-plan",
 					UnityGraphicsMcpSession.Revision,
 					new[] { new UnityGraphicsMcpSaveTargetInput { scenePath = TEMP_SCENE_PATH } });
 			Dictionary<string, object> savePlan = ResultData(savePlanResult);
 			UnityGraphicsMcpToolResult saveResult =
 				UnityGraphicsMcpInspection.ApplySavePlan(
-					"phase4d-loop-save",
+					"apv-visual-acceptance-loop-save",
 					savePlan["planId"] as string,
 					Convert.ToInt64(savePlan["expectedRevision"]),
 					savePlan["approvalToken"] as string,
@@ -472,7 +472,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpDirectionPlan source = StoreDirectionPlan();
 			UnityGraphicsMcpToolResult refine =
 				UnityGraphicsMcpInspection.RefineFromEvaluation(
-					"phase4d-loop-refine",
+					"apv-visual-acceptance-loop-refine",
 					source.PlanId,
 					evaluation["evaluationId"] as string,
 					UnityGraphicsMcpSession.Revision);
@@ -484,7 +484,7 @@ namespace UnityGraphicsMcp
 
 		private static Scene CreateSavedScene()
 		{
-			new GameObject("Phase4D APV Target");
+			new GameObject("ApvVisualAcceptance APV Target");
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH, false), Is.True);
 			return scene;
@@ -494,7 +494,7 @@ namespace UnityGraphicsMcp
 			IEnumerable<string> scenes,
 			IEnumerable<string> scenarios)
 		{
-			UnityGraphicsMcpPhase4DApvSession.EnvironmentOverrideForTests = input =>
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.EnvironmentOverrideForTests = input =>
 				new UnityGraphicsMcpApvEnvironment
 				{
 					PipelineKind = "URP",
@@ -517,11 +517,11 @@ namespace UnityGraphicsMcp
 			Func<Dictionary<string, string>> snapshot,
 			Func<bool> cancel)
 		{
-			UnityGraphicsMcpPhase4DApvSession.StartOverrideForTests = plan =>
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.StartOverrideForTests = plan =>
 				new UnityGraphicsMcpApvBackendState { Started = true };
-			UnityGraphicsMcpPhase4DApvSession.IsRunningOverrideForTests = isRunning;
-			UnityGraphicsMcpPhase4DApvSession.CancelOverrideForTests = cancel;
-			UnityGraphicsMcpPhase4DApvSession.OutputSnapshotOverrideForTests = plan => snapshot();
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.IsRunningOverrideForTests = isRunning;
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.CancelOverrideForTests = cancel;
+			UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.OutputSnapshotOverrideForTests = plan => snapshot();
 		}
 
 		private static UnityGraphicsMcpApvBakePlanInput CreateApvInput(
@@ -542,7 +542,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpApvBakePlanInput input)
 		{
 			return UnityGraphicsMcpInspection.PrepareApvBakePlan(
-				"phase4d-apv-prepare",
+				"apv-visual-acceptance-apv-prepare",
 				UnityGraphicsMcpSession.Revision,
 				input);
 		}
@@ -551,7 +551,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> plan)
 		{
 			return UnityGraphicsMcpInspection.StartApvBake(
-				"phase4d-apv-start",
+				"apv-visual-acceptance-apv-start",
 				plan["planId"] as string,
 				Convert.ToInt64(plan["expectedRevision"]),
 				plan["approvalToken"] as string,
@@ -570,7 +570,7 @@ namespace UnityGraphicsMcp
 		{
 			return new UnityGraphicsMcpAcceptanceProfileInput
 			{
-				profileName = "Phase4D Visual Acceptance",
+				profileName = "ApvVisualAcceptance Visual Acceptance",
 				minimumPassScore = 70.0,
 				criteria = new[]
 				{
@@ -604,7 +604,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpAcceptanceProfileInput input)
 		{
 			return UnityGraphicsMcpInspection.PrepareAcceptanceProfile(
-				"phase4d-profile",
+				"apv-visual-acceptance-profile",
 				UnityGraphicsMcpSession.Revision,
 				input);
 		}
@@ -635,7 +635,7 @@ namespace UnityGraphicsMcp
 				gpuFrameMs = gpu,
 				memoryMb = memory,
 				drawCalls = drawCalls,
-				source = "Phase4D Test Measurement"
+				source = "ApvVisualAcceptance Test Measurement"
 			};
 		}
 
@@ -646,7 +646,7 @@ namespace UnityGraphicsMcp
 			UnityGraphicsMcpPerformanceMeasurementInput performance)
 		{
 			return UnityGraphicsMcpInspection.EvaluateCapture(
-				"phase4d-evaluate",
+				"apv-visual-acceptance-evaluate",
 				capture.CaptureId,
 				UnityGraphicsMcpSession.Revision,
 				capture.EvidenceDigest,
@@ -666,8 +666,8 @@ namespace UnityGraphicsMcp
 					CameraSceneHandle = SceneManager.GetActiveScene().handle,
 					CameraScenePath = SceneManager.GetActiveScene().path,
 					CameraBaselineDigest = "camera-digest",
-					EvidenceDigest = "phase4d-evidence-digest-" + Guid.NewGuid().ToString("N"),
-					BundlePath = "Library/MyUnityMCP/Phase4DTests",
+					EvidenceDigest = "apv-visual-acceptance-evidence-digest-" + Guid.NewGuid().ToString("N"),
+					BundlePath = "Library/MyUnityMCP/ApvVisualAcceptanceTests",
 					Width = 1280,
 					Height = 720,
 					EncodedRendererCount = 1
@@ -676,7 +676,7 @@ namespace UnityGraphicsMcp
 			capture.Artifacts.Add(Artifact("LINEAR_DEPTH", "linear-depth.exr"));
 			capture.Artifacts.Add(Artifact("OBJECT_ID", "object-id.png"));
 			capture.Artifacts.Add(Artifact("OBJECT_ID_MAP", MAP_RELATIVE_PATH));
-			UnityGraphicsMcpPhase4CaptureSession.StoreCaptureForTests(capture);
+			UnityGraphicsMcpCaptureEvidenceSession.StoreCaptureForTests(capture);
 			return capture;
 		}
 
@@ -728,7 +728,7 @@ namespace UnityGraphicsMcp
 				CreatedUtc = DateTime.UtcNow,
 				ProjectContext = new Dictionary<string, object>
 				{
-					{ "test", "phase4d" }
+					{ "test", "apv-visual-acceptance" }
 				},
 				VisualIntent = new Dictionary<string, object>
 				{

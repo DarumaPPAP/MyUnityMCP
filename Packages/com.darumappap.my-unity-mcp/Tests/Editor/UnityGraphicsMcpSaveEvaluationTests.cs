@@ -13,10 +13,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4Tests
+	public sealed class UnityGraphicsMcpSaveEvaluationTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4TemporaryScene.unity";
+			"Assets/MyUnityMcpSaveEvaluationTemporaryScene.unity";
 
 		private readonly List<string> _capturePaths = new List<string>();
 
@@ -28,7 +28,7 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 			_capturePaths.Clear();
@@ -39,7 +39,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
 			Undo.ClearAll();
 			RenderTexture.active = null;
 			EditorSceneManager.NewScene(
@@ -57,7 +57,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase4ATools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversSaveEvaluationTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 
@@ -97,7 +97,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareSavePlan(
-					"phase4-save-readonly",
+					"save-evaluation-save-readonly",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -125,7 +125,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.ApplySavePlan(
-					"phase4-save-missing-approval",
+					"save-evaluation-save-missing-approval",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					null,
@@ -152,7 +152,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.ApplySavePlan(
-					"phase4-save-changed-baseline",
+					"save-evaluation-save-changed-baseline",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -171,7 +171,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.ApplySavePlan(
-					"phase4-save-apply",
+					"save-evaluation-save-apply",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -195,7 +195,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareSavePlan(
-					"phase4-save-as-reject",
+					"save-evaluation-save-as-reject",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -215,7 +215,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void CaptureEvaluation_RestoresTemporaryState_AndWritesPngWhenAvailable()
 		{
-			GameObject cameraObject = new GameObject("Phase4 Capture Camera");
+			GameObject cameraObject = new GameObject("SaveEvaluation Capture Camera");
 			Camera camera = cameraObject.AddComponent<Camera>();
 			SaveScene();
 
@@ -229,12 +229,12 @@ namespace UnityGraphicsMcp
 			{
 				UnityGraphicsMcpToolResult result =
 					UnityGraphicsMcpInspection.CaptureEvaluation(
-						"phase4-capture",
+						"save-evaluation-capture",
 						ObjectId(camera),
 						UnityGraphicsMcpSession.Revision,
 						64,
 						64,
-						"phase4-test");
+						"save-evaluation-test");
 
 				Assert.That(camera.targetTexture, Is.SameAs(originalTarget));
 				Assert.That(RenderTexture.active, Is.SameAs(originalActive));
@@ -277,7 +277,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineDirection(
-					"phase4-refine",
+					"save-evaluation-refine",
 					direction["planId"] as string,
 					captureId,
 					Convert.ToInt64(direction["expectedRevision"]),
@@ -303,7 +303,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineDirection(
-					"phase4-refine-empty",
+					"save-evaluation-refine-empty",
 					direction["planId"] as string,
 					captureId,
 					Convert.ToInt64(direction["expectedRevision"]),
@@ -317,9 +317,9 @@ namespace UnityGraphicsMcp
 
 		private static Scene CreateSavedDirtyScene()
 		{
-			new GameObject("Phase4 Save Target");
+			new GameObject("SaveEvaluation Save Target");
 			SaveScene();
-			new GameObject("Phase4 Unsaved Change");
+			new GameObject("SaveEvaluation Unsaved Change");
 			Scene scene = SceneManager.GetActiveScene();
 			EditorSceneManager.MarkSceneDirty(scene);
 			return scene;
@@ -335,7 +335,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareSavePlan(
-					"phase4-save-prepare",
+					"save-evaluation-save-prepare",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -362,7 +362,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CompileDirection(
-					"phase4-direction",
+					"save-evaluation-direction",
 					"CaptureをHuman Reviewし、画作りを再調整する。",
 					new[] { "Heroが画面中央に配置されている。" },
 					new[] { "ドラマチック" },
@@ -395,7 +395,7 @@ namespace UnityGraphicsMcp
 					Height = 64
 				};
 
-			return UnityGraphicsMcpPhase4Session.StoreCapture(capture);
+			return UnityGraphicsMcpSaveEvaluationSession.StoreCapture(capture);
 		}
 
 		private static string ObjectId(UnityEngine.Object target)

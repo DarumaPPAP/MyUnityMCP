@@ -8,10 +8,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4BakeDirtySetTests
+	public sealed class UnityGraphicsMcpDependencyBakeDirtySetTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4BakeDirtySetTemporaryScene.unity";
+			"Assets/MyUnityMcpDependencyBakeDirtySetTemporaryScene.unity";
 
 		[SetUp]
 		public void SetUp()
@@ -19,14 +19,14 @@ namespace UnityGraphicsMcp
 			EditorSceneManager.NewScene(
 				NewSceneSetup.EmptyScene,
 				NewSceneMode.Single);
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 		}
 
 		[TearDown]
 		public void TearDown()
 		{
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
 			EditorSceneManager.NewScene(
 				NewSceneSetup.EmptyScene,
 				NewSceneMode.Single);
@@ -43,13 +43,13 @@ namespace UnityGraphicsMcp
 				Is.True);
 
 			EditorSceneManager.MarkSceneDirty(scene);
-			UnityGraphicsMcpPhase4BakeSession.TrackDirtySceneForTests(scene);
-			long firstSerial = UnityGraphicsMcpPhase4BakeSession.DirtySerial;
+			UnityGraphicsMcpDependencyBakeSession.TrackDirtySceneForTests(scene);
+			long firstSerial = UnityGraphicsMcpDependencyBakeSession.DirtySerial;
 
-			UnityGraphicsMcpPhase4BakeSession.TrackDirtySceneForTests(scene);
+			UnityGraphicsMcpDependencyBakeSession.TrackDirtySceneForTests(scene);
 
 			Assert.That(
-				UnityGraphicsMcpPhase4BakeSession.DirtySerial,
+				UnityGraphicsMcpDependencyBakeSession.DirtySerial,
 				Is.EqualTo(firstSerial));
 		}
 	}

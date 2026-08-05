@@ -14,10 +14,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4CaptureTests
+	public sealed class UnityGraphicsMcpCaptureEvidenceTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4CaptureTemporaryScene.unity";
+			"Assets/MyUnityMcpCaptureEvidenceTemporaryScene.unity";
 
 		private readonly List<string> _captureDirectories =
 			new List<string>();
@@ -30,8 +30,8 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 			_captureDirectories.Clear();
@@ -42,8 +42,8 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
 			Undo.ClearAll();
 			RenderTexture.active = null;
 			EditorSceneManager.NewScene(
@@ -62,7 +62,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase4CCaptureTools_AndKeepsThemDisabled()
+		public void Bridge_DiscoversCaptureEvidenceCaptureTools_AndKeepsThemDisabled()
 		{
 			CommandRegistry.Initialize();
 
@@ -95,11 +95,11 @@ namespace UnityGraphicsMcp
 		public void ObjectIdEncoding_IsDeterministic24Bit()
 		{
 			Color32 first =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(1);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(1);
 			Color32 second =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(256);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(256);
 			Color32 third =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(65536);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(65536);
 
 			Assert.That(first, Is.EqualTo(new Color32(1, 0, 0, 255)));
 			Assert.That(second, Is.EqualTo(new Color32(0, 1, 0, 255)));
@@ -119,10 +119,10 @@ namespace UnityGraphicsMcp
 
 			string firstDigest =
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(first);
+					.BuildCaptureEvidenceEvidenceDigestForTests(first);
 			string secondDigest =
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(second);
+					.BuildCaptureEvidenceEvidenceDigestForTests(second);
 
 			Assert.That(firstDigest, Is.EqualTo(secondDigest));
 
@@ -131,7 +131,7 @@ namespace UnityGraphicsMcp
 				new string('f', 64);
 			Assert.That(
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(second),
+					.BuildCaptureEvidenceEvidenceDigestForTests(second),
 				Is.Not.EqualTo(firstDigest));
 		}
 
@@ -142,7 +142,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CaptureEvidence(
-					"phase4c-invalid-channel",
+					"capture-evidence-invalid-channel",
 					ObjectId(camera),
 					UnityGraphicsMcpSession.Revision,
 					64,
@@ -164,7 +164,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CaptureEvidence(
-					"phase4c-stale",
+					"capture-evidence-stale",
 					ObjectId(camera),
 					UnityGraphicsMcpSession.Revision + 1,
 					64,
@@ -194,13 +194,13 @@ namespace UnityGraphicsMcp
 			{
 				UnityGraphicsMcpToolResult result =
 					UnityGraphicsMcpInspection.CaptureEvidence(
-						"phase4c-capture",
+						"capture-evidence-capture",
 						ObjectId(camera),
 						UnityGraphicsMcpSession.Revision,
 						64,
 						64,
 						new[] { "COLOR", "LINEAR_DEPTH", "OBJECT_ID" },
-						"phase4c-test",
+						"capture-evidence-test",
 						32);
 
 				Assert.That(
@@ -282,7 +282,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-digest",
+					"capture-evidence-review-digest",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest-b",
@@ -305,7 +305,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-confirm",
+					"capture-evidence-review-confirm",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -328,7 +328,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-accepted-adjustment",
+					"capture-evidence-review-accepted-adjustment",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -351,7 +351,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult accepted =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-accepted",
+					"capture-evidence-review-accepted",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -376,7 +376,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult second =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-second",
+					"capture-evidence-review-second",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -430,7 +430,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromVisualReview(
-					"phase4c-refine",
+					"capture-evidence-refine",
 					direction["planId"] as string,
 					review["reviewId"] as string,
 					Convert.ToInt64(
@@ -468,7 +468,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> review =
 				ResultData(
 					UnityGraphicsMcpInspection.SubmitVisualReview(
-						"phase4c-review-final",
+						"capture-evidence-review-final",
 						captureId,
 						UnityGraphicsMcpSession.Revision,
 						"digest",
@@ -480,7 +480,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.RefineFromVisualReview(
-					"phase4c-refine-accepted",
+					"capture-evidence-refine-accepted",
 					direction["planId"] as string,
 					review["reviewId"] as string,
 					Convert.ToInt64(
@@ -500,7 +500,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.SubmitVisualReview(
-					"phase4c-review-revision",
+					"capture-evidence-review-revision",
 					captureId,
 					UnityGraphicsMcpSession.Revision,
 					"digest",
@@ -519,7 +519,7 @@ namespace UnityGraphicsMcp
 		private static Camera CreateSavedCamera()
 		{
 			GameObject cameraObject =
-				new GameObject("Phase4C Capture Camera");
+				new GameObject("CaptureEvidence Capture Camera");
 			Camera camera = cameraObject.AddComponent<Camera>();
 			camera.clearFlags = CameraClearFlags.SolidColor;
 			camera.backgroundColor = Color.gray;
@@ -528,7 +528,7 @@ namespace UnityGraphicsMcp
 
 			GameObject target =
 				GameObject.CreatePrimitive(PrimitiveType.Cube);
-			target.name = "Phase4C Capture Target";
+			target.name = "CaptureEvidence Capture Target";
 
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(
@@ -627,7 +627,7 @@ namespace UnityGraphicsMcp
 					Width = 64,
 					Height = 64
 				};
-			return UnityGraphicsMcpPhase4CaptureSession
+			return UnityGraphicsMcpCaptureEvidenceSession
 				.StoreCaptureForTests(capture);
 		}
 
@@ -637,7 +637,7 @@ namespace UnityGraphicsMcp
 				string digest)
 		{
 			return UnityGraphicsMcpInspection.SubmitVisualReview(
-				"phase4c-review-adjustment",
+				"capture-evidence-review-adjustment",
 				captureId,
 				UnityGraphicsMcpSession.Revision,
 				digest,
@@ -652,7 +652,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.CompileDirection(
-					"phase4c-direction",
+					"capture-evidence-direction",
 					"Capture EvidenceをHuman Reviewして画作りを調整する。",
 					new[] { "Heroが中央に配置されている。" },
 					new[] { "ドラマチック" },

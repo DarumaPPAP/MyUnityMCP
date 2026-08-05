@@ -114,7 +114,7 @@ namespace UnityGraphicsMcp
 	}
 
 	[InitializeOnLoad]
-	internal static class UnityGraphicsMcpPhase4DApvSession
+	internal static class UnityGraphicsMcpAdaptiveProbeVolumeBakeSession
 	{
 		private const int MAX_PLAN_COUNT = 8;
 		private const int MAX_JOB_COUNT = 8;
@@ -133,7 +133,7 @@ namespace UnityGraphicsMcp
 		internal static Func<UnityGraphicsMcpApvBakePlan, Dictionary<string, string>>
 			OutputSnapshotOverrideForTests { get; set; }
 
-		static UnityGraphicsMcpPhase4DApvSession()
+		static UnityGraphicsMcpAdaptiveProbeVolumeBakeSession()
 		{
 			EditorApplication.update += Tick;
 			EditorApplication.playModeStateChanged += state => Clear();
@@ -201,7 +201,7 @@ namespace UnityGraphicsMcp
 			if (string.IsNullOrWhiteSpace(approvalToken) ||
 				!string.Equals(
 					plan.ApprovalTokenHash,
-					UnityGraphicsMcpPhase4Session.HashText(approvalToken),
+					UnityGraphicsMcpSaveEvaluationSession.HashText(approvalToken),
 					StringComparison.Ordinal))
 			{
 				failureStatus = E_MCP_TOOL_STATUS.INVALID_REQUEST;
@@ -820,7 +820,7 @@ namespace UnityGraphicsMcp
 			builder.Append(assetPath).Append('|');
 			builder.Append(asset == null ? string.Empty : asset.GetType().FullName).Append('|');
 			builder.Append(asset == null ? string.Empty : EditorJsonUtility.ToJson(asset, false));
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
 		private static Type FindType(string fullName)
@@ -981,9 +981,9 @@ namespace UnityGraphicsMcp
 
 	public static partial class UnityGraphicsMcpInspection
 	{
-		private const string PHASE4D_APV_BAKE_MODE = "EXPLICIT_APV_BAKING_SET";
-		private const int PHASE4D_MIN_TIMEOUT_SECONDS = 30;
-		private const int PHASE4D_MAX_TIMEOUT_SECONDS = 86400;
+		private const string APV_BAKE_MODE = "EXPLICIT_APV_BAKING_SET";
+		private const int MIN_APV_TIMEOUT_SECONDS = 30;
+		private const int MAX_APV_TIMEOUT_SECONDS = 86400;
 
 		public static UnityGraphicsMcpToolResult PrepareApvBakePlan(
 			string requestId,
@@ -1030,9 +1030,9 @@ namespace UnityGraphicsMcp
 					string failureCode;
 					string failureMessage;
 					bool environmentResolved;
-					if (UnityGraphicsMcpPhase4DApvSession.EnvironmentOverrideForTests != null)
+					if (UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.EnvironmentOverrideForTests != null)
 					{
-						environment = UnityGraphicsMcpPhase4DApvSession
+						environment = UnityGraphicsMcpAdaptiveProbeVolumeBakeSession
 							.EnvironmentOverrideForTests(input);
 						environmentResolved = environment != null;
 						failureCode = environmentResolved
@@ -1076,15 +1076,15 @@ namespace UnityGraphicsMcp
 
 					List<string> explicitScenes = input.scenePaths
 						.Where(value => !string.IsNullOrWhiteSpace(value))
-						.Select(NormalizePhase4SceneAssetPath)
+						.Select(NormalizeSaveEvaluationSceneAssetPath)
 						.Distinct(StringComparer.Ordinal)
 						.OrderBy(value => value, StringComparer.Ordinal)
 						.ToList();
 					foreach (string scenePath in explicitScenes)
 					{
 						Scene scene;
-						if (!IsSupportedPhase4SceneAssetPath(scenePath) ||
-							!TryResolvePhase4LoadedScene(scenePath, out scene))
+						if (!IsSupportedSaveEvaluationSceneAssetPath(scenePath) ||
+							!TryResolveSaveEvaluationLoadedScene(scenePath, out scene))
 						{
 							return CreateResult(
 								"graphics.prepare_apv_bake_plan",
@@ -1099,7 +1099,7 @@ namespace UnityGraphicsMcp
 					}
 
 					List<string> bakingSetScenes = environment.ScenePaths
-						.Select(NormalizePhase4SceneAssetPath)
+						.Select(NormalizeSaveEvaluationSceneAssetPath)
 						.Distinct(StringComparer.Ordinal)
 						.OrderBy(value => value, StringComparer.Ordinal)
 						.ToList();
@@ -1133,8 +1133,8 @@ namespace UnityGraphicsMcp
 					}
 
 					int timeoutSeconds = input.timeoutSeconds ?? 3600;
-					if (timeoutSeconds < PHASE4D_MIN_TIMEOUT_SECONDS ||
-						timeoutSeconds > PHASE4D_MAX_TIMEOUT_SECONDS)
+					if (timeoutSeconds < MIN_APV_TIMEOUT_SECONDS ||
+						timeoutSeconds > MAX_APV_TIMEOUT_SECONDS)
 					{
 						return CreateResult(
 							"graphics.prepare_apv_bake_plan",
@@ -1144,7 +1144,7 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
-					List<string> outputRoots = NormalizePhase4DOutputRoots(
+					List<string> outputRoots = NormalizeApvVisualAcceptanceOutputRoots(
 						input.outputAssetRoots,
 						environment.BakingSetAssetPath);
 					if (outputRoots.Count == 0)
@@ -1162,7 +1162,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpApvBakePlan plan = new UnityGraphicsMcpApvBakePlan
 					{
 						Revision = expectedRevision.Value,
-						ApprovalTokenHash = UnityGraphicsMcpPhase4Session.HashText(approvalToken),
+						ApprovalTokenHash = UnityGraphicsMcpSaveEvaluationSession.HashText(approvalToken),
 						BakingSetAssetPath = environment.BakingSetAssetPath,
 						BakingSetDigest = environment.BakingSetDigest,
 						LightingScenario = scenario,
@@ -1177,8 +1177,8 @@ namespace UnityGraphicsMcp
 						CancelMethod = environment.CancelMethod,
 						NativeCancellationSupported = environment.NativeCancellationSupported
 					};
-					plan.DiffDigest = BuildPhase4DApvPlanDigest(plan);
-					UnityGraphicsMcpPhase4DApvSession.StorePlan(plan);
+					plan.DiffDigest = BuildAdaptiveProbeVolumeBakePlanDigest(plan);
+					UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.StorePlan(plan);
 
 					return CreateResult(
 						"graphics.prepare_apv_bake_plan",
@@ -1192,7 +1192,7 @@ namespace UnityGraphicsMcp
 							{ "approvalTokenExpiresUtc", plan.ExpiresUtc.ToString("O", CultureInfo.InvariantCulture) },
 							{ "expectedRevision", plan.Revision },
 							{ "diffDigest", plan.DiffDigest },
-							{ "bakeMode", PHASE4D_APV_BAKE_MODE },
+							{ "bakeMode", APV_BAKE_MODE },
 							{ "pipelineKind", plan.PipelineKind },
 							{ "pipelineAssetType", plan.PipelineAssetType },
 							{ "bakingSetAssetPath", plan.BakingSetAssetPath },
@@ -1222,7 +1222,7 @@ namespace UnityGraphicsMcp
 			string approvalToken,
 			string bakeMode)
 		{
-			return ExecutePhase4PersistentOperation(
+			return ExecuteSaveEvaluationPersistentOperation(
 				"graphics.start_apv_bake",
 				requestId,
 				delegate
@@ -1238,7 +1238,7 @@ namespace UnityGraphicsMcp
 					}
 					if (!string.Equals(
 						bakeMode == null ? string.Empty : bakeMode.Trim(),
-						PHASE4D_APV_BAKE_MODE,
+						APV_BAKE_MODE,
 						StringComparison.OrdinalIgnoreCase))
 					{
 						return CreateResult(
@@ -1252,7 +1252,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpApvBakePlan plan;
 					E_MCP_TOOL_STATUS failureStatus;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4DApvSession.TryGetPlan(
+					if (!UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.TryGetPlan(
 						planId,
 						expectedRevision.Value,
 						approvalToken,
@@ -1268,7 +1268,7 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
-					if (!ValidatePhase4DApvPlan(plan, out failureMessage))
+					if (!ValidateAdaptiveProbeVolumeBakePlan(plan, out failureMessage))
 					{
 						return CreateResult(
 							"graphics.start_apv_bake",
@@ -1279,10 +1279,10 @@ namespace UnityGraphicsMcp
 					}
 
 					UnityGraphicsMcpApvBakeJob job =
-						UnityGraphicsMcpPhase4DApvSession.StartJob(
+						UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.StartJob(
 							plan,
 							out failureMessage);
-					return BuildPhase4DApvJobResult(
+					return BuildAdaptiveProbeVolumeBakeJobResult(
 						"graphics.start_apv_bake",
 						requestId,
 						job,
@@ -1300,7 +1300,7 @@ namespace UnityGraphicsMcp
 				delegate
 				{
 					UnityGraphicsMcpApvBakeJob job;
-					if (!UnityGraphicsMcpPhase4DApvSession.TryGetJob(jobId, out job))
+					if (!UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.TryGetJob(jobId, out job))
 					{
 						return CreateResult(
 							"graphics.get_apv_bake_status",
@@ -1309,7 +1309,7 @@ namespace UnityGraphicsMcp
 							"APV Bake Jobが現在のEditor Sessionに存在しません。",
 							null);
 					}
-					return BuildPhase4DApvJobResult(
+					return BuildAdaptiveProbeVolumeBakeJobResult(
 						"graphics.get_apv_bake_status",
 						requestId,
 						job,
@@ -1327,7 +1327,7 @@ namespace UnityGraphicsMcp
 				delegate
 				{
 					UnityGraphicsMcpApvBakeJob job;
-					if (!UnityGraphicsMcpPhase4DApvSession.TryGetJob(jobId, out job))
+					if (!UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.TryGetJob(jobId, out job))
 					{
 						return CreateResult(
 							"graphics.cancel_apv_bake",
@@ -1338,7 +1338,7 @@ namespace UnityGraphicsMcp
 					}
 
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4DApvSession.RequestCancellation(
+					if (!UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.RequestCancellation(
 						job,
 						out failureMessage))
 					{
@@ -1347,10 +1347,10 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.INVALID_REQUEST,
 							failureMessage,
-							BuildPhase4DApvJobData(job));
+							BuildAdaptiveProbeVolumeBakeJobData(job));
 					}
 
-					return BuildPhase4DApvJobResult(
+					return BuildAdaptiveProbeVolumeBakeJobResult(
 						"graphics.cancel_apv_bake",
 						requestId,
 						job,
@@ -1358,7 +1358,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static UnityGraphicsMcpToolResult BuildPhase4DApvJobResult(
+		private static UnityGraphicsMcpToolResult BuildAdaptiveProbeVolumeBakeJobResult(
 			string toolName,
 			string requestId,
 			UnityGraphicsMcpApvBakeJob job,
@@ -1385,7 +1385,7 @@ namespace UnityGraphicsMcp
 				string.IsNullOrWhiteSpace(message)
 					? "APV Bake Job状態を取得しました。"
 					: message,
-				BuildPhase4DApvJobData(job));
+				BuildAdaptiveProbeVolumeBakeJobData(job));
 			if (!string.IsNullOrWhiteSpace(job.FailureCode))
 			{
 				result.issues.Add(new UnityGraphicsMcpIssue
@@ -1403,7 +1403,7 @@ namespace UnityGraphicsMcp
 			return result;
 		}
 
-		private static Dictionary<string, object> BuildPhase4DApvJobData(
+		private static Dictionary<string, object> BuildAdaptiveProbeVolumeBakeJobData(
 			UnityGraphicsMcpApvBakeJob job)
 		{
 			return new Dictionary<string, object>
@@ -1432,12 +1432,12 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static bool ValidatePhase4DApvPlan(
+		private static bool ValidateAdaptiveProbeVolumeBakePlan(
 			UnityGraphicsMcpApvBakePlan plan,
 			out string failureMessage)
 		{
 			failureMessage = null;
-			if (UnityGraphicsMcpPhase4DApvSession.EnvironmentOverrideForTests == null)
+			if (UnityGraphicsMcpAdaptiveProbeVolumeBakeSession.EnvironmentOverrideForTests == null)
 			{
 				Object asset = AssetDatabase.LoadMainAssetAtPath(plan.BakingSetAssetPath);
 				if (asset == null)
@@ -1458,7 +1458,7 @@ namespace UnityGraphicsMcp
 			foreach (string scenePath in plan.ScenePaths)
 			{
 				Scene scene;
-				if (!TryResolvePhase4LoadedScene(scenePath, out scene))
+				if (!TryResolveSaveEvaluationLoadedScene(scenePath, out scene))
 				{
 					failureMessage = "APV対象Scene集合がPrepare後に変更されました。";
 					return false;
@@ -1467,7 +1467,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static List<string> NormalizePhase4DOutputRoots(
+		private static List<string> NormalizeApvVisualAcceptanceOutputRoots(
 			string[] roots,
 			string bakingSetAssetPath)
 		{
@@ -1490,7 +1490,7 @@ namespace UnityGraphicsMcp
 			return normalized.OrderBy(value => value, StringComparer.Ordinal).ToList();
 		}
 
-		private static string BuildPhase4DApvPlanDigest(
+		private static string BuildAdaptiveProbeVolumeBakePlanDigest(
 			UnityGraphicsMcpApvBakePlan plan)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1513,7 +1513,7 @@ namespace UnityGraphicsMcp
 			{
 				builder.Append("O:").Append(root).Append('|');
 			}
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 	}
 }

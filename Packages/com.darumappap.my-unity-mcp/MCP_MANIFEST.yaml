@@ -1,7 +1,7 @@
 schema_version: "1.8"
 package_id: com.darumappap.my-unity-mcp
-version: "0.7.0"
-implementation_status: phase_4d_apv_visual_acceptance_complete
+version: "0.7.1"
+implementation_status: apv_visual_acceptance_complete
 verified_level: unity_editor_ci
 
 control_plane:
@@ -12,15 +12,15 @@ control_plane:
 
 registered_domains:
   - id: unity_graphics_mcp
-    status: phase_4d_editor_operational
+    status: editor_operational
     implementation_status: inspect_plan_mutate_save_bake_capture_evaluate_review_refine_verified
     specification: ../../Specs/UnityGraphicsMCP/spec.md
     plan: ../../Specs/UnityGraphicsMCP/plan.md
     tasks: ../../Specs/UnityGraphicsMCP/tasks.md
     editor_tool_design: ../../Specs/UnityGraphicsMCP/editor-tool-design.md
-    phase_4b_bake_contract: ../../Specs/UnityGraphicsMCP/phase4b-bake.md
-    phase_4c_capture_contract: ../../Specs/UnityGraphicsMCP/phase4c-capture.md
-    phase_4d_contract: ../../Specs/UnityGraphicsMCP/phase4d-apv-visual-acceptance.md
+    dependency_bake_bake_contract: ../../Specs/UnityGraphicsMCP/dependency-bake.md
+    capture_evidence_capture_contract: ../../Specs/UnityGraphicsMCP/capture-evidence.md
+    apv_visual_acceptance_contract: ../../Specs/UnityGraphicsMCP/apv-visual-acceptance.md
 
 planned_domains:
   - unity_cinematic_mcp
@@ -133,7 +133,7 @@ tool_groups:
 
   save:
     mutation: persistent_scene_write
-    status: phase_4a_editor_verified
+    status: save_evaluation_editor_verified
     bridge_group: core
     auto_register: false
     activation: explicit
@@ -148,7 +148,7 @@ tool_groups:
   bake:
     mutation: true
     expensive: true
-    status: phase_4d_editor_verified
+    status: apv_visual_acceptance_editor_verified
     bridge_group: core
     auto_register: false
     activation: explicit
@@ -169,7 +169,7 @@ tool_groups:
             status: implemented_source_verified
             existing_cubemap_required: true
           ADAPTIVE_PROBE_VOLUME:
-            status: delegated_to_phase_4d_apv_job
+            status: delegated_to_apv_visual_acceptance_apv_job
       graphics.start_apv_bake:
         status: implemented_editor_verified
         bake_mode: EXPLICIT_APV_BAKING_SET
@@ -199,7 +199,7 @@ tool_groups:
 
   capture:
     mutation: temporary_editor_state_and_library_evidence_write
-    status: phase_4c_editor_verified
+    status: capture_evidence_editor_verified
     bridge_group: core
     auto_register: false
     activation: explicit
@@ -248,7 +248,7 @@ tool_groups:
 
   visual_acceptance:
     mutation: false
-    status: phase_4d_editor_verified
+    status: apv_visual_acceptance_editor_verified
     bridge_group: core
     auto_register: false
     activation: explicit
@@ -316,7 +316,7 @@ bridge:
 availability:
   source_is_implemented: true
   package_is_executable: true
-  operational_scope: phase_4d_editor_tools
+  operational_scope: apv_visual_acceptance_editor_tools
   tools_enabled_by_default: false
   expose_unimplemented_tools: false
   expose_selected_tool_group_only: true
@@ -356,7 +356,7 @@ backend_selection:
 
 verification:
   historical_matrix_path: ../../Tests/Compatibility/verification-matrix.yaml
-  latest_evidence_path: ../../Tests/Compatibility/phase4d-verification.yaml
+  latest_evidence_path: ../../Tests/Compatibility/apv-visual-acceptance-verification.yaml
   verified_environment_is_evidence_not_global_support_contract: true
   current_gates:
     static_source_review: passed
@@ -399,7 +399,7 @@ verification:
     target_device: unverified
   evidence_source:
     kind: phase_verification_record
-    verification_id: MUMCP-PHASE4D-CI-20260805-001
+    verification_id: MUMCP-APV-VISUAL-ACCEPTANCE-CI-20260805-001
     workflow_run_id: 31005540655
     workflow_job_id: 92304475814
     artifact_id: 8930337405

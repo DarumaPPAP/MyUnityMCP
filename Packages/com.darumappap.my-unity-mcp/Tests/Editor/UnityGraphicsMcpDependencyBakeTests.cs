@@ -11,10 +11,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4BakeTests
+	public sealed class UnityGraphicsMcpDependencyBakeTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4BakeTemporaryScene.unity";
+			"Assets/MyUnityMcpDependencyBakeTemporaryScene.unity";
 
 		[SetUp]
 		public void SetUp()
@@ -24,8 +24,8 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 		}
@@ -35,8 +35,8 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
 			Undo.ClearAll();
 			EditorSceneManager.NewScene(
 				NewSceneSetup.EmptyScene,
@@ -45,7 +45,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase4BTools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversDependencyBakeTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 
@@ -70,7 +70,7 @@ namespace UnityGraphicsMcp
 			Scene scene = target.scene;
 			Assert.That(scene.isDirty, Is.False);
 			Assert.That(
-				UnityGraphicsMcpPhase4BakeSession.HasDirtySceneForTests(
+				UnityGraphicsMcpDependencyBakeSession.HasDirtySceneForTests(
 					TEMP_SCENE_PATH),
 				Is.True);
 
@@ -107,7 +107,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-missing-approval",
+					"dependency-bake-missing-approval",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					null,
@@ -117,7 +117,7 @@ namespace UnityGraphicsMcp
 				result.status,
 				Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
 			Assert.That(
-				UnityGraphicsMcpPhase4BakeSession.HasDirtySceneForTests(
+				UnityGraphicsMcpDependencyBakeSession.HasDirtySceneForTests(
 					TEMP_SCENE_PATH),
 				Is.True);
 		}
@@ -131,12 +131,12 @@ namespace UnityGraphicsMcp
 
 			target.transform.position = new Vector3(2.0f, 3.0f, 4.0f);
 			EditorSceneManager.MarkSceneDirty(target.scene);
-			UnityGraphicsMcpPhase4BakeSession.TrackDirtySceneForTests(
+			UnityGraphicsMcpDependencyBakeSession.TrackDirtySceneForTests(
 				target.scene);
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-changed-baseline",
+					"dependency-bake-changed-baseline",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -156,7 +156,7 @@ namespace UnityGraphicsMcp
 
 			int invocationCount = 0;
 			string bakedScenePath = null;
-			UnityGraphicsMcpPhase4BakeSession.SceneBakeOverrideForTests =
+			UnityGraphicsMcpDependencyBakeSession.SceneBakeOverrideForTests =
 				scene =>
 				{
 					invocationCount++;
@@ -166,7 +166,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.BakeDependencies(
-					"phase4b-apply",
+					"dependency-bake-apply",
 					executable["planId"] as string,
 					Convert.ToInt64(executable["expectedRevision"]),
 					executable["approvalToken"] as string,
@@ -176,7 +176,7 @@ namespace UnityGraphicsMcp
 			Assert.That(invocationCount, Is.EqualTo(1));
 			Assert.That(bakedScenePath, Is.EqualTo(TEMP_SCENE_PATH));
 			Assert.That(
-				UnityGraphicsMcpPhase4BakeSession.HasDirtySceneForTests(
+				UnityGraphicsMcpDependencyBakeSession.HasDirtySceneForTests(
 					TEMP_SCENE_PATH),
 				Is.False);
 
@@ -194,7 +194,7 @@ namespace UnityGraphicsMcp
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareBakePlan(
-					"phase4b-apv",
+					"dependency-bake-apv",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -225,11 +225,11 @@ namespace UnityGraphicsMcp
 			Assert.That(
 				EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH, false),
 				Is.True);
-			UnityGraphicsMcpPhase4BakeSession.ClearForTests();
+			UnityGraphicsMcpDependencyBakeSession.ClearForTests();
 
 			UnityGraphicsMcpToolResult result =
 				UnityGraphicsMcpInspection.PrepareBakePlan(
-					"phase4b-clean",
+					"dependency-bake-clean",
 					UnityGraphicsMcpSession.Revision,
 					new[]
 					{
@@ -252,7 +252,7 @@ namespace UnityGraphicsMcp
 
 		private static GameObject CreateTrackedSceneAndSave()
 		{
-			GameObject target = new GameObject("Phase4B Bake Target");
+			GameObject target = new GameObject("DependencyBake Bake Target");
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(
 				EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH, false),
@@ -260,7 +260,7 @@ namespace UnityGraphicsMcp
 
 			target.transform.position = Vector3.one;
 			EditorSceneManager.MarkSceneDirty(scene);
-			UnityGraphicsMcpPhase4BakeSession.TrackDirtySceneForTests(scene);
+			UnityGraphicsMcpDependencyBakeSession.TrackDirtySceneForTests(scene);
 
 			Assert.That(
 				EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH, false),
@@ -272,7 +272,7 @@ namespace UnityGraphicsMcp
 		private static UnityGraphicsMcpToolResult PrepareLightmapBake()
 		{
 			return UnityGraphicsMcpInspection.PrepareBakePlan(
-				"phase4b-prepare",
+				"dependency-bake-prepare",
 				UnityGraphicsMcpSession.Revision,
 				new[]
 				{

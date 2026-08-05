@@ -78,7 +78,7 @@ namespace UnityGraphicsMcp
 	}
 
 	[InitializeOnLoad]
-	internal static class UnityGraphicsMcpPhase4BakeSession
+	internal static class UnityGraphicsMcpDependencyBakeSession
 	{
 		private const int MAX_BAKE_PLAN_COUNT = 8;
 		private static readonly TimeSpan BAKE_PLAN_LIFETIME = TimeSpan.FromMinutes(10.0);
@@ -96,7 +96,7 @@ namespace UnityGraphicsMcp
 		internal static Func<ReflectionProbe, string, bool>
 			ReflectionProbeBakeOverrideForTests { get; set; }
 
-		static UnityGraphicsMcpPhase4BakeSession()
+		static UnityGraphicsMcpDependencyBakeSession()
 		{
 			EditorSceneManager.sceneDirtied += TrackDirtyScene;
 			EditorSceneManager.sceneClosed += RemoveClosedScene;
@@ -164,7 +164,7 @@ namespace UnityGraphicsMcp
 			if (string.IsNullOrWhiteSpace(approvalToken) ||
 				!string.Equals(
 					plan.ApprovalTokenHash,
-					UnityGraphicsMcpPhase4Session.HashText(approvalToken),
+					UnityGraphicsMcpSaveEvaluationSession.HashText(approvalToken),
 					StringComparison.Ordinal))
 			{
 				failureStatus = E_MCP_TOOL_STATUS.INVALID_REQUEST;
@@ -466,11 +466,11 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
-					UnityGraphicsMcpPhase4BakeSession.EnsureCurrentlyDirtyScenesTracked();
+					UnityGraphicsMcpDependencyBakeSession.EnsureCurrentlyDirtyScenesTracked();
 
 					List<UnityGraphicsMcpBakeSceneBaseline> contributingScenes;
 					UnityGraphicsMcpToolResult sceneSetFailure;
-					if (!TryCapturePhase4BakeContributingScenes(
+					if (!TryCaptureDependencyBakeContributingScenes(
 						requestId,
 						out contributingScenes,
 						out sceneSetFailure))
@@ -486,7 +486,7 @@ namespace UnityGraphicsMcp
 					foreach (UnityGraphicsMcpBakeTargetInput target in targets)
 					{
 						UnityGraphicsMcpToolResult targetFailure;
-						if (!TryPreparePhase4BakeTarget(
+						if (!TryPrepareDependencyBakeTarget(
 							requestId,
 							target,
 							dependencies,
@@ -518,14 +518,14 @@ namespace UnityGraphicsMcp
 						{
 							Revision = expectedRevision.Value,
 							DirtySetSerial =
-								UnityGraphicsMcpPhase4BakeSession.DirtySerial,
+								UnityGraphicsMcpDependencyBakeSession.DirtySerial,
 							ApprovalTokenHash =
-								UnityGraphicsMcpPhase4Session.HashText(approvalToken),
+								UnityGraphicsMcpSaveEvaluationSession.HashText(approvalToken),
 							ContributingScenes = contributingScenes,
 							Dependencies = dependencies
 						};
-					plan.DiffDigest = BuildPhase4BakePlanDigest(plan);
-					UnityGraphicsMcpPhase4BakeSession.StorePlan(plan);
+					plan.DiffDigest = BuildDependencyBakePlanDigest(plan);
+					UnityGraphicsMcpDependencyBakeSession.StorePlan(plan);
 
 					return CreateResult(
 						"graphics.prepare_bake_plan",
@@ -545,11 +545,11 @@ namespace UnityGraphicsMcp
 							{ "dirtySetSerial", plan.DirtySetSerial },
 							{
 								"contributingScenes",
-								BuildPhase4BakeScenePreviews(plan.ContributingScenes)
+								BuildDependencyBakeScenePreviews(plan.ContributingScenes)
 							},
 							{
 								"dependencies",
-								BuildPhase4BakeDependencyPreviews(plan.Dependencies)
+								BuildDependencyBakeDependencyPreviews(plan.Dependencies)
 							},
 							{
 								"bakeMode",
@@ -570,7 +570,7 @@ namespace UnityGraphicsMcp
 			string approvalToken,
 			string bakeMode)
 		{
-			return ExecutePhase4PersistentOperation(
+			return ExecuteSaveEvaluationPersistentOperation(
 				"graphics.bake_dependencies",
 				requestId,
 				delegate
@@ -624,7 +624,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpExecutableBakePlan plan;
 					E_MCP_TOOL_STATUS failureStatus;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4BakeSession.TryGetPlan(
+					if (!UnityGraphicsMcpDependencyBakeSession.TryGetPlan(
 						planId,
 						expectedRevision.Value,
 						approvalToken,
@@ -645,10 +645,10 @@ namespace UnityGraphicsMcp
 					}
 
 					List<UnityGraphicsMcpIssue> staleIssues;
-					if (!ValidatePhase4BakePlan(plan, out staleIssues) ||
+					if (!ValidateDependencyBakePlan(plan, out staleIssues) ||
 						!string.Equals(
 							plan.DiffDigest,
-							BuildPhase4BakePlanDigest(plan),
+							BuildDependencyBakePlanDigest(plan),
 							StringComparison.Ordinal))
 					{
 						UnityGraphicsMcpToolResult staleResult = CreateResult(
@@ -662,7 +662,7 @@ namespace UnityGraphicsMcp
 					}
 
 					List<UnityGraphicsMcpIssue> preflightIssues;
-					if (!PreflightPhase4BakeDependencies(
+					if (!PreflightDependencyBakeDependencies(
 						plan.Dependencies,
 						out preflightIssues))
 					{
@@ -676,11 +676,11 @@ namespace UnityGraphicsMcp
 						return unsupportedResult;
 					}
 
-					return ExecutePhase4BakePlan(requestId, plan);
+					return ExecuteDependencyBakePlan(requestId, plan);
 				});
 		}
 
-		private static UnityGraphicsMcpToolResult ExecutePhase4BakePlan(
+		private static UnityGraphicsMcpToolResult ExecuteDependencyBakePlan(
 			string requestId,
 			UnityGraphicsMcpExecutableBakePlan plan)
 		{
@@ -688,8 +688,8 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> failedDependency = null;
 			long startRevision = UnityGraphicsMcpSession.Revision;
 
-			UnityGraphicsMcpPhase4BakeSession.ConsumePlan(plan);
-			UnityGraphicsMcpPhase4BakeSession.BeginOwnedBake();
+			UnityGraphicsMcpDependencyBakeSession.ConsumePlan(plan);
+			UnityGraphicsMcpDependencyBakeSession.BeginOwnedBake();
 
 			try
 			{
@@ -698,7 +698,7 @@ namespace UnityGraphicsMcp
 				{
 					bool succeeded;
 					string failureMessage;
-					if (!TryExecutePhase4BakeDependency(
+					if (!TryExecuteDependencyBakeDependency(
 						dependency,
 						out succeeded,
 						out failureMessage) ||
@@ -716,13 +716,13 @@ namespace UnityGraphicsMcp
 					}
 
 					completedDependencyIds.Add(dependency.DependencyId);
-					UnityGraphicsMcpPhase4BakeSession.ClearCompletedDependency(
+					UnityGraphicsMcpDependencyBakeSession.ClearCompletedDependency(
 						dependency);
 				}
 			}
 			finally
 			{
-				UnityGraphicsMcpPhase4BakeSession.EndOwnedBake();
+				UnityGraphicsMcpDependencyBakeSession.EndOwnedBake();
 			}
 
 			if (completedDependencyIds.Count > 0 &&
@@ -761,7 +761,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static bool TryCapturePhase4BakeContributingScenes(
+		private static bool TryCaptureDependencyBakeContributingScenes(
 			string requestId,
 			out List<UnityGraphicsMcpBakeSceneBaseline> scenes,
 			out UnityGraphicsMcpToolResult failure)
@@ -777,8 +777,8 @@ namespace UnityGraphicsMcp
 					continue;
 				}
 
-				string path = NormalizePhase4SceneAssetPath(scene.path);
-				if (!IsSupportedPhase4SceneAssetPath(path))
+				string path = NormalizeSaveEvaluationSceneAssetPath(scene.path);
+				if (!IsSupportedSaveEvaluationSceneAssetPath(path))
 				{
 					failure = CreateResult(
 						"graphics.prepare_bake_plan",
@@ -799,7 +799,7 @@ namespace UnityGraphicsMcp
 						SceneHandle = scene.handle,
 						ScenePath = scene.path,
 						WasDirty = scene.isDirty,
-						ContentDigest = BuildPhase4SceneContentDigest(scene)
+						ContentDigest = BuildSaveEvaluationSceneContentDigest(scene)
 					});
 			}
 
@@ -820,7 +820,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static bool TryPreparePhase4BakeTarget(
+		private static bool TryPrepareDependencyBakeTarget(
 			string requestId,
 			UnityGraphicsMcpBakeTargetInput target,
 			List<UnityGraphicsMcpPreparedBakeDependency> dependencies,
@@ -842,10 +842,10 @@ namespace UnityGraphicsMcp
 				return false;
 			}
 
-			string scenePath = NormalizePhase4SceneAssetPath(target.scenePath);
+			string scenePath = NormalizeSaveEvaluationSceneAssetPath(target.scenePath);
 			Scene scene;
-			if (!IsSupportedPhase4SceneAssetPath(scenePath) ||
-				!TryResolvePhase4LoadedScene(scenePath, out scene))
+			if (!IsSupportedSaveEvaluationSceneAssetPath(scenePath) ||
+				!TryResolveSaveEvaluationLoadedScene(scenePath, out scene))
 			{
 				failure = CreateResult(
 					"graphics.prepare_bake_plan",
@@ -860,7 +860,7 @@ namespace UnityGraphicsMcp
 			}
 
 			UnityGraphicsMcpDirtyDependencyRecord dirtyRecord;
-			if (!UnityGraphicsMcpPhase4BakeSession.TryGetDirtyRecord(
+			if (!UnityGraphicsMcpDependencyBakeSession.TryGetDirtyRecord(
 				scenePath,
 				out dirtyRecord))
 			{
@@ -918,7 +918,7 @@ namespace UnityGraphicsMcp
 						"graphics.prepare_bake_plan",
 						requestId,
 						E_MCP_TOOL_STATUS.BACKEND_NOT_IMPLEMENTED,
-						"APVはBaking SetとLighting ScenarioのPipeline固有契約が必要なため、Phase 4Bでは実行しません。",
+						"APVはBaking SetとLighting ScenarioのPipeline固有契約が必要なため、Dependency Bakeでは実行しません。",
 						new Dictionary<string, object>
 						{
 							{ "scenePath", scenePath },
@@ -971,13 +971,13 @@ namespace UnityGraphicsMcp
 							Kind = parsedKind.ToString(),
 							ScenePath = scenePath,
 							SceneHandle = scene.handle,
-							BaselineDigest = BuildPhase4SceneContentDigest(scene),
+							BaselineDigest = BuildSaveEvaluationSceneContentDigest(scene),
 							Backend = "UNITY_LIGHTMAPPING_SCENE"
 						});
 					continue;
 				}
 
-				if (!TryPreparePhase4ReflectionProbeDependencies(
+				if (!TryPrepareSaveEvaluationReflectionProbeDependencies(
 					requestId,
 					scene,
 					target.reflectionProbeObjectIds,
@@ -992,7 +992,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static bool TryPreparePhase4ReflectionProbeDependencies(
+		private static bool TryPrepareSaveEvaluationReflectionProbeDependencies(
 			string requestId,
 			Scene scene,
 			string[] objectIds,
@@ -1023,7 +1023,7 @@ namespace UnityGraphicsMcp
 			foreach (string objectId in normalizedIds)
 			{
 				ReflectionProbe probe;
-				if (!TryResolvePhase4ReflectionProbe(objectId, out probe) ||
+				if (!TryResolveSaveEvaluationReflectionProbe(objectId, out probe) ||
 					probe.gameObject.scene.handle != scene.handle)
 				{
 					failure = CreateResult(
@@ -1054,7 +1054,7 @@ namespace UnityGraphicsMcp
 					return false;
 				}
 
-				if (!UnityGraphicsMcpPhase4BakeSession.HasDirtyDependency(
+				if (!UnityGraphicsMcpDependencyBakeSession.HasDirtyDependency(
 					scene.path,
 					E_GRAPHICS_BAKE_DEPENDENCY_KIND.REFLECTION_PROBE.ToString(),
 					objectId))
@@ -1118,7 +1118,7 @@ namespace UnityGraphicsMcp
 						ObjectId = objectId,
 						OutputAssetPath = outputAssetPath,
 						BaselineDigest =
-							BuildPhase4ReflectionProbeDigest(probe, outputAssetPath),
+							BuildSaveEvaluationReflectionProbeDigest(probe, outputAssetPath),
 						Backend = "UNITY_LIGHTMAPPING_REFLECTION_PROBE"
 					});
 			}
@@ -1126,7 +1126,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static bool ValidatePhase4BakePlan(
+		private static bool ValidateDependencyBakePlan(
 			UnityGraphicsMcpExecutableBakePlan plan,
 			out List<UnityGraphicsMcpIssue> issues)
 		{
@@ -1135,7 +1135,7 @@ namespace UnityGraphicsMcp
 				plan.Dependencies == null ||
 				plan.Dependencies.Count == 0)
 			{
-				issues.Add(CreatePhase4BakeIssue(
+				issues.Add(CreateDependencyBakeIssue(
 					"BAKE_PLAN_EMPTY",
 					"Bake PlanにDependencyがありません。",
 					null));
@@ -1143,9 +1143,9 @@ namespace UnityGraphicsMcp
 			}
 
 			if (plan.DirtySetSerial !=
-				UnityGraphicsMcpPhase4BakeSession.DirtySerial)
+				UnityGraphicsMcpDependencyBakeSession.DirtySerial)
 			{
-				issues.Add(CreatePhase4BakeIssue(
+				issues.Add(CreateDependencyBakeIssue(
 					"DIRTY_DEPENDENCY_SET_CHANGED",
 					"Prepare後にDirty Dependency Setが変更されました。",
 					new Dictionary<string, object>
@@ -1153,7 +1153,7 @@ namespace UnityGraphicsMcp
 						{ "planSerial", plan.DirtySetSerial },
 						{
 							"currentSerial",
-							UnityGraphicsMcpPhase4BakeSession.DirtySerial
+							UnityGraphicsMcpDependencyBakeSession.DirtySerial
 						}
 					}));
 			}
@@ -1162,17 +1162,17 @@ namespace UnityGraphicsMcp
 				in plan.ContributingScenes)
 			{
 				Scene scene;
-				if (!TryResolvePhase4LoadedSceneByHandleAndPath(
+				if (!TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 					baseline.SceneHandle,
 					baseline.ScenePath,
 					out scene) ||
 					baseline.WasDirty != scene.isDirty ||
 					!string.Equals(
 						baseline.ContentDigest,
-						BuildPhase4SceneContentDigest(scene),
+						BuildSaveEvaluationSceneContentDigest(scene),
 						StringComparison.Ordinal))
 				{
-					issues.Add(CreatePhase4BakeIssue(
+					issues.Add(CreateDependencyBakeIssue(
 						"BAKE_CONTRIBUTING_SCENE_CHANGED",
 						"Bakeへ寄与するLoaded SceneがPrepare時の状態と一致しません。",
 						new Dictionary<string, object>
@@ -1185,7 +1185,7 @@ namespace UnityGraphicsMcp
 
 			if (plan.ContributingScenes.Count != SceneManager.sceneCount)
 			{
-				issues.Add(CreatePhase4BakeIssue(
+				issues.Add(CreateDependencyBakeIssue(
 					"BAKE_LOADED_SCENE_SET_CHANGED",
 					"Loaded Scene数がPrepare時から変更されました。",
 					new Dictionary<string, object>
@@ -1198,28 +1198,28 @@ namespace UnityGraphicsMcp
 			foreach (UnityGraphicsMcpPreparedBakeDependency dependency
 				in plan.Dependencies)
 			{
-				if (!UnityGraphicsMcpPhase4BakeSession.HasDirtyDependency(
+				if (!UnityGraphicsMcpDependencyBakeSession.HasDirtyDependency(
 					dependency.ScenePath,
 					dependency.Kind,
 					dependency.ObjectId))
 				{
-					issues.Add(CreatePhase4BakeIssue(
+					issues.Add(CreateDependencyBakeIssue(
 						"BAKE_DEPENDENCY_NO_LONGER_DIRTY",
 						"Dependencyが現在のDirty Dependency Setに存在しません。",
-						BuildPhase4BakeDependencyPreview(dependency)));
+						BuildDependencyBakeDependencyPreview(dependency)));
 					continue;
 				}
 
 				Scene scene;
-				if (!TryResolvePhase4LoadedSceneByHandleAndPath(
+				if (!TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 					dependency.SceneHandle,
 					dependency.ScenePath,
 					out scene))
 				{
-					issues.Add(CreatePhase4BakeIssue(
+					issues.Add(CreateDependencyBakeIssue(
 						"BAKE_TARGET_SCENE_CHANGED",
 						"Bake対象SceneをHandleとPathで再解決できません。",
-						BuildPhase4BakeDependencyPreview(dependency)));
+						BuildDependencyBakeDependencyPreview(dependency)));
 					continue;
 				}
 
@@ -1228,39 +1228,39 @@ namespace UnityGraphicsMcp
 				{
 					if (!string.Equals(
 						dependency.BaselineDigest,
-						BuildPhase4SceneContentDigest(scene),
+						BuildSaveEvaluationSceneContentDigest(scene),
 						StringComparison.Ordinal))
 					{
-						issues.Add(CreatePhase4BakeIssue(
+						issues.Add(CreateDependencyBakeIssue(
 							"LIGHTMAP_SCENE_BASELINE_CHANGED",
 							"Lightmap対象SceneがPrepare時の状態と一致しません。",
-							BuildPhase4BakeDependencyPreview(dependency)));
+							BuildDependencyBakeDependencyPreview(dependency)));
 					}
 					continue;
 				}
 
 				ReflectionProbe probe;
-				if (!TryResolvePhase4ReflectionProbe(
+				if (!TryResolveSaveEvaluationReflectionProbe(
 					dependency.ObjectId,
 					out probe) ||
 					!string.Equals(
 						dependency.BaselineDigest,
-						BuildPhase4ReflectionProbeDigest(
+						BuildSaveEvaluationReflectionProbeDigest(
 							probe,
 							dependency.OutputAssetPath),
 						StringComparison.Ordinal))
 				{
-					issues.Add(CreatePhase4BakeIssue(
+					issues.Add(CreateDependencyBakeIssue(
 						"REFLECTION_PROBE_BASELINE_CHANGED",
 						"Reflection ProbeがPrepare時の状態と一致しません。",
-						BuildPhase4BakeDependencyPreview(dependency)));
+						BuildDependencyBakeDependencyPreview(dependency)));
 				}
 			}
 
 			return issues.Count == 0;
 		}
 
-		private static bool PreflightPhase4BakeDependencies(
+		private static bool PreflightDependencyBakeDependencies(
 			IEnumerable<UnityGraphicsMcpPreparedBakeDependency> dependencies,
 			out List<UnityGraphicsMcpIssue> issues)
 		{
@@ -1272,16 +1272,16 @@ namespace UnityGraphicsMcp
 					E_GRAPHICS_BAKE_DEPENDENCY_KIND.LIGHTMAP_SCENE.ToString())
 				{
 					Scene scene;
-					if (!TryResolvePhase4LoadedSceneByHandleAndPath(
+					if (!TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 						dependency.SceneHandle,
 						dependency.ScenePath,
 						out scene) ||
-						!CanExecutePhase4SceneBake(scene))
+						!CanExecuteSaveEvaluationSceneBake(scene))
 					{
-						issues.Add(CreatePhase4BakeIssue(
+						issues.Add(CreateDependencyBakeIssue(
 							"SCENE_BAKE_BACKEND_NOT_IMPLEMENTED",
 							"対象Unity VersionでScene限定Bake APIを解決できません。全Loaded Scene BakeへのFallbackは行いません。",
-							BuildPhase4BakeDependencyPreview(dependency)));
+							BuildDependencyBakeDependencyPreview(dependency)));
 					}
 					continue;
 				}
@@ -1290,28 +1290,28 @@ namespace UnityGraphicsMcp
 					E_GRAPHICS_BAKE_DEPENDENCY_KIND.REFLECTION_PROBE.ToString())
 				{
 					ReflectionProbe probe;
-					if (!TryResolvePhase4ReflectionProbe(
+					if (!TryResolveSaveEvaluationReflectionProbe(
 						dependency.ObjectId,
 						out probe))
 					{
-						issues.Add(CreatePhase4BakeIssue(
+						issues.Add(CreateDependencyBakeIssue(
 							"REFLECTION_PROBE_BACKEND_UNAVAILABLE",
 							"Reflection Probeを再解決できません。",
-							BuildPhase4BakeDependencyPreview(dependency)));
+							BuildDependencyBakeDependencyPreview(dependency)));
 					}
 					continue;
 				}
 
-				issues.Add(CreatePhase4BakeIssue(
+				issues.Add(CreateDependencyBakeIssue(
 					"APV_BAKE_BACKEND_NOT_IMPLEMENTED",
-					"APV Bake BackendはPhase 4Bでは未実装です。",
-					BuildPhase4BakeDependencyPreview(dependency)));
+					"APV Bake BackendはDependency Bakeでは未実装です。",
+					BuildDependencyBakeDependencyPreview(dependency)));
 			}
 
 			return issues.Count == 0;
 		}
 
-		private static bool TryExecutePhase4BakeDependency(
+		private static bool TryExecuteDependencyBakeDependency(
 			UnityGraphicsMcpPreparedBakeDependency dependency,
 			out bool succeeded,
 			out string failureMessage)
@@ -1323,7 +1323,7 @@ namespace UnityGraphicsMcp
 				E_GRAPHICS_BAKE_DEPENDENCY_KIND.LIGHTMAP_SCENE.ToString())
 			{
 				Scene scene;
-				if (!TryResolvePhase4LoadedSceneByHandleAndPath(
+				if (!TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 					dependency.SceneHandle,
 					dependency.ScenePath,
 					out scene))
@@ -1332,7 +1332,7 @@ namespace UnityGraphicsMcp
 					return false;
 				}
 
-				succeeded = ExecutePhase4SceneBake(scene);
+				succeeded = ExecuteSaveEvaluationSceneBake(scene);
 				if (!succeeded)
 				{
 					failureMessage = "Unity Lightmapping Scene Bakeがfalseを返しました。";
@@ -1344,7 +1344,7 @@ namespace UnityGraphicsMcp
 				E_GRAPHICS_BAKE_DEPENDENCY_KIND.REFLECTION_PROBE.ToString())
 			{
 				ReflectionProbe probe;
-				if (!TryResolvePhase4ReflectionProbe(
+				if (!TryResolveSaveEvaluationReflectionProbe(
 					dependency.ObjectId,
 					out probe))
 				{
@@ -1353,7 +1353,7 @@ namespace UnityGraphicsMcp
 				}
 
 				Func<ReflectionProbe, string, bool> testOverride =
-					UnityGraphicsMcpPhase4BakeSession
+					UnityGraphicsMcpDependencyBakeSession
 						.ReflectionProbeBakeOverrideForTests;
 				succeeded = testOverride != null
 					? testOverride(probe, dependency.OutputAssetPath)
@@ -1372,27 +1372,27 @@ namespace UnityGraphicsMcp
 			return false;
 		}
 
-		private static bool CanExecutePhase4SceneBake(Scene scene)
+		private static bool CanExecuteSaveEvaluationSceneBake(Scene scene)
 		{
-			if (UnityGraphicsMcpPhase4BakeSession.SceneBakeOverrideForTests != null)
+			if (UnityGraphicsMcpDependencyBakeSession.SceneBakeOverrideForTests != null)
 			{
 				return true;
 			}
 
-			return ResolvePhase4SceneBakeMethod() != null ||
+			return ResolveSaveEvaluationSceneBakeMethod() != null ||
 				SceneManager.sceneCount == 1;
 		}
 
-		private static bool ExecutePhase4SceneBake(Scene scene)
+		private static bool ExecuteSaveEvaluationSceneBake(Scene scene)
 		{
 			Func<Scene, bool> testOverride =
-				UnityGraphicsMcpPhase4BakeSession.SceneBakeOverrideForTests;
+				UnityGraphicsMcpDependencyBakeSession.SceneBakeOverrideForTests;
 			if (testOverride != null)
 			{
 				return testOverride(scene);
 			}
 
-			MethodInfo method = ResolvePhase4SceneBakeMethod();
+			MethodInfo method = ResolveSaveEvaluationSceneBakeMethod();
 			if (method != null)
 			{
 				object result = method.Invoke(null, new object[] { scene });
@@ -1402,7 +1402,7 @@ namespace UnityGraphicsMcp
 			return SceneManager.sceneCount == 1 && Lightmapping.Bake();
 		}
 
-		private static MethodInfo ResolvePhase4SceneBakeMethod()
+		private static MethodInfo ResolveSaveEvaluationSceneBakeMethod()
 		{
 			MethodInfo method = typeof(Lightmapping).GetMethod(
 				"Bake",
@@ -1433,7 +1433,7 @@ namespace UnityGraphicsMcp
 				: null;
 		}
 
-		private static bool TryResolvePhase4ReflectionProbe(
+		private static bool TryResolveSaveEvaluationReflectionProbe(
 			string objectId,
 			out ReflectionProbe probe)
 		{
@@ -1462,7 +1462,7 @@ namespace UnityGraphicsMcp
 				probe.gameObject.scene.isLoaded;
 		}
 
-		private static string BuildPhase4ReflectionProbeDigest(
+		private static string BuildSaveEvaluationReflectionProbeDigest(
 			ReflectionProbe probe,
 			string outputAssetPath)
 		{
@@ -1473,10 +1473,10 @@ namespace UnityGraphicsMcp
 			builder.Append(probe.gameObject.scene.path).Append('|');
 			builder.Append(outputAssetPath).Append('|');
 			builder.Append(EditorJsonUtility.ToJson(probe, false));
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
-		private static string BuildPhase4BakePlanDigest(
+		private static string BuildDependencyBakePlanDigest(
 			UnityGraphicsMcpExecutableBakePlan plan)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1507,11 +1507,11 @@ namespace UnityGraphicsMcp
 				builder.Append(dependency.Backend).Append('|');
 			}
 
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
 		private static List<Dictionary<string, object>>
-			BuildPhase4BakeScenePreviews(
+			BuildDependencyBakeScenePreviews(
 				IEnumerable<UnityGraphicsMcpBakeSceneBaseline> scenes)
 		{
 			return scenes
@@ -1526,16 +1526,16 @@ namespace UnityGraphicsMcp
 		}
 
 		private static List<Dictionary<string, object>>
-			BuildPhase4BakeDependencyPreviews(
+			BuildDependencyBakeDependencyPreviews(
 				IEnumerable<UnityGraphicsMcpPreparedBakeDependency> dependencies)
 		{
 			return dependencies
-				.Select(BuildPhase4BakeDependencyPreview)
+				.Select(BuildDependencyBakeDependencyPreview)
 				.ToList();
 		}
 
 		private static Dictionary<string, object>
-			BuildPhase4BakeDependencyPreview(
+			BuildDependencyBakeDependencyPreview(
 				UnityGraphicsMcpPreparedBakeDependency dependency)
 		{
 			return new Dictionary<string, object>
@@ -1551,7 +1551,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static UnityGraphicsMcpIssue CreatePhase4BakeIssue(
+		private static UnityGraphicsMcpIssue CreateDependencyBakeIssue(
 			string code,
 			string message,
 			object evidence)

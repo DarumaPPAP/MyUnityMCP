@@ -116,7 +116,7 @@ namespace UnityGraphicsMcp
 	}
 
 	[InitializeOnLoad]
-	internal static class UnityGraphicsMcpPhase4CaptureSession
+	internal static class UnityGraphicsMcpCaptureEvidenceSession
 	{
 		private const int MAX_CAPTURE_COUNT = 8;
 		private const int MAX_REVIEW_COUNT = 16;
@@ -126,7 +126,7 @@ namespace UnityGraphicsMcp
 		private static readonly Dictionary<string, UnityGraphicsMcpVisualReviewRecord> _reviews =
 			new Dictionary<string, UnityGraphicsMcpVisualReviewRecord>(StringComparer.Ordinal);
 
-		static UnityGraphicsMcpPhase4CaptureSession()
+		static UnityGraphicsMcpCaptureEvidenceSession()
 		{
 			EditorApplication.playModeStateChanged += state => Clear();
 			AssemblyReloadEvents.beforeAssemblyReload += Clear;
@@ -365,16 +365,16 @@ namespace UnityGraphicsMcp
 	}
 
 	/// <summary>
-	/// Phase 4CのCapture Evidence Bundleと明示的Visual Acceptanceを所有します。
+	/// Capture EvidenceのCapture Evidence Bundleと明示的Visual Acceptanceを所有します。
 	/// </summary>
 	public static partial class UnityGraphicsMcpInspection
 	{
-		private const string PHASE4C_CAPTURE_SHADER =
+		private const string CAPTURE_EVIDENCE_SHADER =
 			"Hidden/MyUnityMCP/CaptureEvidence";
-		private const string PHASE4C_ACCEPTANCE_CONFIRMATION =
+		private const string VISUAL_ACCEPTANCE_CONFIRMATION =
 			"VISUAL_ACCEPTED";
-		private const int DEFAULT_PHASE4C_RENDERER_LIMIT = 4096;
-		private const int MAX_PHASE4C_RENDERER_LIMIT = 16384;
+		private const int DEFAULT_CAPTURE_RENDERER_LIMIT = 4096;
+		private const int MAX_CAPTURE_RENDERER_LIMIT = 16384;
 
 		public static UnityGraphicsMcpToolResult CaptureEvidence(
 			string requestId,
@@ -388,7 +388,7 @@ namespace UnityGraphicsMcp
 		{
 			string createdBundleAbsolutePath = null;
 			string createdCaptureId = null;
-			return ExecutePhase4CCaptureOperation(
+			return ExecuteCaptureEvidenceCaptureOperation(
 				"graphics.capture_evidence",
 				requestId,
 				delegate
@@ -414,7 +414,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Camera camera;
-					if (!TryResolvePhase4Camera(cameraObjectId, out camera))
+					if (!TryResolveSaveEvaluationCamera(cameraObjectId, out camera))
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -426,7 +426,7 @@ namespace UnityGraphicsMcp
 
 					int captureWidth = width ?? 1280;
 					int captureHeight = height ?? 720;
-					if (!IsValidPhase4CaptureSize(captureWidth, captureHeight))
+					if (!IsValidSaveEvaluationCaptureSize(captureWidth, captureHeight))
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -442,7 +442,7 @@ namespace UnityGraphicsMcp
 
 					List<E_GRAPHICS_CAPTURE_CHANNEL> normalizedChannels;
 					string channelFailureMessage;
-					if (!TryNormalizePhase4CCaptureChannels(
+					if (!TryNormalizeCaptureEvidenceCaptureChannels(
 						channels,
 						out normalizedChannels,
 						out channelFailureMessage))
@@ -456,8 +456,8 @@ namespace UnityGraphicsMcp
 					}
 
 					int rendererLimit = maxRendererCount ??
-						DEFAULT_PHASE4C_RENDERER_LIMIT;
-					if (rendererLimit < 1 || rendererLimit > MAX_PHASE4C_RENDERER_LIMIT)
+						DEFAULT_CAPTURE_RENDERER_LIMIT;
+					if (rendererLimit < 1 || rendererLimit > MAX_CAPTURE_RENDERER_LIMIT)
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -494,7 +494,7 @@ namespace UnityGraphicsMcp
 						normalizedChannels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.LINEAR_DEPTH) ||
 						normalizedChannels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.OBJECT_ID);
 					Shader evidenceShader = requiresEvidenceShader
-						? Shader.Find(PHASE4C_CAPTURE_SHADER)
+						? Shader.Find(CAPTURE_EVIDENCE_SHADER)
 						: null;
 					if (requiresEvidenceShader && evidenceShader == null)
 					{
@@ -505,11 +505,11 @@ namespace UnityGraphicsMcp
 							"Capture Evidence Shaderを解決できません。",
 							new Dictionary<string, object>
 							{
-								{ "shader", PHASE4C_CAPTURE_SHADER }
+								{ "shader", CAPTURE_EVIDENCE_SHADER }
 							});
 					}
 
-					return CapturePhase4CEvidenceBundle(
+					return CaptureCaptureEvidenceEvidenceBundle(
 						requestId,
 						cameraObjectId,
 						camera,
@@ -527,8 +527,8 @@ namespace UnityGraphicsMcp
 				},
 				delegate
 				{
-					DeletePhase4CDirectory(createdBundleAbsolutePath);
-					UnityGraphicsMcpPhase4CaptureSession.RemoveCapture(
+					DeleteCaptureEvidenceDirectory(createdBundleAbsolutePath);
+					UnityGraphicsMcpCaptureEvidenceSession.RemoveCapture(
 						createdCaptureId);
 				});
 		}
@@ -572,7 +572,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpCaptureEvidenceRecord capture;
 					E_MCP_TOOL_STATUS failureStatus;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4CaptureSession.TryGetCapture(
+					if (!UnityGraphicsMcpCaptureEvidenceSession.TryGetCapture(
 						captureId,
 						expectedRevision.Value,
 						evidenceDigest,
@@ -619,16 +619,16 @@ namespace UnityGraphicsMcp
 					}
 
 					List<string> normalizedObservations =
-						NormalizePhase4ExplicitReviewValues(observations);
+						NormalizeSaveEvaluationExplicitReviewValues(observations);
 					List<string> normalizedAdjustments =
-						NormalizePhase4ExplicitReviewValues(requestedAdjustments);
+						NormalizeSaveEvaluationExplicitReviewValues(requestedAdjustments);
 
 					if (normalizedDecision ==
 						E_GRAPHICS_VISUAL_REVIEW_DECISION.ACCEPTED)
 					{
 						if (!string.Equals(
 							acceptanceConfirmation,
-							PHASE4C_ACCEPTANCE_CONFIRMATION,
+							VISUAL_ACCEPTANCE_CONFIRMATION,
 							StringComparison.Ordinal))
 						{
 							return CreateResult(
@@ -681,9 +681,9 @@ namespace UnityGraphicsMcp
 							Observations = normalizedObservations,
 							RequestedAdjustments = normalizedAdjustments
 						};
-					review.ReviewDigest = BuildPhase4CReviewDigest(review);
+					review.ReviewDigest = BuildCaptureEvidenceReviewDigest(review);
 
-					if (!UnityGraphicsMcpPhase4CaptureSession.TryStoreReview(
+					if (!UnityGraphicsMcpCaptureEvidenceSession.TryStoreReview(
 						capture,
 						review,
 						out failureMessage))
@@ -770,7 +770,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpCaptureEvidenceRecord capture;
 					E_MCP_TOOL_STATUS reviewFailureStatus;
 					string reviewFailureMessage;
-					if (!UnityGraphicsMcpPhase4CaptureSession.TryGetReview(
+					if (!UnityGraphicsMcpCaptureEvidenceSession.TryGetReview(
 						reviewId,
 						expectedRevision.Value,
 						out review,
@@ -823,10 +823,10 @@ namespace UnityGraphicsMcp
 					List<UnityGraphicsMcpPlanRecommendation> recommendations =
 						(sourcePlan.Recommendations ??
 							new List<UnityGraphicsMcpPlanRecommendation>())
-						.Select(ClonePhase4Recommendation)
+						.Select(CloneSaveEvaluationRecommendation)
 						.ToList();
 					recommendations.Add(
-						BuildPhase4RefineRecommendation(
+						BuildSaveEvaluationRefineRecommendation(
 							directionPlanId,
 							capture.CaptureId,
 							review.Observations,
@@ -890,18 +890,18 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		internal static Color32 EncodePhase4CObjectIdForTests(int objectId)
+		internal static Color32 EncodeCaptureEvidenceObjectIdForTests(int objectId)
 		{
-			return EncodePhase4CObjectId(objectId);
+			return EncodeCaptureEvidenceObjectId(objectId);
 		}
 
-		internal static string BuildPhase4CEvidenceDigestForTests(
+		internal static string BuildCaptureEvidenceEvidenceDigestForTests(
 			UnityGraphicsMcpCaptureEvidenceRecord capture)
 		{
-			return BuildPhase4CEvidenceDigest(capture);
+			return BuildCaptureEvidenceEvidenceDigest(capture);
 		}
 
-		private static UnityGraphicsMcpToolResult CapturePhase4CEvidenceBundle(
+		private static UnityGraphicsMcpToolResult CaptureCaptureEvidenceEvidenceBundle(
 			string requestId,
 			string cameraObjectId,
 			Camera camera,
@@ -919,7 +919,7 @@ namespace UnityGraphicsMcp
 			RenderTexture originalTargetTexture = camera.targetTexture;
 			RenderTexture originalActiveTexture = RenderTexture.active;
 			string normalizedCaptureLabel =
-				SanitizePhase4CCaptureLabel(captureLabel);
+				SanitizeCaptureEvidenceCaptureLabel(captureLabel);
 			string captureKey = DateTime.UtcNow.ToString(
 				"yyyyMMdd-HHmmssfff",
 				CultureInfo.InvariantCulture) + "-" +
@@ -930,11 +930,11 @@ namespace UnityGraphicsMcp
 			string relativeBundlePath =
 				"Library/MyUnityMCP/Captures/" + captureKey;
 			string absoluteBundlePath =
-				ToPhase4ProjectAbsolutePath(relativeBundlePath);
+				ToSaveEvaluationProjectAbsolutePath(relativeBundlePath);
 			string stagingPath = absoluteBundlePath +
 				".tmp-" + Guid.NewGuid().ToString("N");
 
-			List<Renderer> renderers = CollectPhase4CCaptureRenderers(camera);
+			List<Renderer> renderers = CollectCaptureEvidenceCaptureRenderers(camera);
 			bool requiresRendererEvidence =
 				channels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.LINEAR_DEPTH) ||
 				channels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.OBJECT_ID);
@@ -961,17 +961,17 @@ namespace UnityGraphicsMcp
 					CameraSceneHandle = cameraScene.handle,
 					CameraScenePath = cameraScene.path,
 					CameraBaselineDigest =
-						BuildPhase4CCameraBaselineDigest(camera),
+						BuildCaptureEvidenceCameraBaselineDigest(camera),
 					BundlePath = relativeBundlePath,
 					Width = width,
 					Height = height,
 					EncodedRendererCount = renderers.Count,
 					SkippedRendererCount =
-						CountPhase4CSkippedRenderers(camera),
+						CountCaptureEvidenceSkippedRenderers(camera),
 					UnsupportedTerrainCount =
-						CountPhase4CUnsupportedTerrains(camera)
+						CountCaptureEvidenceUnsupportedTerrains(camera)
 				};
-			UnityGraphicsMcpPhase4CaptureSession.StoreCapture(capture);
+			UnityGraphicsMcpCaptureEvidenceSession.StoreCapture(capture);
 
 			List<Material> temporaryMaterials = new List<Material>();
 			Exception captureException = null;
@@ -982,11 +982,11 @@ namespace UnityGraphicsMcp
 
 				if (channels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.COLOR))
 				{
-					byte[] colorBytes = CapturePhase4CColor(
+					byte[] colorBytes = CaptureCaptureEvidenceColor(
 						camera,
 						width,
 						height);
-					AddPhase4CArtifact(
+					AddCaptureEvidenceArtifact(
 						capture,
 						stagingPath,
 						relativeBundlePath,
@@ -1000,14 +1000,14 @@ namespace UnityGraphicsMcp
 				if (channels.Contains(
 					E_GRAPHICS_CAPTURE_CHANNEL.LINEAR_DEPTH))
 				{
-					byte[] depthBytes = CapturePhase4CLinearDepth(
+					byte[] depthBytes = CaptureCaptureEvidenceLinearDepth(
 						camera,
 						width,
 						height,
 						renderers,
 						evidenceShader,
 						temporaryMaterials);
-					AddPhase4CArtifact(
+					AddCaptureEvidenceArtifact(
 						capture,
 						stagingPath,
 						relativeBundlePath,
@@ -1021,7 +1021,7 @@ namespace UnityGraphicsMcp
 				if (channels.Contains(E_GRAPHICS_CAPTURE_CHANNEL.OBJECT_ID))
 				{
 					List<UnityGraphicsMcpObjectIdEntry> objectIdEntries;
-					byte[] objectIdBytes = CapturePhase4CObjectId(
+					byte[] objectIdBytes = CaptureCaptureEvidenceObjectId(
 						camera,
 						width,
 						height,
@@ -1029,7 +1029,7 @@ namespace UnityGraphicsMcp
 						evidenceShader,
 						temporaryMaterials,
 						out objectIdEntries);
-					AddPhase4CArtifact(
+					AddCaptureEvidenceArtifact(
 						capture,
 						stagingPath,
 						relativeBundlePath,
@@ -1043,7 +1043,7 @@ namespace UnityGraphicsMcp
 						JsonConvert.SerializeObject(
 							objectIdEntries,
 							Formatting.Indented));
-					AddPhase4CArtifact(
+					AddCaptureEvidenceArtifact(
 						capture,
 						stagingPath,
 						relativeBundlePath,
@@ -1055,7 +1055,7 @@ namespace UnityGraphicsMcp
 				}
 
 				capture.EvidenceDigest =
-					BuildPhase4CEvidenceDigest(capture);
+					BuildCaptureEvidenceEvidenceDigest(capture);
 
 				UnityGraphicsMcpCaptureManifest manifest =
 					new UnityGraphicsMcpCaptureManifest
@@ -1096,7 +1096,7 @@ namespace UnityGraphicsMcp
 					JsonConvert.SerializeObject(
 						manifest,
 						Formatting.Indented));
-				AddPhase4CArtifact(
+				AddCaptureEvidenceArtifact(
 					capture,
 					stagingPath,
 					relativeBundlePath,
@@ -1144,10 +1144,10 @@ namespace UnityGraphicsMcp
 
 			if (captureException != null)
 			{
-				UnityGraphicsMcpPhase4CaptureSession.RemoveCapture(
+				UnityGraphicsMcpCaptureEvidenceSession.RemoveCapture(
 					capture.CaptureId);
-				DeletePhase4CDirectory(stagingPath);
-				DeletePhase4CDirectory(absoluteBundlePath);
+				DeleteCaptureEvidenceDirectory(stagingPath);
+				DeleteCaptureEvidenceDirectory(absoluteBundlePath);
 				return CreateResult(
 					"graphics.capture_evidence",
 					requestId,
@@ -1173,9 +1173,9 @@ namespace UnityGraphicsMcp
 				RenderTexture.active != originalActiveTexture ||
 				cameraScene.isDirty != cameraSceneDirtyBefore)
 			{
-				UnityGraphicsMcpPhase4CaptureSession.RemoveCapture(
+				UnityGraphicsMcpCaptureEvidenceSession.RemoveCapture(
 					capture.CaptureId);
-				DeletePhase4CDirectory(absoluteBundlePath);
+				DeleteCaptureEvidenceDirectory(absoluteBundlePath);
 				return CreateResult(
 					"graphics.capture_evidence",
 					requestId,
@@ -1186,9 +1186,9 @@ namespace UnityGraphicsMcp
 
 			if (startRevision != UnityGraphicsMcpSession.Revision)
 			{
-				UnityGraphicsMcpPhase4CaptureSession.RemoveCapture(
+				UnityGraphicsMcpCaptureEvidenceSession.RemoveCapture(
 					capture.CaptureId);
-				DeletePhase4CDirectory(absoluteBundlePath);
+				DeleteCaptureEvidenceDirectory(absoluteBundlePath);
 				return CreateResult(
 					"graphics.capture_evidence",
 					requestId,
@@ -1200,9 +1200,9 @@ namespace UnityGraphicsMcp
 			if (!Directory.Exists(absoluteBundlePath) ||
 				capture.Artifacts.Count == 0)
 			{
-				UnityGraphicsMcpPhase4CaptureSession.RemoveCapture(
+				UnityGraphicsMcpCaptureEvidenceSession.RemoveCapture(
 					capture.CaptureId);
-				DeletePhase4CDirectory(absoluteBundlePath);
+				DeleteCaptureEvidenceDirectory(absoluteBundlePath);
 				return CreateResult(
 					"graphics.capture_evidence",
 					requestId,
@@ -1225,7 +1225,7 @@ namespace UnityGraphicsMcp
 					{ "bundlePath", capture.BundlePath },
 					{
 						"artifacts",
-						capture.Artifacts.Select(ToPhase4CArtifactData).ToList()
+						capture.Artifacts.Select(ToCaptureEvidenceArtifactData).ToList()
 					},
 					{ "width", capture.Width },
 					{ "height", capture.Height },
@@ -1244,7 +1244,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static UnityGraphicsMcpToolResult ExecutePhase4CCaptureOperation(
+		private static UnityGraphicsMcpToolResult ExecuteCaptureEvidenceCaptureOperation(
 			string toolName,
 			string requestId,
 			Func<UnityGraphicsMcpToolResult> operation,
@@ -1275,16 +1275,16 @@ namespace UnityGraphicsMcp
 			}
 
 			Dictionary<int, bool> sceneDirtyState =
-				CapturePhase4SceneDirtyState();
+				CaptureSaveEvaluationSceneDirtyState();
 			Dictionary<int, bool> assetDirtyState =
-				CapturePhase4AssetDirtyState();
+				CaptureSaveEvaluationAssetDirtyState();
 			int undoGroup = Undo.GetCurrentGroup();
 
 			try
 			{
 				UnityGraphicsMcpToolResult result = operation();
 				Dictionary<string, object> evidence;
-				if (HasPhase4CaptureReadOnlyViolation(
+				if (HasSaveEvaluationCaptureReadOnlyViolation(
 					sceneDirtyState,
 					assetDirtyState,
 					undoGroup,
@@ -1309,7 +1309,7 @@ namespace UnityGraphicsMcp
 					toolName,
 					normalizedRequestId,
 					E_MCP_TOOL_STATUS.FAILED,
-					"Phase 4C Capture処理中に例外が発生しました。",
+					"Capture Evidence Capture処理中に例外が発生しました。",
 					new Dictionary<string, object>
 					{
 						{ "exceptionType", exception.GetType().FullName },
@@ -1318,7 +1318,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static bool TryNormalizePhase4CCaptureChannels(
+		private static bool TryNormalizeCaptureEvidenceCaptureChannels(
 			IEnumerable<string> channels,
 			out List<E_GRAPHICS_CAPTURE_CHANNEL> normalized,
 			out string failureMessage)
@@ -1366,27 +1366,27 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static List<Renderer> CollectPhase4CCaptureRenderers(
+		private static List<Renderer> CollectCaptureEvidenceCaptureRenderers(
 			Camera camera)
 		{
 			Plane[] frustumPlanes =
 				GeometryUtility.CalculateFrustumPlanes(camera);
 			return Resources.FindObjectsOfTypeAll<Renderer>()
 				.Where(renderer =>
-					IsPhase4CRendererEligible(
+					IsCaptureEvidenceRendererEligible(
 						renderer,
 						camera,
 						frustumPlanes))
 				.OrderBy(renderer => renderer.gameObject.scene.path, StringComparer.Ordinal)
 				.ThenBy(
-					renderer => BuildPhase4StableHierarchyPath(renderer.gameObject),
+					renderer => BuildSaveEvaluationStableHierarchyPath(renderer.gameObject),
 					StringComparer.Ordinal)
 				.ThenBy(renderer => renderer.GetType().FullName, StringComparer.Ordinal)
 				.ThenBy(renderer => renderer.GetInstanceID())
 				.ToList();
 		}
 
-		private static int CountPhase4CSkippedRenderers(Camera camera)
+		private static int CountCaptureEvidenceSkippedRenderers(Camera camera)
 		{
 			Plane[] frustumPlanes =
 				GeometryUtility.CalculateFrustumPlanes(camera);
@@ -1395,13 +1395,13 @@ namespace UnityGraphicsMcp
 					renderer != null &&
 					renderer.gameObject.scene.IsValid() &&
 					renderer.gameObject.scene.isLoaded &&
-					!IsPhase4CRendererEligible(
+					!IsCaptureEvidenceRendererEligible(
 						renderer,
 						camera,
 						frustumPlanes));
 		}
 
-		private static int CountPhase4CUnsupportedTerrains(Camera camera)
+		private static int CountCaptureEvidenceUnsupportedTerrains(Camera camera)
 		{
 			return Terrain.activeTerrains.Count(terrain =>
 				terrain != null &&
@@ -1412,7 +1412,7 @@ namespace UnityGraphicsMcp
 				  camera.cullingMask) != 0));
 		}
 
-		private static bool IsPhase4CRendererEligible(
+		private static bool IsCaptureEvidenceRendererEligible(
 			Renderer renderer,
 			Camera camera,
 			Plane[] frustumPlanes)
@@ -1436,7 +1436,7 @@ namespace UnityGraphicsMcp
 					renderer.bounds);
 		}
 
-		private static int GetPhase4CSubMeshCount(Renderer renderer)
+		private static int GetCaptureEvidenceSubMeshCount(Renderer renderer)
 		{
 			MeshRenderer meshRenderer = renderer as MeshRenderer;
 			if (meshRenderer != null)
@@ -1462,7 +1462,7 @@ namespace UnityGraphicsMcp
 			return Math.Max(1, renderer.sharedMaterials.Length);
 		}
 
-		private static byte[] CapturePhase4CColor(
+		private static byte[] CaptureCaptureEvidenceColor(
 			Camera camera,
 			int width,
 			int height)
@@ -1480,7 +1480,7 @@ namespace UnityGraphicsMcp
 					RenderTextureFormat.ARGB32,
 					RenderTextureReadWrite.Default)
 				{
-					name = "MyUnityMCP Phase4C Color"
+					name = "MyUnityMCP CaptureEvidence Color"
 				};
 				target.Create();
 				camera.targetTexture = target;
@@ -1517,7 +1517,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static byte[] CapturePhase4CLinearDepth(
+		private static byte[] CaptureCaptureEvidenceLinearDepth(
 			Camera camera,
 			int width,
 			int height,
@@ -1527,14 +1527,14 @@ namespace UnityGraphicsMcp
 		{
 			Material depthMaterial = new Material(shader)
 			{
-				name = "MyUnityMCP Phase4C Linear Depth",
+				name = "MyUnityMCP CaptureEvidence Linear Depth",
 				hideFlags = HideFlags.HideAndDontSave
 			};
 			depthMaterial.SetFloat("_McpNear", camera.nearClipPlane);
 			depthMaterial.SetFloat("_McpFar", camera.farClipPlane);
 			temporaryMaterials.Add(depthMaterial);
 
-			return RenderPhase4COverride(
+			return RenderCaptureEvidenceOverride(
 				camera,
 				width,
 				height,
@@ -1546,7 +1546,7 @@ namespace UnityGraphicsMcp
 				true);
 		}
 
-		private static byte[] CapturePhase4CObjectId(
+		private static byte[] CaptureCaptureEvidenceObjectId(
 			Camera camera,
 			int width,
 			int height,
@@ -1563,7 +1563,7 @@ namespace UnityGraphicsMcp
 			{
 				Renderer renderer = renderers[index];
 				int objectId = index + 1;
-				Color32 encoded = EncodePhase4CObjectId(objectId);
+				Color32 encoded = EncodeCaptureEvidenceObjectId(objectId);
 				Material material = new Material(shader)
 				{
 					name = "MyUnityMCP Object ID " +
@@ -1593,13 +1593,13 @@ namespace UnityGraphicsMcp
 						RendererType = renderer.GetType().FullName,
 						Name = renderer.name,
 						HierarchyPath =
-							BuildPhase4StableHierarchyPath(renderer.gameObject),
+							BuildSaveEvaluationStableHierarchyPath(renderer.gameObject),
 						ScenePath = renderer.gameObject.scene.path,
-						SubMeshCount = GetPhase4CSubMeshCount(renderer)
+						SubMeshCount = GetCaptureEvidenceSubMeshCount(renderer)
 					});
 			}
 
-			return RenderPhase4COverride(
+			return RenderCaptureEvidenceOverride(
 				camera,
 				width,
 				height,
@@ -1612,7 +1612,7 @@ namespace UnityGraphicsMcp
 				materials);
 		}
 
-		private static byte[] RenderPhase4COverride(
+		private static byte[] RenderCaptureEvidenceOverride(
 			Camera camera,
 			int width,
 			int height,
@@ -1638,13 +1638,13 @@ namespace UnityGraphicsMcp
 					renderTextureFormat,
 					RenderTextureReadWrite.Linear)
 				{
-					name = "MyUnityMCP Phase4C Evidence"
+					name = "MyUnityMCP CaptureEvidence Evidence"
 				};
 				target.Create();
 
 				commandBuffer = new CommandBuffer
 				{
-					name = "MyUnityMCP Phase4C Capture"
+					name = "MyUnityMCP CaptureEvidence Capture"
 				};
 				commandBuffer.SetRenderTarget(target);
 				commandBuffer.ClearRenderTarget(
@@ -1671,7 +1671,7 @@ namespace UnityGraphicsMcp
 					}
 
 					int subMeshCount =
-						GetPhase4CSubMeshCount(renderer);
+						GetCaptureEvidenceSubMeshCount(renderer);
 					for (int subMesh = 0;
 						subMesh < subMeshCount;
 						subMesh++)
@@ -1726,7 +1726,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static Color32 EncodePhase4CObjectId(int objectId)
+		private static Color32 EncodeCaptureEvidenceObjectId(int objectId)
 		{
 			if (objectId < 1 || objectId > 0xFFFFFF)
 			{
@@ -1742,7 +1742,7 @@ namespace UnityGraphicsMcp
 				255);
 		}
 
-		private static void AddPhase4CArtifact(
+		private static void AddCaptureEvidenceArtifact(
 			UnityGraphicsMcpCaptureEvidenceRecord capture,
 			string stagingPath,
 			string relativeBundlePath,
@@ -1767,14 +1767,14 @@ namespace UnityGraphicsMcp
 				{
 					Channel = channel,
 					OutputPath = relativeBundlePath + "/" + fileName,
-					Sha256 = HashPhase4Bytes(bytes),
+					Sha256 = HashSaveEvaluationBytes(bytes),
 					ByteLength = bytes.LongLength,
 					Format = format,
 					Semantics = semantics
 				});
 		}
 
-		private static string BuildPhase4CCameraBaselineDigest(
+		private static string BuildCaptureEvidenceCameraBaselineDigest(
 			Camera camera)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1784,14 +1784,14 @@ namespace UnityGraphicsMcp
 			builder.Append(camera.gameObject.scene.handle).Append('|');
 			builder.Append(camera.gameObject.scene.path).Append('|');
 			builder.Append(EditorJsonUtility.ToJson(camera, false)).Append('|');
-			AppendPhase4Vector(builder, camera.transform.position);
-			AppendPhase4Vector(builder, camera.transform.eulerAngles);
-			AppendPhase4Vector(builder, camera.transform.lossyScale);
-			return UnityGraphicsMcpPhase4Session.HashText(
+			AppendSaveEvaluationVector(builder, camera.transform.position);
+			AppendSaveEvaluationVector(builder, camera.transform.eulerAngles);
+			AppendSaveEvaluationVector(builder, camera.transform.lossyScale);
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(
 				builder.ToString());
 		}
 
-		private static string BuildPhase4CEvidenceDigest(
+		private static string BuildCaptureEvidenceEvidenceDigest(
 			UnityGraphicsMcpCaptureEvidenceRecord capture)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1820,11 +1820,11 @@ namespace UnityGraphicsMcp
 				builder.Append(artifact.Format).Append('|');
 			}
 
-			return UnityGraphicsMcpPhase4Session.HashText(
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(
 				builder.ToString());
 		}
 
-		private static string BuildPhase4CReviewDigest(
+		private static string BuildCaptureEvidenceReviewDigest(
 			UnityGraphicsMcpVisualReviewRecord review)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1841,11 +1841,11 @@ namespace UnityGraphicsMcp
 			{
 				builder.Append("A:").Append(adjustment).Append('|');
 			}
-			return UnityGraphicsMcpPhase4Session.HashText(
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(
 				builder.ToString());
 		}
 
-		private static Dictionary<string, object> ToPhase4CArtifactData(
+		private static Dictionary<string, object> ToCaptureEvidenceArtifactData(
 			UnityGraphicsMcpCaptureArtifactRecord artifact)
 		{
 			return new Dictionary<string, object>
@@ -1859,7 +1859,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static string SanitizePhase4CCaptureLabel(string value)
+		private static string SanitizeCaptureEvidenceCaptureLabel(string value)
 		{
 			if (string.IsNullOrWhiteSpace(value))
 			{
@@ -1887,7 +1887,7 @@ namespace UnityGraphicsMcp
 				: result.Substring(0, 48);
 		}
 
-		private static void DeletePhase4CDirectory(string absolutePath)
+		private static void DeleteCaptureEvidenceDirectory(string absolutePath)
 		{
 			if (!string.IsNullOrWhiteSpace(absolutePath) &&
 				Directory.Exists(absolutePath))

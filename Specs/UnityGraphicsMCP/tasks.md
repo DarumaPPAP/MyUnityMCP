@@ -2,7 +2,7 @@
 
 - TaskPlanVersion: `5.0.0`
 - CurrentPhase: `Phase 4 APV / Visual Acceptance Closed Loop`
-- ImplementationStatus: `Phase 4D APV and Visual Acceptance Complete`
+- ImplementationStatus: `APV and Visual Acceptance APV and Visual Acceptance Complete`
 
 ## Status legend
 
@@ -79,7 +79,7 @@ Operation:
 - 自動Saveなし
 - Bakeなし
 
-## Phase 4A: Save / Color Capture / Refine — DONE
+## Save and Evaluation: Save / Color Capture / Refine — DONE
 
 Tool:
 
@@ -106,7 +106,7 @@ Tool:
 - Human Reviewの明示入力だけを次Iterationへ反映
 - Human ReviewなしにVisual Acceptedと判定しない
 
-## Phase 4B: Dirty Dependency Bake — DONE
+## Dependency Bake: Dirty Dependency Bake — DONE
 
 Tool:
 
@@ -137,7 +137,7 @@ Tool:
 - 複数Loaded Sceneで全Scene BakeへのSilent Fallbackなし
 - Unity Undo / 自動Rollback保証なし
 
-## Phase 4C: Capture Evidence and Human Visual Acceptance — DONE
+## Capture Evidence: Capture Evidence and Human Visual Acceptance — DONE
 
 Tool:
 
@@ -178,7 +178,7 @@ Tool:
 - `REJECTED`または`NEEDS_ADJUSTMENT`だけを次IterationのDirection PlanへRefine
 - Unity C#側は画像の意味解析や自動Acceptanceを行わない
 
-## Phase 4D: APV Bake Job and Acceptance Profile — DONE
+## APV and Visual Acceptance: APV Bake Job and Acceptance Profile — DONE
 
 Tool:
 
@@ -230,7 +230,7 @@ Tool:
 - Renderer GlobalObjectId / Type / Hierarchy / Sceneへ関連付け
 - 不合格項目、Performance違反、問題Object、推奨Actionを構造化
 - `FAILED` / `INCOMPLETE`だけを次Direction PlanへRefine
-- `PASSED`でも最終AcceptanceにはPhase 4C Human Reviewが必要
+- `PASSED`でも最終AcceptanceにはCapture Evidence Human Reviewが必要
 
 ### Closed-loop Completion
 
@@ -249,7 +249,7 @@ EditMode E2E契約で次を成立させた。
 
 CIでは実APV Bakeを偽装せず、Job State MachineとOutput差分をBackend Overrideで契約検証し、Reflection BackendはUnity CompileとCapability解決で検証する。
 
-## Phase 4D verification gate — PASSED
+## APV and Visual Acceptance verification gate — PASSED
 
 1. Package dependency resolution — PASS
 2. Unity 6000.0.75f1 Editor Compile — PASS
@@ -273,11 +273,11 @@ CIでは実APV Bakeを偽装せず、Job State MachineとOutput差分をBackend 
 
 最新Evidence:
 
-- Verification ID: `MUMCP-PHASE4D-CI-20260805-001`
+- Verification ID: `MUMCP-APV-VISUAL-ACCEPTANCE-CI-20260805-001`
 - Workflow Run: `31005540655`
 - Job: `92304475814`
-- Artifact: `MyUnityMCP-Phase4D-Unity-Evidence` (`8930337405`)
-- Source: `Tests/Compatibility/phase4d-verification.yaml`
+- Artifact: `MyUnityMCP-APV-Visual-Acceptance-Evidence` (`8930337405`)
+- Source: `Tests/Compatibility/apv-visual-acceptance-verification.yaml`
 
 ## Phase 5: Hardening and domain expansion — PENDING
 

@@ -1,7 +1,7 @@
 schema_version: "1.0"
-verification_id: MUMCP-PHASE4D-CI-20260805-001
+verification_id: MUMCP-APV-VISUAL-ACCEPTANCE-CI-20260805-001
 date: "2026-08-05"
-scope: phase_1_to_phase_4d_editor_tools
+scope: phase_1_to_apv_visual_acceptance_editor_tools
 
 host:
   runner: github_actions_ubuntu_24_04
@@ -16,7 +16,7 @@ source:
   repository: DarumaPPAP/MyUnityMCP
   branch: feature/phase4d-apv-visual-acceptance
   verified_commit: 5ad2da97bb559c8c3a9ef253a873aea20cc3e784
-  package_version: "0.7.0"
+  package_version: "0.7.1"
 
 verification:
   package_resolution: passed
@@ -33,7 +33,7 @@ verification:
     skipped: 0
     inconclusive: 0
   phase_1_to_4c_regression: passed
-  phase_4d_apv_contract:
+  apv_visual_acceptance_apv_contract:
     explicit_baking_set: passed
     explicit_lighting_scenario: passed
     exact_scene_set_validation: passed
@@ -54,7 +54,7 @@ verification:
     automatic_save: prohibited_and_tested
     unity_undo: not_supported_and_explicit
     automatic_rollback: not_supported_and_explicit
-  phase_4d_visual_acceptance_contract:
+  apv_visual_acceptance_visual_acceptance_contract:
     acceptance_profile: passed
     criteria_weight: passed
     minimum_pass_score: passed
@@ -79,10 +79,10 @@ verification:
     next_refine_direction: passed
 
 evidence:
-  workflow: Phase 4D Unity Verification
+  workflow: APV and Visual Acceptance Unity Verification
   workflow_run_id: 31005540655
   workflow_job_id: 92304475814
-  artifact_name: MyUnityMCP-Phase4D-Unity-Evidence
+  artifact_name: MyUnityMCP-APV-Visual-Acceptance-Evidence
   artifact_id: 8930337405
   artifact_sha256: 2dfa78a86310f8424807f68924bd58a99d998a3d51d3cae741a0b62b0f6d447d
 
@@ -94,7 +94,7 @@ interpretation:
   player_verified: false
   target_device_verified: false
   notes:
-    - This verifies 27 Phase 1 through Phase 4D Editor tools and 98 contract tests in one Unity 6000.0.75f1 CI environment.
+    - This verifies 27 Phase 1 through APV and Visual Acceptance Editor tools and 98 contract tests in one Unity 6000.0.75f1 CI environment.
     - CI does not silently fake a real APV bake. The APV job state machine, output diff, partial result, cancellation, and closed loop are verified with an explicit test backend override.
     - The real APV reflection backend compiles and performs runtime capability checks, but an actual URP or HDRP Baking Set sample remains future environment evidence.
     - Automated profile pass is not final visual acceptance. Human review and VISUAL_ACCEPTED remain mandatory.

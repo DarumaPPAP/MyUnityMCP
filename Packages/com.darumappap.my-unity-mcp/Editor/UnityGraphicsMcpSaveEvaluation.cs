@@ -53,7 +53,7 @@ namespace UnityGraphicsMcp
 		public int Height { get; set; }
 	}
 
-	internal static class UnityGraphicsMcpPhase4Session
+	internal static class UnityGraphicsMcpSaveEvaluationSession
 	{
 		private const int MAX_SAVE_PLAN_COUNT = 8;
 		private const int MAX_CAPTURE_COUNT = 8;
@@ -64,7 +64,7 @@ namespace UnityGraphicsMcp
 		private static readonly Dictionary<string, UnityGraphicsMcpCaptureRecord> _captures =
 			new Dictionary<string, UnityGraphicsMcpCaptureRecord>();
 
-		static UnityGraphicsMcpPhase4Session()
+		static UnityGraphicsMcpSaveEvaluationSession()
 		{
 			EditorApplication.playModeStateChanged += state => Clear();
 			AssemblyReloadEvents.beforeAssemblyReload += Clear;
@@ -321,12 +321,12 @@ namespace UnityGraphicsMcp
 							"graphics.prepare_save_plan",
 							requestId,
 							E_MCP_TOOL_STATUS.INVALID_REQUEST,
-							"Phase 4Aでは、一つの保存済みLoaded Sceneを明示指定してください。",
+							"Save Workflowでは、一つの保存済みLoaded Sceneを明示指定してください。",
 							null);
 					}
 
-					string scenePath = NormalizePhase4SceneAssetPath(targets[0].scenePath);
-					if (!IsSupportedPhase4SceneAssetPath(scenePath))
+					string scenePath = NormalizeSaveEvaluationSceneAssetPath(targets[0].scenePath);
+					if (!IsSupportedSaveEvaluationSceneAssetPath(scenePath))
 					{
 						return CreateResult(
 							"graphics.prepare_save_plan",
@@ -340,7 +340,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Scene scene;
-					if (!TryResolvePhase4LoadedScene(scenePath, out scene))
+					if (!TryResolveSaveEvaluationLoadedScene(scenePath, out scene))
 					{
 						return CreateResult(
 							"graphics.prepare_save_plan",
@@ -361,7 +361,7 @@ namespace UnityGraphicsMcp
 					}
 
 					UnityGraphicsMcpSaveSceneBaseline baseline =
-						CapturePhase4SaveSceneBaseline(scene);
+						CaptureSaveEvaluationSaveSceneBaseline(scene);
 					string approvalToken = Guid.NewGuid().ToString("N") +
 						Guid.NewGuid().ToString("N");
 					UnityGraphicsMcpExecutableSavePlan plan =
@@ -369,11 +369,11 @@ namespace UnityGraphicsMcp
 						{
 							Revision = expectedRevision.Value,
 							ApprovalTokenHash =
-								UnityGraphicsMcpPhase4Session.HashText(approvalToken),
+								UnityGraphicsMcpSaveEvaluationSession.HashText(approvalToken),
 							Target = baseline
 						};
-					plan.DiffDigest = BuildPhase4SavePlanDigest(plan);
-					UnityGraphicsMcpPhase4Session.StoreSavePlan(plan);
+					plan.DiffDigest = BuildSaveEvaluationSavePlanDigest(plan);
+					UnityGraphicsMcpSaveEvaluationSession.StoreSavePlan(plan);
 
 					return CreateResult(
 						"graphics.prepare_save_plan",
@@ -414,7 +414,7 @@ namespace UnityGraphicsMcp
 			string approvalToken,
 			string saveMode)
 		{
-			return ExecutePhase4PersistentOperation(
+			return ExecuteSaveEvaluationPersistentOperation(
 				"graphics.apply_save_plan",
 				requestId,
 				delegate
@@ -441,14 +441,14 @@ namespace UnityGraphicsMcp
 							"graphics.apply_save_plan",
 							requestId,
 							E_MCP_TOOL_STATUS.UNSUPPORTED,
-							"Phase 4AのsaveModeはEXPLICIT_SCENEだけです。",
+							"Save WorkflowのsaveModeはEXPLICIT_SCENEだけです。",
 							null);
 					}
 
 					UnityGraphicsMcpExecutableSavePlan plan;
 					E_MCP_TOOL_STATUS failureStatus;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4Session.TryGetSavePlan(
+					if (!UnityGraphicsMcpSaveEvaluationSession.TryGetSavePlan(
 						planId,
 						expectedRevision.Value,
 						approvalToken,
@@ -469,7 +469,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Scene scene;
-					if (!TryResolvePhase4LoadedSceneByHandleAndPath(
+					if (!TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 						plan.Target.SceneHandle,
 						plan.Target.ScenePath,
 						out scene))
@@ -483,7 +483,7 @@ namespace UnityGraphicsMcp
 					}
 
 					UnityGraphicsMcpSaveSceneBaseline current =
-						CapturePhase4SaveSceneBaseline(scene);
+						CaptureSaveEvaluationSaveSceneBaseline(scene);
 					if (!current.WasDirty ||
 						!string.Equals(
 							current.ContentDigest,
@@ -491,7 +491,7 @@ namespace UnityGraphicsMcp
 							StringComparison.Ordinal) ||
 						!string.Equals(
 							plan.DiffDigest,
-							BuildPhase4SavePlanDigest(plan),
+							BuildSaveEvaluationSavePlanDigest(plan),
 							StringComparison.Ordinal))
 					{
 						return CreateResult(
@@ -532,7 +532,7 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
-					UnityGraphicsMcpPhase4Session.ConsumeSavePlan(plan);
+					UnityGraphicsMcpSaveEvaluationSession.ConsumeSavePlan(plan);
 					if (revisionBeforeSave == UnityGraphicsMcpSession.Revision)
 					{
 						UnityGraphicsMcpSession.NotifyMutationApplied();
@@ -563,7 +563,7 @@ namespace UnityGraphicsMcp
 			int? height,
 			string captureLabel)
 		{
-			return ExecutePhase4CaptureOperation(
+			return ExecuteSaveEvaluationCaptureOperation(
 				"graphics.capture_evaluation",
 				requestId,
 				delegate
@@ -589,7 +589,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Camera camera;
-					if (!TryResolvePhase4Camera(cameraObjectId, out camera))
+					if (!TryResolveSaveEvaluationCamera(cameraObjectId, out camera))
 					{
 						return CreateResult(
 							"graphics.capture_evaluation",
@@ -601,7 +601,7 @@ namespace UnityGraphicsMcp
 
 					int captureWidth = width ?? 1280;
 					int captureHeight = height ?? 720;
-					if (!IsValidPhase4CaptureSize(captureWidth, captureHeight))
+					if (!IsValidSaveEvaluationCaptureSize(captureWidth, captureHeight))
 					{
 						return CreateResult(
 							"graphics.capture_evaluation",
@@ -631,7 +631,7 @@ namespace UnityGraphicsMcp
 							});
 					}
 
-					return CapturePhase4Camera(
+					return CaptureSaveEvaluationCamera(
 						requestId,
 						cameraObjectId,
 						camera,
@@ -665,9 +665,9 @@ namespace UnityGraphicsMcp
 					}
 
 					List<string> observations =
-						NormalizePhase4ExplicitReviewValues(humanObservations);
+						NormalizeSaveEvaluationExplicitReviewValues(humanObservations);
 					List<string> adjustments =
-						NormalizePhase4ExplicitReviewValues(requestedAdjustments);
+						NormalizeSaveEvaluationExplicitReviewValues(requestedAdjustments);
 					if (observations.Count == 0 && adjustments.Count == 0)
 					{
 						return CreateResult(
@@ -696,7 +696,7 @@ namespace UnityGraphicsMcp
 
 					UnityGraphicsMcpCaptureRecord capture;
 					E_MCP_TOOL_STATUS captureFailureStatus;
-					if (!UnityGraphicsMcpPhase4Session.TryGetCapture(
+					if (!UnityGraphicsMcpSaveEvaluationSession.TryGetCapture(
 						captureId,
 						expectedRevision.Value,
 						out capture,
@@ -723,10 +723,10 @@ namespace UnityGraphicsMcp
 					List<UnityGraphicsMcpPlanRecommendation> recommendations =
 						(sourcePlan.Recommendations ??
 							new List<UnityGraphicsMcpPlanRecommendation>())
-						.Select(ClonePhase4Recommendation)
+						.Select(CloneSaveEvaluationRecommendation)
 						.ToList();
 					recommendations.Add(
-						BuildPhase4RefineRecommendation(
+						BuildSaveEvaluationRefineRecommendation(
 							directionPlanId,
 							captureId,
 							observations,
@@ -783,7 +783,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static UnityGraphicsMcpToolResult CapturePhase4Camera(
+		private static UnityGraphicsMcpToolResult CaptureSaveEvaluationCamera(
 			string requestId,
 			string cameraObjectId,
 			Camera camera,
@@ -833,8 +833,8 @@ namespace UnityGraphicsMcp
 				capturedTexture.Apply(false, false);
 				pngBytes = capturedTexture.EncodeToPNG();
 
-				relativeOutputPath = BuildPhase4CaptureOutputPath(captureLabel);
-				absoluteOutputPath = ToPhase4ProjectAbsolutePath(relativeOutputPath);
+				relativeOutputPath = BuildSaveEvaluationCaptureOutputPath(captureLabel);
+				absoluteOutputPath = ToSaveEvaluationProjectAbsolutePath(relativeOutputPath);
 				Directory.CreateDirectory(Path.GetDirectoryName(absoluteOutputPath));
 				File.WriteAllBytes(absoluteOutputPath, pngBytes);
 			}
@@ -866,7 +866,7 @@ namespace UnityGraphicsMcp
 
 			if (captureException != null)
 			{
-				DeletePhase4CaptureFile(absoluteOutputPath);
+				DeleteSaveEvaluationCaptureFile(absoluteOutputPath);
 				return CreateResult(
 					"graphics.capture_evaluation",
 					requestId,
@@ -887,7 +887,7 @@ namespace UnityGraphicsMcp
 				RenderTexture.active != originalActiveTexture ||
 				scene.isDirty != sceneDirtyBefore)
 			{
-				DeletePhase4CaptureFile(absoluteOutputPath);
+				DeleteSaveEvaluationCaptureFile(absoluteOutputPath);
 				return CreateResult(
 					"graphics.capture_evaluation",
 					requestId,
@@ -898,7 +898,7 @@ namespace UnityGraphicsMcp
 
 			if (startRevision != UnityGraphicsMcpSession.Revision)
 			{
-				DeletePhase4CaptureFile(absoluteOutputPath);
+				DeleteSaveEvaluationCaptureFile(absoluteOutputPath);
 				return CreateResult(
 					"graphics.capture_evaluation",
 					requestId,
@@ -926,11 +926,11 @@ namespace UnityGraphicsMcp
 					Revision = startRevision,
 					CameraObjectId = cameraObjectId,
 					OutputPath = relativeOutputPath,
-					Sha256 = HashPhase4Bytes(pngBytes),
+					Sha256 = HashSaveEvaluationBytes(pngBytes),
 					Width = width,
 					Height = height
 				};
-			UnityGraphicsMcpPhase4Session.StoreCapture(capture);
+			UnityGraphicsMcpSaveEvaluationSession.StoreCapture(capture);
 
 			return CreateResult(
 				"graphics.capture_evaluation",
@@ -953,7 +953,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static UnityGraphicsMcpToolResult ExecutePhase4CaptureOperation(
+		private static UnityGraphicsMcpToolResult ExecuteSaveEvaluationCaptureOperation(
 			string toolName,
 			string requestId,
 			Func<UnityGraphicsMcpToolResult> operation)
@@ -982,15 +982,15 @@ namespace UnityGraphicsMcp
 					null);
 			}
 
-			Dictionary<int, bool> sceneDirtyState = CapturePhase4SceneDirtyState();
-			Dictionary<int, bool> assetDirtyState = CapturePhase4AssetDirtyState();
+			Dictionary<int, bool> sceneDirtyState = CaptureSaveEvaluationSceneDirtyState();
+			Dictionary<int, bool> assetDirtyState = CaptureSaveEvaluationAssetDirtyState();
 			int undoGroup = Undo.GetCurrentGroup();
 
 			try
 			{
 				UnityGraphicsMcpToolResult result = operation();
 				Dictionary<string, object> evidence;
-				if (HasPhase4CaptureReadOnlyViolation(
+				if (HasSaveEvaluationCaptureReadOnlyViolation(
 					sceneDirtyState,
 					assetDirtyState,
 					undoGroup,
@@ -1021,7 +1021,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static UnityGraphicsMcpToolResult ExecutePhase4PersistentOperation(
+		private static UnityGraphicsMcpToolResult ExecuteSaveEvaluationPersistentOperation(
 			string toolName,
 			string requestId,
 			Func<UnityGraphicsMcpToolResult> operation)
@@ -1071,7 +1071,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static Dictionary<int, bool> CapturePhase4SceneDirtyState()
+		private static Dictionary<int, bool> CaptureSaveEvaluationSceneDirtyState()
 		{
 			Dictionary<int, bool> states = new Dictionary<int, bool>();
 			for (int index = 0; index < SceneManager.sceneCount; index++)
@@ -1085,12 +1085,12 @@ namespace UnityGraphicsMcp
 			return states;
 		}
 
-		private static Dictionary<int, bool> CapturePhase4AssetDirtyState()
+		private static Dictionary<int, bool> CaptureSaveEvaluationAssetDirtyState()
 		{
 			Dictionary<int, bool> states = new Dictionary<int, bool>();
 			foreach (Object target in Resources.FindObjectsOfTypeAll<Object>())
 			{
-				if (!IsPhase4ProjectAsset(target))
+				if (!IsSaveEvaluationProjectAsset(target))
 				{
 					continue;
 				}
@@ -1099,7 +1099,7 @@ namespace UnityGraphicsMcp
 			return states;
 		}
 
-		private static bool HasPhase4CaptureReadOnlyViolation(
+		private static bool HasSaveEvaluationCaptureReadOnlyViolation(
 			Dictionary<int, bool> sceneDirtyState,
 			Dictionary<int, bool> assetDirtyState,
 			int undoGroup,
@@ -1136,7 +1136,7 @@ namespace UnityGraphicsMcp
 
 			foreach (Object target in Resources.FindObjectsOfTypeAll<Object>())
 			{
-				if (!IsPhase4ProjectAsset(target))
+				if (!IsSaveEvaluationProjectAsset(target))
 				{
 					continue;
 				}
@@ -1180,14 +1180,14 @@ namespace UnityGraphicsMcp
 				sceneDirtyState.Count != SceneManager.sceneCount;
 		}
 
-		private static bool IsPhase4ProjectAsset(Object target)
+		private static bool IsSaveEvaluationProjectAsset(Object target)
 		{
 			return target != null &&
 				EditorUtility.IsPersistent(target) &&
 				!string.IsNullOrWhiteSpace(AssetDatabase.GetAssetPath(target));
 		}
 
-		private static UnityGraphicsMcpPlanRecommendation BuildPhase4RefineRecommendation(
+		private static UnityGraphicsMcpPlanRecommendation BuildSaveEvaluationRefineRecommendation(
 			string directionPlanId,
 			string captureId,
 			List<string> observations,
@@ -1217,7 +1217,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static UnityGraphicsMcpSaveSceneBaseline CapturePhase4SaveSceneBaseline(
+		private static UnityGraphicsMcpSaveSceneBaseline CaptureSaveEvaluationSaveSceneBaseline(
 			Scene scene)
 		{
 			return new UnityGraphicsMcpSaveSceneBaseline
@@ -1225,11 +1225,11 @@ namespace UnityGraphicsMcp
 				SceneHandle = scene.handle,
 				ScenePath = scene.path,
 				WasDirty = scene.isDirty,
-				ContentDigest = BuildPhase4SceneContentDigest(scene)
+				ContentDigest = BuildSaveEvaluationSceneContentDigest(scene)
 			};
 		}
 
-		private static string BuildPhase4SavePlanDigest(
+		private static string BuildSaveEvaluationSavePlanDigest(
 			UnityGraphicsMcpExecutableSavePlan plan)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1238,10 +1238,10 @@ namespace UnityGraphicsMcp
 			builder.Append(plan.Target.ScenePath).Append('|');
 			builder.Append(plan.Target.WasDirty).Append('|');
 			builder.Append(plan.Target.ContentDigest);
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
-		private static string BuildPhase4SceneContentDigest(Scene scene)
+		private static string BuildSaveEvaluationSceneContentDigest(Scene scene)
 		{
 			StringBuilder builder = new StringBuilder();
 			builder.Append(scene.handle).Append('|');
@@ -1252,21 +1252,21 @@ namespace UnityGraphicsMcp
 				.SelectMany(root =>
 					root.GetComponentsInChildren<Transform>(true)
 						.Select(transform => transform.gameObject))
-				.OrderBy(BuildPhase4StableHierarchyPath, StringComparer.Ordinal)
+				.OrderBy(BuildSaveEvaluationStableHierarchyPath, StringComparer.Ordinal)
 				.ToList();
 
 			foreach (GameObject gameObject in objects)
 			{
-				builder.Append(BuildPhase4StableHierarchyPath(gameObject)).Append('|');
+				builder.Append(BuildSaveEvaluationStableHierarchyPath(gameObject)).Append('|');
 				builder.Append(gameObject.activeSelf).Append('|');
 				builder.Append(gameObject.layer).Append('|');
 				builder.Append(gameObject.tag).Append('|');
 				builder.Append(gameObject.isStatic).Append('|');
 
 				Transform transform = gameObject.transform;
-				AppendPhase4Vector(builder, transform.localPosition);
-				AppendPhase4Vector(builder, transform.localEulerAngles);
-				AppendPhase4Vector(builder, transform.localScale);
+				AppendSaveEvaluationVector(builder, transform.localPosition);
+				AppendSaveEvaluationVector(builder, transform.localEulerAngles);
+				AppendSaveEvaluationVector(builder, transform.localScale);
 
 				Component[] components = gameObject
 					.GetComponents<Component>()
@@ -1285,10 +1285,10 @@ namespace UnityGraphicsMcp
 				}
 			}
 
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
-		private static void AppendPhase4Vector(
+		private static void AppendSaveEvaluationVector(
 			StringBuilder builder,
 			Vector3 value)
 		{
@@ -1297,7 +1297,7 @@ namespace UnityGraphicsMcp
 			builder.Append(value.z.ToString("R", CultureInfo.InvariantCulture)).Append('|');
 		}
 
-		private static string BuildPhase4StableHierarchyPath(GameObject gameObject)
+		private static string BuildSaveEvaluationStableHierarchyPath(GameObject gameObject)
 		{
 			List<string> parts = new List<string>();
 			Transform current = gameObject.transform;
@@ -1313,21 +1313,21 @@ namespace UnityGraphicsMcp
 			return string.Join("/", parts);
 		}
 
-		private static string NormalizePhase4SceneAssetPath(string scenePath)
+		private static string NormalizeSaveEvaluationSceneAssetPath(string scenePath)
 		{
 			return string.IsNullOrWhiteSpace(scenePath)
 				? string.Empty
 				: scenePath.Trim().Replace('\\', '/');
 		}
 
-		private static bool IsSupportedPhase4SceneAssetPath(string scenePath)
+		private static bool IsSupportedSaveEvaluationSceneAssetPath(string scenePath)
 		{
 			return scenePath.StartsWith("Assets/", StringComparison.Ordinal) &&
 				scenePath.EndsWith(".unity", StringComparison.OrdinalIgnoreCase) &&
 				AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) != null;
 		}
 
-		private static bool TryResolvePhase4LoadedScene(
+		private static bool TryResolveSaveEvaluationLoadedScene(
 			string scenePath,
 			out Scene scene)
 		{
@@ -1346,7 +1346,7 @@ namespace UnityGraphicsMcp
 			return false;
 		}
 
-		private static bool TryResolvePhase4LoadedSceneByHandleAndPath(
+		private static bool TryResolveSaveEvaluationLoadedSceneByHandleAndPath(
 			int sceneHandle,
 			string scenePath,
 			out Scene scene)
@@ -1367,7 +1367,7 @@ namespace UnityGraphicsMcp
 			return false;
 		}
 
-		private static bool TryResolvePhase4Camera(
+		private static bool TryResolveSaveEvaluationCamera(
 			string objectId,
 			out Camera camera)
 		{
@@ -1395,7 +1395,7 @@ namespace UnityGraphicsMcp
 				camera.gameObject.scene.isLoaded;
 		}
 
-		private static bool IsValidPhase4CaptureSize(int width, int height)
+		private static bool IsValidSaveEvaluationCaptureSize(int width, int height)
 		{
 			return width >= MIN_CAPTURE_SIZE &&
 				width <= MAX_CAPTURE_SIZE &&
@@ -1404,9 +1404,9 @@ namespace UnityGraphicsMcp
 				(long)width * height <= MAX_CAPTURE_PIXEL_COUNT;
 		}
 
-		private static string BuildPhase4CaptureOutputPath(string captureLabel)
+		private static string BuildSaveEvaluationCaptureOutputPath(string captureLabel)
 		{
-			string label = SanitizePhase4FileName(captureLabel);
+			string label = SanitizeSaveEvaluationFileName(captureLabel);
 			if (string.IsNullOrWhiteSpace(label))
 			{
 				label = "evaluation";
@@ -1416,7 +1416,7 @@ namespace UnityGraphicsMcp
 				"-" + label + "-" + Guid.NewGuid().ToString("N") + ".png";
 		}
 
-		private static string SanitizePhase4FileName(string value)
+		private static string SanitizeSaveEvaluationFileName(string value)
 		{
 			if (string.IsNullOrWhiteSpace(value))
 			{
@@ -1437,7 +1437,7 @@ namespace UnityGraphicsMcp
 			return result.Length <= 48 ? result : result.Substring(0, 48);
 		}
 
-		private static string ToPhase4ProjectAbsolutePath(string relativePath)
+		private static string ToSaveEvaluationProjectAbsolutePath(string relativePath)
 		{
 			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
 			return Path.GetFullPath(
@@ -1446,7 +1446,7 @@ namespace UnityGraphicsMcp
 					relativePath.Replace('/', Path.DirectorySeparatorChar)));
 		}
 
-		private static string HashPhase4Bytes(byte[] value)
+		private static string HashSaveEvaluationBytes(byte[] value)
 		{
 			using (SHA256 sha256 = SHA256.Create())
 			{
@@ -1460,7 +1460,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static void DeletePhase4CaptureFile(string absolutePath)
+		private static void DeleteSaveEvaluationCaptureFile(string absolutePath)
 		{
 			if (!string.IsNullOrWhiteSpace(absolutePath) && File.Exists(absolutePath))
 			{
@@ -1468,7 +1468,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static List<string> NormalizePhase4ExplicitReviewValues(
+		private static List<string> NormalizeSaveEvaluationExplicitReviewValues(
 			IEnumerable<string> values)
 		{
 			return values == null
@@ -1480,7 +1480,7 @@ namespace UnityGraphicsMcp
 					.ToList();
 		}
 
-		private static UnityGraphicsMcpPlanRecommendation ClonePhase4Recommendation(
+		private static UnityGraphicsMcpPlanRecommendation CloneSaveEvaluationRecommendation(
 			UnityGraphicsMcpPlanRecommendation source)
 		{
 			return new UnityGraphicsMcpPlanRecommendation
