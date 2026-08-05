@@ -1,8 +1,8 @@
 # UnityGraphicsMCP Tasks
 
-- TaskPlanVersion: `4.2.0`
-- CurrentPhase: `Phase 4 Save / Bake / Capture`
-- ImplementationStatus: `Phase 4C Capture Evidence Complete`
+- TaskPlanVersion: `5.0.0`
+- CurrentPhase: `Phase 4 APV / Visual Acceptance Closed Loop`
+- ImplementationStatus: `Phase 4D APV and Visual Acceptance Complete`
 
 ## Status legend
 
@@ -136,9 +136,8 @@ Tool:
 - 自動Saveなし
 - 複数Loaded Sceneで全Scene BakeへのSilent Fallbackなし
 - Unity Undo / 自動Rollback保証なし
-- APVはBaking Set / Lighting Scenario契約未実装のため`BACKEND_NOT_IMPLEMENTED`
 
-## Phase 4C: Capture Evidence and Visual Acceptance — DONE
+## Phase 4C: Capture Evidence and Human Visual Acceptance — DONE
 
 Tool:
 
@@ -179,46 +178,114 @@ Tool:
 - `REJECTED`または`NEEDS_ADJUSTMENT`だけを次IterationのDirection PlanへRefine
 - Unity C#側は画像の意味解析や自動Acceptanceを行わない
 
-## Phase 4C verification gate — PASSED
+## Phase 4D: APV Bake Job and Acceptance Profile — DONE
+
+Tool:
+
+- `graphics.prepare_apv_bake_plan`
+- `graphics.start_apv_bake`
+- `graphics.get_apv_bake_status`
+- `graphics.cancel_apv_bake`
+- `graphics.prepare_acceptance_profile`
+- `graphics.evaluate_capture`
+- `graphics.refine_from_evaluation`
+
+### APV Backend
+
+- `ProbeVolumeBakingSet` Assetを明示指定
+- Lighting Scenarioを明示指定
+- 明示Scene集合とBaking Set Scene集合の完全一致検証
+- Sceneは`Assets/`配下の既存Loaded Sceneへ限定
+- URP / HDRP Pipeline Capability検証
+- APV APIをReflection Capabilityとして検証
+- Prepare / Start / Poll / Cancel Job契約
+- 10分TTLの一時Approval Token
+- `bakeMode = EXPLICIT_APV_BAKING_SET`
+- Output Asset Rootの事前 / 事後SHA-256差分
+- Timeoutと実行中Revision変更のCancellation
+- Native Cancel + Cooperative Polling
+- 生成済みOutputがある失敗 / Cancelは`PARTIAL`
+- OutputがないCancelは`CANCELLED`
+- 正常終了でOutput差分が無い場合は失敗
+- 自動Save、Unity Undo、自動Rollback保証なし
+
+### Acceptance Profile
+
+- Profile名と最低総合合格値
+- 1～32件の評価項目
+- 項目別Weight / 最低合格値 / Critical Failure閾値
+- 必須 / 任意Measurement
+- Reference Capture ID / Evidence Digest固定
+- CPU / GPU Frame Time、Memory、Draw Calls Performance Budget
+- Unity側の画像意味解析なし
+- 自動Profile合格とHuman Acceptanceを分離
+
+### Visual Evaluation
+
+- `PASSED` / `FAILED` / `INCOMPLETE`
+- Critical Failureは総合Scoreより優先
+- 必須Measurement不足は`INCOMPLETE`
+- Performance Budget超過は`FAILED`
+- Affected Object IDをCaptureのObject ID Mapへ解決
+- Renderer GlobalObjectId / Type / Hierarchy / Sceneへ関連付け
+- 不合格項目、Performance違反、問題Object、推奨Actionを構造化
+- `FAILED` / `INCOMPLETE`だけを次Direction PlanへRefine
+- `PASSED`でも最終AcceptanceにはPhase 4C Human Reviewが必要
+
+### Closed-loop Completion
+
+EditMode E2E契約で次を成立させた。
+
+1. Scene変更
+2. 明示Save Plan / Apply
+3. APV限定Bake Plan / Job
+4. Output差分確定
+5. COLOR / LINEAR_DEPTH / OBJECT_ID Capture Record
+6. Acceptance Profile
+7. Visual Evaluation
+8. 不合格理由
+9. Structured Refine Direction
+10. 次Direction Plan
+
+CIでは実APV Bakeを偽装せず、Job State MachineとOutput差分をBackend Overrideで契約検証し、Reflection BackendはUnity CompileとCapability解決で検証する。
+
+## Phase 4D verification gate — PASSED
 
 1. Package dependency resolution — PASS
 2. Unity 6000.0.75f1 Editor Compile — PASS
-3. 20 Tool Bridge Discovery — PASS
+3. 27 Tool Bridge Discovery — PASS
 4. Default Disable contract — PASS
-5. Phase 1～4B Regression — PASS
-6. Color Capture Evidence — PASS
-7. Linear Depth Evidence — PASS
-8. Deterministic Object ID Evidence / Mapping — PASS
-9. Manifest / Artifact SHA-256 / Evidence Digest — PASS
-10. Atomic Bundle Publish — PASS
-11. Expected Revision / Capture State Guard — PASS
-12. Scene / Project Asset Dirty / Undo Guard — PASS
-13. Null Graphics Device `UNVERIFIED` — PASS
-14. Human Review / Acceptance Confirmation Guard — PASS
-15. Immutable Review — PASS
-16. Review起点Refine — PASS
-17. EditMode Test — `78 / 78 PASS`
-18. Evidence Artifact Upload — PASS
+5. Phase 1～4C Regression — PASS
+6. APV Baking Set / Scenario / Scene Set Validation — PASS
+7. Pipeline / Backend Capability — PASS
+8. Approval / Revision / Plan Digest Guard — PASS
+9. Async Job Status / Output Diff — PASS
+10. Cancellation / Partial Result — PASS
+11. Acceptance Profile Validation — PASS
+12. Weight / Minimum / Critical Failure — PASS
+13. Reference Capture Provenance — PASS
+14. Performance Budget — PASS
+15. Object ID Mapping — PASS
+16. Structured Refine Direction — PASS
+17. Closed-loop E2E Contract — PASS
+18. EditMode Test — `98 / 98 PASS`
+19. Evidence Artifact Upload — PASS
 
 最新Evidence:
 
-- Verification ID: `MUMCP-PHASE4C-CI-20260805-001`
-- Workflow Run: `30991161982`
-- Job: `92257378283`
-- Artifact: `MyUnityMCP-Phase4C-Unity-Evidence` (`8924347145`)
-- Source: `Tests/Compatibility/phase4c-verification.yaml`
+- Verification ID: `MUMCP-PHASE4D-CI-20260805-001`
+- Workflow Run: `31005540655`
+- Job: `92304475814`
+- Artifact: `MyUnityMCP-Phase4D-Unity-Evidence` (`8930337405`)
+- Source: `Tests/Compatibility/phase4d-verification.yaml`
 
-## Phase 4D candidates — PENDING
+## Phase 5: Hardening and domain expansion — PENDING
 
-- APV Baking Set / Lighting Scenario Backend
+- Actual URP / HDRP APV Sample Project verification
+- Multiple Unity / SRP Version Matrix
+- Player / Target Device Performance Evidence
 - Reflection Probe新規Cubemap Asset生成Plan
-- Async Bake Job / Progress / Cancel
-- Bake Artifact Digest
-- Visual Acceptance Profile / Score / Performance Budget
-- End-to-End Modify → Save → Bake → Capture → Review → Refine Workflow Test
-
-## Phase 5: Domain expansion — PENDING
-
+- Progress percentage / structured operation history
 - Deferred Renderer / Material Mutation
 - UnityCinematicMCP
 - LiveCreator / MovieCreator実行化
