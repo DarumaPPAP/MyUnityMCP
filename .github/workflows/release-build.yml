@@ -1,6 +1,7 @@
 name: MyUnityMCP Release Build
 
 on:
+  workflow_dispatch: {}
   push:
     tags:
       - v*
@@ -9,7 +10,36 @@ permissions:
   contents: write
 
 jobs:
+  publish-tag:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main release commit
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify main and publish version tag
+        run: |
+          set -euo pipefail
+          version=$(cat VERSION)
+          tag="v${version}"
+          python3 Tests/Release/verify_release_contract.py --mode pr
+          git fetch origin --tags --force
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            if [ "$(git rev-parse "$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::error::$tag already points to a different commit."
+              exit 1
+            fi
+            echo "$tag already points to the current main commit."
+            exit 0
+          fi
+          git tag -a "$tag" -m "MyUnityMCP ${tag}"
+          git push origin "$tag"
+
   release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
