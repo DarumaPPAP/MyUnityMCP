@@ -99,6 +99,13 @@ jobs:
           restore-keys: |
             MyUnityMCP-Editor-6000.0.75f1-
 
+      - name: Remove stale Unity test evidence
+        run: |
+          rm -rf artifacts
+          find TestProjects/MyUnityMCPVerification -type f \
+            \( -name '*.xml' -o -name 'editmode.log' \) \
+            -path '*/TestResults/*' -delete 2>/dev/null || true
+
       - name: Run Unity EditMode contract tests
         id: tests
         continue-on-error: true
@@ -114,7 +121,7 @@ jobs:
           testMode: editmode
           customParameters: -testFilter UnityGraphicsMcp
 
-      - name: Verify Unity NUnit result
+      - name: Verify Unity compile and NUnit result
         if: always() && steps.license.outputs.available == 'true'
         env:
           ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
@@ -127,6 +134,18 @@ jobs:
             if [ -d "$ARTIFACTS_PATH" ]; then
               find "$ARTIFACTS_PATH" -maxdepth 3 -type f -print || true
             fi
+            exit 1
+          fi
+
+          editmode_log=$(find "$ARTIFACTS_PATH" -name 'editmode.log' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2- || true)
+          if [ -z "$editmode_log" ]; then
+            echo "::error::Unity produced no editmode.log."
+            exit 1
+          fi
+
+          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log"; then
+            echo "::error::Unity C# compilation failed. NUnit XML will not be evaluated."
+            grep -n -E 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log" | tail -n 100 || true
             exit 1
           fi
 
