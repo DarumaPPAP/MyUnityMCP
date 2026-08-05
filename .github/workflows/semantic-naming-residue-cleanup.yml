@@ -1,0 +1,35 @@
+name: Semantic Naming Residue Cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.head_ref == 'refactor/semantic-feature-names' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout refactor branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refactor/semantic-feature-names
+
+      - name: Remove phase naming residues
+        run: python3 Tools/Repository/semantic_naming_residue_cleanup.py
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No cleanup changes."
+            exit 0
+          fi
+          git commit -m "refactor: remove remaining delivery phase identifiers"
+          git push origin HEAD:refactor/semantic-feature-names
