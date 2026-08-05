@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using MCPForUnity.Editor.Helpers;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityGraphicsMcp;
@@ -32,11 +32,22 @@ namespace MyUnityMcpGettingStarted
 			EditorSceneManager.OpenScene(
 				"Assets/Scenes/MyUnityMcpGettingStarted.unity",
 				OpenSceneMode.Single);
-			CommandRegistry.Initialize();
-			foreach (string toolName in TOOL_NAMES)
-			{
-				Assert.That(CommandRegistry.GetHandler(toolName), Is.Not.Null, toolName);
-			}
+
+			string[] discoveredToolNames = typeof(GraphicsInspectProjectTool)
+				.Assembly
+				.GetTypes()
+				.SelectMany(type => type.GetCustomAttributesData())
+				.Where(attribute => string.Equals(
+					attribute.AttributeType.FullName,
+					"MCPForUnity.Editor.Tools.McpForUnityToolAttribute",
+					StringComparison.Ordinal))
+				.Select(attribute => attribute.ConstructorArguments.Count > 0
+					? attribute.ConstructorArguments[0].Value as string
+					: null)
+				.Where(toolName => !string.IsNullOrWhiteSpace(toolName))
+				.OrderBy(toolName => toolName, StringComparer.Ordinal)
+				.ToArray();
+			Assert.That(discoveredToolNames, Is.EquivalentTo(TOOL_NAMES));
 
 			UnityGraphicsMcpToolResult project =
 				UnityGraphicsMcpInspection.InspectProject("sample-project");
