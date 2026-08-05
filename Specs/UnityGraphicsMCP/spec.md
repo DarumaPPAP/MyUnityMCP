@@ -1,17 +1,17 @@
 # UnityGraphicsMCP 仕様書
 
 - FeatureName: `UnityGraphicsMCP`
-- DocumentVersion: `4.0.0`
-- DesignStatus: `Phase 3 Stable`
-- ImplementationStatus: `Phase 1-3 Implemented`
-- VerificationStatus: `Unity Editor CI 46 / 46 PASS`
+- DocumentVersion: `4.1.0`
+- DesignStatus: `Phase 4B Stable`
+- ImplementationStatus: `Phase 1-4B Implemented`
+- VerificationStatus: `Unity Editor CI 62 / 62 PASS`
 - PrimaryNamespace: `UnityGraphicsMcp`
 
 ## 1. 目的
 
-対象Unity ProjectのGraphics状態を解析し、構造化Visual IntentからDirection Planを作成し、明示承認された限定Operationだけを安全なUnity Undo Transactionとして適用する。
+対象Unity ProjectのGraphics状態を解析し、構造化Visual IntentからDirection Planを作成し、明示承認された限定Operation、Save、Bakeだけを安全境界ごとに実行する。
 
-UnityGraphicsMCPはGraphics領域の判断、Project Context、Plan、Mutation Contractを所有する。完成目的のWorkflowはLiveCreator、MovieCreator等が所有する。
+UnityGraphicsMCPはGraphics領域のProject Context、Plan、Mutation、Persistence、Bake、Capture契約を所有する。完成目的のWorkflowはLiveCreator、MovieCreator等が所有する。
 
 ## 2. Project environment resolution
 
@@ -35,7 +35,7 @@ Capability選択前に対象Projectから次をRead-onlyで取得する。
 
 `UNVERIFIED`を`UNSUPPORTED`として扱わず、未実装BackendへSilent Fallbackしない。
 
-## 3. Tool contract
+## 3. Tool catalog
 
 ### Inspection
 
@@ -43,185 +43,204 @@ Capability選択前に対象Projectから次をRead-onlyで取得する。
 - `graphics.inspect_scene`
 - `graphics.validate_scene`
 
-InspectionはScene Dirty、Persistent Asset Dirty、Undo Group、Material Instanceを変更しない。
-
-### Planning
+### Direction planning
 
 - `graphics.compile_direction`
 - `graphics.preview_plan`
 
-Unity C#側で自然言語や画像の意味理解を偽装しない。UnityAgentまたはMCP ClientがVisual Intentを構造化する。
-
-Direction Planは次を持つ。
-
-- Session-local Plan ID
-- Expected Revision
-- Detected Project Context
-- Visual Intent
-- Recommendation / Range / Reason / Dependency
-- Confidence / Pipeline Impact / Platform Impact / Verification Level
-
-### Light Mutation
+### Approval-gated mutation
 
 - `graphics.prepare_light_plan`
 - `graphics.apply_plan`
 - `graphics.undo_last_transaction`
-
-対応Operation:
-
-- `LIGHT_CREATE`
-- `LIGHT_UPDATE`
-
-対応Light Type:
-
-- Directional
-- Point
-- Spot
-
-### Environment Mutation
-
 - `graphics.prepare_environment_plan`
 - `graphics.apply_environment_plan`
 - `graphics.undo_last_environment_transaction`
 
-対応Operation:
+### Save / Capture / Refine
 
-- `CAMERA_CREATE`
-- `CAMERA_UPDATE`
-- `REFLECTION_PROBE_CREATE`
-- `REFLECTION_PROBE_UPDATE`
-- `VOLUME_CREATE`
-- `VOLUME_UPDATE`
+- `graphics.prepare_save_plan`
+- `graphics.apply_save_plan`
+- `graphics.capture_evaluation`
+- `graphics.refine_direction`
 
-全Toolは`AutoRegister = false`とし、明示Activation時だけ公開する。
+### Dependency Bake
 
-## 4. Mutation approval contract
+- `graphics.prepare_bake_plan`
+- `graphics.bake_dependencies`
 
-PrepareはRead-onlyで次を生成する。
+全17 Toolは`AutoRegister = false`とし、明示Activation時だけ公開する。
 
-- Exact Before / Requested After
+## 4. Read-only contract
+
+Inspection、Planning、Prepareは実行前後で次を比較する。
+
+- Loaded Scene Dirty State
+- Persistent Asset Dirty State
+- Undo Group
+
+Material確認に`renderer.material`を使用せず、`sharedMaterials`を使用する。Read-only ToolからAsset生成、Scene保存、Bakeを実行しない。
+
+違反時は`READ_ONLY_CONTRACT_VIOLATION`を返す。
+
+Captureは一時Editor状態を利用できるが、Camera TargetTexture、Active RenderTexture、Scene / Asset Dirty、Undo状態を必ず復元する。
+
+## 5. Session and revision
+
+Snapshot、Direction Plan、Executable Plan、Capture、Dirty Dependency SetはEditor Session内だけで有効とする。
+
+失効条件:
+
+- Domain Reload
+- Compile開始
+- Play Mode遷移
+- Editor終了
+- Revision変更
+- Plan / Snapshot TTL超過
+
+大きなScene ResultはSnapshot IDとCursorで参照し、毎回全JSONを複製しない。
+
+## 6. Planning contract
+
+Unity C# Toolは自然言語や画像を独自解釈しない。UnityAgentまたはMCP Clientが構造化したVisual IntentとHuman Reviewを入力する。
+
+PrepareはUnity状態を変更せず、次を返す。
+
+- Exact Before / Requested AfterまたはExact Dependency
 - Diff Digest
-- Executable Plan ID
-- 10分TTLの一時Approval Token
+- Approval Token
 - Expected Revision
-- Created / Modified / Dirty候補
-- Save / Bake非実行の明示
+- 副作用未実行の明示
 
-Applyは次をすべて満たす場合だけ実行する。
+## 7. Mutation contract
+
+Mutation Apply必須条件:
 
 - Direction Planが現在Sessionに存在する
-- Executable Planが未使用かつ有効期限内
-- Expected Revisionが一致する
-- Approval Tokenが一致する
-- Preview Baselineが適用直前状態と一致する
-- Operation IDがPlan内で一意
-- 同一既存ComponentへのUpdateが一回だけ
-- 必要Unity APIをPrepare時に読み書き可能と確認済み
+- Executable Planが未使用
+- Expected Revision一致
+- Approval Token一致
+- Preview Baseline一致
 - `saveMode = NONE`
 
-自然言語から数値を推測せず、明示値だけを適用する。
+対応Operation:
 
-## 5. Transaction and Undo contract
+- `LIGHT_CREATE` / `LIGHT_UPDATE`
+- `CAMERA_CREATE` / `CAMERA_UPDATE`
+- `REFLECTION_PROBE_CREATE` / `REFLECTION_PROBE_UPDATE`
+- `VOLUME_CREATE` / `VOLUME_UPDATE`
 
-- 一つのPlanを一つのUnity Undo Groupへ集約する
-- Camera、Reflection Probe、Volumeは同一Environment Transactionへ混在可能
-- 途中例外時は`Undo.RevertAllDownToGroup`で全体Rollbackする
-- Planは一回だけ使用可能
-- Mutationは対象SceneをDirtyにするが保存しない
-- Bakeを実行しない
+Applyは一つのUnity Undo Groupへ集約する。途中例外時は`Undo.RevertAllDownToGroup`で全体Rollbackする。
 
-Undo前に次を再確認する。
+## 8. Undo contract
+
+Undo前に次を確認する。
 
 - Transaction ID
 - Expected Revision
-- 対象Componentの適用後State Digest
+- Transaction適用後State Digest
 - TransactionがUndo Stackの最新Groupであること
 
-外部変更や新しいUndo操作が存在する場合はUndoを拒否する。
+外部変更、新しいUndo Group、Session失効がある場合は拒否する。
 
-## 6. Phase 3 capability scope
+## 9. Save contract
 
-### Light
+SaveはMutation Applyから分離する。
 
-- Type
-- Name
-- Color / Intensity
-- Range / Spot Angle
-- Shadow
-- Transform
-- Enabled
+- 一つの既存Loaded Sceneだけ
+- Dirty Sceneだけ
+- Scene Handle / Path / Content Digest / Dirty StateをPrepare時に固定
+- Save専用Approval Token
+- `saveMode = EXPLICIT_SCENE`
+- Save As、自動保存、全Scene保存、Asset一括保存なし
+- 永続化後のUnity Undo / 自動Rollback保証なし
 
-### Camera
+## 10. Dirty Dependency Set
 
-- Projection
-- Field of View / Orthographic Size
-- Near / Far Clip
-- Culling Mask
-- Clear Flags / Background Color
-- Depth
-- HDR / MSAA
-- Transform
-- Enabled
+保存済みLoaded SceneがDirtyになった時点で、再Bakeが必要になった可能性をSession-local Setへ保守的に記録する。
 
-### Reflection Probe
+- `LIGHTMAP_SCENE`
+- `REFLECTION_PROBE`
+- `ADAPTIVE_PROBE_VOLUME`
 
-- Mode / Refresh Mode / Time Slicing
-- Importance / Intensity
-- Box Projection
-- Size / Center / Blend Distance
-- Resolution / Culling Mask
-- Transform
-- Enabled
+Scene Save後もSetを保持し、`scene.isDirty = false`だけでBake不要とは判定しない。
 
-### Volume
+Scene Close、Play Mode、Compile、Domain Reloadで失効する。成功したDependencyだけを除去する。
 
-- Is Global
-- Priority
-- Blend Distance
-- Weight
-- Enabled
-- 既存`sharedProfile`参照の割当
+## 11. Bake contract
 
-Render Pipelines CoreのVersion差でVolume Memberが公開Propertyまたは公開Fieldになる差を吸収する。指定MemberをPrepare時に読み書き可能か検証する。
+BakeはSave、Mutationと別のApproval境界を持つ。
 
-## 7. Explicit exclusions
+Prepareで固定する情報:
 
-Phase 3では次を実装しない。
+- Expected Revision
+- Dirty Dependency Set Serial
+- 全Loaded Contributing SceneのHandle / Path / Dirty / Content Digest
+- Dependency Kind / Object ID / Output Asset Path
+- Baseline Digest / Native Backend
+- Exact Diff Digest
+- 10分TTLのBake Approval Token
 
-- Delete Operation
-- Area Light
-- Camera Stack / Target Texture
-- URP / HDRP Additional Camera Data
-- Reflection Probe Bake
-- Volume Profile内部Overrideの作成・変更
-- Material / Renderer Feature Mutation
-- Scene / Asset Save
-- Bake / Capture / Visual Refine
-- 任意`SerializedProperty` Mutation
+Apply必須条件:
 
-## 8. Pipeline and platform policy
+- `bakeMode = EXPLICIT_DEPENDENCIES`
+- Plan未使用 / TTL内
+- Revision / Token一致
+- Dirty Set / Loaded Scene / Baseline一致
+- 全Dependency Backend Preflight成功
+
+対応:
+
+- Scene限定Lightmap Bake
+- 既存Cubemap Assetを明示したBaked Reflection Probe Bake
+
+制限:
+
+- 自動Saveなし
+- 複数Loaded Sceneで全Scene BakeへSilent Fallbackしない
+- 新規Cubemap Asset Pathを推測しない
+- Unity Undo / 自動Rollback保証なし
+- 途中失敗時、完了済みBakeを巻き戻さない
+- APVは検出のみ。Baking Set / Lighting Scenario Backend未実装時は`BACKEND_NOT_IMPLEMENTED`
+
+## 12. Capture and Refine contract
+
+Capture:
+
+- 指定CameraのColor PNG
+- `Library/MyUnityMCP/Captures`配下
+- Unity C#側で画像意味解析を行わない
+- Graphics Device Nullは`UNVERIFIED`
+
+Refine:
+
+- Direction PlanとCapture ID必須
+- Human Reviewの観察または調整要求必須
+- 明示入力だけを次Iterationへ追加
+- Mutation / Save / Bakeを実行しない
+- Human ReviewなしにVisual Acceptedと判定しない
+
+## 13. Pipeline and platform policy
 
 Pipeline共通APIで扱えるCapabilityを先に使用する。Pipeline固有設定が必要な場合は、対象ProjectでPackage、Version、APIを検出し、実装済みBackendがなければ`BACKEND_NOT_IMPLEMENTED`を返す。
 
 PipelineとPlatformを別軸で扱う。Editor成功だけでPlayerまたはTarget Deviceを保証しない。
 
-## 9. Compatibility evidence
+## 14. Explicit exclusions
 
-実測Evidenceは`Tests/Compatibility/verification-matrix.yaml`へ記録する。
+- Delete Operation
+- Area Light
+- Camera Stack / Target Texture Mutation
+- URP / HDRP Additional Camera Data Mutation
+- Volume Profile内部Overrideの作成・変更
+- Material / Renderer Feature Mutation
+- 任意`SerializedProperty` Mutation
+- APV Baking Set / Lighting Scenario Bake
+- Reflection Probe新規Cubemap Asset生成
+- Depth / Object ID Capture
+- Human ReviewなしのVisual Acceptance
 
-MatrixはPackage全体の対応保証ではなく、次を分離した検証実績である。
-
-- Package Resolve
-- Editor Compile
-- Bridge Discovery
-- Direct Handler Invocation
-- EditMode
-- Player
-- Target Device
-
-Entryがない環境は`UNVERIFIED`とする。
-
-## 10. Naming and architecture
+## 15. Naming and architecture
 
 - Namespaceは`UnityGraphicsMcp`
 - enum型は`E_UPPER_SNAKE_CASE`
@@ -231,33 +250,17 @@ Entryがない環境は`UNVERIFIED`とする。
 - Runtime AssemblyやCapabilityごとのasmdefを増やさない
 - Feature-local DTOとHelperは最も近いPrimary Typeと同一ファイルに置く
 
-## 11. Phase 3 acceptance criteria
+## 16. Compatibility evidence
 
-- InspectionとPrepareがUnity状態をDirtyにしない
-- Project事実とRequested Targetを分離する
-- 11 ToolをBridgeからDiscoveryできる
-- 全ToolがDefault Disableである
-- Light Create / Update / Undoが成立する
-- Camera Create / Update / Undoが成立する
-- Reflection Probe Create / Update / Undoが成立する
-- Volume Create / Update / sharedProfile / Undoが成立する
-- Approval / Revision / Baseline Guardが成立する
-- Duplicate Operation / Update Targetを拒否する
-- Property / Field API差を解決する
-- 複合TransactionがAtomicである
-- 外部変更後のUndoを拒否する
-- 新しいUndo Group追加後のUndoを拒否する
-- Automatic SaveとBakeを実行しない
+実測Evidenceは`Tests/Compatibility/verification-matrix.yaml`へ記録する。
 
-## 12. Phase 4 boundary
+現在のEditor Gate:
 
-Phase 4では次をMutationとは別の明示承認境界として追加する。
+- Unity `6000.0.75f1`
+- Package Resolve
+- Editor Compile
+- 17 Tool Bridge Discovery
+- Direct Handler Invocation
+- EditMode `62 / 62 PASS`
 
-- Save Plan
-- Dirty Dependency Set
-- Dependency限定Bake
-- Capture時の一時Editor State復元
-- Visual Evaluation
-- Human Reviewを含むRefine Loop
-
-Human ReviewなしにVisual Acceptedと判定しない。
+EntryがないPlayer / Target Device環境は`UNVERIFIED`とする。

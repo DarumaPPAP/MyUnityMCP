@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -23,6 +25,21 @@ namespace UnityGraphicsMcp
 				null,
 				new[] { typeof(Scene) },
 				null);
+		private static readonly HashSet<int> _knownDirtySceneHandles =
+			new HashSet<int>();
+		private static readonly HashSet<int> _loadedSceneHandles =
+			new HashSet<int>();
+
+		static EditorSceneManager()
+		{
+			EditorApplication.update += PollSceneDirtiness;
+			UnityEditor.SceneManagement.EditorSceneManager.sceneClosed += OnSceneClosed;
+		}
+
+		/// <summary>
+		/// Unity 6000.0に存在しないsceneDirtiedを、Scene.isDirtyの遷移監視で補います。
+		/// </summary>
+		public static event Action<Scene> sceneDirtied;
 
 		public static event UnityEditor.SceneManagement.EditorSceneManager.SceneOpenedCallback sceneOpened
 		{
@@ -59,7 +76,14 @@ namespace UnityGraphicsMcp
 
 		public static bool MarkSceneDirty(Scene scene)
 		{
-			return UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+			bool marked = UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+			if (marked && scene.IsValid())
+			{
+				_knownDirtySceneHandles.Add(scene.handle);
+				sceneDirtied?.Invoke(scene);
+			}
+
+			return marked;
 		}
 
 		public static bool SaveScene(
@@ -83,6 +107,7 @@ namespace UnityGraphicsMcp
 			if (_clearSceneDirtinessMethod != null)
 			{
 				_clearSceneDirtinessMethod.Invoke(null, new object[] { scene });
+				_knownDirtySceneHandles.Remove(scene.handle);
 				return;
 			}
 
@@ -98,6 +123,43 @@ namespace UnityGraphicsMcp
 
 				EditorUtility.ClearDirty(root);
 			}
+
+			_knownDirtySceneHandles.Remove(scene.handle);
+		}
+
+		private static void PollSceneDirtiness()
+		{
+			_loadedSceneHandles.Clear();
+
+			for (int index = 0; index < SceneManager.sceneCount; index++)
+			{
+				Scene scene = SceneManager.GetSceneAt(index);
+				if (!scene.IsValid() || !scene.isLoaded)
+				{
+					continue;
+				}
+
+				_loadedSceneHandles.Add(scene.handle);
+				if (scene.isDirty)
+				{
+					if (_knownDirtySceneHandles.Add(scene.handle))
+					{
+						sceneDirtied?.Invoke(scene);
+					}
+				}
+				else
+				{
+					_knownDirtySceneHandles.Remove(scene.handle);
+				}
+			}
+
+			_knownDirtySceneHandles.RemoveWhere(
+				handle => !_loadedSceneHandles.Contains(handle));
+		}
+
+		private static void OnSceneClosed(Scene scene)
+		{
+			_knownDirtySceneHandles.Remove(scene.handle);
 		}
 	}
 }

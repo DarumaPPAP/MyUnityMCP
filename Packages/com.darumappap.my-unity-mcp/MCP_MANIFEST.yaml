@@ -1,7 +1,7 @@
-schema_version: "1.5"
+schema_version: "1.6"
 package_id: com.darumappap.my-unity-mcp
-version: "0.4.0"
-implementation_status: phase_3_graphics_mutation_complete
+version: "0.5.0"
+implementation_status: phase_4b_save_bake_capture_complete
 verified_level: unity_editor_ci
 
 control_plane:
@@ -12,12 +12,13 @@ control_plane:
 
 registered_domains:
   - id: unity_graphics_mcp
-    status: phase_3_editor_operational
-    implementation_status: inspect_plan_and_graphics_mutation_verified
+    status: phase_4b_editor_operational
+    implementation_status: inspect_plan_mutate_save_bake_capture_refine_verified
     specification: ../../Specs/UnityGraphicsMCP/spec.md
     plan: ../../Specs/UnityGraphicsMCP/plan.md
     tasks: ../../Specs/UnityGraphicsMCP/tasks.md
     editor_tool_design: ../../Specs/UnityGraphicsMCP/editor-tool-design.md
+    phase_4b_bake_contract: ../../Specs/UnityGraphicsMCP/phase4b-bake.md
 
 planned_domains:
   - unity_cinematic_mcp
@@ -34,13 +35,11 @@ creator_workflows:
     path: ../../Workflows/LiveCreator.yaml
     blocked_by:
       - unity_cinematic_mcp_not_implemented
-      - phase_4_save_bake_capture_not_implemented
   - id: movie_creator
     status: specified_not_executable
     path: ../../Workflows/MovieCreator.yaml
     blocked_by:
       - unity_cinematic_mcp_not_implemented
-      - phase_4_save_bake_capture_not_implemented
 
 tool_groups:
   inspect:
@@ -52,16 +51,11 @@ tool_groups:
     tools:
       graphics.inspect_project:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpInspection.cs
       graphics.inspect_scene:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpInspection.cs
         snapshot_paging: true
       graphics.validate_scene:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpInspection.cs
-      graphics.inspect_frame:
-        status: planned
 
   plan:
     mutation: false
@@ -72,27 +66,24 @@ tool_groups:
     tools:
       graphics.compile_direction:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpPlanning.cs
       graphics.preview_plan:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpPlanning.cs
       graphics.prepare_light_plan:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpMutation.cs
         exact_diff: true
         approval_token_issued: true
       graphics.prepare_environment_plan:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpEnvironmentMutation.cs
         exact_diff: true
         approval_token_issued: true
-        supported_operations:
-          - CAMERA_CREATE
-          - CAMERA_UPDATE
-          - REFLECTION_PROBE_CREATE
-          - REFLECTION_PROBE_UPDATE
-          - VOLUME_CREATE
-          - VOLUME_UPDATE
+      graphics.prepare_save_plan:
+        status: implemented_editor_verified
+        exact_diff: true
+        approval_token_issued: true
+      graphics.prepare_bake_plan:
+        status: implemented_editor_verified
+        exact_dependency_set: true
+        approval_token_issued: true
 
   mutate:
     mutation: true
@@ -101,57 +92,93 @@ tool_groups:
     auto_register: false
     activation: explicit
     explicit_approval_required: true
-    prerequisites:
-      - direction_plan
-      - executable_capability_plan
-      - expected_revision
-      - approval_token
-      - exact_diff_digest
-      - save_mode_none
     tools:
       graphics.apply_plan:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpMutation.cs
         supported_operations:
           - LIGHT_CREATE
           - LIGHT_UPDATE
       graphics.undo_last_transaction:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpMutation.cs
-        latest_transaction_only: true
-        external_change_rejection: true
       graphics.apply_environment_plan:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpEnvironmentMutation.cs
-        atomic_multi_component_transaction: true
+        supported_operations:
+          - CAMERA_CREATE
+          - CAMERA_UPDATE
+          - REFLECTION_PROBE_CREATE
+          - REFLECTION_PROBE_UPDATE
+          - VOLUME_CREATE
+          - VOLUME_UPDATE
       graphics.undo_last_environment_transaction:
         status: implemented_editor_verified
-        source: Editor/UnityGraphicsMcpEnvironmentMutation.cs
-        latest_transaction_only: true
-        external_change_rejection: true
-        newer_undo_group_rejection: true
+
+  save:
+    mutation: persistent_scene_write
+    status: phase_4a_editor_verified
+    explicit_approval_required: true
+    tools:
+      graphics.apply_save_plan:
+        status: implemented_editor_verified
+        save_mode: EXPLICIT_SCENE
+        save_as: prohibited
+        automatic_rollback: false
 
   bake:
     mutation: true
     expensive: true
-    status: planned_phase_4
+    status: phase_4b_editor_verified
+    bridge_group: core
+    auto_register: false
+    activation: explicit
     explicit_approval_required: true
     prerequisites:
       - dirty_dependency_set
+      - expected_revision
+      - bake_plan
+      - approval_token
+      - exact_diff_digest
+      - explicit_dependency_mode
     tools:
-      - graphics.bake_dependencies
+      graphics.bake_dependencies:
+        status: implemented_editor_verified
+        bake_mode: EXPLICIT_DEPENDENCIES
+        synchronous: true
+        automatic_save: false
+        unity_undo: false
+        automatic_rollback: false
+        supported_dependencies:
+          LIGHTMAP_SCENE:
+            status: implemented_editor_verified
+            full_loaded_scene_fallback: prohibited_when_multiple_scenes
+          REFLECTION_PROBE:
+            status: implemented_source_verified
+            existing_cubemap_required: true
+          ADAPTIVE_PROBE_VOLUME:
+            status: backend_not_implemented
+            requires:
+              - baking_set_contract
+              - lighting_scenario_contract
+              - pipeline_package_backend
 
   capture:
     mutation: temporary_editor_state
-    status: planned_phase_4
+    status: phase_4a_editor_verified
+    bridge_group: core
+    auto_register: false
+    activation: explicit
     tools:
-      - graphics.capture_evaluation
-      - graphics.refine_direction
+      graphics.capture_evaluation:
+        status: implemented_editor_verified
+        color_png_only: true
+        temporary_state_restore: true
+      graphics.refine_direction:
+        status: implemented_editor_verified
+        human_review_required: true
+        visual_acceptance_automatic: false
 
 bridge:
   package: com.coplaydev.unity-mcp
   declared_api_version: "10.1.2"
-  unity_verified_commit: 9f84072c38906e3ca903f14f6a8edc1a1c9012c3
   tool_attribute: MCPForUnity.Editor.Tools.McpForUnityToolAttribute
   command_entry: HandleCommand(JObject)
   response_contract:
@@ -160,40 +187,18 @@ bridge:
   command_dispatch: unity_main_thread
   compile_verified: true
   command_registry_discovery_verified: true
-  discovered_tool_count: 11
+  discovered_tool_count: 17
   direct_handler_invocation_verified: true
   external_mcp_client_connection_verified: false
 
 availability:
   source_is_implemented: true
   package_is_executable: true
-  operational_scope: phase_3_editor_tools
+  operational_scope: phase_4b_editor_tools
   tools_enabled_by_default: false
   expose_unimplemented_tools: false
   expose_selected_tool_group_only: true
-  load_package_source_during_normal_use: false
   explicit_activation_required: true
-  completed_operational_gates:
-    - package_dependency_resolution
-    - unity_editor_compile
-    - editmode_tests
-    - eleven_tool_bridge_discovery
-    - direct_bridge_handler_invocation
-    - scene_dirty_guard
-    - persistent_asset_dirty_guard
-    - material_instance_guard
-    - direction_plan_revision_guard
-    - exact_diff_preview
-    - approval_token_guard
-    - mutation_rollback
-    - atomic_undo
-    - duplicate_operation_rejection
-    - duplicate_update_target_rejection
-    - volume_property_field_resolution
-    - external_change_undo_rejection
-    - newer_undo_group_rejection
-    - no_auto_save
-    - no_bake
 
 environment_resolution:
   source_of_truth: target_unity_project
@@ -223,28 +228,9 @@ environment_resolution:
 
 backend_selection:
   select_after_project_inspection: true
-  current_inspection_strategy: pipeline_agnostic_plus_serialized_capability_detection
-  current_mutation_scope:
-    - pipeline_independent_light
-    - pipeline_independent_camera
-    - pipeline_independent_reflection_probe
-    - optional_render_pipelines_core_volume
-  render_pipelines_core_dependency: optional_target_project_capability
   load_only_selected_implemented_backend: true
   silent_fallback: prohibited
   backend_interface_requires_multiple_real_implementations: true
-
-capability_status:
-  values:
-    - AVAILABLE
-    - UNAVAILABLE
-    - UNSUPPORTED
-    - UNVERIFIED
-    - PACKAGE_NOT_INSTALLED
-    - VERSION_NOT_SUPPORTED
-    - PROJECT_CONFIGURATION_REQUIRED
-    - BACKEND_NOT_IMPLEMENTED
-  unverified_is_not_unsupported: true
 
 verification:
   matrix_path: ../../Tests/Compatibility/verification-matrix.yaml
@@ -253,35 +239,27 @@ verification:
     static_source_review: passed
     package_dependency_resolution: passed
     unity_editor_compile: passed
-    editmode: passed_46_of_46
-    bridge_discovery: passed_11_tools
+    editmode: passed_62_of_62
+    bridge_discovery: passed_17_tools
     direct_handler_invocation: passed
-    light_create: passed
-    light_update: passed
-    camera_create: passed
-    camera_update: passed
-    reflection_probe_create: passed
-    reflection_probe_update: passed
-    volume_create: passed
-    volume_update: passed
-    volume_shared_profile_assignment: passed
-    volume_property_field_resolution: passed
-    approval_rejection: passed
-    stale_revision_rejection: passed
-    baseline_recheck: passed
-    duplicate_operation_rejection: passed
-    duplicate_update_target_rejection: passed
-    rollback_contract: passed
-    atomic_undo: passed
-    external_change_undo_rejection: passed
-    newer_undo_group_rejection: passed
+    phase_1_to_3_regression: passed
+    save_contract: passed
+    capture_state_restore: passed
+    refine_human_review_guard: passed
+    dirty_dependency_survives_save: passed
+    bake_prepare_read_only: passed
+    bake_approval_rejection: passed
+    bake_baseline_recheck: passed
+    bake_dirty_set_recheck: passed
+    explicit_scene_bake_backend: passed
+    apv_backend_rejection: passed
     automatic_save: prohibited_and_tested
-    bake: not_implemented_and_not_invoked
-    player: not_required_for_editor_only_phase_3
-    target_device: not_required_for_editor_only_phase_3
+    silent_full_bake_fallback: prohibited
+    player: unverified
+    target_device: unverified
   evidence_source:
     kind: compatibility_matrix
-    verification_id: MUMCP-PHASE3-CI-20260805-001
+    verification_id: MUMCP-PHASE4B-CI-20260805-001
 
 safety:
   inspect_must_not_dirty_unity_state: true
@@ -293,11 +271,13 @@ safety:
   mutation_requires_approval_token: true
   mutation_requires_expected_revision: true
   mutation_is_single_undo_transaction: true
-  duplicate_operation_id: prohibited
-  duplicate_update_target: prohibited
-  exception_rolls_back_undo_group: true
-  undo_requires_latest_group: true
+  save_requires_separate_approval: true
+  save_as: prohibited
+  bake_requires_separate_approval: true
+  bake_requires_dirty_dependency_set: true
+  bake_requires_all_backend_preflight: true
   automatic_save: prohibited
   automatic_full_bake: prohibited
+  bake_automatic_rollback: false
   silent_fallback: prohibited
   visual_acceptance_requires_human_review: true
