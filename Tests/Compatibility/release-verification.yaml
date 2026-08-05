@@ -1,0 +1,68 @@
+schema_version: "1.0"
+release_version: "1.0.0"
+verification_status: passed
+
+required_gates:
+  release_contract: passed
+  unity_editor_compile: passed
+  tool_discovery_32: passed
+  editmode_contracts_125: passed
+  fresh_project_package_compile: passed
+  sample_workflow: passed
+  distribution_preview: passed
+  all_ci: passed
+  support_matrix_documented: true
+  known_issues_documented: true
+  version_manifest_changelog_aligned: true
+  temporary_release_assets_removed: true
+
+editor_verification:
+  unity_version: "6000.0.75f1"
+  result: passed
+  total: 125
+  passed: 125
+  failed: 0
+  skipped: 0
+  inconclusive: 0
+  duration_seconds: 9.4432903
+
+fresh_project_verification:
+  unity_version: "6000.0.75f1"
+  package_compile: passed
+  tool_discovery_count: 32
+  sample_workflow_total: 1
+  sample_workflow_passed: 1
+  sample_workflow_failed: 0
+  duration_seconds: 0.139552
+
+release_distribution:
+  package: com.darumappap.my-unity-mcp-1.0.0.tgz
+  sample_project: MyUnityMCP-SampleProject-1.0.0.zip
+  templates: MyUnityMCP-Templates-1.0.0.zip
+  checksums: SHA256SUMS.txt
+  package_sha256: efdc9d91065f68ece2ce5ce9ae49c0677cf417da749a0e67759811492b7dc24d
+  sample_project_sha256: b3fc560f985635e418bc5d810838931d0f35f3ff46fb86d583a8b21a18b607d2
+  templates_sha256: 329ca59f72300f33eb83dcd2fb9c40503eef96a198d908d3649b1b33dd9ece0c
+
+evidence:
+  verified_source_commit: 769e1c40cd71c61a8a2ce115e7311d506cd7c791
+  editor_workflow_run: 31045924267
+  editor_job: 92441292935
+  editor_artifact_id: 8946591833
+  editor_artifact_name: MyUnityMCP-Unity-Editor-Evidence
+  editor_artifact_sha256: 9a43320b4107f68c41fced6c32e3ace895bce361c1679aa8fe7a3deeff098c6f
+  sample_workflow_run: 31045925174
+  sample_job: 92441293677
+  sample_artifact_id: 8946603818
+  sample_artifact_name: MyUnityMCP-Fresh-Project-Sample-Evidence
+  sample_artifact_sha256: e779409601056bf56b2a5b389be0b149561cb581278d2a2af7e43a439e728ad8
+  distribution_job: 92441293614
+  distribution_artifact_id: 8946426366
+  distribution_artifact_name: MyUnityMCP-v1.0.0-Distribution-Preview
+  distribution_artifact_sha256: 150a116d0d75dddb0e87f2232898ec1524e0121088af42cf87ba33326049ab90
+
+release_identity:
+  release_commit: merge_commit_of_pull_request_13
+  tag: v1.0.0
+  main_must_point_to_release_commit: true
+  tag_must_point_to_release_commit: true

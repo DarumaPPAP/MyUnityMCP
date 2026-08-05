@@ -512,7 +512,7 @@ namespace UnityGraphicsMcp
 							"graphics.apply_plan",
 							requestId,
 							E_MCP_TOOL_STATUS.UNSUPPORTED,
-							"Phase 3Aで利用できるsaveModeはNONEだけです。",
+							"Light Mutationで利用できるsaveModeはNONEだけです。",
 							null);
 					}
 
@@ -924,7 +924,7 @@ namespace UnityGraphicsMcp
 			{
 				issue = CreateMutationIssue(
 					"LIGHT_OPERATION_UNSUPPORTED",
-					"Phase 3Aで利用できるoperationはLIGHT_CREATEとLIGHT_UPDATEだけです。",
+					"Light Mutationで利用できるoperationはLIGHT_CREATEとLIGHT_UPDATEだけです。",
 					new Dictionary<string, object>
 					{
 						{ "operation", input.operation }

@@ -467,7 +467,7 @@ namespace UnityGraphicsMcp
 			return new Dictionary<string, object>
 			{
 				{ "contractVersion", "1.0" },
-				{ "packageVersion", "0.8.0" },
+				{ "packageVersion", "1.0.0" },
 				{ "editorOnly", true },
 				{ "minimumUnityVersion", "6000.0" },
 				{ "verifiedUnityVersion", "6000.0.75f1" },

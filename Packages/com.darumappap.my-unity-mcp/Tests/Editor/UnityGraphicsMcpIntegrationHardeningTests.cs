@@ -268,7 +268,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> matrix =
 				UnityGraphicsMcpExecutionHardening.BuildSupportMatrix();
 			Assert.That(matrix["contractVersion"], Is.EqualTo("1.0"));
-			Assert.That(matrix["packageVersion"], Is.EqualTo("0.8.0"));
+			Assert.That(matrix["packageVersion"], Is.EqualTo("1.0.0"));
 			Assert.That(matrix["minimumUnityVersion"], Is.EqualTo("6000.0"));
 			Assert.That(matrix["verifiedUnityVersion"], Is.EqualTo("6000.0.75f1"));
 			Assert.That((matrix["notVerified"] as string[]).Length,

@@ -3,7 +3,7 @@ id: movie_creator
 kind: workflow
 status: specified_not_executable
 blocked_by:
-  - unity_graphics_mcp_not_implemented
+  - unity_agent_mcp_runtime_not_implemented
   - unity_cinematic_mcp_not_implemented
 
 use_when:

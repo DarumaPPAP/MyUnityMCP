@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "unity": {
+      "url": "<UNITY_MCP_HTTP_URL>"
+    }
+  }
+}

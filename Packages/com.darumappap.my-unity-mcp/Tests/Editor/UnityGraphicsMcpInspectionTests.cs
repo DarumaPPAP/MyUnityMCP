@@ -16,7 +16,7 @@ namespace UnityGraphicsMcp
 {
 	public sealed class UnityGraphicsMcpInspectionTests
 	{
-		private const string TEMP_ASSET_PATH = "Assets/MyUnityMcpPhase1Temp.asset";
+		private const string TEMP_ASSET_PATH = "Assets/MyUnityMcpInspectionTemp.asset";
 
 		[SetUp]
 		public void SetUp()
@@ -34,7 +34,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversAllPhase1Tools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversAllInspectionTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 
