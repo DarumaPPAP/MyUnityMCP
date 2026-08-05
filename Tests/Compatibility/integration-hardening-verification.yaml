@@ -1,0 +1,97 @@
+schema_version: "1.0"
+package_version: "0.8.0"
+verification_status: pending_ci
+
+scope:
+  - canonical_end_to_end_workflow
+  - execution_runtime
+  - structured_error_contract
+  - lifecycle_recovery
+  - fault_injection
+  - large_scene_inspection
+  - support_matrix
+
+canonical_workflow:
+  - inspect_project
+  - inspect_scene_snapshot
+  - compile_direction
+  - prepare_plan
+  - approval
+  - apply
+  - prepare_save
+  - save
+  - prepare_bake
+  - bake
+  - capture_evidence
+  - evaluate
+  - refine
+
+fault_injection:
+  plan_after_scene_change:
+    expected: stale_snapshot_and_no_additional_mutation
+  scene_close:
+    expected: interrupted_and_no_automatic_save
+  domain_reload:
+    expected: interrupted_and_transient_ids_invalid
+  compile_started:
+    expected: interrupted_and_transient_ids_invalid
+  play_mode_transition:
+    expected: interrupted_and_editor_mutation_stopped
+  approval_token_mismatch:
+    expected: rejected_and_no_mutation
+  plan_expired:
+    expected: session_expired_and_no_mutation
+  bake_output_missing:
+    expected: failed_and_no_scene_damage
+  camera_deleted:
+    expected: rejected_and_no_capture_state_leak
+  unsupported_pipeline:
+    expected: unsupported_and_backend_not_invoked
+  multi_scene_configuration_changed:
+    expected: interrupted_and_baseline_invalid
+  mcp_client_disconnected:
+    expected: interrupted_and_history_queryable
+  unity_restart:
+    expected: recovered_as_interrupted_and_not_auto_resumed
+
+operational_contract:
+  timeout: cooperative
+  cancellation: cooperative
+  progress: polling_and_jsonl_trace
+  structured_log: jsonl
+  execution_history: jsonl
+  tool_call_trace: jsonl
+  artifact_retention_days: 14
+  execution_history_retention_days: 30
+  ci_evidence_retention_days: 90
+  performance_metrics:
+    - duration_ms
+    - managed_memory_delta_bytes
+    - p50_duration_ms
+    - p95_duration_ms
+    - max_duration_ms
+
+large_scene_contract:
+  generated_light_count: 400
+  maximum_inspection_seconds: 20
+  scene_dirty_must_not_change: true
+
+completion_gate:
+  editor_compile: pending_ci
+  bridge_tool_count: pending_ci
+  editmode_total: pending_ci
+  editmode_failed: 0
+  editmode_skipped: 0
+  editmode_inconclusive: 0
+  canonical_end_to_end: pending_ci
+  major_faults_scene_safe: pending_ci
+  structured_retry_procedure: pending_ci
+  support_matrix_fixed: pending_ci
+
+evidence:
+  workflow_run_id: pending
+  workflow_job_id: pending
+  artifact_name: MyUnityMCP-Unity-Editor-Evidence
+  artifact_id: pending
+  artifact_sha256: pending
+  verified_source_commit: pending
