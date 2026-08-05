@@ -1,6 +1,12 @@
 schema_version: "1.0"
 package_version: "0.8.0"
 
+verification_contract:
+  discovered_mcp_tools: 32
+  minimum_editmode_contracts: 124
+  canonical_end_to_end_required: true
+  major_fault_injection_scene_safety_required: true
+
 execution_surface:
   unity_editor: supported
   player_runtime: unsupported
