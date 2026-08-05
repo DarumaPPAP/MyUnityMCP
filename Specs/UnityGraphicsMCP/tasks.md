@@ -160,7 +160,7 @@ Tool:
 13. APV Backend rejection — PASS
 14. No Auto-save — PASS
 15. No Silent Full Bake Fallback — PASS
-16. EditMode Test — `63 / 63 PASS`
+16. EditMode Test — `62 / 62 PASS`
 
 最終Run、Artifact、Verification IDは`Tests/Compatibility/verification-matrix.yaml`を正本とする。
 
