@@ -414,7 +414,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Camera camera;
-					if (!TryResolveCaptureEvidenceamera(cameraObjectId, out camera))
+					if (!TryResolveSaveEvaluationCamera(cameraObjectId, out camera))
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -426,7 +426,7 @@ namespace UnityGraphicsMcp
 
 					int captureWidth = width ?? 1280;
 					int captureHeight = height ?? 720;
-					if (!IsValidCaptureEvidenceSize(captureWidth, captureHeight))
+					if (!IsValidSaveEvaluationCaptureSize(captureWidth, captureHeight))
 					{
 						return CreateResult(
 							"graphics.capture_evidence",
@@ -1277,14 +1277,14 @@ namespace UnityGraphicsMcp
 			Dictionary<int, bool> sceneDirtyState =
 				CaptureSaveEvaluationSceneDirtyState();
 			Dictionary<int, bool> assetDirtyState =
-				CaptureSaveEvaluationssetDirtyState();
+				CaptureSaveEvaluationAssetDirtyState();
 			int undoGroup = Undo.GetCurrentGroup();
 
 			try
 			{
 				UnityGraphicsMcpToolResult result = operation();
 				Dictionary<string, object> evidence;
-				if (HasCaptureEvidenceReadOnlyViolation(
+				if (HasSaveEvaluationCaptureReadOnlyViolation(
 					sceneDirtyState,
 					assetDirtyState,
 					undoGroup,
@@ -1767,7 +1767,7 @@ namespace UnityGraphicsMcp
 				{
 					Channel = channel,
 					OutputPath = relativeBundlePath + "/" + fileName,
-					Sha256 = HashDependencyBakeytes(bytes),
+					Sha256 = HashSaveEvaluationBytes(bytes),
 					ByteLength = bytes.LongLength,
 					Format = format,
 					Semantics = semantics
