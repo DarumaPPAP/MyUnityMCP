@@ -239,7 +239,7 @@ verification:
     static_source_review: passed
     package_dependency_resolution: passed
     unity_editor_compile: passed
-    editmode: passed_63_of_63
+    editmode: passed_62_of_62
     bridge_discovery: passed_17_tools
     direct_handler_invocation: passed
     phase_1_to_3_regression: passed
