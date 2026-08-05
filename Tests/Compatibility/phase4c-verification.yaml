@@ -1,0 +1,73 @@
+schema_version: "1.0"
+verification_id: MUMCP-PHASE4C-CI-20260805-001
+date: "2026-08-05"
+scope: phase_1_to_phase_4c_editor_tools
+
+host:
+  runner: github_actions_ubuntu_24_04
+  execution_mode: batchmode
+
+unity:
+  version: 6000.0.75f1
+  active_build_target: StandaloneLinux64
+  graphics_device: llvmpipe_opengl_core
+
+source:
+  repository: DarumaPPAP/MyUnityMCP
+  branch: feature/phase4c-capture-evidence
+  verified_commit: 7789fc625f532b284f2309c5ab24ebdacf2c2a7d
+  package_version: "0.6.0"
+
+verification:
+  package_resolution: passed
+  editor_compile: passed
+  bridge_tool_discovery:
+    status: passed
+    discovered_tool_count: 20
+    auto_register: false
+  editmode:
+    status: passed
+    total: 78
+    passed: 78
+    failed: 0
+    skipped: 0
+    inconclusive: 0
+    duration_seconds: 6.8617403
+  phase_1_to_4b_regression: passed
+  phase_4c_capture_contract:
+    color_png: passed
+    linear_eye_depth_float_exr: passed
+    deterministic_object_id_png: passed
+    object_id_mapping_json: passed
+    manifest_and_artifact_sha256: passed
+    evidence_digest: passed
+    atomic_bundle_publish: passed
+    expected_revision_guard: passed
+    camera_target_texture_restore: passed
+    active_render_texture_restore: passed
+    scene_dirty_guard: passed
+    project_asset_dirty_guard: passed
+    undo_group_guard: passed
+    null_graphics_device_unverified: passed
+    explicit_human_review: passed
+    accepted_confirmation_guard: passed
+    immutable_review: passed
+    rejected_review_refine: passed
+    image_semantic_analysis_in_unity: prohibited_and_tested
+
+evidence:
+  workflow: Phase 4C Unity Verification
+  workflow_run_id: 30991161982
+  workflow_job_id: 92257378283
+  artifact_name: MyUnityMCP-Phase4C-Unity-Evidence
+  artifact_id: 8924347145
+  artifact_sha256: 2067835d9da6ba3b8241d18d0e2b1b302959481e61f49eebab84635a0494cd56
+
+interpretation:
+  global_support_claim: false
+  player_verified: false
+  target_device_verified: false
+  notes:
+    - This verifies the 20 Phase 1 through Phase 4C Editor tools in one Unity 6000.0.75f1 CI environment.
+    - Depth and Object ID coverage limitations are recorded in each Capture Manifest and are never silently treated as supported.
+    - Player, target device, every render pipeline, and every Unity version remain outside this evidence scope.
