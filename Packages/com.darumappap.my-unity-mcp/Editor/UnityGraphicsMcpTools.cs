@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 
 using System;
+using System.Collections.Generic;
 using MCPForUnity.Editor.Helpers;
 using MCPForUnity.Editor.Tools;
 using Newtonsoft.Json.Linq;
@@ -322,21 +323,88 @@ namespace UnityGraphicsMcp
 			Func<T, UnityGraphicsMcpToolResult> operation)
 			where T : new()
 		{
+			string requestId = @params == null || @params["requestId"] == null
+				? null
+				: @params["requestId"].ToString();
+			Type declaringType = typeof(T).DeclaringType;
+			string provisionalToolName = declaringType == null
+				? "unknown"
+				: declaringType.Name;
+			UnityGraphicsMcpExecutionScope scope =
+				UnityGraphicsMcpExecutionHardening.Begin(
+					provisionalToolName,
+					requestId);
+
+			T parameters;
 			try
 			{
-				T parameters = ParseParameters<T>(@params);
-				return Wrap(operation(parameters));
+				parameters = ParseParameters<T>(@params);
 			}
 			catch (Exception exception)
 			{
-				return new ErrorResponse(
-					E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString(),
-					new
-					{
-						message = "Tool Parameterを解釈できませんでした。",
-						exceptionType = exception.GetType().FullName,
-						detail = exception.Message
-					});
+				UnityGraphicsMcpToolResult invalid =
+					UnityGraphicsMcpInspection.CreateHardeningResult(
+						provisionalToolName,
+						requestId,
+						E_MCP_TOOL_STATUS.INVALID_REQUEST,
+						"Tool Parameterを解釈できませんでした。",
+						new Dictionary<string, object>
+						{
+							{ "failureCode", "MCP_INVALID_REQUEST" },
+							{ "exceptionType", exception.GetType().FullName },
+							{ "detail", exception.Message }
+						});
+				return Wrap(UnityGraphicsMcpExecutionHardening.Complete(scope, invalid));
+			}
+
+			try
+			{
+				UnityGraphicsMcpToolResult result = operation(parameters);
+				if (result == null)
+				{
+					result = UnityGraphicsMcpInspection.CreateHardeningResult(
+						provisionalToolName,
+						requestId,
+						E_MCP_TOOL_STATUS.FAILED,
+						"MyUnityMCP ToolがResultを返しませんでした。",
+						new Dictionary<string, object>
+						{
+							{ "failureCode", "MYUNITYMCP_NULL_RESULT" }
+						});
+				}
+				return Wrap(UnityGraphicsMcpExecutionHardening.Complete(scope, result));
+			}
+			catch (OperationCanceledException exception)
+			{
+				UnityGraphicsMcpToolResult cancelled =
+					UnityGraphicsMcpInspection.CreateHardeningResult(
+						provisionalToolName,
+						requestId,
+						E_MCP_TOOL_STATUS.FAILED,
+						"Tool実行はCancellation Pointで停止しました。",
+						new Dictionary<string, object>
+						{
+							{ "failureCode", "EXECUTION_CANCEL_REQUESTED" },
+							{ "detail", exception.Message }
+						});
+				return Wrap(UnityGraphicsMcpExecutionHardening.Complete(scope, cancelled));
+			}
+			catch (Exception exception)
+			{
+				UnityEngine.Debug.LogException(exception);
+				UnityGraphicsMcpToolResult failed =
+					UnityGraphicsMcpInspection.CreateHardeningResult(
+						provisionalToolName,
+						requestId,
+						E_MCP_TOOL_STATUS.FAILED,
+						"Tool実行中に未処理例外が発生しました。",
+						new Dictionary<string, object>
+						{
+							{ "failureCode", "MCP_FAILED" },
+							{ "exceptionType", exception.GetType().FullName },
+							{ "detail", exception.Message }
+						});
+				return Wrap(UnityGraphicsMcpExecutionHardening.Complete(scope, failed));
 			}
 		}
 

@@ -657,6 +657,29 @@ namespace UnityGraphicsMcp
 			RecoverInterruptedExecutions(code);
 		}
 
+		internal static void SimulateProcessLossForTests()
+		{
+			lock (_sync)
+			{
+				_active.Clear();
+			}
+		}
+
+		internal static void PruneRetentionForTests()
+		{
+			lock (_sync)
+			{
+				TrimHistoryInMemory();
+				RewriteJsonLines(HistoryPath(), _history);
+				PruneOwnedArtifacts(UtcNow().AddDays(-ARTIFACT_RETENTION_DAYS));
+			}
+		}
+
+		internal static string OwnedArtifactRootForTests()
+		{
+			return OwnedArtifactRoot();
+		}
+
 		internal static void ResetForTests(string storageRoot)
 		{
 			lock (_sync)

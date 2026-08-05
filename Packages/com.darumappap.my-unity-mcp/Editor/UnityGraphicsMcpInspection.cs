@@ -64,6 +64,8 @@ namespace UnityGraphicsMcp
 		public string status { get; set; }
 		public string summary { get; set; }
 		public object data { get; set; }
+		public UnityGraphicsMcpStructuredError error { get; set; }
+		public UnityGraphicsMcpExecutionMetadata execution { get; set; }
 		public List<UnityGraphicsMcpIssue> issues { get; set; } = new List<UnityGraphicsMcpIssue>();
 
 		public bool IsSuccessful =>
