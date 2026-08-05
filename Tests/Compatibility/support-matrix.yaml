@@ -25,6 +25,7 @@ pipelines:
     volume_mutation: unsupported_without_volume_api
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
+    apv_plan_preparation: rejected_before_plan_creation
     apv_bake: unsupported
     visual_evaluation_refine: supported
   urp:
@@ -34,6 +35,7 @@ pipelines:
     volume_mutation: conditional_volume_api
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
+    apv_plan_preparation: conditional_apv_environment
     apv_bake: conditional_apv_backend
     visual_evaluation_refine: supported
   hdrp:
@@ -43,6 +45,7 @@ pipelines:
     volume_mutation: conditional_volume_api
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
+    apv_plan_preparation: conditional_apv_environment
     apv_bake: conditional_apv_backend
     visual_evaluation_refine: supported
 
