@@ -1,13 +1,13 @@
 # UnityGraphicsMCP Unity Editor C# Tool実装設計
 
-- DocumentVersion: `4.0.0`
+- DocumentVersion: `4.1.0`
 - DesignStatus: `Implemented / Unity Editor CI Verified`
-- ImplementationStatus: `Phase 3 Graphics Mutation Complete`
-- VerificationStatus: `46 / 46 EditMode PASS`
+- ImplementationStatus: `Phase 4B Dirty Dependency Bake Complete`
+- VerificationStatus: `63 / 63 EditMode PASS`
 
 ## 1. 目的
 
-対象Unity Projectの環境、Scene Graphics状態、Direction Plan、承認済みGraphics Mutationを機械可読Resultとして扱うEditor-only Toolを構築する。
+対象Unity Projectの環境、Scene Graphics状態、Direction Plan、承認済みGraphics Mutation、Save、Dependency Bake、Capture Evidenceを機械可読Resultとして扱うEditor-only Toolを構築する。
 
 特定のUnity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをMyUnityMCP全体へ固定しない。
 
@@ -25,15 +25,24 @@
 - `graphics.preview_plan`
 - `graphics.prepare_light_plan`
 - `graphics.prepare_environment_plan`
+- `graphics.prepare_save_plan`
+- `graphics.prepare_bake_plan`
 
-### Mutation
+### Mutation / Persistence / Bake
 
 - `graphics.apply_plan`
 - `graphics.undo_last_transaction`
 - `graphics.apply_environment_plan`
 - `graphics.undo_last_environment_transaction`
+- `graphics.apply_save_plan`
+- `graphics.bake_dependencies`
 
-全Toolは`AutoRegister = false`とし、Activation PolicyまたはBridge設定から明示的に有効化する。
+### Evaluation
+
+- `graphics.capture_evaluation`
+- `graphics.refine_direction`
+
+全17 Toolは`AutoRegister = false`とし、Activation PolicyまたはBridge設定から明示的に有効化する。
 
 ## 3. Bridge contract
 
@@ -46,71 +55,31 @@
 - Response: `SuccessResponse` / `ErrorResponse`
 - Command Dispatch: Unity Main Thread
 
-MCP Bridge固有依存はTool Entryへ閉じ込め、Inspection、Planning、Mutation本体をBridge Response型へ依存させない。
+Bridge固有依存はTool Entryへ閉じ込め、Domain本体をBridge Response型へ依存させない。
 
 ## 4. Physical architecture
 
 ```text
 MCP for Unity Bridge
         ↓
-UnityGraphicsMcpTools.cs
+UnityGraphicsMcp*Tools.cs
         ↓
 UnityGraphicsMcpSession.cs
         ├─ Session / Revision
         ├─ Snapshot / Direction Plan
-        └─ Read-only Dirty Guard
+        └─ Read-only Guard
         ↓
 UnityGraphicsMcpInspection.cs
 UnityGraphicsMcpPlanning.cs
 UnityGraphicsMcpMutation.cs
 UnityGraphicsMcpEnvironmentMutation.cs
+UnityGraphicsMcpPhase4.cs
+UnityGraphicsMcpPhase4Bake.cs
         ↓
 Unity Editor API
 ```
 
-### `UnityGraphicsMcpTools.cs`
-
-- Tool Attribute
-- Parameter Schema
-- JObject変換
-- Success / Error変換
-- Default Disable
-
-### `UnityGraphicsMcpSession.cs`
-
-- Session ID
-- Revision
-- Snapshot / Direction Plan Lifetime
-- Compile / Reload / Play Mode失効
-- Read-only Guard
-
-### `UnityGraphicsMcpInspection.cs`
-
-- Project Environment
-- Scene Snapshot
-- Graphics Validation
-- Tool Result Contract
-
-### `UnityGraphicsMcpPlanning.cs`
-
-- Structured Visual Intent
-- Direction Recommendation
-- Plan ID / Expected Revision
-- Read-only Preview
-
-### `UnityGraphicsMcpMutation.cs`
-
-- Light Operation Schema
-- Exact Diff
-- Approval Token
-- Light Transaction / Undo
-
-### `UnityGraphicsMcpEnvironmentMutation.cs`
-
-- Camera / Reflection Probe / Volume Operation Schema
-- Property / Field対応Volume Member Access
-- Multi-component Transaction / Rollback
-- Guarded Undo
+Phase 4実装は既存Applyへ混在させず、Save / Capture / RefineとBakeを独立Partialへ分離する。
 
 ## 5. Read-only contract
 
@@ -120,13 +89,19 @@ Inspection、Planning、Prepareの実行前後で次を比較する。
 - Persistent Asset Dirty State
 - Undo Group
 
-Material確認に`renderer.material`を使用せず、`sharedMaterials`を使用する。Read-only ToolからAsset生成、Scene保存、Bakeを実行しない。
+Captureは一時RenderTextureを利用するが、Camera TargetTexture、Active RenderTexture、Scene / Asset Dirty、Undoを復元する。
 
-違反時は`READ_ONLY_CONTRACT_VIOLATION`を返す。
+## 6. Session and invalidation
 
-## 6. Session and revision
+Session-local state:
 
-Snapshot、Direction Plan、Executable PlanはEditor Session内だけで有効とする。
+- Scene Snapshot
+- Direction Plan
+- Mutation Plan / Transaction
+- Save Plan
+- Capture Record
+- Dirty Dependency Set
+- Bake Plan
 
 失効条件:
 
@@ -137,106 +112,82 @@ Snapshot、Direction Plan、Executable PlanはEditor Session内だけで有効�
 - Revision変更
 - TTL超過
 
-大きなScene ResultはSnapshot IDとCursorで参照し、毎回全JSONを複製しない。
+Dirty Dependency SetはScene Saveでは失効させない。Scene Closeでは該当Sceneを除去する。
 
-## 7. Planning contract
+## 7. Mutation and Save
 
-Unity C# Toolは自然言語や画像を独自解釈しない。UnityAgentまたはMCP Clientが構造化したVisual Intentを入力する。
+Mutationは一つのUnity Undo Groupへ集約し、例外時Rollbackする。SaveはUndo Transactionから分離し、既存Dirty Loaded Scene一つだけを明示保存する。
 
-Direction PlanはProject Inspectionの検出事実とRequested Targetを別フィールドで保持する。
+Save後の永続化はUndo / 自動Rollbackを保証しない。
 
-PrepareはUnity状態を変更せず、次を返す。
+## 8. Dirty Dependency Set design
 
-- Exact Before / Requested After
+`EditorSceneManager.sceneDirtied`を入口に、保存済みLoaded Sceneの再Bake候補を記録する。
+
+追跡Kind:
+
+- `LIGHTMAP_SCENE`
+- `REFLECTION_PROBE`
+- `ADAPTIVE_PROBE_VOLUME`
+
+一般Scene変更から実際のGI影響を意味解析せず、保守的にLightmap Dependencyを登録する。Baked Reflection ProbeとProbe Volume ComponentはScene構造から候補を追加する。
+
+Dirty SetはSerialを持ち、Prepare後にSetが変化した場合はBake Applyを拒否する。
+
+## 9. Bake Plan design
+
+Prepareは次を固定する。
+
+- Expected Revision
+- Dirty Set Serial
+- 全Loaded Contributing Scene Baseline
+- Dependency Kind / Object ID / Output Asset
+- Dependency Baseline Digest
+- Native Backend
 - Diff Digest
-- Approval Token
-- Expected Revision
-- Mutation / Save / Bake未実行の明示
+- Approval Token / TTL
 
-## 8. Mutation contract
+Apply直前に全項目を再検証し、全DependencyのBackendをPreflightする。
 
-Apply必須条件:
+## 10. Native Bake backend
 
-- Direction Planが現在Sessionに存在する
-- Executable Planが未使用
-- Expected Revision一致
-- Approval Token一致
-- Preview Baseline一致
-- `saveMode = NONE`
+### Lightmap Scene
 
-Environment Planでは追加で次を要求する。
+ReflectionでScene引数付きBake APIを解決する。解決できない場合、Loaded Sceneが一つだけなら`Lightmapping.Bake()`を使用する。
 
-- Operation ID一意
-- 同一既存ComponentへのUpdateは一回
-- 指定Volume MemberをPrepare時に読み書き可能と確認
-
-Applyは一つのUnity Undo Groupへ集約する。途中例外時は`Undo.RevertAllDownToGroup`で全体Rollbackする。
-
-## 9. Undo contract
-
-Undo前に次を確認する。
-
-- Transaction ID
-- Expected Revision
-- Transaction適用後State Digest
-- TransactionがUndo Stackの最新Groupであること
-
-外部変更、新しいUndo Group、Session失効がある場合は拒否する。
-
-## 10. Supported Phase 3 operations
-
-### Light
-
-- `LIGHT_CREATE`
-- `LIGHT_UPDATE`
-
-### Camera
-
-- `CAMERA_CREATE`
-- `CAMERA_UPDATE`
+複数Loaded Sceneで全Scene BakeへFallbackしない。
 
 ### Reflection Probe
 
-- `REFLECTION_PROBE_CREATE`
-- `REFLECTION_PROBE_UPDATE`
+`Lightmapping.BakeReflectionProbe`を使用する。既存Cubemap Assetへの上書きだけを許可し、新規Asset Pathを生成しない。
 
-### Volume
+### APV
 
-- `VOLUME_CREATE`
-- `VOLUME_UPDATE`
-- 既存`sharedProfile`参照割当
+Component候補を検出するが、Baking Set / Lighting Scenario / Package Version契約を持たないため実行しない。
 
-Volume Profile内部Override、Save、Bake、Captureは実装しない。
+## 11. Bake failure model
 
-## 11. Test architecture
+BakeはUnity Undo外である。
+
+- Planは実行開始時に消費
+- 自動Saveなし
+- 自動Rollbackなし
+- 完了済みDependencyだけDirty Setから除去
+- 途中失敗時は`PARTIAL`と完了 / 失敗Dependency Evidenceを返す
+
+## 12. Test architecture
 
 Editor Test Assemblyから次を検証する。
 
-- 11 Tool Discovery / Default Disable
-- Read-only Guard
-- Session / Revision / Cursor
-- Direction Compile / Preview
-- Approval / Baseline / Save Mode拒否
-- Light Create / Update / Undo
-- Camera Create / Update / Undo
-- Reflection Probe Create / Update / Undo
-- Volume Create / Update / sharedProfile / Undo
-- Property / Field API形状差
-- Duplicate Operation / Update Target拒否
-- Atomic Transaction / Rollback
-- External Change / Newer Undo Group拒否
-- Phase 1～2 Regression
+- 17 Tool Discovery / Default Disable
+- Phase 1-3 Regression
+- Save / Capture / Refine contract
+- Bake Prepare Read-only
+- Save後のDirty Dependency保持
+- Approval / Revision / Baseline / Dirty Set Guard
+- Scene限定Backend Invocation
+- Dependency消費
+- APV Backend rejection
+- No Auto-save / No Silent Full Bake Fallback
 
 Test用に公開範囲を広げず、`InternalsVisibleTo("MyUnityMcp.Editor.Tests")`だけを使用する。
-
-## 12. Phase 4 extension boundary
-
-Save、Bake、Captureは既存Applyへ追加せず、独立Toolと別Approval Tokenで実装する。
-
-- Save Plan
-- Dirty Dependency Set
-- Dependency限定Bake
-- Capture State Restore
-- Visual Evaluation / Refine
-
-任意`SerializedProperty` Toolや空Backendを追加しない。
