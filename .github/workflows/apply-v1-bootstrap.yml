@@ -1,0 +1,53 @@
+name: Apply MyUnityMCP v1 Release Migration
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .release-bootstrap/**
+      - .github/workflows/apply-v1-bootstrap.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Reconstruct and apply release migration
+        run: |
+          set -euo pipefail
+          mkdir -p Tools
+          cat .release-bootstrap/bootstrap0.part .release-bootstrap/bootstrap1.part > Tools/apply-v1-bootstrap.py
+          python3 Tools/apply-v1-bootstrap.py
+          python3 Tests/Release/verify_release_contract.py --mode pr
+
+      - name: Remove migration-only assets
+        run: |
+          rm -rf .release-bootstrap
+          rm -f Tools/apply-v1-bootstrap.py
+          rm -f .github/workflows/apply-v1-bootstrap.yml
+          rm -f .github/workflows/release-source-audit-export.yml
+
+      - name: Commit v1 release preparation
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No release changes required."
+            exit 0
+          fi
+          git commit -m "release: prepare MyUnityMCP v1.0.0"
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
