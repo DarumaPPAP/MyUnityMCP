@@ -52,6 +52,8 @@ jobs:
               exit 1
             fi
           else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$tag" -m "MyUnityMCP ${tag}"
             git push origin "$tag"
           fi
