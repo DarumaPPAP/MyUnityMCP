@@ -40,3 +40,5 @@ jobs:
           git add Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpIntegrationHardeningTests.cs
           git commit -m "fix: preserve terminal execution state and normalize fault codes"
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
+
+# Triggered after the refinement workflow became part of the pull request.
