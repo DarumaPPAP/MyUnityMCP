@@ -3,7 +3,7 @@
 - DocumentVersion: `4.1.0`
 - DesignStatus: `Implemented / Unity Editor CI Verified`
 - ImplementationStatus: `Phase 4B Dirty Dependency Bake Complete`
-- VerificationStatus: `63 / 63 EditMode PASS`
+- VerificationStatus: `62 / 62 EditMode PASS`
 
 ## 1. 目的
 
