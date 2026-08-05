@@ -65,7 +65,7 @@ namespace UnityGraphicsMcp
 		public static bool SaveScene(
 			Scene scene,
 			string destinationScenePath,
-			bool saveAsCopy)
+			bool saveAsCopy = false)
 		{
 			return UnityEditor.SceneManagement.EditorSceneManager.SaveScene(
 				scene,
