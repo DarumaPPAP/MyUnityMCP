@@ -287,6 +287,7 @@ namespace UnityGraphicsMcp
 				return;
 			}
 
+			bool dependencySetChanged = false;
 			UnityGraphicsMcpDirtyDependencyRecord record;
 			if (!_dirtyDependencies.TryGetValue(scene.path, out record))
 			{
@@ -295,12 +296,17 @@ namespace UnityGraphicsMcp
 					ScenePath = scene.path
 				};
 				_dirtyDependencies[scene.path] = record;
+				dependencySetChanged = true;
 			}
 
-			record.SceneHandle = scene.handle;
-			record.DirtySerial = ++_dirtySerial;
+			if (record.SceneHandle != scene.handle)
+			{
+				record.SceneHandle = scene.handle;
+				dependencySetChanged = true;
+			}
+
 			record.LastDirtyUtc = DateTime.UtcNow;
-			record.Kinds.Add(
+			dependencySetChanged |= record.Kinds.Add(
 				E_GRAPHICS_BAKE_DEPENDENCY_KIND.LIGHTMAP_SCENE.ToString());
 
 			foreach (ReflectionProbe probe in scene
@@ -315,16 +321,22 @@ namespace UnityGraphicsMcp
 				string objectId = GlobalObjectId.GetGlobalObjectIdSlow(probe).ToString();
 				if (!string.IsNullOrWhiteSpace(objectId))
 				{
-					record.Kinds.Add(
+					dependencySetChanged |= record.Kinds.Add(
 						E_GRAPHICS_BAKE_DEPENDENCY_KIND.REFLECTION_PROBE.ToString());
-					record.ReflectionProbeObjectIds.Add(objectId);
+					dependencySetChanged |=
+						record.ReflectionProbeObjectIds.Add(objectId);
 				}
 			}
 
 			if (SceneContainsAdaptiveProbeVolume(scene))
 			{
-				record.Kinds.Add(
+				dependencySetChanged |= record.Kinds.Add(
 					E_GRAPHICS_BAKE_DEPENDENCY_KIND.ADAPTIVE_PROBE_VOLUME.ToString());
+			}
+
+			if (dependencySetChanged)
+			{
+				record.DirtySerial = ++_dirtySerial;
 			}
 		}
 
