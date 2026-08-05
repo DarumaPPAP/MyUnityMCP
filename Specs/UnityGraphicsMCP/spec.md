@@ -2,7 +2,7 @@
 
 - FeatureName: `UnityGraphicsMCP`
 - DocumentVersion: `4.1.0`
-- DesignStatus: `Phase 4B Stable`
+- DesignStatus: `Dependency Bake Stable`
 - ImplementationStatus: `Phase 1-4B Implemented`
 - VerificationStatus: `Unity Editor CI 62 / 62 PASS`
 - PrimaryNamespace: `UnityGraphicsMcp`

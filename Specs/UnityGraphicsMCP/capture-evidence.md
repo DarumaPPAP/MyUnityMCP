@@ -1,8 +1,8 @@
-# Phase 4C Capture Evidence Contract
+# Capture Evidence Capture Evidence Contract
 
 ## Scope
 
-Phase 4Cは、既存のColor-only `graphics.capture_evaluation`を互換維持したまま、評価用Captureを再現可能なEvidence Bundleへ拡張し、Human Visual Acceptanceを明示的に確定する。
+Capture Evidenceは、既存のColor-only `graphics.capture_evaluation`を互換維持したまま、評価用Captureを再現可能なEvidence Bundleへ拡張し、Human Visual Acceptanceを明示的に確定する。
 
 追加Tool:
 

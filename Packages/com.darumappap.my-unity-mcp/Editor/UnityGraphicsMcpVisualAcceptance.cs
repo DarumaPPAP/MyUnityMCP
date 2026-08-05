@@ -149,7 +149,7 @@ namespace UnityGraphicsMcp
 	}
 
 	[InitializeOnLoad]
-	internal static class UnityGraphicsMcpPhase4DAcceptanceSession
+	internal static class UnityGraphicsMcpVisualAcceptanceSession
 	{
 		private const int MAX_PROFILE_COUNT = 16;
 		private const int MAX_EVALUATION_COUNT = 32;
@@ -159,7 +159,7 @@ namespace UnityGraphicsMcp
 		private static readonly Dictionary<string, UnityGraphicsMcpVisualEvaluationRecord> _evaluations =
 			new Dictionary<string, UnityGraphicsMcpVisualEvaluationRecord>(StringComparer.Ordinal);
 
-		static UnityGraphicsMcpPhase4DAcceptanceSession()
+		static UnityGraphicsMcpVisualAcceptanceSession()
 		{
 			EditorApplication.playModeStateChanged += state => Clear();
 			AssemblyReloadEvents.beforeAssemblyReload += Clear;
@@ -327,7 +327,7 @@ namespace UnityGraphicsMcp
 						input.criteria == null ||
 						input.criteria.Length == 0 ||
 						input.criteria.Length > PHASE4D_MAX_ACCEPTANCE_CRITERIA ||
-						!IsPhase4DScore(input.minimumPassScore))
+						!IsApvVisualAcceptanceScore(input.minimumPassScore))
 					{
 						return CreateResult(
 							"graphics.prepare_acceptance_profile",
@@ -346,9 +346,9 @@ namespace UnityGraphicsMcp
 							? string.Empty
 							: criterion.criterionId.Trim();
 						if (id.Length == 0 || id.Length > 64 || !ids.Add(id) ||
-							criterion.weight <= 0.0 || !IsPhase4DScore(criterion.minimumScore) ||
+							criterion.weight <= 0.0 || !IsApvVisualAcceptanceScore(criterion.minimumScore) ||
 							(criterion.criticalFailureBelow.HasValue &&
-							 !IsPhase4DScore(criterion.criticalFailureBelow.Value)))
+							 !IsApvVisualAcceptanceScore(criterion.criticalFailureBelow.Value)))
 						{
 							return CreateResult(
 								"graphics.prepare_acceptance_profile",
@@ -368,7 +368,7 @@ namespace UnityGraphicsMcp
 							MinimumScore = criterion.minimumScore,
 							CriticalFailureBelow = criterion.criticalFailureBelow,
 							Required = criterion.required ?? true,
-							RecommendedActions = NormalizePhase4DTextValues(criterion.recommendedActions)
+							RecommendedActions = NormalizeApvVisualAcceptanceTextValues(criterion.recommendedActions)
 						});
 					}
 
@@ -380,7 +380,7 @@ namespace UnityGraphicsMcp
 						UnityGraphicsMcpCaptureEvidenceRecord referenceCapture;
 						E_MCP_TOOL_STATUS referenceFailureStatus;
 						string referenceFailureMessage;
-						if (!UnityGraphicsMcpPhase4CaptureSession.TryGetCapture(
+						if (!UnityGraphicsMcpCaptureEvidenceSession.TryGetCapture(
 							input.referenceCaptureId,
 							expectedRevision.Value,
 							input.referenceEvidenceDigest,
@@ -401,7 +401,7 @@ namespace UnityGraphicsMcp
 
 					UnityGraphicsMcpPerformanceBudget budget;
 					string budgetFailure;
-					if (!TryBuildPhase4DPerformanceBudget(
+					if (!TryBuildApvVisualAcceptancePerformanceBudget(
 						input.performanceBudget,
 						out budget,
 						out budgetFailure))
@@ -425,15 +425,15 @@ namespace UnityGraphicsMcp
 							ReferenceEvidenceDigest = referenceDigest,
 							PerformanceBudget = budget
 						};
-					UnityGraphicsMcpPhase4DAcceptanceSession.StoreProfile(profile);
-					profile.ProfileDigest = BuildPhase4DProfileDigest(profile);
+					UnityGraphicsMcpVisualAcceptanceSession.StoreProfile(profile);
+					profile.ProfileDigest = BuildApvVisualAcceptanceProfileDigest(profile);
 
 					return CreateResult(
 						"graphics.prepare_acceptance_profile",
 						requestId,
 						E_MCP_TOOL_STATUS.SUCCESS,
 						"Acceptance Profileの評価項目、Weight、合格値、Critical Failure、Reference、Performance Budgetを固定しました。",
-						BuildPhase4DProfileData(profile));
+						BuildApvVisualAcceptanceProfileData(profile));
 				});
 		}
 
@@ -464,7 +464,7 @@ namespace UnityGraphicsMcp
 					UnityGraphicsMcpCaptureEvidenceRecord capture;
 					E_MCP_TOOL_STATUS failureStatus;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4CaptureSession.TryGetCapture(
+					if (!UnityGraphicsMcpCaptureEvidenceSession.TryGetCapture(
 						captureId,
 						expectedRevision.Value,
 						evidenceDigest,
@@ -481,7 +481,7 @@ namespace UnityGraphicsMcp
 					}
 
 					UnityGraphicsMcpAcceptanceProfile profile;
-					if (!UnityGraphicsMcpPhase4DAcceptanceSession.TryGetProfile(
+					if (!UnityGraphicsMcpVisualAcceptanceSession.TryGetProfile(
 						profileId,
 						expectedRevision.Value,
 						out profile,
@@ -497,7 +497,7 @@ namespace UnityGraphicsMcp
 					}
 
 					Dictionary<string, UnityGraphicsMcpEvaluationMeasurementInput> measurementMap;
-					if (!TryBuildPhase4DMeasurementMap(
+					if (!TryBuildApvVisualAcceptanceMeasurementMap(
 						measurements,
 						profile,
 						out measurementMap,
@@ -512,14 +512,14 @@ namespace UnityGraphicsMcp
 					}
 
 					UnityGraphicsMcpVisualEvaluationRecord evaluation =
-						BuildPhase4DEvaluation(
+						BuildApvVisualAcceptanceEvaluation(
 							capture,
 							profile,
 							measurementMap,
 							performance);
-					UnityGraphicsMcpPhase4DAcceptanceSession.StoreEvaluation(evaluation);
-					evaluation.EvaluationDigest = BuildPhase4DEvaluationDigest(evaluation);
-					evaluation.RefineDirection = BuildPhase4DRefineDirection(evaluation);
+					UnityGraphicsMcpVisualAcceptanceSession.StoreEvaluation(evaluation);
+					evaluation.EvaluationDigest = BuildApvVisualAcceptanceEvaluationDigest(evaluation);
+					evaluation.RefineDirection = BuildApvVisualAcceptanceRefineDirection(evaluation);
 
 					E_MCP_TOOL_STATUS resultStatus = evaluation.Decision ==
 						E_GRAPHICS_VISUAL_EVALUATION_DECISION.INCOMPLETE.ToString()
@@ -532,7 +532,7 @@ namespace UnityGraphicsMcp
 						evaluation.Decision == E_GRAPHICS_VISUAL_EVALUATION_DECISION.PASSED.ToString()
 							? "CaptureはAcceptance Profileの自動評価条件を満たしました。Human Acceptanceは別途必要です。"
 							: "CaptureはAcceptance Profileの不合格またはEvidence不足理由を構造化しました。",
-						BuildPhase4DEvaluationData(evaluation));
+						BuildApvVisualAcceptanceEvaluationData(evaluation));
 					foreach (UnityGraphicsMcpEvaluationCriterionResult criterion in evaluation.Criteria
 						.Where(item => !item.MeasurementPresent || !item.PassedMinimum || item.CriticalFailure))
 					{
@@ -544,7 +544,7 @@ namespace UnityGraphicsMcp
 									? "VISUAL_MEASUREMENT_MISSING"
 									: "VISUAL_CRITERION_BELOW_MINIMUM",
 							message = criterion.DisplayName + ": " + criterion.Summary,
-							evidence = BuildPhase4DCriterionData(criterion)
+							evidence = BuildApvVisualAcceptanceCriterionData(criterion)
 						});
 					}
 					return result;
@@ -590,7 +590,7 @@ namespace UnityGraphicsMcp
 
 					UnityGraphicsMcpVisualEvaluationRecord evaluation;
 					string failureMessage;
-					if (!UnityGraphicsMcpPhase4DAcceptanceSession.TryGetEvaluation(
+					if (!UnityGraphicsMcpVisualAcceptanceSession.TryGetEvaluation(
 						evaluationId,
 						expectedRevision.Value,
 						out evaluation,
@@ -612,7 +612,7 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.INVALID_REQUEST,
 							"PASSED EvaluationからRefine Directionは作成しません。",
-							BuildPhase4DEvaluationData(evaluation));
+							BuildApvVisualAcceptanceEvaluationData(evaluation));
 					}
 
 					Dictionary<string, object> intent = new Dictionary<string, object>(
@@ -629,7 +629,7 @@ namespace UnityGraphicsMcp
 
 					List<UnityGraphicsMcpPlanRecommendation> recommendations =
 						(sourcePlan.Recommendations ?? new List<UnityGraphicsMcpPlanRecommendation>())
-						.Select(ClonePhase4Recommendation)
+						.Select(CloneSaveEvaluationRecommendation)
 						.ToList();
 					recommendations.Add(new UnityGraphicsMcpPlanRecommendation
 					{
@@ -695,7 +695,7 @@ namespace UnityGraphicsMcp
 				});
 		}
 
-		private static UnityGraphicsMcpVisualEvaluationRecord BuildPhase4DEvaluation(
+		private static UnityGraphicsMcpVisualEvaluationRecord BuildApvVisualAcceptanceEvaluation(
 			UnityGraphicsMcpCaptureEvidenceRecord capture,
 			UnityGraphicsMcpAcceptanceProfile profile,
 			Dictionary<string, UnityGraphicsMcpEvaluationMeasurementInput> measurementMap,
@@ -734,7 +734,7 @@ namespace UnityGraphicsMcp
 						AffectedObjectIds = present && measurement.affectedObjectIds != null
 							? measurement.affectedObjectIds.Where(value => value > 0).Distinct().ToList()
 							: new List<int>(),
-						Evidence = present ? NormalizePhase4DTextValues(measurement.evidence) : new List<string>(),
+						Evidence = present ? NormalizeApvVisualAcceptanceTextValues(measurement.evidence) : new List<string>(),
 						RecommendedActions = new List<string>(criterion.RecommendedActions)
 					};
 				item.PassedMinimum = present && item.Score >= item.MinimumScore;
@@ -759,12 +759,12 @@ namespace UnityGraphicsMcp
 			evaluation.WeightedScore = Math.Round(weightedTotal, 4);
 			evaluation.MeetsWeightedThreshold =
 				evaluation.WeightedScore >= profile.MinimumPassScore;
-			evaluation.PerformanceFailures = EvaluatePhase4DPerformance(
+			evaluation.PerformanceFailures = EvaluateApvVisualAcceptancePerformance(
 				profile.PerformanceBudget,
 				performance,
 				out bool performanceIncomplete);
 			evaluation.HasIncompleteRequiredEvidence |= performanceIncomplete;
-			evaluation.AffectedObjects = ResolvePhase4DAffectedObjects(capture, evaluation.Criteria);
+			evaluation.AffectedObjects = ResolveApvVisualAcceptanceAffectedObjects(capture, evaluation.Criteria);
 
 			bool criterionFailure = evaluation.Criteria.Any(item =>
 				item.MeasurementPresent && !item.PassedMinimum);
@@ -786,7 +786,7 @@ namespace UnityGraphicsMcp
 			return evaluation;
 		}
 
-		private static List<Dictionary<string, object>> EvaluatePhase4DPerformance(
+		private static List<Dictionary<string, object>> EvaluateApvVisualAcceptancePerformance(
 			UnityGraphicsMcpPerformanceBudget budget,
 			UnityGraphicsMcpPerformanceMeasurementInput measurement,
 			out bool incomplete)
@@ -804,19 +804,19 @@ namespace UnityGraphicsMcp
 				return failures;
 			}
 
-			AddPhase4DPerformanceFailure(
+			AddApvVisualAcceptancePerformanceFailure(
 				failures,
 				"CPU_FRAME_MS",
 				measurement.cpuFrameMs,
 				budget.MaxCpuFrameMs,
 				measurement.source);
-			AddPhase4DPerformanceFailure(
+			AddApvVisualAcceptancePerformanceFailure(
 				failures,
 				"GPU_FRAME_MS",
 				measurement.gpuFrameMs,
 				budget.MaxGpuFrameMs,
 				measurement.source);
-			AddPhase4DPerformanceFailure(
+			AddApvVisualAcceptancePerformanceFailure(
 				failures,
 				"MEMORY_MB",
 				measurement.memoryMb,
@@ -842,7 +842,7 @@ namespace UnityGraphicsMcp
 			return failures;
 		}
 
-		private static void AddPhase4DPerformanceFailure(
+		private static void AddApvVisualAcceptancePerformanceFailure(
 			List<Dictionary<string, object>> failures,
 			string metric,
 			double? measured,
@@ -861,7 +861,7 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static List<Dictionary<string, object>> ResolvePhase4DAffectedObjects(
+		private static List<Dictionary<string, object>> ResolveApvVisualAcceptanceAffectedObjects(
 			UnityGraphicsMcpCaptureEvidenceRecord capture,
 			IEnumerable<UnityGraphicsMcpEvaluationCriterionResult> criteria)
 		{
@@ -935,12 +935,12 @@ namespace UnityGraphicsMcp
 			}
 		}
 
-		private static Dictionary<string, object> BuildPhase4DRefineDirection(
+		private static Dictionary<string, object> BuildApvVisualAcceptanceRefineDirection(
 			UnityGraphicsMcpVisualEvaluationRecord evaluation)
 		{
 			List<Dictionary<string, object>> failedCriteria = evaluation.Criteria
 				.Where(item => !item.MeasurementPresent || !item.PassedMinimum || item.CriticalFailure)
-				.Select(BuildPhase4DCriterionData)
+				.Select(BuildApvVisualAcceptanceCriterionData)
 				.ToList();
 			List<string> actions = evaluation.Criteria
 				.Where(item => !item.MeasurementPresent || !item.PassedMinimum || item.CriticalFailure)
@@ -969,7 +969,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static Dictionary<string, object> BuildPhase4DProfileData(
+		private static Dictionary<string, object> BuildApvVisualAcceptanceProfileData(
 			UnityGraphicsMcpAcceptanceProfile profile)
 		{
 			return new Dictionary<string, object>
@@ -991,7 +991,7 @@ namespace UnityGraphicsMcp
 					}).ToList() },
 				{ "referenceCaptureId", profile.ReferenceCaptureId },
 				{ "referenceEvidenceDigest", profile.ReferenceEvidenceDigest },
-				{ "performanceBudget", BuildPhase4DPerformanceBudgetData(profile.PerformanceBudget) },
+				{ "performanceBudget", BuildApvVisualAcceptancePerformanceBudgetData(profile.PerformanceBudget) },
 				{ "referenceComparisonPerformedByUnity", false },
 				{ "imageMeaningAnalysisPerformedByUnity", false },
 				{ "humanReviewRequired", true },
@@ -999,7 +999,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static Dictionary<string, object> BuildPhase4DEvaluationData(
+		private static Dictionary<string, object> BuildApvVisualAcceptanceEvaluationData(
 			UnityGraphicsMcpVisualEvaluationRecord evaluation)
 		{
 			return new Dictionary<string, object>
@@ -1015,7 +1015,7 @@ namespace UnityGraphicsMcp
 				{ "meetsWeightedThreshold", evaluation.MeetsWeightedThreshold },
 				{ "hasCriticalFailure", evaluation.HasCriticalFailure },
 				{ "hasIncompleteRequiredEvidence", evaluation.HasIncompleteRequiredEvidence },
-				{ "criteria", evaluation.Criteria.Select(BuildPhase4DCriterionData).ToList() },
+				{ "criteria", evaluation.Criteria.Select(BuildApvVisualAcceptanceCriterionData).ToList() },
 				{ "performanceFailures", evaluation.PerformanceFailures },
 				{ "affectedObjects", evaluation.AffectedObjects },
 				{ "refineDirection", evaluation.RefineDirection },
@@ -1029,7 +1029,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static Dictionary<string, object> BuildPhase4DCriterionData(
+		private static Dictionary<string, object> BuildApvVisualAcceptanceCriterionData(
 			UnityGraphicsMcpEvaluationCriterionResult item)
 		{
 			return new Dictionary<string, object>
@@ -1052,7 +1052,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static bool TryBuildPhase4DMeasurementMap(
+		private static bool TryBuildApvVisualAcceptanceMeasurementMap(
 			UnityGraphicsMcpEvaluationMeasurementInput[] measurements,
 			UnityGraphicsMcpAcceptanceProfile profile,
 			out Dictionary<string, UnityGraphicsMcpEvaluationMeasurementInput> map,
@@ -1070,7 +1070,7 @@ namespace UnityGraphicsMcp
 					? string.Empty
 					: measurement.criterionId.Trim();
 				if (!allowed.Contains(id) || map.ContainsKey(id) ||
-					!IsPhase4DScore(measurement.score) ||
+					!IsApvVisualAcceptanceScore(measurement.score) ||
 					(measurement.confidence.HasValue &&
 					 (measurement.confidence.Value < 0.0 || measurement.confidence.Value > 1.0)))
 				{
@@ -1082,7 +1082,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static bool TryBuildPhase4DPerformanceBudget(
+		private static bool TryBuildApvVisualAcceptancePerformanceBudget(
 			UnityGraphicsMcpPerformanceBudgetInput input,
 			out UnityGraphicsMcpPerformanceBudget budget,
 			out string failureMessage)
@@ -1112,7 +1112,7 @@ namespace UnityGraphicsMcp
 			return true;
 		}
 
-		private static object BuildPhase4DPerformanceBudgetData(
+		private static object BuildApvVisualAcceptancePerformanceBudgetData(
 			UnityGraphicsMcpPerformanceBudget budget)
 		{
 			if (budget == null)
@@ -1129,7 +1129,7 @@ namespace UnityGraphicsMcp
 			};
 		}
 
-		private static string BuildPhase4DProfileDigest(
+		private static string BuildApvVisualAcceptanceProfileDigest(
 			UnityGraphicsMcpAcceptanceProfile profile)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1146,11 +1146,11 @@ namespace UnityGraphicsMcp
 				builder.Append(criterion.CriticalFailureBelow).Append('|');
 				builder.Append(criterion.Required).Append('|');
 			}
-			builder.Append(JsonConvert.SerializeObject(BuildPhase4DPerformanceBudgetData(profile.PerformanceBudget)));
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			builder.Append(JsonConvert.SerializeObject(BuildApvVisualAcceptancePerformanceBudgetData(profile.PerformanceBudget)));
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
-		private static string BuildPhase4DEvaluationDigest(
+		private static string BuildApvVisualAcceptanceEvaluationDigest(
 			UnityGraphicsMcpVisualEvaluationRecord evaluation)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -1170,10 +1170,10 @@ namespace UnityGraphicsMcp
 			}
 			builder.Append(JsonConvert.SerializeObject(evaluation.PerformanceFailures));
 			builder.Append(JsonConvert.SerializeObject(evaluation.AffectedObjects));
-			return UnityGraphicsMcpPhase4Session.HashText(builder.ToString());
+			return UnityGraphicsMcpSaveEvaluationSession.HashText(builder.ToString());
 		}
 
-		private static List<string> NormalizePhase4DTextValues(string[] values)
+		private static List<string> NormalizeApvVisualAcceptanceTextValues(string[] values)
 		{
 			return values == null
 				? new List<string>()
@@ -1186,7 +1186,7 @@ namespace UnityGraphicsMcp
 					.ToList();
 		}
 
-		private static bool IsPhase4DScore(double value)
+		private static bool IsApvVisualAcceptanceScore(double value)
 		{
 			return !double.IsNaN(value) &&
 				!double.IsInfinity(value) &&

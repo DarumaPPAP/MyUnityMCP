@@ -20,7 +20,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
 
-			[ToolParameter("Phase 4Aでは一つの保存済みLoaded Sceneを指定します。", Required = true)]
+			[ToolParameter("Save and Evaluationでは一つの保存済みLoaded Sceneを指定します。", Required = true)]
 			public UnityGraphicsMcpSaveTargetInput[] targets { get; set; }
 		}
 
@@ -56,7 +56,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Exact Diff確認後の一時Save承認Token。", Required = true)]
 			public string approvalToken { get; set; }
 
-			[ToolParameter("Phase 4AではEXPLICIT_SCENEのみ。", Required = true)]
+			[ToolParameter("Save and EvaluationではEXPLICIT_SCENEのみ。", Required = true)]
 			public string saveMode { get; set; }
 		}
 

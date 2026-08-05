@@ -1,8 +1,8 @@
-# Phase 4D — APV Bake Job and Visual Acceptance
+# APV and Visual Acceptance — APV Bake Job and Visual Acceptance
 
 ## 1. 目的
 
-Phase 4Dは、Graphics変更後の永続化、限定Bake、Capture Evidence、Visual Evaluation、不合格理由、次IterationのRefine Directionまでを一つの監査可能な閉ループとして成立させる。
+APV and Visual Acceptanceは、Graphics変更後の永続化、限定Bake、Capture Evidence、Visual Evaluation、不合格理由、次IterationのRefine Directionまでを一つの監査可能な閉ループとして成立させる。
 
 ```text
 変更
@@ -20,7 +20,7 @@ Acceptance ProfileによるVisual Evaluation
 構造化Refine Direction
 ```
 
-Unity C#は画像の意味を自動判定しない。Visual Measurementは人間または外部Vision Evaluatorが明示入力し、最終AcceptanceはPhase 4CのHuman Review契約で確定する。
+Unity C#は画像の意味を自動判定しない。Visual Measurementは人間または外部Vision Evaluatorが明示入力し、最終AcceptanceはCapture EvidenceのHuman Review契約で確定する。
 
 ## 2. APV Tool
 
@@ -108,7 +108,7 @@ Cancellationを要求する。
 - Reference Capture ID / Evidence Digest
 - Performance Budget
 
-Score範囲は0～100、Weightは正数とする。ReferenceはPhase 4C Capture RecordとEvidence Digestの完全一致を要求する。Unity側はReference Imageの意味比較を実行しない。
+Score範囲は0～100、Weightは正数とする。ReferenceはCapture Evidence Capture RecordとEvidence Digestの完全一致を要求する。Unity側はReference Imageの意味比較を実行しない。
 
 ## 5. Performance Budget
 
@@ -125,7 +125,7 @@ MeasurementはPlayer、実機、Profiler、外部計測などのSourceを明示�
 
 ### `graphics.evaluate_capture`
 
-Phase 4C Capture EvidenceとAcceptance Profileへ外部Measurementを適用する。
+Capture Evidence Capture EvidenceとAcceptance Profileへ外部Measurementを適用する。
 
 各Measurement:
 
@@ -142,7 +142,7 @@ Phase 4C Capture EvidenceとAcceptance Profileへ外部Measurementを適用す�
 - `FAILED`: Critical Failure、評価項目最低値未達、総合最低値未達、Performance Budget違反のいずれか
 - `INCOMPLETE`: 必須Measurementまたは必須Performance Measurementが不足
 
-`PASSED`は自動Profile条件を満たしたことだけを意味し、Human Visual Acceptanceではない。最終承認にはPhase 4Cの`graphics.submit_visual_review`と`VISUAL_ACCEPTED`が必要である。
+`PASSED`は自動Profile条件を満たしたことだけを意味し、Human Visual Acceptanceではない。最終承認にはCapture Evidenceの`graphics.submit_visual_review`と`VISUAL_ACCEPTED`が必要である。
 
 ## 7. Object ID関連付け
 

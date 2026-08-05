@@ -1,7 +1,7 @@
 schema_version: "1.0"
-verification_id: MUMCP-PHASE4C-CI-20260805-001
+verification_id: MUMCP-CAPTURE-EVIDENCE-CI-20260805-001
 date: "2026-08-05"
-scope: phase_1_to_phase_4c_editor_tools
+scope: phase_1_to_capture_evidence_editor_tools
 
 host:
   runner: github_actions_ubuntu_24_04
@@ -34,7 +34,7 @@ verification:
     inconclusive: 0
     duration_seconds: 6.8617403
   phase_1_to_4b_regression: passed
-  phase_4c_capture_contract:
+  capture_evidence_capture_contract:
     color_png: passed
     linear_eye_depth_float_exr: passed
     deterministic_object_id_png: passed
@@ -56,10 +56,10 @@ verification:
     image_semantic_analysis_in_unity: prohibited_and_tested
 
 evidence:
-  workflow: Phase 4C Unity Verification
+  workflow: Capture Evidence Unity Verification
   workflow_run_id: 30991161982
   workflow_job_id: 92257378283
-  artifact_name: MyUnityMCP-Phase4C-Unity-Evidence
+  artifact_name: MyUnityMCP-Capture-Evidence
   artifact_id: 8924347145
   artifact_sha256: 2067835d9da6ba3b8241d18d0e2b1b302959481e61f49eebab84635a0494cd56
 
@@ -68,6 +68,6 @@ interpretation:
   player_verified: false
   target_device_verified: false
   notes:
-    - This verifies the 20 Phase 1 through Phase 4C Editor tools in one Unity 6000.0.75f1 CI environment.
+    - This verifies the 20 Phase 1 through Capture Evidence Editor tools in one Unity 6000.0.75f1 CI environment.
     - Depth and Object ID coverage limitations are recorded in each Capture Manifest and are never silently treated as supported.
     - Player, target device, every render pipeline, and every Unity version remain outside this evidence scope.

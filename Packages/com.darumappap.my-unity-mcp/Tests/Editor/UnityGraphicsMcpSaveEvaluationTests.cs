@@ -13,10 +13,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4Tests
+	public sealed class UnityGraphicsMcpSaveEvaluationTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4TemporaryScene.unity";
+			"Assets/MyUnityMcpSaveEvaluationTemporaryScene.unity";
 
 		private readonly List<string> _capturePaths = new List<string>();
 
@@ -28,7 +28,7 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 			_capturePaths.Clear();
@@ -39,7 +39,7 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
 			Undo.ClearAll();
 			RenderTexture.active = null;
 			EditorSceneManager.NewScene(
@@ -57,7 +57,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase4ATools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversSaveEvaluationTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 
@@ -215,7 +215,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void CaptureEvaluation_RestoresTemporaryState_AndWritesPngWhenAvailable()
 		{
-			GameObject cameraObject = new GameObject("Phase4 Capture Camera");
+			GameObject cameraObject = new GameObject("SaveEvaluation Capture Camera");
 			Camera camera = cameraObject.AddComponent<Camera>();
 			SaveScene();
 
@@ -317,9 +317,9 @@ namespace UnityGraphicsMcp
 
 		private static Scene CreateSavedDirtyScene()
 		{
-			new GameObject("Phase4 Save Target");
+			new GameObject("SaveEvaluation Save Target");
 			SaveScene();
-			new GameObject("Phase4 Unsaved Change");
+			new GameObject("SaveEvaluation Unsaved Change");
 			Scene scene = SceneManager.GetActiveScene();
 			EditorSceneManager.MarkSceneDirty(scene);
 			return scene;
@@ -395,7 +395,7 @@ namespace UnityGraphicsMcp
 					Height = 64
 				};
 
-			return UnityGraphicsMcpPhase4Session.StoreCapture(capture);
+			return UnityGraphicsMcpSaveEvaluationSession.StoreCapture(capture);
 		}
 
 		private static string ObjectId(UnityEngine.Object target)

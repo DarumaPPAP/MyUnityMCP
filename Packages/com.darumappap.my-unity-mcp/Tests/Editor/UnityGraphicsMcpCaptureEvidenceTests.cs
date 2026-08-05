@@ -14,10 +14,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4CaptureTests
+	public sealed class UnityGraphicsMcpCaptureEvidenceTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4CaptureTemporaryScene.unity";
+			"Assets/MyUnityMcpCaptureEvidenceTemporaryScene.unity";
 
 		private readonly List<string> _captureDirectories =
 			new List<string>();
@@ -30,8 +30,8 @@ namespace UnityGraphicsMcp
 				NewSceneMode.Single);
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
 			Undo.ClearAll();
 			AssetDatabase.DeleteAsset(TEMP_SCENE_PATH);
 			_captureDirectories.Clear();
@@ -42,8 +42,8 @@ namespace UnityGraphicsMcp
 		{
 			UnityGraphicsMcpSession.ClearSnapshots();
 			UnityGraphicsMcpSession.ClearPlans();
-			UnityGraphicsMcpPhase4Session.ClearForTests();
-			UnityGraphicsMcpPhase4CaptureSession.ClearForTests();
+			UnityGraphicsMcpSaveEvaluationSession.ClearForTests();
+			UnityGraphicsMcpCaptureEvidenceSession.ClearForTests();
 			Undo.ClearAll();
 			RenderTexture.active = null;
 			EditorSceneManager.NewScene(
@@ -62,7 +62,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase4CCaptureTools_AndKeepsThemDisabled()
+		public void Bridge_DiscoversCaptureEvidenceCaptureTools_AndKeepsThemDisabled()
 		{
 			CommandRegistry.Initialize();
 
@@ -95,11 +95,11 @@ namespace UnityGraphicsMcp
 		public void ObjectIdEncoding_IsDeterministic24Bit()
 		{
 			Color32 first =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(1);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(1);
 			Color32 second =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(256);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(256);
 			Color32 third =
-				UnityGraphicsMcpInspection.EncodePhase4CObjectIdForTests(65536);
+				UnityGraphicsMcpInspection.EncodeCaptureEvidenceObjectIdForTests(65536);
 
 			Assert.That(first, Is.EqualTo(new Color32(1, 0, 0, 255)));
 			Assert.That(second, Is.EqualTo(new Color32(0, 1, 0, 255)));
@@ -119,10 +119,10 @@ namespace UnityGraphicsMcp
 
 			string firstDigest =
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(first);
+					.BuildCaptureEvidenceEvidenceDigestForTests(first);
 			string secondDigest =
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(second);
+					.BuildCaptureEvidenceEvidenceDigestForTests(second);
 
 			Assert.That(firstDigest, Is.EqualTo(secondDigest));
 
@@ -131,7 +131,7 @@ namespace UnityGraphicsMcp
 				new string('f', 64);
 			Assert.That(
 				UnityGraphicsMcpInspection
-					.BuildPhase4CEvidenceDigestForTests(second),
+					.BuildCaptureEvidenceEvidenceDigestForTests(second),
 				Is.Not.EqualTo(firstDigest));
 		}
 
@@ -519,7 +519,7 @@ namespace UnityGraphicsMcp
 		private static Camera CreateSavedCamera()
 		{
 			GameObject cameraObject =
-				new GameObject("Phase4C Capture Camera");
+				new GameObject("CaptureEvidence Capture Camera");
 			Camera camera = cameraObject.AddComponent<Camera>();
 			camera.clearFlags = CameraClearFlags.SolidColor;
 			camera.backgroundColor = Color.gray;
@@ -528,7 +528,7 @@ namespace UnityGraphicsMcp
 
 			GameObject target =
 				GameObject.CreatePrimitive(PrimitiveType.Cube);
-			target.name = "Phase4C Capture Target";
+			target.name = "CaptureEvidence Capture Target";
 
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(
@@ -627,7 +627,7 @@ namespace UnityGraphicsMcp
 					Width = 64,
 					Height = 64
 				};
-			return UnityGraphicsMcpPhase4CaptureSession
+			return UnityGraphicsMcpCaptureEvidenceSession
 				.StoreCaptureForTests(capture);
 		}
 

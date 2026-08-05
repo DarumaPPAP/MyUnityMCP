@@ -11,10 +11,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityGraphicsMcp
 {
-	public sealed class UnityGraphicsMcpPhase4DiagnosticsTests
+	public sealed class UnityGraphicsMcpApvVisualAcceptanceiagnosticsTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase4DiagnosticsScene.unity";
+			"Assets/MyUnityMcpApvVisualAcceptanceiagnosticsScene.unity";
 
 		[Test]
 		public void CaptureEvaluation_LogsReadOnlyViolationEvidence()
@@ -22,7 +22,7 @@ namespace UnityGraphicsMcp
 			EditorSceneManager.NewScene(
 				UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
 				UnityEditor.SceneManagement.NewSceneMode.Single);
-			GameObject cameraObject = new GameObject("Phase4 Diagnostics Camera");
+			GameObject cameraObject = new GameObject("SaveEvaluation Diagnostics Camera");
 			Camera camera = cameraObject.AddComponent<Camera>();
 			Scene scene = SceneManager.GetActiveScene();
 			Assert.That(EditorSceneManager.SaveScene(scene, TEMP_SCENE_PATH), Is.True);
