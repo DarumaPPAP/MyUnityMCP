@@ -1,0 +1,37 @@
+name: Release Source Audit Export
+
+on:
+  push:
+    branches:
+      - release/v1.0.0
+    paths:
+      - .github/workflows/release-source-audit-export.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build audit archive
+        run: |
+          set -euo pipefail
+          mkdir -p AuditExport
+          rsync -a --exclude '.git' --exclude 'AuditExport' ./ AuditExport/MyUnityMCP/
+          cd AuditExport
+          zip -qr MyUnityMCP-release-audit.zip MyUnityMCP
+
+      - name: Upload audit archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyUnityMCP-Release-Audit-Source
+          path: AuditExport/MyUnityMCP-release-audit.zip
+          retention-days: 1
+          if-no-files-found: error
