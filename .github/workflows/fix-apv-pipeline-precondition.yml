@@ -1,0 +1,40 @@
+name: Fix APV Pipeline Precondition
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Tools/fix-apv-pipeline-precondition.py
+      - .github/workflows/fix-apv-pipeline-precondition.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+
+      - name: Apply APV precondition
+        run: python3 Tools/fix-apv-pipeline-precondition.py
+
+      - name: Commit fix
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpAdaptiveProbeVolumeBake.cs
+          git commit -m "fix: reject unsupported APV pipeline during plan preparation"
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
