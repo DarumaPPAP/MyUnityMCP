@@ -1,0 +1,100 @@
+schema_version: "1.0"
+verification_id: MUMCP-PHASE4D-CI-20260805-001
+date: "2026-08-05"
+scope: phase_1_to_phase_4d_editor_tools
+
+host:
+  runner: github_actions_ubuntu_24_04
+  execution_mode: batchmode
+
+unity:
+  version: 6000.0.75f1
+  active_build_target: StandaloneLinux64
+  graphics_device: llvmpipe_opengl_core
+
+source:
+  repository: DarumaPPAP/MyUnityMCP
+  branch: feature/phase4d-apv-visual-acceptance
+  verified_commit: 5ad2da97bb559c8c3a9ef253a873aea20cc3e784
+  package_version: "0.7.0"
+
+verification:
+  package_resolution: passed
+  editor_compile: passed
+  bridge_tool_discovery:
+    status: passed
+    discovered_tool_count: 27
+    auto_register: false
+  editmode:
+    status: passed
+    total: 98
+    passed: 98
+    failed: 0
+    skipped: 0
+    inconclusive: 0
+  phase_1_to_4c_regression: passed
+  phase_4d_apv_contract:
+    explicit_baking_set: passed
+    explicit_lighting_scenario: passed
+    exact_scene_set_validation: passed
+    loaded_assets_scene_guard: passed
+    pipeline_capability: passed
+    reflection_backend_capability: passed
+    approval_token_guard: passed
+    expected_revision_guard: passed
+    single_use_plan: passed
+    async_job_state_machine: passed
+    output_sha256_diff: passed
+    no_output_failure: passed
+    native_and_cooperative_cancellation: passed
+    cancellation_without_output: passed_cancelled
+    cancellation_with_output: passed_partial
+    timeout_contract: source_verified
+    running_revision_change_contract: source_verified
+    automatic_save: prohibited_and_tested
+    unity_undo: not_supported_and_explicit
+    automatic_rollback: not_supported_and_explicit
+  phase_4d_visual_acceptance_contract:
+    acceptance_profile: passed
+    criteria_weight: passed
+    minimum_pass_score: passed
+    per_criterion_minimum: passed
+    critical_failure_override: passed
+    reference_capture_provenance: passed
+    performance_budget: passed
+    missing_required_measurement_incomplete: passed
+    object_id_mapping: passed
+    structured_failure_reasons: passed
+    structured_refine_direction: passed
+    passed_evaluation_refine_rejected: passed
+    automatic_profile_pass_separated_from_human_acceptance: passed
+    image_semantic_analysis_in_unity: prohibited_and_tested
+  closed_loop_contract:
+    change: passed
+    explicit_save: passed
+    limited_apv_bake_job: passed
+    color_depth_object_id_capture_record: passed
+    visual_evaluation: passed
+    failure_reason: passed
+    next_refine_direction: passed
+
+evidence:
+  workflow: Phase 4D Unity Verification
+  workflow_run_id: 31005540655
+  workflow_job_id: 92304475814
+  artifact_name: MyUnityMCP-Phase4D-Unity-Evidence
+  artifact_id: 8930337405
+  artifact_sha256: 2dfa78a86310f8424807f68924bd58a99d998a3d51d3cae741a0b62b0f6d447d
+
+interpretation:
+  global_support_claim: false
+  actual_apv_bake_in_ci: false
+  apv_job_contract_verified_with_backend_override: true
+  reflection_backend_compiled: true
+  player_verified: false
+  target_device_verified: false
+  notes:
+    - This verifies 27 Phase 1 through Phase 4D Editor tools and 98 contract tests in one Unity 6000.0.75f1 CI environment.
+    - CI does not silently fake a real APV bake. The APV job state machine, output diff, partial result, cancellation, and closed loop are verified with an explicit test backend override.
+    - The real APV reflection backend compiles and performs runtime capability checks, but an actual URP or HDRP Baking Set sample remains future environment evidence.
+    - Automated profile pass is not final visual acceptance. Human review and VISUAL_ACCEPTED remain mandatory.
