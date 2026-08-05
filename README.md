@@ -158,7 +158,7 @@ Packages/
     Editor/
     Tests/Editor/
 TestProjects/
-  MyUnityMCPPhase1/
+  MyUnityMCPVerification/
 Tests/
   Compatibility/
 ```
