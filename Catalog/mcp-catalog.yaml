@@ -1,118 +1,61 @@
-schema_version: "1.1"
-
-selection:
-  select_exactly_one_primary_creator_or_domain_mcp: true
-  conditional_domain_mcp_limit: 2
-  load_all_manifests: false
-  load_all_tool_schemas: false
-  load_package_source_by_default: false
-
-control_plane:
-  id: unity_agent_mcp
-  kind: control_plane
-  status: specified
-  specification: Specs/UnityAgentMCP/spec.md
-  owns:
-    - creator_and_domain_selection
-    - activation_levels
-    - tool_group_gates
-    - shared_transaction_contract
-    - result_integration
-  does_not_own:
-    - graphics_operations
-    - cinematic_operations
-    - ui_operations
-    - addressables_operations
-    - profiling_analysis
+schema_version: "2.0"
+release_version: "1.0.0"
 
 modules:
   unity_graphics_mcp:
     kind: domain
-    status: phase_3_editor_operational
+    status: editor_operational
     manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
     specification: Specs/UnityGraphicsMCP/spec.md
-    use_when:
-      - graphics project and scene inspection
-      - visual direction planning
-      - approval gated light camera reflection probe and volume mutation
-      - lighting GI reflection material atmosphere validation
-      - reference driven scene planning
-    do_not_use_when:
-      - shader compile error only
-      - gameplay logic only
-      - build failure only
-      - save bake or capture is required before phase_4
     default_tool_group: inspect
     available_tool_groups:
       - inspect
       - plan
       - mutate
-    unavailable_tool_groups:
+      - save
       - bake
       - capture
+      - evaluate
+      - review_and_refine
+      - execution
+    use_when:
+      - Unity graphics project and scene inspection
+      - approval gated graphics mutation and save
+      - explicit dependency or APV bake
+      - capture evidence and visual evaluation
+      - long running execution tracking
+    do_not_use_when:
+      - gameplay logic only
+      - player build orchestration only
+      - shader source repair only
 
+  unity_agent_mcp:
+    kind: control_plane
+    status: design_only_not_executable
+    specification: Specs/UnityAgentMCP/spec.md
   unity_cinematic_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - Timeline Cinemachine shot camera language
-      - cutscene authoring
-      - animation binding and signals
-    do_not_use_when:
-      - static look development only
-
+    status: design_only_not_executable
   unity_ui_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - uGUI UI Toolkit layout safe area input
-
+    status: design_only_not_executable
   unity_addressables_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - Addressables groups labels dependencies content update
-
+    status: design_only_not_executable
   unity_animation_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - Animator AnimationClip Rig Playable state machine
-
+    status: design_only_not_executable
   unity_audio_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - AudioMixer BGM SE Timeline and beat synchronization
-
+    status: design_only_not_executable
   unity_profiler_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - CPU GPU memory overdraw before after target device evidence
-
+    status: design_only_not_executable
   unity_build_mcp:
     kind: domain
-    status: planned
-    use_when:
-      - Player Settings IL2CPP build target and platform validation
+    status: design_only_not_executable
 
-activation:
-  normal_use_loads:
-    - compact_catalog_entry
-    - selected_manifest
-    - selected_tool_group_schema
-  normal_use_does_not_load:
-    - every_manifest
-    - every_tool_schema
-    - package_source
-    - unrelated_domain_knowledge
-
-source_read_policy:
-  normal_tool_use: prohibited
-  selected_package_implementation: allowed
-  selected_package_bug_fix: allowed
-  selected_schema_audit: allowed
-  selected_unity_version_migration: allowed
-  security_review: allowed
-  all_package_scan: prohibited
+selection:
+  load_all_tool_schemas: false
+  load_package_source_by_default: false
+  explicit_tool_activation_required: true

@@ -203,13 +203,13 @@ namespace UnityGraphicsMcp
 
 			if (transaction == null || transaction.Undone)
 			{
-				failureMessage = "Undo可能なPhase 3B Transactionがありません。";
+				failureMessage = "Undo可能なEnvironment Mutation Transactionがありません。";
 				return false;
 			}
 
 			if (!string.Equals(transaction.TransactionId, transactionId, StringComparison.Ordinal))
 			{
-				failureMessage = "transactionIdが直近Phase 3B Transactionと一致しません。";
+				failureMessage = "transactionIdが直近Environment Mutation Transactionと一致しません。";
 				return false;
 			}
 
@@ -309,7 +309,7 @@ namespace UnityGraphicsMcp
 
 				if (issues.Count > 0 || prepared.Count != operations.Length)
 				{
-					E_MCP_TOOL_STATUS status = issues.Any(issue => issue.code != null && issue.code.StartsWith("GFX-PHASE3B-API-", StringComparison.Ordinal))
+					E_MCP_TOOL_STATUS status = issues.Any(issue => issue.code != null && issue.code.StartsWith("GFX-ENVIRONMENT-API-", StringComparison.Ordinal))
 						? E_MCP_TOOL_STATUS.UNSUPPORTED
 						: E_MCP_TOOL_STATUS.INVALID_REQUEST;
 					UnityGraphicsMcpToolResult invalid = CreateResult("graphics.prepare_environment_plan", requestId, status, "Environment OperationをExecutable Planへ変換できませんでした。", null);
@@ -361,7 +361,7 @@ namespace UnityGraphicsMcp
 
 				if (!string.Equals(string.IsNullOrWhiteSpace(saveMode) ? ENVIRONMENT_SAVE_MODE_NONE : saveMode.Trim(), ENVIRONMENT_SAVE_MODE_NONE, StringComparison.OrdinalIgnoreCase))
 				{
-					return CreateResult("graphics.apply_environment_plan", requestId, E_MCP_TOOL_STATUS.UNSUPPORTED, "Phase 3Bで利用できるsaveModeはNONEだけです。", null);
+					return CreateResult("graphics.apply_environment_plan", requestId, E_MCP_TOOL_STATUS.UNSUPPORTED, "Environment Mutationで利用できるsaveModeはNONEだけです。", null);
 				}
 
 				UnityGraphicsMcpExecutableEnvironmentPlan plan;
@@ -383,7 +383,7 @@ namespace UnityGraphicsMcp
 
 				Undo.IncrementCurrentGroup();
 				int undoGroup = Undo.GetCurrentGroup();
-				Undo.SetCurrentGroupName("MyUnityMCP Phase 3B Environment Transaction");
+				Undo.SetCurrentGroupName("MyUnityMCP Environment Transaction");
 				List<Dictionary<string, object>> applied = new List<Dictionary<string, object>>();
 				List<UnityGraphicsMcpEnvironmentTransactionTarget> targets = new List<UnityGraphicsMcpEnvironmentTransactionTarget>();
 
@@ -468,7 +468,7 @@ namespace UnityGraphicsMcp
 
 				if (Undo.GetCurrentGroup() != transaction.UndoGroup)
 				{
-					return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "Phase 3B TransactionがUndo Stackの最新Groupではありません。", null);
+					return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.INVALID_REQUEST, "Environment Mutation TransactionがUndo Stackの最新Groupではありません。", null);
 				}
 
 				if (!TransactionTargetsStillMatch(transaction))
@@ -479,7 +479,7 @@ namespace UnityGraphicsMcp
 				Undo.PerformUndo();
 				UnityGraphicsMcpSession.NotifyMutationApplied();
 				UnityGraphicsMcpEnvironmentMutationSession.MarkUndone();
-				return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.SUCCESS, "直近Phase 3B TransactionをUndoしました。", new Dictionary<string, object>
+				return CreateResult("graphics.undo_last_environment_transaction", requestId, E_MCP_TOOL_STATUS.SUCCESS, "直近Environment Mutation TransactionをUndoしました。", new Dictionary<string, object>
 				{
 					{ "transactionId", transaction.TransactionId },
 					{ "revision", UnityGraphicsMcpSession.Revision },
@@ -500,14 +500,14 @@ namespace UnityGraphicsMcp
 			{
 				if (input == null || string.IsNullOrWhiteSpace(input.operationId))
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-IDENTITY-001", "operationIdは必須です。", null);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-IDENTITY-001", "operationIdは必須です。", null);
 					continue;
 				}
 
 				string operationId = input.operationId.Trim();
 				if (!operationIds.Add(operationId))
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-IDENTITY-002", "同一Plan内でoperationIdは一意である必要があります。", operationId);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-IDENTITY-002", "同一Plan内でoperationIdは一意である必要があります。", operationId);
 				}
 
 				string operation = string.IsNullOrWhiteSpace(input.operation) ? string.Empty : input.operation.Trim().ToUpperInvariant();
@@ -516,7 +516,7 @@ namespace UnityGraphicsMcp
 					string target = input.targetObjectId.Trim();
 					if (!updateTargets.Add(target))
 					{
-						AddEnvironmentIssue(issues, "GFX-PHASE3B-IDENTITY-003", "同じComponentへの複数Updateは一つのOperationへ統合してください。", target);
+						AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-IDENTITY-003", "同じComponentへの複数Updateは一つのOperationへ統合してください。", target);
 					}
 				}
 			}
@@ -532,7 +532,7 @@ namespace UnityGraphicsMcp
 			prepared = null;
 			if (input == null || string.IsNullOrWhiteSpace(input.operationId) || string.IsNullOrWhiteSpace(input.operation))
 			{
-				AddEnvironmentIssue(issues, "GFX-PHASE3B-001", "operationIdとoperationは必須です。", null);
+				AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-001", "operationIdとoperationは必須です。", null);
 				return false;
 			}
 
@@ -548,13 +548,13 @@ namespace UnityGraphicsMcp
 				case "VOLUME_CREATE": kind = "VOLUME"; create = true; break;
 				case "VOLUME_UPDATE": kind = "VOLUME"; create = false; break;
 				default:
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-002", "未対応Operationです。", operation);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-002", "未対応Operationです。", operation);
 					return false;
 			}
 
 			if (kind == "VOLUME" && ResolveEnvironmentVolumeType() == null)
 			{
-				AddEnvironmentIssue(issues, "GFX-PHASE3B-API-001", "Volume APIを提供するRender Pipelines Core Packageが導入されていません。", operation);
+				AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-API-001", "Volume APIを提供するRender Pipelines Core Packageが導入されていません。", operation);
 				return false;
 			}
 
@@ -564,7 +564,7 @@ namespace UnityGraphicsMcp
 			{
 				if (!TryResolveEnvironmentLoadedScene(input.targetScenePath, out targetScene))
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-004", "作成先Sceneを解決できません。", input.targetScenePath);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-004", "作成先Sceneを解決できません。", input.targetScenePath);
 					return false;
 				}
 			}
@@ -572,7 +572,7 @@ namespace UnityGraphicsMcp
 			{
 				if (!TryResolveEnvironmentGlobalObject(input.targetObjectId, out target) || !IsExpectedEnvironmentComponent(target, kind))
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-005", "更新対象Componentを解決できないか種別が一致しません。", input.targetObjectId);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-005", "更新対象Componentを解決できないか種別が一致しません。", input.targetObjectId);
 					return false;
 				}
 				targetScene = ((Component)target).gameObject.scene;
@@ -621,7 +621,7 @@ namespace UnityGraphicsMcp
 					string projection = input.projection.Trim().ToUpperInvariant();
 					if (projection != "PERSPECTIVE" && projection != "ORTHOGRAPHIC")
 					{
-						AddEnvironmentIssue(issues, "GFX-PHASE3B-101", "projectionはPERSPECTIVEまたはORTHOGRAPHICです。", projection);
+						AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-101", "projectionはPERSPECTIVEまたはORTHOGRAPHICです。", projection);
 						return false;
 					}
 					values["projection"] = projection;
@@ -636,7 +636,7 @@ namespace UnityGraphicsMcp
 					CameraClearFlags clearFlags;
 					if (!Enum.TryParse(input.clearFlags, true, out clearFlags))
 					{
-						AddEnvironmentIssue(issues, "GFX-PHASE3B-102", "clearFlagsを解釈できません。", input.clearFlags);
+						AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-102", "clearFlagsを解釈できません。", input.clearFlags);
 						return false;
 					}
 					values["clearFlags"] = clearFlags.ToString();
@@ -694,7 +694,7 @@ namespace UnityGraphicsMcp
 				Object profile = profileType == null ? null : AssetDatabase.LoadAssetAtPath(input.sharedProfileAssetPath, profileType);
 				if (profile == null)
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-301", "既存VolumeProfile Assetを解決できません。", input.sharedProfileAssetPath);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-301", "既存VolumeProfile Assetを解決できません。", input.sharedProfileAssetPath);
 					return false;
 				}
 				values["sharedProfileAssetPath"] = input.sharedProfileAssetPath;
@@ -709,7 +709,7 @@ namespace UnityGraphicsMcp
 		{
 			if (volumeType == null)
 			{
-				AddEnvironmentIssue(issues, "GFX-PHASE3B-API-001", "Volume APIを解決できません。", null);
+				AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-API-001", "Volume APIを解決できません。", null);
 				return false;
 			}
 
@@ -724,7 +724,7 @@ namespace UnityGraphicsMcp
 			{
 				if (!CanReadAndWriteEnvironmentMember(volumeType, memberName))
 				{
-					AddEnvironmentIssue(issues, "GFX-PHASE3B-API-002", volumeType.FullName + "." + memberName + "を読み書きできません。", memberName);
+					AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-API-002", volumeType.FullName + "." + memberName + "を読み書きできません。", memberName);
 				}
 			}
 			return issues.Count == 0;
@@ -732,7 +732,7 @@ namespace UnityGraphicsMcp
 
 		private static bool AddInvalidEnvironmentEnum(List<UnityGraphicsMcpIssue> issues, string name, string value)
 		{
-			AddEnvironmentIssue(issues, "GFX-PHASE3B-201", name + "を解釈できません。", value);
+			AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-201", name + "を解釈できません。", value);
 			return false;
 		}
 
@@ -748,7 +748,7 @@ namespace UnityGraphicsMcp
 					if (!TryResolveEnvironmentSceneByHandle(operation.TargetSceneHandle, out scene) ||
 						!string.Equals(operation.BaselineDigest, BuildEnvironmentCreateBaselineDigest(scene, operation.ComponentKind), StringComparison.Ordinal))
 					{
-						AddEnvironmentIssue(issues, "GFX-PHASE3B-401", "作成先SceneのBaselineが変化しました。", operation.OperationId);
+						AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-401", "作成先SceneのBaselineが変化しました。", operation.OperationId);
 						return false;
 					}
 				}
@@ -759,7 +759,7 @@ namespace UnityGraphicsMcp
 						!IsExpectedEnvironmentComponent(component, operation.ComponentKind) ||
 						!string.Equals(operation.BaselineDigest, HashEnvironmentDictionary(CaptureEnvironmentState(component, operation.ComponentKind)), StringComparison.Ordinal))
 					{
-						AddEnvironmentIssue(issues, "GFX-PHASE3B-402", "更新対象ComponentのBaselineが変化しました。", operation.OperationId);
+						AddEnvironmentIssue(issues, "GFX-ENVIRONMENT-402", "更新対象ComponentのBaselineが変化しました。", operation.OperationId);
 						return false;
 					}
 				}
@@ -1180,7 +1180,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Environment Plan ID。", Required = true)] public string planId { get; set; }
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Approval Token。", Required = true)] public string approvalToken { get; set; }
-			[ToolParameter("Phase 3BではNONEのみ。", Required = false)] public string saveMode { get; set; }
+			[ToolParameter("Environment MutationではNONEのみ。", Required = false)] public string saveMode { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -1189,7 +1189,7 @@ namespace UnityGraphicsMcp
 		}
 	}
 
-	[McpForUnityTool("graphics.undo_last_environment_transaction", Description = "対象StateとUndo Groupが適用直後から変化していない場合だけ、直近Phase 3B Transactionを一括Undoします。", AutoRegister = false, Group = "core")]
+	[McpForUnityTool("graphics.undo_last_environment_transaction", Description = "対象StateとUndo Groupが適用直後から変化していない場合だけ、直近Environment Mutation Transactionを一括Undoします。", AutoRegister = false, Group = "core")]
 	public static class GraphicsUndoLastEnvironmentTransactionTool
 	{
 		public sealed class Parameters

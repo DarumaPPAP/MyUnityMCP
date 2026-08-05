@@ -269,7 +269,7 @@ namespace UnityGraphicsMcp
 			[ToolParameter("Preview確認後に使用する一時承認Token。", Required = true)]
 			public string approvalToken { get; set; }
 
-			[ToolParameter("Phase 3AではNONEのみ。Scene / Assetを自動保存しません。", Required = true)]
+			[ToolParameter("Light MutationではNONEのみ。Scene / Assetを自動保存しません。", Required = true)]
 			public string saveMode { get; set; }
 		}
 

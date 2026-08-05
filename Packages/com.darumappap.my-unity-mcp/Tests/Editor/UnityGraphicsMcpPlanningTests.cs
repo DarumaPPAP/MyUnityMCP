@@ -31,7 +31,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase2Tools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversPlanningTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 

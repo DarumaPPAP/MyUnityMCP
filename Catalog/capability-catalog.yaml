@@ -1,92 +1,56 @@
-schema_version: "1.1"
+schema_version: "2.0"
+release_version: "1.0.0"
 
 capabilities:
   graphics:
     owner: unity_graphics_mcp
-    status: phase_3_operational
+    status: editor_operational
     modules:
-      - id: project_and_scene_inspection
-        status: implemented_editor_verified
-        mutation: false
-      - id: direction_planning
-        status: implemented_editor_verified
-        mutation: false
-      - id: scene_composition
-        status: inspection_only_editor_verified
-      - id: camera
-        status: create_update_editor_verified
-      - id: material_and_surface
-        status: inspection_only_editor_verified
-      - id: direct_light_and_shadow
-        status: create_update_editor_verified
-      - id: lightmap_and_lighting_data
-        status: inspection_and_validation_editor_verified
-      - id: light_probe
-        status: inspection_only_editor_verified
-      - id: adaptive_probe_volume
-        status: capability_detection_only
-      - id: reflection_probe
-        status: create_update_editor_verified
-      - id: environment_and_fog
-        status: inspection_only_editor_verified
-      - id: decal
-        status: inspection_only_editor_verified
-      - id: particle_system
-        status: inspection_only_editor_verified
-      - id: volume_and_post_process
-        status: volume_component_create_update_editor_verified
-        limitations:
-          - existing_shared_profile_assignment_only
-          - profile_override_mutation_not_implemented
-      - id: renderer_feature_inspection
-        status: inspection_only_editor_verified
-      - id: graphics_save
-        status: planned_phase_4
-      - id: graphics_bake
-        status: planned_phase_4
-      - id: graphics_capture
-        status: planned_phase_4
+      project_and_scene_inspection: implemented_editor_verified
+      direction_planning: implemented_editor_verified
+      light_mutation: create_update_undo_editor_verified
+      camera_mutation: create_update_undo_editor_verified
+      reflection_probe_mutation: create_update_undo_editor_verified
+      volume_mutation: conditional_volume_api
+      explicit_scene_save: implemented_editor_verified
+      dependency_bake: conditional_explicit_backend
+      adaptive_probe_volume_bake: conditional_urp_hdrp_backend
+      capture_evidence: conditional_graphics_device
+      visual_evaluation: implemented_editor_verified
+      human_visual_review: implemented_editor_verified
+      structured_refine: implemented_editor_verified
+      execution_hardening: implemented_editor_verified
+    limitations:
+      - no_generic_serialized_property_mutation
+      - no_automatic_save
+      - no_automatic_full_bake
+      - no_automatic_visual_acceptance
+      - player_runtime_tool_execution_unsupported
 
   cinematic:
     owner: unity_cinematic_mcp
-    status: planned
-    modules:
-      - id: timeline
-        status: planned
-      - id: cinemachine
-        status: planned
-      - id: shot_and_continuity
-        status: planned
-      - id: animation_binding
-        status: planned
-      - id: signal
-        status: planned
-
+    status: design_only_not_executable
   ui:
     owner: unity_ui_mcp
-    status: planned
-    modules:
-      - id: ugui
-        status: planned
-      - id: ui_toolkit
-        status: planned
-      - id: safe_area
-        status: planned
-
+    status: design_only_not_executable
   addressables:
     owner: unity_addressables_mcp
-    status: planned
-    modules:
-      - id: groups_and_labels
-        status: planned
-      - id: dependency_analysis
-        status: planned
-      - id: content_update
-        status: planned
+    status: design_only_not_executable
+  animation:
+    owner: unity_animation_mcp
+    status: design_only_not_executable
+  audio:
+    owner: unity_audio_mcp
+    status: design_only_not_executable
+  profiler:
+    owner: unity_profiler_mcp
+    status: design_only_not_executable
+  build:
+    owner: unity_build_mcp
+    status: design_only_not_executable
 
 rules:
-  capability_is_not_a_separate_mcp_server_by_default: true
-  capability_does_not_own_cross_domain_workflow: true
-  capability_does_not_make_visual_acceptance_decisions: true
-  capability_source_is_not_loaded_during_normal_tool_use: true
+  explicit_tool_activation_required: true
+  capability_does_not_make_human_acceptance_decisions: true
   generic_serialized_property_mutation_is_prohibited: true
+  silent_fallback_is_prohibited: true

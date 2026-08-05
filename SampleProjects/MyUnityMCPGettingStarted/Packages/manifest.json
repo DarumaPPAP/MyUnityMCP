@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#9f84072c38906e3ca903f14f6a8edc1a1c9012c3",
+    "com.darumappap.my-unity-mcp": "file:../../../Packages/com.darumappap.my-unity-mcp",
+    "com.unity.test-framework": "1.1.33",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.uielements": "1.0.0",
+    "com.unity.modules.unitywebrequest": "1.0.0"
+  }
+}

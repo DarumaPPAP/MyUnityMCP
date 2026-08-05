@@ -1,13 +1,13 @@
 # UnityGraphicsMCP Dependency Bake Dirty Dependency Bake
 
 - DocumentVersion: `1.0.0`
-- Phase: `Dependency Bake`
+- Capability: `Dependency Bake`
 - Scope: `Dirty Dependency Set / Bake Plan / Dependency-limited Bake`
 - PrimaryNamespace: `UnityGraphicsMcp`
 
 ## 1. 目的
 
-Phase 3 MutationとSave and Evaluation Saveの結果から、再生成が必要なGraphics依存をEditor Session内で追跡し、明示承認されたDependencyだけをBakeする。
+Graphics Mutationと明示Saveの結果から、再生成が必要なGraphics依存をEditor Session内で追跡し、明示承認されたDependencyだけをBakeする。
 
 Save、Bake、Captureは独立した副作用境界として扱う。Mutation ApplyへBakeを混在させない。
 

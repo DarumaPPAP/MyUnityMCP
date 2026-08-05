@@ -17,7 +17,7 @@ namespace UnityGraphicsMcp
 	public sealed class UnityGraphicsMcpMutationTests
 	{
 		private const string TEMP_SCENE_PATH =
-			"Assets/MyUnityMcpPhase3ATemporaryScene.unity";
+			"Assets/MyUnityMcpLightMutationTemporaryScene.unity";
 
 		[SetUp]
 		public void SetUp()
@@ -39,7 +39,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase3ATools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversLightMutationTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 
@@ -69,14 +69,14 @@ namespace UnityGraphicsMcp
 		public void Bridge_CanInvokePrepareLightPlanHandler()
 		{
 			Dictionary<string, object> directionData = CompileDirection(
-				"test-phase3a-bridge-direction");
+				"test-light-mutation-bridge-direction");
 			CommandRegistry.Initialize();
 			Func<JObject, object> handler =
 				CommandRegistry.GetHandler("graphics.prepare_light_plan");
 
 			object response = handler(new JObject
 			{
-				["requestId"] = "test-phase3a-bridge",
+				["requestId"] = "test-light-mutation-bridge",
 				["directionPlanId"] = directionData["planId"] as string,
 				["expectedRevision"] = Convert.ToInt64(directionData["expectedRevision"]),
 				["lightOperations"] = new JArray

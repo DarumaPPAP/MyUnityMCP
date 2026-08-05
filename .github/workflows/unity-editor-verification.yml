@@ -10,6 +10,9 @@ on:
       - Specs/UnityGraphicsMCP/**
       - Tests/Compatibility/**
       - .github/workflows/unity-editor-verification.yml
+      - README.md
+      - CHANGELOG.md
+      - VERSION
   workflow_dispatch: {}
 
 concurrency:
@@ -18,7 +21,7 @@ concurrency:
 
 jobs:
   editmode:
-    name: Compile, 32 Tool Discovery and 124 EditMode Contracts
+    name: Compile, 32 Tool Discovery and 125 EditMode Contracts
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -167,8 +170,8 @@ jobs:
           inconclusive = int(root.attrib.get("inconclusive", "0"))
 
           print(f"Unity Editor contract results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
-          if total < 124:
-              raise SystemExit(f"Expected at least 124 Unity Editor contract tests, but only {total} ran.")
+          if total < 125:
+              raise SystemExit(f"Expected at least 125 Unity Editor contract tests, but only {total} ran.")
           if failed != 0 or skipped != 0 or inconclusive != 0 or passed != total:
               for case in root.iter("test-case"):
                   if case.attrib.get("result") != "Passed":

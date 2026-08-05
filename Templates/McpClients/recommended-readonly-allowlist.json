@@ -1,0 +1,13 @@
+{
+  "allowedTools": [
+    "graphics.get_support_matrix",
+    "graphics.get_error_catalog",
+    "graphics.inspect_project",
+    "graphics.inspect_scene",
+    "graphics.validate_scene",
+    "graphics.compile_direction",
+    "graphics.preview_plan",
+    "graphics.get_execution_status",
+    "graphics.get_execution_history"
+  ]
+}

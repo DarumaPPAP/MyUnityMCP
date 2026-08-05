@@ -1,168 +1,86 @@
 # MyUnityMCP
 
-UnityAgentの判断規則と連携し、目的別Creator、専門Domain MCP、Unity操作Capability Moduleを必要時だけ有効化するUnity制作基盤です。
+MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEditor拡張Packageです。Project／SceneのInspection、構造化Planning、明示承認付きMutation／Save／Bake、Capture Evidence、Visual Evaluation、Refine、長時間実行の履歴・Timeout・Cancellationを提供します。
 
-## Architecture
+## v1.0 scope
 
-```text
-UnityAgent
-ユーザーの規約・感性・Unity知識
-        ↓
-UnityAgentMCP
-Creator / Domain MCPの選択、権限、実行順序
-        ↓
-Creator Workflow
-LiveCreator / MovieCreator / WorldCreator
-        ↓
-Domain MCP
-Graphics / Cinematic / UI / Addressables / Profiler ...
-        ↓
-Capability Module
-Light / Camera / Probe / Volume / Timeline / Cinemachine ...
-        ↓
-Unity Editor API
-```
+- Unity Editor専用
+- Unity `6000.0`以上
+- CI検証環境: Unity `6000.0.75f1`
+- MCP Tool: 32
+- Toolはすべて既定で非公開（`AutoRegister = false`）
+- Mutation、Save、Bakeはそれぞれ別の承認境界
+- Player／実機上でのTool実行は非対応
 
-## Ownership
+## Quick Start
 
-このRepositoryはUnityAgentMCP、Creator Workflow、Domain MCP、Capability Module、Catalog、Manifest、UPM Package、MCP固有仕様とTestを所有します。
+1. Unity Package ManagerからMCP for Unity Bridgeを導入します。
+2. このRepositoryのPackageをGit URL、`.tgz`、またはEmbedded Packageとして導入します。
+3. Unityで `Window > MCP for Unity` を開き、検出されたMCP Clientを設定します。
+4. Client側では必要なToolだけを許可します。
+5. 最初のCallは `graphics.inspect_project`、続いて `graphics.inspect_scene` を実行します。
 
-MCPが生成・変更するScene、Prefab、Material、Timeline、Volume Profile等は対象Unity Projectが所有します。UnityAgentはユーザー固有の規約、Visual Direction、Route、Context、Knowledgeを所有します。
+詳細は[Quick Start](Packages/com.darumappap.my-unity-mcp/Documentation~/quick-start.md)と[Installation](Packages/com.darumappap.my-unity-mcp/Documentation~/installation.md)を参照してください。
 
-## Project environment resolution
-
-Unity Version、Render Pipeline、Rendering Path、RenderGraph、Target PlatformをRepository全体の固定前提にしません。
+## Safety model
 
 ```text
-対象Unity ProjectをInspect
-→ 検出したProject事実を確定
-→ 今回指定されたTargetと比較
-→ 利用可能なBackend / Capabilityだけを選択
-→ 未対応・未検証・未設定を区別して返す
+Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
+       → Prepare Save → Save
+       → Prepare Bake → Bake
+       → Capture → Evaluate → Human Review → Refine
 ```
 
-優先順位:
+- Read-only ToolはScene、Asset、Undo Groupを変更しません。
+- ApplyはPlan ID、Expected Revision、Approval Token、Baselineを再検証します。
+- SaveとBakeはMutationへ暗黙統合しません。
+- 自動Save、自動Full Bake、任意SerializedProperty書換え、Silent Fallbackは禁止です。
+- Visual EvaluationのPASSはHuman Acceptanceを代替しません。
+- Domain Reload、Compile、Play Mode移行、Scene構成変更、Client切断、Unity再起動はExecution Historyへ構造化して残します。
 
-1. 対象Unity Projectから検出した事実
-2. 今回明示されたTargetと制約
-3. Project固有Profile
-4. UnityAgentの既定Preference
+## Documentation
 
-## Current status
+- [Tool Reference](Packages/com.darumappap.my-unity-mcp/Documentation~/tool-reference.md)
+- [Status / Error Codes](Packages/com.darumappap.my-unity-mcp/Documentation~/status-and-error-codes.md)
+- [Safety Model](Packages/com.darumappap.my-unity-mcp/Documentation~/safety-model.md)
+- [Bake Constraints](Packages/com.darumappap.my-unity-mcp/Documentation~/bake-constraints.md)
+- [Pipeline Support](Packages/com.darumappap.my-unity-mcp/Documentation~/pipeline-support.md)
+- [MCP Client Configuration](Packages/com.darumappap.my-unity-mcp/Documentation~/mcp-client-configuration.md)
+- [Sample Workflow](Packages/com.darumappap.my-unity-mcp/Documentation~/sample-workflow.md)
+- [Troubleshooting](Packages/com.darumappap.my-unity-mcp/Documentation~/troubleshooting.md)
+- [Upgrade Guide](Packages/com.darumappap.my-unity-mcp/Documentation~/upgrade-guide.md)
+- [Known Issues](Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md)
+- [Support Matrix](Specs/UnityGraphicsMCP/support-matrix.md)
 
-```text
-Phase 0  Architecture / Catalog                         DONE
-Phase 1  Project / Scene Inspection                     DONE
-Phase 2  Direction Planning                             DONE
-Phase 3  Approval-gated Graphics Mutation / Undo        DONE
-Phase 4  Save / Bake / Capture / Visual Refine          PENDING
-```
+## Distribution
 
-実装済みTool:
+- UPM Package: `Packages/com.darumappap.my-unity-mcp`
+- Package Sample: `Samples~/Getting Started`
+- Standalone Sample Project: `SampleProjects/MyUnityMCPGettingStarted`
+- MCP Client Templates: `Templates/McpClients`
+- Acceptance Profile Example: `Templates/AcceptanceProfiles`
+- CI Template: `Templates/CI`
 
-```text
-graphics.inspect_project
-graphics.inspect_scene
-graphics.validate_scene
-graphics.compile_direction
-graphics.preview_plan
-graphics.prepare_light_plan
-graphics.apply_plan
-graphics.undo_last_transaction
-graphics.prepare_environment_plan
-graphics.apply_environment_plan
-graphics.undo_last_environment_transaction
-```
-
-全Toolは`AutoRegister = false`で、明示Activationされた場合だけ公開します。
-
-## Phase 3 flow
-
-Light:
-
-```text
-inspect
-→ compile_direction
-→ preview_plan
-→ prepare_light_plan
-→ Exact Diff確認・承認
-→ apply_plan
-→ undo_last_transaction
-```
-
-Camera / Reflection Probe / Volume:
-
-```text
-inspect
-→ compile_direction
-→ preview_plan
-→ prepare_environment_plan
-→ Exact Diff確認・承認
-→ apply_environment_plan
-→ undo_last_environment_transaction
-```
-
-Applyは次をすべて満たす場合だけ実行します。
-
-- Direction Planが現在Sessionに存在する
-- Expected Revisionが現在値と一致する
-- Approval Tokenが一致する
-- Preview時Baselineが適用直前状態と一致する
-- 同一Plan内でOperation IDとUpdate対象が重複しない
-- 対象Unity APIをPrepare時に読み書き可能と確認できる
-- `saveMode = NONE`
-
-変更は一つのUnity Undo Groupへ集約し、例外時はTransaction全体をRollbackします。Undo時は対象State、Revision、Transaction ID、最新Undo Groupを再確認します。自動保存とBakeは行いません。
-
-## Phase 3 mutation scope
-
-対応:
-
-- Light Create / Update
-- Camera Create / Update
-- Reflection Probe Create / Update
-- Volume Create / Update
-- 既存Volume Profileの`sharedProfile`割当
-- Property / Field形状差を吸収したVolume APIアクセス
-- Atomic Transaction / Rollback / guarded Undo
-
-未対応:
-
-- Delete / Area Light
-- Camera Stack / Target Texture / URP・HDRP Additional Camera Data
-- Reflection Probe Bake
-- Volume Profile内部Overrideの作成・変更
-- Material / Renderer Feature Mutation
-- Save / Bake / Capture
-
-任意の`SerializedProperty`を書き換える汎用Toolは提供しません。
+Tag `v1.0.0`のRelease WorkflowはPackage `.tgz`、Sample Project ZIP、Template ZIP、SHA-256一覧を生成します。
 
 ## Verification
 
-Unity `6000.0.75f1`のGitHub Actions環境で、Package Resolve、Editor Compile、11 Tool Discovery、直接Handler Invocation、Inspection、Planning、Light／Camera／Reflection Probe／Volume Mutation、Atomic Undo、安全拒否を含むEditMode Testを実行しています。
+Release Gateは次を検証します。
 
-Phase 1～3の総合結果は`46 / 46 PASS`です。正確なWorkflow RunとArtifactは`Tests/Compatibility/verification-matrix.yaml`を正本とします。
+- Package Resolve／Editor Compile
+- 32 Tool Discovery
+- 125以上のEditor Contract Test
+- 新規Sample ProjectでのPackage Compile
+- Getting Started Sample Workflow
+- Version／Manifest／Changelog／Support Matrix整合
+- 必須文書／配布物／Known Issuesの存在
 
-このEvidenceは一つのEditor環境に対する実績であり、すべてのUnity Version、Pipeline、Player、Target Device対応を意味しません。
+最新実績は`Tests/Compatibility/release-verification.yaml`、対応範囲は`Tests/Compatibility/support-matrix.yaml`を正本とします。
 
-## Repository map
+## Design-only assets
 
-```text
-Catalog/
-Specs/
-  UnityAgentMCP/
-  UnityGraphicsMCP/
-Workflows/
-Packages/
-  com.darumappap.my-unity-mcp/
-    Editor/
-    Tests/Editor/
-TestProjects/
-  MyUnityMCPVerification/
-Tests/
-  Compatibility/
-```
+`UnityAgentMCP`、`LiveCreator`、`MovieCreator`、Graphics以外のDomain MCPは設計資産です。v1.0で実行可能なのは`unity_graphics_mcp`のUnity Editor Tool群であり、未実装Domainを実行可能とは表現しません。
 
-## Next phase
+## License
 
-Phase 4では、Mutationとは別の明示承認境界としてSave、Dependency限定Bake、Capture、Visual Evaluation、Refine Loopを追加します。
+MIT License。詳細は[LICENSE](LICENSE)を参照してください。

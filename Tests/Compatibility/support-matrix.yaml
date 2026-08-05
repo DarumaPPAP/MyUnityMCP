@@ -1,9 +1,10 @@
 schema_version: "1.0"
-package_version: "0.8.0"
+package_version: "1.0.0"
 
 verification_contract:
   discovered_mcp_tools: 32
-  minimum_editmode_contracts: 124
+  minimum_editmode_contracts: 125
+  fresh_project_sample_required: true
   canonical_end_to_end_required: true
   major_fault_injection_scene_safety_required: true
 
@@ -19,62 +20,41 @@ unity:
 
 pipelines:
   built_in:
-    inspection: supported
-    planning: supported
-    light_camera_reflection_probe_mutation: supported
-    volume_mutation: unsupported_without_volume_api
+    inspection_planning: supported
+    graphics_mutation: supported
+    volume_mutation: conditional_volume_api
+    explicit_save: supported
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
-    apv_plan_preparation: rejected_before_plan_creation
     apv_bake: unsupported
     visual_evaluation_refine: supported
   urp:
-    inspection: supported
-    planning: supported
-    light_camera_reflection_probe_mutation: supported
+    inspection_planning: supported
+    graphics_mutation: supported
     volume_mutation: conditional_volume_api
+    explicit_save: supported
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
-    apv_plan_preparation: conditional_apv_environment
     apv_bake: conditional_apv_backend
     visual_evaluation_refine: supported
   hdrp:
-    inspection: supported
-    planning: supported
-    light_camera_reflection_probe_mutation: supported
+    inspection_planning: supported
+    graphics_mutation: supported
     volume_mutation: conditional_volume_api
+    explicit_save: supported
     dependency_bake: conditional_explicit_backend
     capture_evidence: conditional_graphics_device
-    apv_plan_preparation: conditional_apv_environment
     apv_bake: conditional_apv_backend
     visual_evaluation_refine: supported
 
 execution_services:
-  timeout:
-    mode: cooperative
-    default_seconds: 60
-    minimum_seconds: 1
-    maximum_seconds: 3600
-  cancellation:
-    mode: cooperative
-    native_backend_cancel_when_available: true
-  progress:
-    polling_tool: graphics.get_execution_status
-    trace_format: jsonl
-  persistence:
-    execution_history_days: 30
-    maximum_history_records: 1000
-    runtime_owned_artifact_days: 14
-    ci_evidence_days: 90
-  recovery:
-    domain_reload: interrupted
-    compile_started: interrupted
-    play_mode_transition: interrupted
-    scene_closed: interrupted
-    multi_scene_configuration_changed: interrupted
-    mcp_client_disconnected: adapter_callback_required
-    unity_restart: recover_as_interrupted
-    automatic_resume: prohibited
+  timeout: cooperative_1_to_3600_seconds_default_60
+  cancellation: cooperative_native_backend_when_available
+  progress: polling_and_jsonl_trace
+  execution_history: 30_days_maximum_1000
+  runtime_artifact_retention: 14_days
+  ci_evidence_retention: 90_days
+  automatic_resume_after_restart: prohibited
 
 not_verified:
   - player_runtime_tool_execution
@@ -83,3 +63,4 @@ not_verified:
   - every_render_pipeline_package_version
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
+  - every_project_specific_apv_baking_set

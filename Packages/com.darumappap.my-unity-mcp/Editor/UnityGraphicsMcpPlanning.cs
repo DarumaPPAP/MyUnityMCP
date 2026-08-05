@@ -62,7 +62,7 @@ namespace UnityGraphicsMcp
 	/// Lifetime: Unity Editor Session内のRevision単位。
 	/// Consumers: plan Toolと将来のMutation Tool。
 	/// Responsibility: 構造化Visual IntentをProject事実へ照合し、Read-only Direction Planと差分予告を生成します。
-	/// Split Reason: Project / Scene列挙とは変更理由とTest境界が異なるため、Phase 2 Planningを一ファイルへ分離します。
+	/// Split Reason: Project / Scene列挙とは変更理由とTest境界が異なるため、Direction Planningを一ファイルへ分離します。
 	/// </summary>
 	public static partial class UnityGraphicsMcpInspection
 	{
@@ -701,7 +701,7 @@ namespace UnityGraphicsMcp
 						unsupported,
 						"NATIVE_MUTATION_BACKEND_NOT_IMPLEMENTED",
 						recommendation.section,
-						"Phase 2はPlan Previewのみで、Pipeline Native Mutationは実行しません。");
+						"Direction PlanningはPlan Previewのみで、Pipeline Native Mutationは実行しません。");
 				}
 			}
 
@@ -760,9 +760,9 @@ namespace UnityGraphicsMcp
 					new Dictionary<string, object>
 					{
 						{ "planReview", "READY" },
-						{ "mutation", "NOT_IMPLEMENTED_IN_PHASE_2" },
-						{ "bake", "NOT_IMPLEMENTED_IN_PHASE_2" },
-						{ "capture", "NOT_IMPLEMENTED_IN_PHASE_2" }
+						{ "mutation", "REQUIRES_SEPARATE_APPROVED_TOOL" },
+						{ "bake", "REQUIRES_SEPARATE_APPROVED_TOOL" },
+						{ "capture", "REQUIRES_SEPARATE_APPROVED_TOOL" }
 					}
 				},
 				{ "recommendations", plan.Recommendations }

@@ -14,9 +14,9 @@ namespace UnityGraphicsMcp
 {
 	public sealed class UnityGraphicsMcpEnvironmentMutationTests
 	{
-		private const string TEMP_SCENE_PATH = "Assets/MyUnityMcpPhase3BTemporaryScene.unity";
-		private const string TEMP_PROFILE_A_PATH = "Assets/MyUnityMcpPhase3BProfileA.asset";
-		private const string TEMP_PROFILE_B_PATH = "Assets/MyUnityMcpPhase3BProfileB.asset";
+		private const string TEMP_SCENE_PATH = "Assets/MyUnityMcpEnvironmentTemporaryScene.unity";
+		private const string TEMP_PROFILE_A_PATH = "Assets/MyUnityMcpEnvironmentProfileA.asset";
+		private const string TEMP_PROFILE_B_PATH = "Assets/MyUnityMcpEnvironmentProfileB.asset";
 
 		[SetUp]
 		public void SetUp()
@@ -42,7 +42,7 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Bridge_DiscoversPhase3BTools_AndKeepsThemDisabledByDefault()
+		public void Bridge_DiscoversEnvironmentTools_AndKeepsThemDisabledByDefault()
 		{
 			CommandRegistry.Initialize();
 			Assert.That(CommandRegistry.GetHandler("graphics.prepare_environment_plan"), Is.Not.Null);
@@ -56,12 +56,12 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void PrepareEnvironmentPlan_IsReadOnly()
 		{
-			Dictionary<string, object> direction = CompileDirection("phase3b-readonly-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-readonly-direction");
 			Scene scene = SceneManager.GetActiveScene();
 			bool dirtyBefore = scene.isDirty;
 
 			UnityGraphicsMcpToolResult result = Prepare(
-				"phase3b-readonly",
+				"environment-readonly",
 				direction,
 				new[] { CreateCameraOperation("camera-create") });
 
@@ -76,9 +76,9 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyEnvironmentPlan_RejectsMissingApproval()
 		{
-			Dictionary<string, object> executable = PrepareSingle("phase3b-missing-approval", CreateCameraOperation("camera-create"));
+			Dictionary<string, object> executable = PrepareSingle("environment-missing-approval", CreateCameraOperation("camera-create"));
 			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.ApplyEnvironmentPlan(
-				"phase3b-missing-approval-result",
+				"environment-missing-approval-result",
 				executable["planId"] as string,
 				Convert.ToInt64(executable["expectedRevision"]),
 				null,
@@ -91,9 +91,9 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyEnvironmentPlan_RejectsAutomaticSave()
 		{
-			Dictionary<string, object> executable = PrepareSingle("phase3b-save-mode", CreateCameraOperation("camera-create"));
+			Dictionary<string, object> executable = PrepareSingle("environment-save-mode", CreateCameraOperation("camera-create"));
 			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.ApplyEnvironmentPlan(
-				"phase3b-save-mode-result",
+				"environment-save-mode-result",
 				executable["planId"] as string,
 				Convert.ToInt64(executable["expectedRevision"]),
 				executable["approvalToken"] as string,
@@ -106,8 +106,8 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ApplyAndUndo_CreatesCamera()
 		{
-			Dictionary<string, object> executable = PrepareSingle("phase3b-camera-create", CreateCameraOperation("camera-create"));
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-camera-apply", executable);
+			Dictionary<string, object> executable = PrepareSingle("environment-camera-create", CreateCameraOperation("camera-create"));
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-camera-apply", executable);
 
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Camera[] cameras = FindAll<Camera>();
@@ -116,7 +116,7 @@ namespace UnityGraphicsMcp
 			Assert.That(cameras[0].allowHDR, Is.True);
 			Assert.That(SceneManager.GetActiveScene().path, Is.Empty);
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-camera-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-camera-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
 		}
@@ -130,9 +130,9 @@ namespace UnityGraphicsMcp
 			camera.enabled = true;
 			SaveScene();
 
-			Dictionary<string, object> direction = CompileDirection("phase3b-camera-update-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-camera-update-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
-				"phase3b-camera-update-prepare",
+				"environment-camera-update-prepare",
 				direction,
 				new[]
 				{
@@ -147,13 +147,13 @@ namespace UnityGraphicsMcp
 					}
 				}));
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-camera-update-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-camera-update-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Assert.That(camera.fieldOfView, Is.EqualTo(38.0f));
 			Assert.That(camera.transform.position, Is.EqualTo(new Vector3(1.0f, 2.0f, 3.0f)));
 			Assert.That(camera.enabled, Is.False);
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-camera-update-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-camera-update-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(camera.fieldOfView, Is.EqualTo(60.0f));
 			Assert.That(camera.transform.position, Is.EqualTo(Vector3.zero));
@@ -164,7 +164,7 @@ namespace UnityGraphicsMcp
 		public void ApplyAndUndo_CreatesReflectionProbe()
 		{
 			Dictionary<string, object> executable = PrepareSingle(
-				"phase3b-probe-create",
+				"environment-probe-create",
 				new UnityGraphicsMcpEnvironmentOperationInput
 				{
 					operationId = "probe-create",
@@ -181,14 +181,14 @@ namespace UnityGraphicsMcp
 					enabled = true
 				});
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-probe-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-probe-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			ReflectionProbe[] probes = FindAll<ReflectionProbe>();
 			Assert.That(probes.Length, Is.EqualTo(1));
 			Assert.That(probes[0].importance, Is.EqualTo(5));
 			Assert.That(probes[0].boxProjection, Is.True);
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-probe-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-probe-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(0));
 		}
@@ -204,9 +204,9 @@ namespace UnityGraphicsMcp
 			probe.size = new Vector3(4.0f, 4.0f, 4.0f);
 			SaveScene();
 
-			Dictionary<string, object> direction = CompileDirection("phase3b-probe-update-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-probe-update-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
-				"phase3b-probe-update-prepare",
+				"environment-probe-update-prepare",
 				direction,
 				new[]
 				{
@@ -223,14 +223,14 @@ namespace UnityGraphicsMcp
 					}
 				}));
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-probe-update-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-probe-update-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Assert.That(probe.importance, Is.EqualTo(8));
 			Assert.That(probe.intensity, Is.EqualTo(1.75f));
 			Assert.That(probe.boxProjection, Is.True);
 			Assert.That(probe.size, Is.EqualTo(new Vector3(10.0f, 6.0f, 8.0f)));
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-probe-update-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-probe-update-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(probe.importance, Is.EqualTo(1));
 			Assert.That(probe.intensity, Is.EqualTo(0.5f));
@@ -243,7 +243,7 @@ namespace UnityGraphicsMcp
 		{
 			Type volumeType = RequireVolumeType();
 			Dictionary<string, object> executable = PrepareSingle(
-				"phase3b-volume-create",
+				"environment-volume-create",
 				new UnityGraphicsMcpEnvironmentOperationInput
 				{
 					operationId = "volume-create",
@@ -256,7 +256,7 @@ namespace UnityGraphicsMcp
 					enabled = true
 				});
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-volume-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-volume-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Component volume = FindComponent(volumeType);
 			Assert.That(volume, Is.Not.Null);
@@ -264,7 +264,7 @@ namespace UnityGraphicsMcp
 			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(10.0f));
 			Assert.That(Convert.ToSingle(GetMemberValue(volume, "weight")), Is.EqualTo(0.75f));
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-volume-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-volume-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(FindComponent(volumeType), Is.Null);
 		}
@@ -286,9 +286,9 @@ namespace UnityGraphicsMcp
 			((Behaviour)volume).enabled = true;
 			SaveScene();
 
-			Dictionary<string, object> direction = CompileDirection("phase3b-volume-update-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-volume-update-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
-				"phase3b-volume-update-prepare",
+				"environment-volume-update-prepare",
 				direction,
 				new[]
 				{
@@ -306,7 +306,7 @@ namespace UnityGraphicsMcp
 					}
 				}));
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-volume-update-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-volume-update-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Assert.That((bool)GetMemberValue(volume, "isGlobal"), Is.True);
 			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(12.0f));
@@ -315,7 +315,7 @@ namespace UnityGraphicsMcp
 			Assert.That(GetMemberValue(volume, "sharedProfile"), Is.SameAs(profileB));
 			Assert.That(((Behaviour)volume).enabled, Is.False);
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-volume-update-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-volume-update-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That((bool)GetMemberValue(volume, "isGlobal"), Is.False);
 			Assert.That(Convert.ToSingle(GetMemberValue(volume, "priority")), Is.EqualTo(1.0f));
@@ -331,9 +331,9 @@ namespace UnityGraphicsMcp
 			GameObject gameObject = new GameObject("Baseline Camera");
 			Camera camera = gameObject.AddComponent<Camera>();
 			SaveScene();
-			Dictionary<string, object> direction = CompileDirection("phase3b-baseline-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-baseline-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
-				"phase3b-baseline-prepare",
+				"environment-baseline-prepare",
 				direction,
 				new[]
 				{
@@ -347,7 +347,7 @@ namespace UnityGraphicsMcp
 				}));
 			camera.fieldOfView = 25.0f;
 
-			UnityGraphicsMcpToolResult result = Apply("phase3b-baseline-apply", executable);
+			UnityGraphicsMcpToolResult result = Apply("environment-baseline-apply", executable);
 			Assert.That(result.status, Is.EqualTo(E_MCP_TOOL_STATUS.STALE_SNAPSHOT.ToString()));
 			Assert.That(camera.fieldOfView, Is.EqualTo(25.0f));
 		}
@@ -356,9 +356,9 @@ namespace UnityGraphicsMcp
 		public void ApplyEnvironmentPlan_IsAtomicAcrossCameraProbeAndVolume()
 		{
 			Type volumeType = RequireVolumeType();
-			Dictionary<string, object> direction = CompileDirection("phase3b-atomic-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-atomic-direction");
 			Dictionary<string, object> executable = ResultData(Prepare(
-				"phase3b-atomic-prepare",
+				"environment-atomic-prepare",
 				direction,
 				new[]
 				{
@@ -380,13 +380,13 @@ namespace UnityGraphicsMcp
 					}
 				}));
 
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-atomic-apply", executable);
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-atomic-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Assert.That(FindAll<Camera>().Length, Is.EqualTo(1));
 			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(1));
 			Assert.That(FindComponent(volumeType), Is.Not.Null);
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-atomic-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-atomic-undo", applyResult);
 			Assert.That(undoResult.IsSuccessful, Is.True, undoResult.summary);
 			Assert.That(FindAll<Camera>().Length, Is.EqualTo(0));
 			Assert.That(FindAll<ReflectionProbe>().Length, Is.EqualTo(0));
@@ -396,9 +396,9 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void PrepareEnvironmentPlan_RejectsDuplicateOperationId()
 		{
-			Dictionary<string, object> direction = CompileDirection("phase3b-duplicate-id-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-duplicate-id-direction");
 			UnityGraphicsMcpToolResult result = Prepare(
-				"phase3b-duplicate-id-prepare",
+				"environment-duplicate-id-prepare",
 				direction,
 				new[]
 				{
@@ -420,11 +420,11 @@ namespace UnityGraphicsMcp
 			GameObject gameObject = new GameObject("Duplicate Target Camera");
 			Camera camera = gameObject.AddComponent<Camera>();
 			SaveScene();
-			Dictionary<string, object> direction = CompileDirection("phase3b-duplicate-target-direction");
+			Dictionary<string, object> direction = CompileDirection("environment-duplicate-target-direction");
 			string objectId = ObjectId(camera);
 
 			UnityGraphicsMcpToolResult result = Prepare(
-				"phase3b-duplicate-target-prepare",
+				"environment-duplicate-target-prepare",
 				direction,
 				new[]
 				{
@@ -451,13 +451,13 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void UndoLastEnvironmentTransaction_RejectsExternalTargetChange()
 		{
-			Dictionary<string, object> executable = PrepareSingle("phase3b-external-change", CreateCameraOperation("camera-create"));
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-external-change-apply", executable);
+			Dictionary<string, object> executable = PrepareSingle("environment-external-change", CreateCameraOperation("camera-create"));
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-external-change-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 			Camera camera = FindAll<Camera>()[0];
 			camera.fieldOfView = 23.0f;
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-external-change-undo", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-external-change-undo", applyResult);
 			Assert.That(undoResult.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
 			Assert.That(camera, Is.Not.Null);
 			Assert.That(camera.fieldOfView, Is.EqualTo(23.0f));
@@ -466,8 +466,8 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void UndoLastEnvironmentTransaction_RejectsNewerUndoGroup()
 		{
-			Dictionary<string, object> executable = PrepareSingle("phase3b-newer-undo", CreateCameraOperation("camera-create"));
-			UnityGraphicsMcpToolResult applyResult = Apply("phase3b-newer-undo-apply", executable);
+			Dictionary<string, object> executable = PrepareSingle("environment-newer-undo", CreateCameraOperation("camera-create"));
+			UnityGraphicsMcpToolResult applyResult = Apply("environment-newer-undo-apply", executable);
 			Assert.That(applyResult.IsSuccessful, Is.True, applyResult.summary);
 
 			UnityGraphicsMcpTestAsset marker = ScriptableObject.CreateInstance<UnityGraphicsMcpTestAsset>();
@@ -475,7 +475,7 @@ namespace UnityGraphicsMcp
 			Undo.RecordObject(marker, "Unrelated Newer Undo Group");
 			marker.value = 10;
 
-			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("phase3b-newer-undo-result", applyResult);
+			UnityGraphicsMcpToolResult undoResult = UndoEnvironment("environment-newer-undo-result", applyResult);
 			Assert.That(undoResult.status, Is.EqualTo(E_MCP_TOOL_STATUS.INVALID_REQUEST.ToString()));
 			Assert.That(FindAll<Camera>().Length, Is.EqualTo(1));
 			UnityEngine.Object.DestroyImmediate(marker);
@@ -597,7 +597,7 @@ namespace UnityGraphicsMcp
 		private static Type RequireVolumeType()
 		{
 			Type type = Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime", false);
-			Assert.That(type, Is.Not.Null, "Phase 3 Verification ProjectにはRender Pipelines Core Packageが必要です。");
+			Assert.That(type, Is.Not.Null, "Environment Mutation Verification ProjectにはRender Pipelines Core Packageが必要です。");
 			return type;
 		}
 

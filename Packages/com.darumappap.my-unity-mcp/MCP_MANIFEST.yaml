@@ -1,28 +1,112 @@
-schema_version: "1.8"
+schema_version: "2.0"
 package_id: com.darumappap.my-unity-mcp
-version: "0.7.1"
-implementation_status: apv_visual_acceptance_complete
+version: "1.0.0"
+implementation_status: release
 verified_level: unity_editor_ci
 
-control_plane:
-  id: unity_agent_mcp
-  status: specified
-  implementation_status: not_started
-  specification: ../../Specs/UnityAgentMCP/spec.md
+operational_domain:
+  id: unity_graphics_mcp
+  status: editor_operational
+  specification: ../../Specs/UnityGraphicsMCP/spec.md
+  architecture: ../../Specs/UnityGraphicsMCP/architecture.md
+  support_matrix: ../../Tests/Compatibility/support-matrix.yaml
 
-registered_domains:
-  - id: unity_graphics_mcp
-    status: editor_operational
-    implementation_status: inspect_plan_mutate_save_bake_capture_evaluate_review_refine_verified
-    specification: ../../Specs/UnityGraphicsMCP/spec.md
-    plan: ../../Specs/UnityGraphicsMCP/plan.md
-    tasks: ../../Specs/UnityGraphicsMCP/tasks.md
-    editor_tool_design: ../../Specs/UnityGraphicsMCP/editor-tool-design.md
-    dependency_bake_bake_contract: ../../Specs/UnityGraphicsMCP/dependency-bake.md
-    capture_evidence_capture_contract: ../../Specs/UnityGraphicsMCP/capture-evidence.md
-    apv_visual_acceptance_contract: ../../Specs/UnityGraphicsMCP/apv-visual-acceptance.md
+bridge:
+  package: com.coplaydev.unity-mcp
+  declared_api_version: "10.1.2"
+  command_entry: HandleCommand(JObject)
+  command_dispatch: unity_main_thread
+  discovered_tool_count: 32
+  tools_enabled_by_default: false
+  explicit_activation_required: true
+  external_mcp_client_connection_verified: false
 
-planned_domains:
+tool_groups:
+  inspect:
+    mutation: false
+    tools:
+      - graphics.inspect_project
+      - graphics.inspect_scene
+      - graphics.validate_scene
+  plan:
+    mutation: false
+    tools:
+      - graphics.compile_direction
+      - graphics.preview_plan
+      - graphics.prepare_light_plan
+      - graphics.prepare_environment_plan
+      - graphics.prepare_save_plan
+      - graphics.prepare_bake_plan
+      - graphics.prepare_apv_bake_plan
+      - graphics.prepare_acceptance_profile
+  mutate:
+    mutation: true
+    approval_required: true
+    tools:
+      - graphics.apply_plan
+      - graphics.undo_last_transaction
+      - graphics.apply_environment_plan
+      - graphics.undo_last_environment_transaction
+  save:
+    mutation: persistent_scene_write
+    approval_required: true
+    tools:
+      - graphics.apply_save_plan
+  bake:
+    mutation: persistent_asset_write
+    approval_required: true
+    tools:
+      - graphics.bake_dependencies
+      - graphics.start_apv_bake
+      - graphics.get_apv_bake_status
+      - graphics.cancel_apv_bake
+  capture:
+    mutation: temporary_editor_state_and_library_write
+    tools:
+      - graphics.capture_evaluation
+      - graphics.capture_evidence
+  evaluate_and_refine:
+    mutation: false
+    tools:
+      - graphics.refine_direction
+      - graphics.submit_visual_review
+      - graphics.refine_from_visual_review
+      - graphics.evaluate_capture
+      - graphics.refine_from_evaluation
+  execution:
+    mutation: execution_control
+    tools:
+      - graphics.get_execution_status
+      - graphics.cancel_execution
+      - graphics.get_execution_history
+      - graphics.get_error_catalog
+      - graphics.get_support_matrix
+
+safety:
+  read_only_prepare: true
+  exact_preview_required: true
+  expected_revision_required_for_mutation: true
+  approval_token_required_for_mutation: true
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
+  human_review_required_for_visual_acceptance: true
+  automatic_execution_resume_after_restart: prohibited
+
+verification:
+  current_evidence: ../../Tests/Compatibility/release-verification.yaml
+  historical_evidence_index: ../../Tests/Compatibility/README.md
+  unity_editor_compile: required
+  tool_discovery_count: 32
+  minimum_editmode_contracts: 125
+  fresh_project_sample_workflow: required
+
+not_operational_in_v1:
+  - unity_agent_mcp_runtime
+  - live_creator_runtime
+  - movie_creator_runtime
   - unity_cinematic_mcp
   - unity_ui_mcp
   - unity_addressables_mcp
@@ -30,410 +114,3 @@ planned_domains:
   - unity_audio_mcp
   - unity_profiler_mcp
   - unity_build_mcp
-
-creator_workflows:
-  - id: live_creator
-    status: specified_not_executable
-    path: ../../Workflows/LiveCreator.yaml
-    blocked_by:
-      - unity_cinematic_mcp_not_implemented
-  - id: movie_creator
-    status: specified_not_executable
-    path: ../../Workflows/MovieCreator.yaml
-    blocked_by:
-      - unity_cinematic_mcp_not_implemented
-
-tool_groups:
-  inspect:
-    mutation: false
-    status: implemented_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    tools:
-      graphics.inspect_project:
-        status: implemented_editor_verified
-      graphics.inspect_scene:
-        status: implemented_editor_verified
-        snapshot_paging: true
-      graphics.validate_scene:
-        status: implemented_editor_verified
-
-  plan:
-    mutation: false
-    status: implemented_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    tools:
-      graphics.compile_direction:
-        status: implemented_editor_verified
-      graphics.preview_plan:
-        status: implemented_editor_verified
-      graphics.prepare_light_plan:
-        status: implemented_editor_verified
-        exact_diff: true
-        approval_token_issued: true
-      graphics.prepare_environment_plan:
-        status: implemented_editor_verified
-        exact_diff: true
-        approval_token_issued: true
-      graphics.prepare_save_plan:
-        status: implemented_editor_verified
-        exact_diff: true
-        approval_token_issued: true
-      graphics.prepare_bake_plan:
-        status: implemented_editor_verified
-        exact_dependency_set: true
-        approval_token_issued: true
-      graphics.prepare_apv_bake_plan:
-        status: implemented_editor_verified
-        exact_baking_set: true
-        exact_lighting_scenario: true
-        exact_scene_set: true
-        pipeline_capability: true
-        backend_capability: true
-        output_baseline: sha256
-        approval_token_issued: true
-      graphics.prepare_acceptance_profile:
-        status: implemented_editor_verified
-        criteria: true
-        weights: true
-        minimums: true
-        critical_failure: true
-        reference_capture: true
-        performance_budget: true
-
-  mutate:
-    mutation: true
-    status: phase_3_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    explicit_approval_required: true
-    tools:
-      graphics.apply_plan:
-        status: implemented_editor_verified
-        supported_operations:
-          - LIGHT_CREATE
-          - LIGHT_UPDATE
-      graphics.undo_last_transaction:
-        status: implemented_editor_verified
-      graphics.apply_environment_plan:
-        status: implemented_editor_verified
-        supported_operations:
-          - CAMERA_CREATE
-          - CAMERA_UPDATE
-          - REFLECTION_PROBE_CREATE
-          - REFLECTION_PROBE_UPDATE
-          - VOLUME_CREATE
-          - VOLUME_UPDATE
-      graphics.undo_last_environment_transaction:
-        status: implemented_editor_verified
-
-  save:
-    mutation: persistent_scene_write
-    status: save_evaluation_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    explicit_approval_required: true
-    tools:
-      graphics.apply_save_plan:
-        status: implemented_editor_verified
-        save_mode: EXPLICIT_SCENE
-        save_as: prohibited
-        automatic_rollback: false
-
-  bake:
-    mutation: true
-    expensive: true
-    status: apv_visual_acceptance_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    explicit_approval_required: true
-    tools:
-      graphics.bake_dependencies:
-        status: implemented_editor_verified
-        bake_mode: EXPLICIT_DEPENDENCIES
-        synchronous: true
-        automatic_save: false
-        unity_undo: false
-        automatic_rollback: false
-        supported_dependencies:
-          LIGHTMAP_SCENE:
-            status: implemented_editor_verified
-            full_loaded_scene_fallback: prohibited_when_multiple_scenes
-          REFLECTION_PROBE:
-            status: implemented_source_verified
-            existing_cubemap_required: true
-          ADAPTIVE_PROBE_VOLUME:
-            status: delegated_to_apv_visual_acceptance_apv_job
-      graphics.start_apv_bake:
-        status: implemented_editor_verified
-        bake_mode: EXPLICIT_APV_BAKING_SET
-        asynchronous_job: true
-        explicit_baking_set: true
-        explicit_lighting_scenario: true
-        exact_scene_set: true
-        output_asset_diff: sha256
-        automatic_save: false
-        unity_undo: false
-        automatic_rollback: false
-      graphics.get_apv_bake_status:
-        status: implemented_editor_verified
-        read_only: true
-        states:
-          - RUNNING
-          - SUCCEEDED
-          - PARTIAL
-          - FAILED
-          - CANCEL_REQUESTED
-          - CANCELLED
-      graphics.cancel_apv_bake:
-        status: implemented_editor_verified
-        native_cancel_when_available: true
-        cooperative_polling: true
-        partial_result_preserved: true
-
-  capture:
-    mutation: temporary_editor_state_and_library_evidence_write
-    status: capture_evidence_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    tools:
-      graphics.capture_evaluation:
-        status: implemented_editor_verified
-        compatibility_api: true
-        color_png_only: true
-        temporary_state_restore: true
-      graphics.refine_direction:
-        status: implemented_editor_verified
-        compatibility_api: true
-        human_review_required: true
-        visual_acceptance_automatic: false
-      graphics.capture_evidence:
-        status: implemented_editor_verified
-        expected_revision_required: true
-        atomic_bundle_publish: true
-        evidence_digest: sha256
-        channels:
-          COLOR:
-            format: PNG_RGBA32
-            status: implemented_editor_verified
-          LINEAR_DEPTH:
-            format: EXR_FLOAT_R32
-            status: implemented_editor_verified
-          OBJECT_ID:
-            format: PNG_RGB24
-            status: implemented_editor_verified
-            mapping_json: true
-        manifest:
-          camera_baseline: true
-          scene_identity: true
-          render_pipeline: true
-          color_space: true
-          artifact_sha256: true
-          coverage_limitations: true
-        state_restore:
-          camera_target_texture: required_and_tested
-          active_render_texture: required_and_tested
-          scene_dirty: required_and_tested
-          project_asset_dirty: required_and_tested
-          undo_group: required_and_tested
-        null_graphics_device: unverified_without_fake_output
-        image_semantic_analysis: prohibited
-
-  visual_acceptance:
-    mutation: false
-    status: apv_visual_acceptance_editor_verified
-    bridge_group: core
-    auto_register: false
-    activation: explicit
-    tools:
-      graphics.evaluate_capture:
-        status: implemented_editor_verified
-        evidence_digest_match_required: true
-        acceptance_profile_required: true
-        external_measurement_required_for_required_criteria: true
-        decisions:
-          - PASSED
-          - FAILED
-          - INCOMPLETE
-        weighted_score: true
-        critical_failure_override: true
-        performance_budget: true
-        object_id_mapping: true
-        image_semantic_analysis_in_unity: prohibited
-        passed_is_final_human_acceptance: false
-      graphics.submit_visual_review:
-        status: implemented_editor_verified
-        evidence_digest_match_required: true
-        human_reviewer_required: true
-        immutable_once_submitted: true
-        decisions:
-          - ACCEPTED
-          - REJECTED
-          - NEEDS_ADJUSTMENT
-        accepted_confirmation: VISUAL_ACCEPTED
-        automatic_acceptance: prohibited
-      graphics.refine_from_visual_review:
-        status: implemented_editor_verified
-        read_only: true
-        accepted_review_refine: prohibited
-        supported_decisions:
-          - REJECTED
-          - NEEDS_ADJUSTMENT
-      graphics.refine_from_evaluation:
-        status: implemented_editor_verified
-        read_only: true
-        passed_evaluation_refine: prohibited
-        supported_decisions:
-          - FAILED
-          - INCOMPLETE
-        structured_failure_reasons: true
-        performance_failures: true
-        affected_object_mapping: true
-        required_recapture_channels: true
-
-bridge:
-  package: com.coplaydev.unity-mcp
-  declared_api_version: "10.1.2"
-  tool_attribute: MCPForUnity.Editor.Tools.McpForUnityToolAttribute
-  command_entry: HandleCommand(JObject)
-  response_contract:
-    - SuccessResponse
-    - ErrorResponse
-  command_dispatch: unity_main_thread
-  compile_verified: true
-  command_registry_discovery_verified: true
-  discovered_tool_count: 27
-  direct_handler_invocation_verified: true
-  external_mcp_client_connection_verified: false
-
-availability:
-  source_is_implemented: true
-  package_is_executable: true
-  operational_scope: apv_visual_acceptance_editor_tools
-  tools_enabled_by_default: false
-  expose_unimplemented_tools: false
-  expose_selected_tool_group_only: true
-  explicit_activation_required: true
-
-environment_resolution:
-  source_of_truth: target_unity_project
-  inspect_before_backend_selection: true
-  fixed_default_environment: prohibited
-  required_facts:
-    - unity_version
-    - render_pipeline_kind
-    - render_pipeline_package_version
-    - active_renderer
-    - rendering_path
-    - render_graph_mode
-    - active_build_target
-    - installed_build_targets
-    - graphics_apis
-    - scripting_backend
-    - relevant_package_capabilities
-  precedence:
-    - detected_target_project_facts
-    - explicit_request_targets_and_constraints
-    - project_specific_profile
-    - unity_agent_default_preferences
-  unknown_fact_policy:
-    assume_default: false
-    return_unresolved_capability: true
-    block_native_api_selection_when_required: true
-
-backend_selection:
-  select_after_project_inspection: true
-  load_only_selected_implemented_backend: true
-  silent_fallback: prohibited
-  backend_interface_requires_multiple_real_implementations: true
-
-verification:
-  historical_matrix_path: ../../Tests/Compatibility/verification-matrix.yaml
-  latest_evidence_path: ../../Tests/Compatibility/apv-visual-acceptance-verification.yaml
-  verified_environment_is_evidence_not_global_support_contract: true
-  current_gates:
-    static_source_review: passed
-    package_dependency_resolution: passed
-    unity_editor_compile: passed
-    editmode: passed_98_of_98
-    bridge_discovery: passed_27_tools
-    direct_handler_invocation: passed
-    phase_1_to_4c_regression: passed
-    save_contract: passed
-    dirty_dependency_bake_contract: passed
-    capture_color: passed
-    capture_linear_depth: passed
-    capture_object_id: passed
-    capture_manifest_digest: passed
-    capture_atomic_publish: passed
-    capture_state_restore: passed
-    human_visual_review_guard: passed
-    apv_explicit_baking_set: passed
-    apv_explicit_lighting_scenario: passed
-    apv_exact_scene_set: passed
-    apv_pipeline_capability: passed
-    apv_job_state_machine: passed
-    apv_output_diff: passed
-    apv_cancellation: passed
-    apv_partial_result: passed
-    acceptance_profile: passed
-    acceptance_weights_and_minimums: passed
-    acceptance_critical_failure: passed
-    acceptance_reference_capture: passed
-    acceptance_performance_budget: passed
-    acceptance_object_id_mapping: passed
-    evaluation_refine: passed
-    closed_loop_e2e_contract: passed
-    actual_apv_bake_in_ci: not_run_not_silently_faked
-    actual_urp_hdrp_sample: unverified
-    automatic_visual_acceptance: prohibited_and_tested
-    image_semantic_analysis_in_unity: prohibited_and_tested
-    player: unverified
-    target_device: unverified
-  evidence_source:
-    kind: phase_verification_record
-    verification_id: MUMCP-APV-VISUAL-ACCEPTANCE-CI-20260805-001
-    workflow_run_id: 31005540655
-    workflow_job_id: 92304475814
-    artifact_id: 8930337405
-
-safety:
-  inspect_must_not_dirty_unity_state: true
-  plan_must_not_dirty_unity_state: true
-  renderer_material_instance_creation: prohibited
-  volume_profile_instantiation: prohibited
-  volume_profile_internal_override_mutation: prohibited
-  mutation_requires_exact_preview: true
-  mutation_requires_approval_token: true
-  mutation_requires_expected_revision: true
-  mutation_is_single_undo_transaction: true
-  save_requires_separate_approval: true
-  save_as: prohibited
-  bake_requires_separate_approval: true
-  bake_requires_dirty_dependency_set: true
-  bake_requires_all_backend_preflight: true
-  apv_bake_requires_explicit_baking_set: true
-  apv_bake_requires_explicit_lighting_scenario: true
-  apv_bake_requires_exact_scene_set: true
-  apv_bake_requires_output_diff: true
-  apv_bake_cancellation_must_preserve_partial_result: true
-  automatic_save: prohibited
-  automatic_full_bake: prohibited
-  bake_automatic_rollback: false
-  capture_requires_expected_revision: true
-  capture_requires_state_restore: true
-  capture_requires_artifact_digest: true
-  capture_coverage_limitations_must_be_explicit: true
-  visual_evaluation_requires_acceptance_profile: true
-  visual_evaluation_requires_evidence_digest_match: true
-  visual_acceptance_requires_human_review: true
-  visual_acceptance_requires_evidence_digest_match: true
-  automatic_visual_acceptance: prohibited
-  silent_fallback: prohibited

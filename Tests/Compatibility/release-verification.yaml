@@ -1,0 +1,26 @@
+schema_version: "1.0"
+release_version: "1.0.0"
+verification_status: pending_ci
+
+required_gates:
+  release_contract: pending_ci
+  unity_editor_compile: pending_ci
+  tool_discovery_32: pending_ci
+  editmode_contracts_125: pending_ci
+  fresh_project_package_compile: pending_ci
+  sample_workflow: pending_ci
+  all_ci: pending_ci
+  support_matrix_documented: true
+  known_issues_documented: true
+  version_manifest_changelog_aligned: true
+
+evidence:
+  verified_source_commit: pending
+  editor_workflow_run: pending
+  editor_job: pending
+  editor_artifact: pending
+  sample_workflow_run: pending
+  sample_job: pending
+  sample_artifact: pending
+  release_commit: pending
+  tag: pending

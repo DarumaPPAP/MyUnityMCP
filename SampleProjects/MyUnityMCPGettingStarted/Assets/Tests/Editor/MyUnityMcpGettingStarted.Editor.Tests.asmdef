@@ -1,0 +1,10 @@
+{
+  "name": "MyUnityMcpGettingStarted.Editor.Tests",
+  "references": [
+    "MyUnityMcp.Editor",
+    "MCPForUnity.Editor"
+  ],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}
