@@ -232,12 +232,29 @@ namespace UnityGraphicsMcp
 			}
 
 			UnityGraphicsMcpExecutionRecord record;
+			UnityGraphicsMcpExecutionRecord completedRecord = null;
 			lock (_sync)
 			{
 				if (!_active.TryGetValue(scope.ExecutionId, out record))
 				{
-					record = CreateDetachedRecord(scope.ExecutionId, result);
+					completedRecord = _history.LastOrDefault(item =>
+						item.executionId == scope.ExecutionId);
+					if (completedRecord == null)
+					{
+						record = CreateDetachedRecord(scope.ExecutionId, result);
+					}
 				}
+			}
+
+			if (completedRecord != null)
+			{
+				scope.Stopwatch?.Stop();
+				result.status = E_MCP_TOOL_STATUS.FAILED.ToString();
+				result.summary = completedRecord.summary;
+				result.error = BuildStructuredError(completedRecord);
+				result.execution = BuildMetadata(completedRecord);
+				scope.Completed = true;
+				return result;
 			}
 
 			if (!string.IsNullOrWhiteSpace(result.tool))
@@ -258,8 +275,10 @@ namespace UnityGraphicsMcp
 			record.progress = 100.0;
 			record.status = result.status;
 			record.summary = result.summary;
-			record.state = ResolveExecutionState(result).ToString();
 			record.errorCode = ResolveFailureCode(result);
+			record.state = ResolveExecutionState(
+				result,
+				record.errorCode).ToString();
 			record.progressEvents.Add(new UnityGraphicsMcpProgressEvent
 			{
 				timestampUtc = record.completedUtc,
@@ -974,6 +993,35 @@ namespace UnityGraphicsMcp
 			return error;
 		}
 
+		private static UnityGraphicsMcpStructuredError BuildStructuredError(
+			UnityGraphicsMcpExecutionRecord record)
+		{
+			UnityGraphicsMcpErrorCatalogEntry catalog;
+			if (!_errorCatalog.TryGetValue(record.errorCode ?? string.Empty, out catalog))
+			{
+				catalog = Catalog(
+					record.errorCode ?? "MCP_FAILED",
+					"INTERNAL",
+					true,
+					"Inspect current state and restart from the last successful checkpoint.",
+					"Read the Tool Call Trace and do not reuse stale IDs.");
+			}
+
+			UnityGraphicsMcpStructuredError error = new UnityGraphicsMcpStructuredError
+			{
+				code = catalog.code,
+				category = catalog.category,
+				message = record.summary,
+				retryable = catalog.retryable,
+				retryAction = catalog.retryAction,
+				remediation = catalog.remediation
+			};
+			error.details["executionId"] = record.executionId;
+			error.details["traceId"] = record.traceId;
+			error.details["state"] = record.state;
+			return error;
+		}
+
 		private static string ResolveFailureCode(UnityGraphicsMcpToolResult result)
 		{
 			if (result == null || result.IsSuccessful)
@@ -999,11 +1047,41 @@ namespace UnityGraphicsMcp
 				return issue.code;
 			}
 
+			string summary = result.summary ?? string.Empty;
+			if (summary.IndexOf("承認Token", StringComparison.Ordinal) >= 0 &&
+				(summary.IndexOf("一致しません", StringComparison.Ordinal) >= 0 ||
+				 summary.IndexOf("不足", StringComparison.Ordinal) >= 0))
+			{
+				return "APPROVAL_TOKEN_MISMATCH";
+			}
+			if (summary.IndexOf("有効期限切れ", StringComparison.Ordinal) >= 0)
+			{
+				return "PLAN_EXPIRED";
+			}
+			if (summary.IndexOf("Camera", StringComparison.OrdinalIgnoreCase) >= 0 &&
+				(summary.IndexOf("存在しません", StringComparison.Ordinal) >= 0 ||
+				 summary.IndexOf("解決", StringComparison.Ordinal) >= 0))
+			{
+				return "CAMERA_NOT_FOUND";
+			}
+			if (result.status == E_MCP_TOOL_STATUS.UNSUPPORTED.ToString() &&
+				summary.IndexOf("Pipeline", StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				return "UNSUPPORTED_PIPELINE";
+			}
+			if (summary.IndexOf("Artifact", StringComparison.OrdinalIgnoreCase) >= 0 &&
+				(summary.IndexOf("不足", StringComparison.Ordinal) >= 0 ||
+				 summary.IndexOf("存在しません", StringComparison.Ordinal) >= 0))
+			{
+				return "OUTPUT_ASSET_MISSING";
+			}
+
 			return "MCP_" + (result.status ?? E_MCP_TOOL_STATUS.FAILED.ToString());
 		}
 
 		private static E_MCP_EXECUTION_STATE ResolveExecutionState(
-			UnityGraphicsMcpToolResult result)
+			UnityGraphicsMcpToolResult result,
+			string failureCode)
 		{
 			if (result == null)
 			{
@@ -1016,6 +1094,13 @@ namespace UnityGraphicsMcp
 			if (result.status == E_MCP_TOOL_STATUS.PARTIAL.ToString())
 			{
 				return E_MCP_EXECUTION_STATE.PARTIAL;
+			}
+			if (string.Equals(
+				failureCode,
+				"EXECUTION_CANCEL_REQUESTED",
+				StringComparison.Ordinal))
+			{
+				return E_MCP_EXECUTION_STATE.CANCELLED;
 			}
 			return E_MCP_EXECUTION_STATE.FAILED;
 		}

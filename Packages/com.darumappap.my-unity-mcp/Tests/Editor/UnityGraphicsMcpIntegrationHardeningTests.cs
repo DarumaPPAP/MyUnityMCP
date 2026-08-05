@@ -27,7 +27,7 @@ namespace UnityGraphicsMcp
 
 		private string _storageRoot;
 
-		private sealed class S_DUMMY_PARAMETERS
+		private sealed class DummyParameters
 		{
 			public string requestId { get; set; }
 		}
@@ -107,7 +107,7 @@ namespace UnityGraphicsMcp
 		[Test]
 		public void ToolBridge_SuccessAddsExecutionMetadataAndPersistentHistory()
 		{
-			object response = UnityGraphicsMcpToolBridge.Execute<S_DUMMY_PARAMETERS>(
+			object response = UnityGraphicsMcpToolBridge.Execute<DummyParameters>(
 				new JObject { ["requestId"] = "hardening-success" },
 				parameters => UnityGraphicsMcpInspection.CreateHardeningResult(
 					"graphics.hardening_success",
@@ -508,7 +508,7 @@ namespace UnityGraphicsMcp
 
 			if (code == "MCP_CLIENT_DISCONNECTED")
 			{
-				UnityGraphicsMcpExecutionHardening.NotifyClientDisconnected("mcp-client");
+				UnityGraphicsMcpExecutionLifecycle.NotifyClientDisconnected("mcp-client");
 			}
 			else if (code == "UNITY_RESTARTED")
 			{
