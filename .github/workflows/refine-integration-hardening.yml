@@ -1,0 +1,42 @@
+name: Refine Integration Hardening
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Tools/refine-integration-hardening.py
+      - .github/workflows/refine-integration-hardening.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+
+      - name: Apply refinements
+        run: python3 Tools/refine-integration-hardening.py
+
+      - name: Commit refinements
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No refinement changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpInspection.cs
+          git add Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpExecutionHardening.cs
+          git add Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityGraphicsMcpIntegrationHardeningTests.cs
+          git commit -m "fix: preserve terminal execution state and normalize fault codes"
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
