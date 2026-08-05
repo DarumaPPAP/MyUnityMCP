@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using MCPForUnity.Editor.Tools;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -125,7 +126,9 @@ namespace UnityGraphicsMcp
 
 			Assert.That(firstDigest, Is.EqualTo(secondDigest));
 
-			second.Artifacts[0].Sha256 = new string('f', 64);
+			second.Artifacts.Find(artifact =>
+				artifact.Channel == "COLOR").Sha256 =
+				new string('f', 64);
 			Assert.That(
 				UnityGraphicsMcpInspection
 					.BuildPhase4CEvidenceDigestForTests(second),
@@ -196,7 +199,7 @@ namespace UnityGraphicsMcp
 						UnityGraphicsMcpSession.Revision,
 						64,
 						64,
-						new[] { "COLOR" },
+						new[] { "COLOR", "LINEAR_DEPTH", "OBJECT_ID" },
 						"phase4c-test",
 						32);
 
@@ -222,7 +225,8 @@ namespace UnityGraphicsMcp
 				Assert.That(
 					result.IsSuccessful,
 					Is.True,
-					result.summary);
+					result.summary + "\n" +
+					JsonConvert.SerializeObject(result.data));
 				Dictionary<string, object> data = ResultData(result);
 				string bundlePath = data["bundlePath"] as string;
 				string absoluteBundle =
@@ -243,6 +247,15 @@ namespace UnityGraphicsMcp
 						Path.Combine(
 							absoluteBundle,
 							"capture-manifest.json")),
+					Is.True);
+				Assert.That(
+					File.Exists(Path.Combine(absoluteBundle, "linear-depth.exr")),
+					Is.True);
+				Assert.That(
+					File.Exists(Path.Combine(absoluteBundle, "object-id.png")),
+					Is.True);
+				Assert.That(
+					File.Exists(Path.Combine(absoluteBundle, "object-id-map.json")),
 					Is.True);
 				Assert.That(
 					data["evidenceDigest"] as string,
@@ -525,6 +538,24 @@ namespace UnityGraphicsMcp
 					false),
 				Is.True);
 			Assert.That(scene.isDirty, Is.False);
+
+			Shader.Find("Hidden/MyUnityMCP/CaptureEvidence");
+			foreach (Renderer renderer in
+				Resources.FindObjectsOfTypeAll<Renderer>())
+			{
+				if (renderer != null && renderer.gameObject.scene == scene)
+				{
+					Material[] materials = renderer.sharedMaterials;
+					foreach (Material material in materials)
+					{
+						if (material != null)
+						{
+							Shader shader = material.shader;
+						}
+					}
+				}
+			}
+
 			return camera;
 		}
 
