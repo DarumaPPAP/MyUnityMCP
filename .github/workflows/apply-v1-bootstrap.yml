@@ -29,14 +29,38 @@ jobs:
           set -euo pipefail
           mkdir -p Tools
           cat .release-bootstrap/bootstrap0.part .release-bootstrap/bootstrap1.part > Tools/apply-v1-bootstrap.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('Tools/apply-v1-bootstrap.py')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          marker = next(index for index, line in enumerate(lines) if line.startswith('exec(compile('))
+          path.write_text(chr(10).join(lines[:marker + 1]) + chr(10), encoding='utf-8')
+          PY
           python3 Tools/apply-v1-bootstrap.py
+
+          sed -i 's/NOT_IMPLEMENTED_IN_PHASE_2/REQUIRES_SEPARATE_APPROVED_TOOL/g' Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpPlanning.cs
+          sed -i 's/MyUnityMCP Environment Mutation Environment Transaction/MyUnityMCP Environment Transaction/g' Packages/com.darumappap.my-unity-mcp/Editor/UnityGraphicsMcpEnvironmentMutation.cs
+          sed -i 's/- Phase: `Dependency Bake`/- Capability: `Dependency Bake`/' Specs/UnityGraphicsMCP/dependency-bake.md
+          sed -i '/^  m_LightingSettings: {fileID: 0}$/d' 'Packages/com.darumappap.my-unity-mcp/Samples~/Getting Started/Scenes/MyUnityMcpGettingStarted.unity'
+          sed -i '/^  m_LightingSettings: {fileID: 0}$/d' SampleProjects/MyUnityMCPGettingStarted/Assets/Scenes/MyUnityMcpGettingStarted.unity
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          path = Path('Packages/com.darumappap.my-unity-mcp/package.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          payload['dependencies'].pop('com.unity.test-framework', None)
+          path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + chr(10), encoding='utf-8')
+          PY
+
           python3 Tests/Release/verify_release_contract.py --mode pr
 
       - name: Remove migration-only assets
         run: |
           rm -rf .release-bootstrap
           rm -f Tools/apply-v1-bootstrap.py
+          rm -f Tools/apply-v1-release.py
           rm -f .github/workflows/apply-v1-bootstrap.yml
+          rm -f .github/workflows/apply-v1-release.yml
           rm -f .github/workflows/release-source-audit-export.yml
 
       - name: Commit v1 release preparation
