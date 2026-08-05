@@ -24,7 +24,7 @@ editor_verification:
   failed: 0
   skipped: 0
   inconclusive: 0
-  duration_seconds: 9.4432903
+  duration_seconds: 9.2113006
 
 fresh_project_verification:
   unity_version: "6000.0.75f1"
@@ -33,7 +33,7 @@ fresh_project_verification:
   sample_workflow_total: 1
   sample_workflow_passed: 1
   sample_workflow_failed: 0
-  duration_seconds: 0.139552
+  duration_seconds: 0.1283055
 
 release_distribution:
   package: com.darumappap.my-unity-mcp-1.0.0.tgz
@@ -45,24 +45,33 @@ release_distribution:
   templates_sha256: 329ca59f72300f33eb83dcd2fb9c40503eef96a198d908d3649b1b33dd9ece0c
 
 evidence:
-  verified_source_commit: 769e1c40cd71c61a8a2ce115e7311d506cd7c791
-  editor_workflow_run: 31045924267
-  editor_job: 92441292935
-  editor_artifact_id: 8946591833
+  verified_source_commit: 74f2c0fec9c5794b19930a63c41dc5dd14cc1bc6
+  editor_workflow_run: 31047334394
+  editor_job: 92445984854
+  editor_artifact_id: 8947105343
   editor_artifact_name: MyUnityMCP-Unity-Editor-Evidence
-  editor_artifact_sha256: 9a43320b4107f68c41fced6c32e3ace895bce361c1679aa8fe7a3deeff098c6f
-  sample_workflow_run: 31045925174
-  sample_job: 92441293677
-  sample_artifact_id: 8946603818
+  editor_artifact_sha256: 4923823a61c58a08736ab98bfc39189b2b0c2701e9e3cdf07fbac04e39b9237a
+  sample_workflow_run: 31047334993
+  sample_job: 92445971804
+  sample_artifact_id: 8947107070
   sample_artifact_name: MyUnityMCP-Fresh-Project-Sample-Evidence
-  sample_artifact_sha256: e779409601056bf56b2a5b389be0b149561cb581278d2a2af7e43a439e728ad8
-  distribution_job: 92441293614
-  distribution_artifact_id: 8946426366
+  sample_artifact_sha256: 1ee4f09b20fcd432c2e2895343647d98092cdf38343d06b1e85c7f37e1b28e97
+  distribution_job: 92445971891
+  distribution_artifact_id: 8946966125
   distribution_artifact_name: MyUnityMCP-v1.0.0-Distribution-Preview
-  distribution_artifact_sha256: 150a116d0d75dddb0e87f2232898ec1524e0121088af42cf87ba33326049ab90
+  distribution_artifact_sha256: 49ab6231eddf9dc564d838f5fa7edd4ec943b5fa88953bcfd254bebe2ea8b1c7
 
 release_identity:
-  release_commit: merge_commit_of_pull_request_13
+  release_commit: current_main_release_commit
   tag: v1.0.0
+  publication_triggers:
+    - version_change_on_main
+    - workflow_dispatch
+    - guarded_issue_comment
+  issue_comment_command: /publish-myunitymcp-release
+  allowed_comment_associations:
+    - OWNER
+    - MEMBER
+    - COLLABORATOR
   main_must_point_to_release_commit: true
   tag_must_point_to_release_commit: true
