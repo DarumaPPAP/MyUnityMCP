@@ -9,7 +9,6 @@ using System.Security.Cryptography;
 using System.Text;
 using UnityEditor;
 using UnityEditor.Compilation;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -76,14 +75,7 @@ namespace UnityGraphicsMcp
 		public static string StoreSavePlan(UnityGraphicsMcpExecutableSavePlan plan)
 		{
 			RemoveExpiredSavePlans();
-			while (_savePlans.Count >= MAX_SAVE_PLAN_COUNT)
-			{
-				string oldestId = _savePlans
-					.OrderBy(pair => pair.Value.CreatedUtc)
-					.First()
-					.Key;
-				_savePlans.Remove(oldestId);
-			}
+			RemoveOldestSavePlansWhenFull();
 
 			plan.PlanId = UnityGraphicsMcpSession.SessionId +
 				":save-plan:" + Guid.NewGuid().ToString("N");
@@ -157,14 +149,7 @@ namespace UnityGraphicsMcp
 		public static string StoreCapture(UnityGraphicsMcpCaptureRecord capture)
 		{
 			RemoveExpiredCaptures();
-			while (_captures.Count >= MAX_CAPTURE_COUNT)
-			{
-				string oldestId = _captures
-					.OrderBy(pair => pair.Value.CreatedUtc)
-					.First()
-					.Key;
-				_captures.Remove(oldestId);
-			}
+			RemoveOldestCapturesWhenFull();
 
 			capture.CaptureId = UnityGraphicsMcpSession.SessionId +
 				":capture:" + Guid.NewGuid().ToString("N");
@@ -209,12 +194,7 @@ namespace UnityGraphicsMcp
 			{
 				byte[] bytes = sha256.ComputeHash(
 					Encoding.UTF8.GetBytes(value ?? string.Empty));
-				StringBuilder builder = new StringBuilder(bytes.Length * 2);
-				foreach (byte item in bytes)
-				{
-					builder.Append(item.ToString("x2", CultureInfo.InvariantCulture));
-				}
-				return builder.ToString();
+				return ToHex(bytes);
 			}
 		}
 
@@ -245,6 +225,40 @@ namespace UnityGraphicsMcp
 			{
 				_captures.Remove(id);
 			}
+		}
+
+		private static void RemoveOldestSavePlansWhenFull()
+		{
+			while (_savePlans.Count >= MAX_SAVE_PLAN_COUNT)
+			{
+				string oldestId = _savePlans
+					.OrderBy(pair => pair.Value.CreatedUtc)
+					.First()
+					.Key;
+				_savePlans.Remove(oldestId);
+			}
+		}
+
+		private static void RemoveOldestCapturesWhenFull()
+		{
+			while (_captures.Count >= MAX_CAPTURE_COUNT)
+			{
+				string oldestId = _captures
+					.OrderBy(pair => pair.Value.CreatedUtc)
+					.First()
+					.Key;
+				_captures.Remove(oldestId);
+			}
+		}
+
+		private static string ToHex(byte[] bytes)
+		{
+			StringBuilder builder = new StringBuilder(bytes.Length * 2);
+			foreach (byte item in bytes)
+			{
+				builder.Append(item.ToString("x2", CultureInfo.InvariantCulture));
+			}
+			return builder.ToString();
 		}
 
 		private static void Clear()
@@ -298,7 +312,8 @@ namespace UnityGraphicsMcp
 							});
 					}
 
-					if (targets == null || targets.Length != 1 ||
+					if (targets == null ||
+						targets.Length != 1 ||
 						targets[0] == null ||
 						string.IsNullOrWhiteSpace(targets[0].scenePath))
 					{
@@ -332,10 +347,7 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.INVALID_REQUEST,
 							"指定SceneはLoaded Sceneとして解決できません。",
-							new Dictionary<string, object>
-							{
-								{ "scenePath", scenePath }
-							});
+							null);
 					}
 
 					if (!scene.isDirty)
@@ -345,10 +357,7 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.INVALID_REQUEST,
 							"指定SceneはDirtyではないため、保存対象がありません。",
-							new Dictionary<string, object>
-							{
-								{ "scenePath", scenePath }
-							});
+							null);
 					}
 
 					UnityGraphicsMcpSaveSceneBaseline baseline =
@@ -363,7 +372,6 @@ namespace UnityGraphicsMcp
 								UnityGraphicsMcpPhase4Session.HashText(approvalToken),
 							Target = baseline
 						};
-
 					plan.DiffDigest = BuildPhase4SavePlanDigest(plan);
 					UnityGraphicsMcpPhase4Session.StoreSavePlan(plan);
 
@@ -421,10 +429,11 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
+					string normalizedSaveMode = string.IsNullOrWhiteSpace(saveMode)
+						? string.Empty
+						: saveMode.Trim();
 					if (!string.Equals(
-						string.IsNullOrWhiteSpace(saveMode)
-							? string.Empty
-							: saveMode.Trim(),
+						normalizedSaveMode,
 						SAVE_MODE_EXPLICIT_SCENE,
 						StringComparison.OrdinalIgnoreCase))
 					{
@@ -510,10 +519,7 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.FAILED,
 							"Unity EditorがScene保存を完了できませんでした。",
-							new Dictionary<string, object>
-							{
-								{ "scenePath", plan.Target.ScenePath }
-							});
+							null);
 					}
 
 					if (scene.isDirty)
@@ -523,10 +529,7 @@ namespace UnityGraphicsMcp
 							requestId,
 							E_MCP_TOOL_STATUS.FAILED,
 							"Scene保存後もDirty状態が残っているため、保存成功として扱いません。",
-							new Dictionary<string, object>
-							{
-								{ "scenePath", plan.Target.ScenePath }
-							});
+							null);
 					}
 
 					UnityGraphicsMcpPhase4Session.ConsumeSavePlan(plan);
@@ -560,7 +563,7 @@ namespace UnityGraphicsMcp
 			int? height,
 			string captureLabel)
 		{
-			return ExecuteReadOnly(
+			return ExecutePhase4CaptureOperation(
 				"graphics.capture_evaluation",
 				requestId,
 				delegate
@@ -598,11 +601,7 @@ namespace UnityGraphicsMcp
 
 					int captureWidth = width ?? 1280;
 					int captureHeight = height ?? 720;
-					if (captureWidth < MIN_CAPTURE_SIZE ||
-						captureWidth > MAX_CAPTURE_SIZE ||
-						captureHeight < MIN_CAPTURE_SIZE ||
-						captureHeight > MAX_CAPTURE_SIZE ||
-						(long)captureWidth * captureHeight > MAX_CAPTURE_PIXEL_COUNT)
+					if (!IsValidPhase4CaptureSize(captureWidth, captureHeight))
 					{
 						return CreateResult(
 							"graphics.capture_evaluation",
@@ -632,179 +631,13 @@ namespace UnityGraphicsMcp
 							});
 					}
 
-					long startRevision = UnityGraphicsMcpSession.Revision;
-					Scene scene = camera.gameObject.scene;
-					bool sceneDirtyBefore = scene.isDirty;
-					RenderTexture originalTargetTexture = camera.targetTexture;
-					RenderTexture originalActiveTexture = RenderTexture.active;
-					RenderTexture temporaryTarget = null;
-					Texture2D capturedTexture = null;
-					string relativeOutputPath = null;
-					string absoluteOutputPath = null;
-					byte[] pngBytes = null;
-					Exception captureException = null;
-
-					try
-					{
-						temporaryTarget = new RenderTexture(
-							captureWidth,
-							captureHeight,
-							24,
-							RenderTextureFormat.ARGB32,
-							RenderTextureReadWrite.Default);
-						temporaryTarget.name = "MyUnityMCP Evaluation Capture";
-						temporaryTarget.Create();
-
-						camera.targetTexture = temporaryTarget;
-						camera.Render();
-						RenderTexture.active = temporaryTarget;
-
-						capturedTexture = new Texture2D(
-							captureWidth,
-							captureHeight,
-							TextureFormat.RGBA32,
-							false);
-						capturedTexture.ReadPixels(
-							new Rect(0.0f, 0.0f, captureWidth, captureHeight),
-							0,
-							0,
-							false);
-						capturedTexture.Apply(false, false);
-						pngBytes = capturedTexture.EncodeToPNG();
-
-						relativeOutputPath = BuildPhase4CaptureOutputPath(captureLabel);
-						absoluteOutputPath = ToPhase4ProjectAbsolutePath(relativeOutputPath);
-						Directory.CreateDirectory(Path.GetDirectoryName(absoluteOutputPath));
-						File.WriteAllBytes(absoluteOutputPath, pngBytes);
-					}
-					catch (Exception exception)
-					{
-						captureException = exception;
-					}
-					finally
-					{
-						camera.targetTexture = originalTargetTexture;
-						RenderTexture.active = originalActiveTexture;
-
-						if (capturedTexture != null)
-						{
-							Object.DestroyImmediate(capturedTexture);
-						}
-
-						if (temporaryTarget != null)
-						{
-							temporaryTarget.Release();
-							Object.DestroyImmediate(temporaryTarget);
-						}
-
-						if (!sceneDirtyBefore && scene.IsValid() && scene.isDirty)
-						{
-							EditorSceneManager.ClearSceneDirtiness(scene);
-						}
-					}
-
-					if (captureException != null)
-					{
-						if (!string.IsNullOrWhiteSpace(absoluteOutputPath) &&
-							File.Exists(absoluteOutputPath))
-						{
-							File.Delete(absoluteOutputPath);
-						}
-
-						return CreateResult(
-							"graphics.capture_evaluation",
-							requestId,
-							E_MCP_TOOL_STATUS.FAILED,
-							"Camera Color Capture中に例外が発生しました。Editor一時状態は復元済みです。",
-							new Dictionary<string, object>
-							{
-								{ "exceptionType", captureException.GetType().FullName },
-								{ "message", captureException.Message },
-								{ "temporaryStateRestored",
-									camera.targetTexture == originalTargetTexture &&
-									RenderTexture.active == originalActiveTexture },
-								{ "sceneDirtyStatePreserved", scene.isDirty == sceneDirtyBefore }
-							});
-					}
-
-					if (camera.targetTexture != originalTargetTexture ||
-						RenderTexture.active != originalActiveTexture ||
-						scene.isDirty != sceneDirtyBefore)
-					{
-						if (!string.IsNullOrWhiteSpace(absoluteOutputPath) &&
-							File.Exists(absoluteOutputPath))
-						{
-							File.Delete(absoluteOutputPath);
-						}
-
-						return CreateResult(
-							"graphics.capture_evaluation",
-							requestId,
-							E_MCP_TOOL_STATUS.FAILED,
-							"Capture後のCamera TargetTexture、Active RenderTexture、Scene Dirty状態を復元できませんでした。",
-							null);
-					}
-
-					if (startRevision != UnityGraphicsMcpSession.Revision)
-					{
-						if (!string.IsNullOrWhiteSpace(absoluteOutputPath) &&
-							File.Exists(absoluteOutputPath))
-						{
-							File.Delete(absoluteOutputPath);
-						}
-
-						return CreateResult(
-							"graphics.capture_evaluation",
-							requestId,
-							E_MCP_TOOL_STATUS.STALE_DURING_SCAN,
-							"Capture中にEditor Revisionが変更されたためEvidenceを破棄しました。",
-							null);
-					}
-
-					if (pngBytes == null ||
-						pngBytes.Length == 0 ||
-						string.IsNullOrWhiteSpace(absoluteOutputPath) ||
-						!File.Exists(absoluteOutputPath))
-					{
-						return CreateResult(
-							"graphics.capture_evaluation",
-							requestId,
-							E_MCP_TOOL_STATUS.FAILED,
-							"PNG Evidenceを生成または保存できませんでした。",
-							null);
-					}
-
-					UnityGraphicsMcpCaptureRecord capture =
-						new UnityGraphicsMcpCaptureRecord
-						{
-							Revision = startRevision,
-							CameraObjectId = cameraObjectId,
-							OutputPath = relativeOutputPath,
-							Sha256 = HashPhase4Bytes(pngBytes),
-							Width = captureWidth,
-							Height = captureHeight
-						};
-					UnityGraphicsMcpPhase4Session.StoreCapture(capture);
-
-					return CreateResult(
-						"graphics.capture_evaluation",
+					return CapturePhase4Camera(
 						requestId,
-						E_MCP_TOOL_STATUS.SUCCESS,
-						"Camera Color CaptureをLibrary配下へ保存し、Editor一時状態を復元しました。",
-						new Dictionary<string, object>
-						{
-							{ "captureId", capture.CaptureId },
-							{ "cameraObjectId", capture.CameraObjectId },
-							{ "outputPath", capture.OutputPath },
-							{ "sha256", capture.Sha256 },
-							{ "width", capture.Width },
-							{ "height", capture.Height },
-							{ "temporaryStateRestored", true },
-							{ "sceneDirtyStatePreserved", true },
-							{ "imageAnalysisPerformedByUnity", false },
-							{ "humanReviewStatus", "PENDING" },
-							{ "visualAccepted", false }
-						});
+						cameraObjectId,
+						camera,
+						captureWidth,
+						captureHeight,
+						captureLabel);
 				});
 		}
 
@@ -878,65 +711,44 @@ namespace UnityGraphicsMcp
 					}
 
 					Dictionary<string, object> refinedIntent =
-						new Dictionary<string, object>(sourcePlan.VisualIntent)
-						{
-							{ "refinementSourcePlanId", directionPlanId },
-							{ "captureId", captureId },
-							{ "humanObservations", observations },
-							{ "requestedAdjustments", adjustments },
-							{ "imageAnalysisPerformedByUnity", false },
-							{ "humanReviewRequired", true }
-						};
+						new Dictionary<string, object>(
+							sourcePlan.VisualIntent ?? new Dictionary<string, object>());
+					refinedIntent["refinementSourcePlanId"] = directionPlanId;
+					refinedIntent["captureId"] = captureId;
+					refinedIntent["humanObservations"] = observations;
+					refinedIntent["requestedAdjustments"] = adjustments;
+					refinedIntent["imageAnalysisPerformedByUnity"] = false;
+					refinedIntent["humanReviewRequired"] = true;
 
 					List<UnityGraphicsMcpPlanRecommendation> recommendations =
-						sourcePlan.Recommendations
-							.Select(ClonePhase4Recommendation)
-							.ToList();
+						(sourcePlan.Recommendations ??
+							new List<UnityGraphicsMcpPlanRecommendation>())
+						.Select(ClonePhase4Recommendation)
+						.ToList();
 					recommendations.Add(
-						new UnityGraphicsMcpPlanRecommendation
-						{
-							recommendationId =
-								"REFINE-" + Guid.NewGuid().ToString("N"),
-							section = "LOOK",
-							recommendedValue = new Dictionary<string, object>
-							{
-								{ "humanObservations", observations },
-								{ "requestedAdjustments", adjustments }
-							},
-							reason =
-								"Capture Evidenceに対する明示的なHuman Reviewを次のDirection Iterationへ反映します。",
-							dependencies = new List<string>
-							{
-								directionPlanId,
-								captureId
-							},
-							confidence =
-								E_GRAPHICS_PLAN_CONFIDENCE.MEDIUM.ToString(),
-							pipelineImpact = "PLAN_ONLY",
-							platformImpact = new List<string>(),
-							verificationLevel =
-								E_GRAPHICS_PLAN_VERIFICATION.HUMAN_REVIEW_REQUIRED.ToString(),
-							nativeMutationBackendStatus = "PLAN_ONLY"
-						});
+						BuildPhase4RefineRecommendation(
+							directionPlanId,
+							captureId,
+							observations,
+							adjustments));
 
 					UnityGraphicsMcpDirectionPlan refinedPlan =
 						new UnityGraphicsMcpDirectionPlan
 						{
 							Revision = expectedRevision.Value,
 							CreatedUtc = DateTime.UtcNow,
-							ProjectContext =
-								new Dictionary<string, object>(sourcePlan.ProjectContext),
+							ProjectContext = new Dictionary<string, object>(
+								sourcePlan.ProjectContext ?? new Dictionary<string, object>()),
 							VisualIntent = refinedIntent,
 							Recommendations = recommendations,
-							Issues = new List<UnityGraphicsMcpIssue>(sourcePlan.Issues)
+							Issues = new List<UnityGraphicsMcpIssue>(
+								sourcePlan.Issues ?? new List<UnityGraphicsMcpIssue>())
 						};
-
 					refinedPlan.Issues.Add(
 						new UnityGraphicsMcpIssue
 						{
 							code = "VISUAL_ACCEPTANCE_REQUIRES_HUMAN_REVIEW",
-							message =
-								"Refine Planは自動的にVisual Acceptedとは判定されません。",
+							message = "Refine Planは自動的にVisual Acceptedとは判定されません。",
 							evidence = new Dictionary<string, object>
 							{
 								{ "captureId", captureId },
@@ -944,7 +756,6 @@ namespace UnityGraphicsMcp
 								{ "visualAccepted", false }
 							}
 						});
-
 					UnityGraphicsMcpSession.StorePlan(refinedPlan);
 
 					UnityGraphicsMcpToolResult result = CreateResult(
@@ -970,6 +781,244 @@ namespace UnityGraphicsMcp
 					result.issues.AddRange(refinedPlan.Issues);
 					return result;
 				});
+		}
+
+		private static UnityGraphicsMcpToolResult CapturePhase4Camera(
+			string requestId,
+			string cameraObjectId,
+			Camera camera,
+			int width,
+			int height,
+			string captureLabel)
+		{
+			long startRevision = UnityGraphicsMcpSession.Revision;
+			Scene scene = camera.gameObject.scene;
+			bool sceneDirtyBefore = scene.isDirty;
+			RenderTexture originalTargetTexture = camera.targetTexture;
+			RenderTexture originalActiveTexture = RenderTexture.active;
+			RenderTexture temporaryTarget = null;
+			Texture2D capturedTexture = null;
+			string relativeOutputPath = null;
+			string absoluteOutputPath = null;
+			byte[] pngBytes = null;
+			Exception captureException = null;
+
+			try
+			{
+				temporaryTarget = new RenderTexture(
+					width,
+					height,
+					24,
+					RenderTextureFormat.ARGB32,
+					RenderTextureReadWrite.Default)
+				{
+					name = "MyUnityMCP Evaluation Capture"
+				};
+				temporaryTarget.Create();
+
+				camera.targetTexture = temporaryTarget;
+				camera.Render();
+				RenderTexture.active = temporaryTarget;
+
+				capturedTexture = new Texture2D(
+					width,
+					height,
+					TextureFormat.RGBA32,
+					false);
+				capturedTexture.ReadPixels(
+					new Rect(0.0f, 0.0f, width, height),
+					0,
+					0,
+					false);
+				capturedTexture.Apply(false, false);
+				pngBytes = capturedTexture.EncodeToPNG();
+
+				relativeOutputPath = BuildPhase4CaptureOutputPath(captureLabel);
+				absoluteOutputPath = ToPhase4ProjectAbsolutePath(relativeOutputPath);
+				Directory.CreateDirectory(Path.GetDirectoryName(absoluteOutputPath));
+				File.WriteAllBytes(absoluteOutputPath, pngBytes);
+			}
+			catch (Exception exception)
+			{
+				captureException = exception;
+			}
+			finally
+			{
+				camera.targetTexture = originalTargetTexture;
+				RenderTexture.active = originalActiveTexture;
+
+				if (capturedTexture != null)
+				{
+					Object.DestroyImmediate(capturedTexture);
+				}
+
+				if (temporaryTarget != null)
+				{
+					temporaryTarget.Release();
+					Object.DestroyImmediate(temporaryTarget);
+				}
+
+				if (!sceneDirtyBefore && scene.IsValid() && scene.isDirty)
+				{
+					EditorSceneManager.ClearSceneDirtiness(scene);
+				}
+			}
+
+			if (captureException != null)
+			{
+				DeletePhase4CaptureFile(absoluteOutputPath);
+				return CreateResult(
+					"graphics.capture_evaluation",
+					requestId,
+					E_MCP_TOOL_STATUS.FAILED,
+					"Camera Color Capture中に例外が発生しました。Editor一時状態は復元済みです。",
+					new Dictionary<string, object>
+					{
+						{ "exceptionType", captureException.GetType().FullName },
+						{ "message", captureException.Message },
+						{ "temporaryStateRestored",
+							camera.targetTexture == originalTargetTexture &&
+							RenderTexture.active == originalActiveTexture },
+						{ "sceneDirtyStatePreserved", scene.isDirty == sceneDirtyBefore }
+					});
+			}
+
+			if (camera.targetTexture != originalTargetTexture ||
+				RenderTexture.active != originalActiveTexture ||
+				scene.isDirty != sceneDirtyBefore)
+			{
+				DeletePhase4CaptureFile(absoluteOutputPath);
+				return CreateResult(
+					"graphics.capture_evaluation",
+					requestId,
+					E_MCP_TOOL_STATUS.FAILED,
+					"Capture後のCamera TargetTexture、Active RenderTexture、Scene Dirty状態を復元できませんでした。",
+					null);
+			}
+
+			if (startRevision != UnityGraphicsMcpSession.Revision)
+			{
+				DeletePhase4CaptureFile(absoluteOutputPath);
+				return CreateResult(
+					"graphics.capture_evaluation",
+					requestId,
+					E_MCP_TOOL_STATUS.STALE_DURING_SCAN,
+					"Capture中にEditor Revisionが変更されたためEvidenceを破棄しました。",
+					null);
+			}
+
+			if (pngBytes == null ||
+				pngBytes.Length == 0 ||
+				string.IsNullOrWhiteSpace(absoluteOutputPath) ||
+				!File.Exists(absoluteOutputPath))
+			{
+				return CreateResult(
+					"graphics.capture_evaluation",
+					requestId,
+					E_MCP_TOOL_STATUS.FAILED,
+					"PNG Evidenceを生成または保存できませんでした。",
+					null);
+			}
+
+			UnityGraphicsMcpCaptureRecord capture =
+				new UnityGraphicsMcpCaptureRecord
+				{
+					Revision = startRevision,
+					CameraObjectId = cameraObjectId,
+					OutputPath = relativeOutputPath,
+					Sha256 = HashPhase4Bytes(pngBytes),
+					Width = width,
+					Height = height
+				};
+			UnityGraphicsMcpPhase4Session.StoreCapture(capture);
+
+			return CreateResult(
+				"graphics.capture_evaluation",
+				requestId,
+				E_MCP_TOOL_STATUS.SUCCESS,
+				"Camera Color CaptureをLibrary配下へ保存し、Editor一時状態を復元しました。",
+				new Dictionary<string, object>
+				{
+					{ "captureId", capture.CaptureId },
+					{ "cameraObjectId", capture.CameraObjectId },
+					{ "outputPath", capture.OutputPath },
+					{ "sha256", capture.Sha256 },
+					{ "width", capture.Width },
+					{ "height", capture.Height },
+					{ "temporaryStateRestored", true },
+					{ "sceneDirtyStatePreserved", true },
+					{ "imageAnalysisPerformedByUnity", false },
+					{ "humanReviewStatus", "PENDING" },
+					{ "visualAccepted", false }
+				});
+		}
+
+		private static UnityGraphicsMcpToolResult ExecutePhase4CaptureOperation(
+			string toolName,
+			string requestId,
+			Func<UnityGraphicsMcpToolResult> operation)
+		{
+			string normalizedRequestId = string.IsNullOrWhiteSpace(requestId)
+				? Guid.NewGuid().ToString("N")
+				: requestId;
+
+			if (!UnityGraphicsMcpSession.IsMainThread)
+			{
+				return CreateResult(
+					toolName,
+					normalizedRequestId,
+					E_MCP_TOOL_STATUS.FAILED,
+					"Unity Editor APIはMain Threadで実行する必要があります。",
+					null);
+			}
+
+			if (UnityGraphicsMcpSession.IsReloading)
+			{
+				return CreateResult(
+					toolName,
+					normalizedRequestId,
+					E_MCP_TOOL_STATUS.EDITOR_RELOADING,
+					"Unity EditorがCompileまたはDomain Reload中です。",
+					null);
+			}
+
+			Dictionary<int, bool> sceneDirtyState = CapturePhase4SceneDirtyState();
+			Dictionary<int, bool> assetDirtyState = CapturePhase4AssetDirtyState();
+			int undoGroup = Undo.GetCurrentGroup();
+
+			try
+			{
+				UnityGraphicsMcpToolResult result = operation();
+				Dictionary<string, object> evidence;
+				if (HasPhase4CaptureReadOnlyViolation(
+					sceneDirtyState,
+					assetDirtyState,
+					undoGroup,
+					out evidence))
+				{
+					return CreateResult(
+						toolName,
+						normalizedRequestId,
+						E_MCP_TOOL_STATUS.READ_ONLY_CONTRACT_VIOLATION,
+						"Capture Toolの実行前後でScene、AssetまたはUndo状態が変化しました。",
+						evidence);
+				}
+				return result;
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				return CreateResult(
+					toolName,
+					normalizedRequestId,
+					E_MCP_TOOL_STATUS.FAILED,
+					"Capture処理中に例外が発生しました。",
+					new Dictionary<string, object>
+					{
+						{ "exceptionType", exception.GetType().FullName },
+						{ "message", exception.Message }
+					});
+			}
 		}
 
 		private static UnityGraphicsMcpToolResult ExecutePhase4PersistentOperation(
@@ -1022,6 +1071,152 @@ namespace UnityGraphicsMcp
 			}
 		}
 
+		private static Dictionary<int, bool> CapturePhase4SceneDirtyState()
+		{
+			Dictionary<int, bool> states = new Dictionary<int, bool>();
+			for (int index = 0; index < SceneManager.sceneCount; index++)
+			{
+				Scene scene = SceneManager.GetSceneAt(index);
+				if (scene.IsValid())
+				{
+					states[scene.handle] = scene.isDirty;
+				}
+			}
+			return states;
+		}
+
+		private static Dictionary<int, bool> CapturePhase4AssetDirtyState()
+		{
+			Dictionary<int, bool> states = new Dictionary<int, bool>();
+			foreach (Object target in Resources.FindObjectsOfTypeAll<Object>())
+			{
+				if (!IsPhase4ProjectAsset(target))
+				{
+					continue;
+				}
+				states[target.GetInstanceID()] = EditorUtility.IsDirty(target);
+			}
+			return states;
+		}
+
+		private static bool HasPhase4CaptureReadOnlyViolation(
+			Dictionary<int, bool> sceneDirtyState,
+			Dictionary<int, bool> assetDirtyState,
+			int undoGroup,
+			out Dictionary<string, object> evidence)
+		{
+			evidence = new Dictionary<string, object>();
+			List<Dictionary<string, object>> changedScenes =
+				new List<Dictionary<string, object>>();
+			List<Dictionary<string, object>> changedAssets =
+				new List<Dictionary<string, object>>();
+
+			if (sceneDirtyState.Count != SceneManager.sceneCount)
+			{
+				evidence["sceneCountBefore"] = sceneDirtyState.Count;
+				evidence["sceneCountAfter"] = SceneManager.sceneCount;
+			}
+
+			for (int index = 0; index < SceneManager.sceneCount; index++)
+			{
+				Scene scene = SceneManager.GetSceneAt(index);
+				bool beforeDirty;
+				if (scene.IsValid() &&
+					(!sceneDirtyState.TryGetValue(scene.handle, out beforeDirty) ||
+					 beforeDirty != scene.isDirty))
+				{
+					changedScenes.Add(new Dictionary<string, object>
+					{
+						{ "scene", scene.path },
+						{ "beforeDirty", beforeDirty },
+						{ "afterDirty", scene.isDirty }
+					});
+				}
+			}
+
+			foreach (Object target in Resources.FindObjectsOfTypeAll<Object>())
+			{
+				if (!IsPhase4ProjectAsset(target))
+				{
+					continue;
+				}
+
+				bool beforeDirty;
+				bool afterDirty = EditorUtility.IsDirty(target);
+				bool existedBefore = assetDirtyState.TryGetValue(
+					target.GetInstanceID(),
+					out beforeDirty);
+				if ((existedBefore && beforeDirty != afterDirty) ||
+					(!existedBefore && afterDirty))
+				{
+					changedAssets.Add(new Dictionary<string, object>
+					{
+						{ "asset", target.name },
+						{ "assetPath", AssetDatabase.GetAssetPath(target) },
+						{ "beforeDirty", existedBefore ? (object)beforeDirty : null },
+						{ "afterDirty", afterDirty }
+					});
+				}
+			}
+
+			int currentUndoGroup = Undo.GetCurrentGroup();
+			if (changedScenes.Count > 0)
+			{
+				evidence["changedScenes"] = changedScenes;
+			}
+			if (changedAssets.Count > 0)
+			{
+				evidence["changedAssets"] = changedAssets;
+			}
+			if (currentUndoGroup != undoGroup)
+			{
+				evidence["undoGroupBefore"] = undoGroup;
+				evidence["undoGroupAfter"] = currentUndoGroup;
+			}
+
+			return changedScenes.Count > 0 ||
+				changedAssets.Count > 0 ||
+				currentUndoGroup != undoGroup ||
+				sceneDirtyState.Count != SceneManager.sceneCount;
+		}
+
+		private static bool IsPhase4ProjectAsset(Object target)
+		{
+			return target != null &&
+				EditorUtility.IsPersistent(target) &&
+				!string.IsNullOrWhiteSpace(AssetDatabase.GetAssetPath(target));
+		}
+
+		private static UnityGraphicsMcpPlanRecommendation BuildPhase4RefineRecommendation(
+			string directionPlanId,
+			string captureId,
+			List<string> observations,
+			List<string> adjustments)
+		{
+			return new UnityGraphicsMcpPlanRecommendation
+			{
+				recommendationId = "REFINE-" + Guid.NewGuid().ToString("N"),
+				section = "LOOK",
+				recommendedValue = new Dictionary<string, object>
+				{
+					{ "humanObservations", observations },
+					{ "requestedAdjustments", adjustments }
+				},
+				reason = "Capture Evidenceに対する明示的なHuman Reviewを次のDirection Iterationへ反映します。",
+				dependencies = new List<string>
+				{
+					directionPlanId,
+					captureId
+				},
+				confidence = E_GRAPHICS_PLAN_CONFIDENCE.MEDIUM.ToString(),
+				pipelineImpact = "PLAN_ONLY",
+				platformImpact = new List<string>(),
+				verificationLevel =
+					E_GRAPHICS_PLAN_VERIFICATION.HUMAN_REVIEW_REQUIRED.ToString(),
+				nativeMutationBackendStatus = "PLAN_ONLY"
+			};
+		}
+
 		private static UnityGraphicsMcpSaveSceneBaseline CapturePhase4SaveSceneBaseline(
 			Scene scene)
 		{
@@ -1062,16 +1257,11 @@ namespace UnityGraphicsMcp
 
 			foreach (GameObject gameObject in objects)
 			{
-				builder.Append(BuildPhase4StableHierarchyPath(gameObject))
-					.Append('|')
-					.Append(gameObject.activeSelf)
-					.Append('|')
-					.Append(gameObject.layer)
-					.Append('|')
-					.Append(gameObject.tag)
-					.Append('|')
-					.Append(gameObject.isStatic)
-					.Append('|');
+				builder.Append(BuildPhase4StableHierarchyPath(gameObject)).Append('|');
+				builder.Append(gameObject.activeSelf).Append('|');
+				builder.Append(gameObject.layer).Append('|');
+				builder.Append(gameObject.tag).Append('|');
+				builder.Append(gameObject.isStatic).Append('|');
 
 				Transform transform = gameObject.transform;
 				AppendPhase4Vector(builder, transform.localPosition);
@@ -1084,11 +1274,9 @@ namespace UnityGraphicsMcp
 					.OrderBy(component => component.GetType().AssemblyQualifiedName)
 					.ThenBy(component => component.GetInstanceID())
 					.ToArray();
-
 				foreach (Component component in components)
 				{
-					builder.Append(component.GetType().AssemblyQualifiedName)
-						.Append('|');
+					builder.Append(component.GetType().AssemblyQualifiedName).Append('|');
 					if (!(component is Transform))
 					{
 						builder.Append(EditorJsonUtility.ToJson(component, false));
@@ -1104,13 +1292,9 @@ namespace UnityGraphicsMcp
 			StringBuilder builder,
 			Vector3 value)
 		{
-			builder
-				.Append(value.x.ToString("R", CultureInfo.InvariantCulture))
-				.Append(',')
-				.Append(value.y.ToString("R", CultureInfo.InvariantCulture))
-				.Append(',')
-				.Append(value.z.ToString("R", CultureInfo.InvariantCulture))
-				.Append('|');
+			builder.Append(value.x.ToString("R", CultureInfo.InvariantCulture)).Append(',');
+			builder.Append(value.y.ToString("R", CultureInfo.InvariantCulture)).Append(',');
+			builder.Append(value.z.ToString("R", CultureInfo.InvariantCulture)).Append('|');
 		}
 
 		private static string BuildPhase4StableHierarchyPath(GameObject gameObject)
@@ -1125,7 +1309,6 @@ namespace UnityGraphicsMcp
 					"]");
 				current = current.parent;
 			}
-
 			parts.Reverse();
 			return string.Join("/", parts);
 		}
@@ -1153,16 +1336,12 @@ namespace UnityGraphicsMcp
 				Scene candidate = SceneManager.GetSceneAt(index);
 				if (candidate.IsValid() &&
 					candidate.isLoaded &&
-					string.Equals(
-						candidate.path,
-						scenePath,
-						StringComparison.Ordinal))
+					string.Equals(candidate.path, scenePath, StringComparison.Ordinal))
 				{
 					scene = candidate;
 					return true;
 				}
 			}
-
 			scene = default;
 			return false;
 		}
@@ -1178,16 +1357,12 @@ namespace UnityGraphicsMcp
 				if (candidate.IsValid() &&
 					candidate.isLoaded &&
 					candidate.handle == sceneHandle &&
-					string.Equals(
-						candidate.path,
-						scenePath,
-						StringComparison.Ordinal))
+					string.Equals(candidate.path, scenePath, StringComparison.Ordinal))
 				{
 					scene = candidate;
 					return true;
 				}
 			}
-
 			scene = default;
 			return false;
 		}
@@ -1197,19 +1372,14 @@ namespace UnityGraphicsMcp
 			out Camera camera)
 		{
 			camera = null;
-			if (string.IsNullOrWhiteSpace(objectId))
-			{
-				return false;
-			}
-
 			GlobalObjectId globalObjectId;
-			if (!GlobalObjectId.TryParse(objectId, out globalObjectId))
+			if (string.IsNullOrWhiteSpace(objectId) ||
+				!GlobalObjectId.TryParse(objectId, out globalObjectId))
 			{
 				return false;
 			}
 
-			Object target =
-				GlobalObjectId.GlobalObjectIdentifierToObjectSlow(globalObjectId);
+			Object target = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(globalObjectId);
 			camera = target as Camera;
 			if (camera == null)
 			{
@@ -1225,6 +1395,15 @@ namespace UnityGraphicsMcp
 				camera.gameObject.scene.isLoaded;
 		}
 
+		private static bool IsValidPhase4CaptureSize(int width, int height)
+		{
+			return width >= MIN_CAPTURE_SIZE &&
+				width <= MAX_CAPTURE_SIZE &&
+				height >= MIN_CAPTURE_SIZE &&
+				height <= MAX_CAPTURE_SIZE &&
+				(long)width * height <= MAX_CAPTURE_PIXEL_COUNT;
+		}
+
 		private static string BuildPhase4CaptureOutputPath(string captureLabel)
 		{
 			string label = SanitizePhase4FileName(captureLabel);
@@ -1232,14 +1411,9 @@ namespace UnityGraphicsMcp
 			{
 				label = "evaluation";
 			}
-
 			return "Library/MyUnityMCP/Captures/" +
 				DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff", CultureInfo.InvariantCulture) +
-				"-" +
-				label +
-				"-" +
-				Guid.NewGuid().ToString("N") +
-				".png";
+				"-" + label + "-" + Guid.NewGuid().ToString("N") + ".png";
 		}
 
 		private static string SanitizePhase4FileName(string value)
@@ -1249,34 +1423,27 @@ namespace UnityGraphicsMcp
 				return string.Empty;
 			}
 
-			HashSet<char> invalid =
-				new HashSet<char>(Path.GetInvalidFileNameChars());
+			HashSet<char> invalid = new HashSet<char>(Path.GetInvalidFileNameChars());
 			StringBuilder builder = new StringBuilder();
 			foreach (char character in value.Trim())
 			{
-				if (!invalid.Contains(character) &&
-					!char.IsControl(character))
+				if (!invalid.Contains(character) && !char.IsControl(character))
 				{
 					builder.Append(character);
 				}
 			}
 
 			string result = builder.ToString();
-			return result.Length <= 48
-				? result
-				: result.Substring(0, 48);
+			return result.Length <= 48 ? result : result.Substring(0, 48);
 		}
 
 		private static string ToPhase4ProjectAbsolutePath(string relativePath)
 		{
-			string projectRoot =
-				Directory.GetParent(Application.dataPath).FullName;
+			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
 			return Path.GetFullPath(
 				Path.Combine(
 					projectRoot,
-					relativePath.Replace(
-						'/',
-						Path.DirectorySeparatorChar)));
+					relativePath.Replace('/', Path.DirectorySeparatorChar)));
 		}
 
 		private static string HashPhase4Bytes(byte[] value)
@@ -1290,6 +1457,14 @@ namespace UnityGraphicsMcp
 					builder.Append(item.ToString("x2", CultureInfo.InvariantCulture));
 				}
 				return builder.ToString();
+			}
+		}
+
+		private static void DeletePhase4CaptureFile(string absolutePath)
+		{
+			if (!string.IsNullOrWhiteSpace(absolutePath) && File.Exists(absolutePath))
+			{
+				File.Delete(absolutePath);
 			}
 		}
 
@@ -1326,8 +1501,7 @@ namespace UnityGraphicsMcp
 					? new List<string>()
 					: new List<string>(source.platformImpact),
 				verificationLevel = source.verificationLevel,
-				nativeMutationBackendStatus =
-					source.nativeMutationBackendStatus
+				nativeMutationBackendStatus = source.nativeMutationBackendStatus
 			};
 		}
 	}
