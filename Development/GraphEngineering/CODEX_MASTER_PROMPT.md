@@ -25,7 +25,57 @@ py Development/GraphEngineering/scripts/roadmap_harness.py next
 git status --short --branch
 ```
 
-`Development/GraphEngineering/graph/implementation-graph.json`と`Development/GraphEngineering/state/roadmap-state.json`を開発進行の正本にします。Repository固有のRelease／Safety／C# PolicyはRootの`AGENTS.md`を最優先にします。
+`Development/GraphEngineering/graph/implementation-graph.json`と
+`Development/GraphEngineering/state/roadmap-state.json`を開発進行の正本にします。
+Repository固有のRelease／Safety／C# PolicyはRootの`AGENTS.md`を最優先にします。
+
+## Branch operating model
+
+通常の開発は、長期開発環境Branchで行います。
+
+```text
+feature/graph-engineering-master
+```
+
+このBranchは次を保持します。
+
+- Graph／Roadmap State
+- Evidence／ExecPlan
+- 実装途中の製品変更
+- Test／失敗／再開情報
+- Visualize Dashboard
+
+このBranchを`main`へ直接Mergeしてはいけません。
+このBranchから`main`への直接Pull Requestも作成してはいけません。
+
+成果物を`main`へ届ける場合だけ、最新`main`から次を作成します。
+
+```text
+delivery/<goal-or-capability>
+```
+
+Graph Engineering Branchから、Human Review済みの成果物だけを移植してください。
+Delivery Branchへ次を含めてはいけません。
+
+- `Development/GraphEngineering/`
+- `GRAPH_ENGINEERING.md`
+- Roadmap State
+- Evidence
+- ExecPlan
+- Source Archive
+- 開発専用Dashboard
+- Graph Engineering専用Test／Harness
+
+Delivery Branchでは製品Compile／Testを再実行し、次のGuardを通してください。
+
+```powershell
+py Development/GraphEngineering/scripts/delivery_guard.py `
+  --base main `
+  --head delivery/<goal-or-capability>
+```
+
+その後、明示承認を得た場合だけ`delivery/* → main`のPRを作成してください。
+PR作成とMergeを同じ承認として扱わないでください。
 
 ## Graph visualization
 
@@ -88,6 +138,8 @@ UnityAgentMCP RuntimeをCodex Harnessとして扱ってはいけません。Crea
 
 次は人間の明示承認なしに実行しない。
 
+- Delivery Branch作成
+- Pull Request作成
 - Merge
 - Release公開
 - Tag作成・移動
@@ -103,8 +155,13 @@ Human Gateで停止してもProjectを完了扱いにしない。
 
 ## Final condition
 
-`py Development/GraphEngineering/scripts/roadmap_harness.py completion-check`がPASSし、人間の最終Release ApprovalがStateに記録されるまで、`Terminal Goal satisfied: true`と報告してはいけません。
+`py Development/GraphEngineering/scripts/roadmap_harness.py completion-check`がPASSし、
+人間の最終Release ApprovalがStateに記録されるまで、
+`Terminal Goal satisfied: true`と報告してはいけません。
 
 ## Visualize採用Dashboard
 
-直前にVisualizeで作成したクリック式Dashboardを正式採用する。Static Snapshotは`Development/GraphEngineering/visualize/MyUnityMCP_GraphDashboard.html`、Live Viewerは同DirectoryのHarnessから起動する。Graph／StateをRead-onlyで投影し、HTML自体を進捗Stateの正本にしない。
+直前にVisualizeで作成したクリック式Dashboardを正式採用する。
+Static Snapshotは`Development/GraphEngineering/visualize/MyUnityMCP_GraphDashboard.html`、
+Live Viewerは同DirectoryのHarnessから起動する。
+Graph／StateをRead-onlyで投影し、HTML自体を進捗Stateの正本にしない。
