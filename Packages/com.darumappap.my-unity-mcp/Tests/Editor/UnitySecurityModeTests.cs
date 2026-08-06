@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityMcpSecurity;
@@ -79,7 +80,7 @@ namespace MyUnityMcp.EditorTests
 			UnityMcpSecurityContext context = UnityMcpSecurityPolicy.Resolve("CI");
 			JObject redacted = (JObject)UnityMcpSecurityPolicy.Redact(SensitivePayload(), context);
 
-			Assert.That(redacted.Properties().Count, Is.EqualTo(2));
+			Assert.That(redacted.Properties().Count(), Is.EqualTo(2));
 			Assert.That(redacted["count"]?.Value<int>(), Is.EqualTo(42));
 			Assert.That(redacted["securityMode"]?.Value<string>(), Is.EqualTo("CI"));
 		}
