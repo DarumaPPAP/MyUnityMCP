@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>MyUnityMCP Graph Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="dashboard-shell">
+    <section class="dashboard-header">
+      <div>
+        <h1>MyUnityMCP 実装グラフ</h1>
+        <p>Nodeを選択すると、依存関係・完了条件・必要Evidenceを確認できます。</p>
+      </div>
+      <div class="tab-group" aria-label="Graph切替">
+        <button id="implementationTab" type="button" class="tab-button">Codex実装グラフ</button>
+        <button id="runtimeTab" type="button" class="tab-button">製品Runtimeグラフ</button>
+      </div>
+    </section>
+
+    <section class="metric-grid" aria-label="Graph summary">
+      <article class="metric-card"><span>全Node</span><strong id="totalMetric">—</strong></article>
+      <article class="metric-card"><span>完了</span><strong id="completeMetric">—</strong></article>
+      <article class="metric-card"><span>実行可能</span><strong id="eligibleMetric">—</strong></article>
+      <article class="metric-card"><span>Terminal Goal</span><strong id="terminalMetric" class="terminal-value">—</strong></article>
+    </section>
+
+    <section class="control-row">
+      <label class="control search-control">
+        <span>Node検索</span>
+        <input id="searchInput" type="search" placeholder="例: Profiler / Creator / Approval">
+      </label>
+      <label class="control filter-control">
+        <span>表示状態</span>
+        <select id="statusFilter">
+          <option value="all">すべて</option>
+          <option value="eligible">実行可能</option>
+          <option value="running">実行中</option>
+          <option value="pending">未着手</option>
+          <option value="complete">完了</option>
+          <option value="approval">Human Gate</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="legend" aria-label="Status legend">
+      <span><i class="legend-dot status-eligible"></i>実行可能</span>
+      <span><i class="legend-dot status-running"></i>実行中</span>
+      <span><i class="legend-dot status-complete"></i>完了</span>
+      <span><i class="legend-dot status-pending"></i>未着手</span>
+      <span><i class="legend-dot status-approval"></i>Human Gate</span>
+      <span><i class="legend-dot status-blocked"></i>Blocked</span>
+    </section>
+
+    <section class="workspace">
+      <div class="graph-panel">
+        <svg id="graphSvg" viewBox="0 0 920 1700" role="img" aria-label="MyUnityMCPの実装工程を表す依存グラフ"></svg>
+      </div>
+
+      <aside class="detail-panel" aria-live="polite">
+        <div>
+          <span class="detail-label">選択中Node</span>
+          <h2 id="detailTitle">—</h2>
+          <span id="detailStatus" class="status-badge">—</span>
+        </div>
+        <section class="detail-section"><span class="detail-label">役割</span><p id="detailDescription">—</p></section>
+        <section class="detail-section"><span class="detail-label">依存Node</span><div id="detailDependencies" class="badge-list"></div></section>
+        <section class="detail-section"><span class="detail-label">必須Evidence</span><ul id="detailEvidence" class="evidence-list"></ul></section>
+        <section class="detail-section">
+          <span class="detail-label">State</span>
+          <dl class="state-list">
+            <div><dt>Project</dt><dd id="projectStatus">—</dd></div>
+            <div><dt>Current</dt><dd id="currentNode">—</dd></div>
+            <div><dt>Attempts</dt><dd id="attemptCount">—</dd></div>
+            <div><dt>更新</dt><dd id="lastUpdated">—</dd></div>
+          </dl>
+        </section>
+        <section class="gate-callout"><strong>次の遷移条件</strong><p id="detailGate">—</p></section>
+      </aside>
+    </section>
+    <p id="liveRegion" class="sr-only" aria-live="polite"></p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
