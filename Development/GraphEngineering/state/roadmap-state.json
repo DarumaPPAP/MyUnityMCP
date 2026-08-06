@@ -3,7 +3,7 @@
   "project_goal_id": "myunitymcp_complete_integrated_product",
   "project_status": "running",
   "terminal_goal_satisfied": false,
-  "source_revision": "94cab7f93592f345d5b23e88f0ad295f8ae3e476",
+  "source_revision": "0e3b455ddb8af3c646d784a700d7b6844ce4a3a8",
   "current_node": "phase_01_unity_agent_runtime",
   "nodes": {
     "bootstrap_development_harness": {
@@ -72,95 +72,31 @@
           "source_revision": "94cab7f93592f345d5b23e88f0ad295f8ae3e476",
           "iteration_budget": 10,
           "kind": "start"
+        },
+        {
+          "started_at": "2026-08-07T03:34:00+09:00",
+          "source_revision": "0e3b455ddb8af3c646d784a700d7b6844ce4a3a8",
+          "iteration_budget": 5,
+          "kind": "resume"
         }
       ],
       "evidence": {},
       "completed_at": null
     },
-    "phase_02_world_creator": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_03_profiler_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_04_build_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_05_addressables_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_06_ui_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_07_animation_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_08_audio_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_09_cinematic_mcp": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_10_movie_creator": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_11_live_creator": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_12_production_hardening": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "project_completion_gate": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "human_final_release_approval": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    },
-    "project_complete": {
-      "status": "pending",
-      "attempts": [],
-      "evidence": {},
-      "completed_at": null
-    }
+    "phase_02_world_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_03_profiler_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_04_build_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_05_addressables_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_06_ui_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_07_animation_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_08_audio_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_09_cinematic_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_10_movie_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_11_live_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_12_production_hardening": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "project_completion_gate": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "human_final_release_approval": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "project_complete": {"status":"pending","attempts":[],"evidence":{},"completed_at":null}
   },
   "approvals": {
     "human_final_release_approval": {
@@ -172,5 +108,5 @@
   },
   "blockers": [],
   "interruptions": [],
-  "updated_at": "2026-08-07T01:36:00+09:00"
+  "updated_at": "2026-08-07T03:34:00+09:00"
 }
