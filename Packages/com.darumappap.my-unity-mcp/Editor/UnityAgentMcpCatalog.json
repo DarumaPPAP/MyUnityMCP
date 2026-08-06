@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "domains": [
+    {
+      "domainId": "unity_graphics_mcp",
+      "status": "editor_operational",
+      "toolGroups": ["inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"],
+      "tools": [
+        "graphics.inspect_project",
+        "graphics.inspect_scene",
+        "graphics.validate_scene",
+        "graphics.compile_direction",
+        "graphics.preview_plan",
+        "graphics.prepare_light_plan",
+        "graphics.prepare_environment_plan",
+        "graphics.prepare_save_plan",
+        "graphics.prepare_bake_plan",
+        "graphics.prepare_apv_bake_plan",
+        "graphics.prepare_acceptance_profile",
+        "graphics.apply_plan",
+        "graphics.undo_last_transaction",
+        "graphics.apply_environment_plan",
+        "graphics.undo_last_environment_transaction",
+        "graphics.apply_save_plan",
+        "graphics.bake_dependencies",
+        "graphics.start_apv_bake",
+        "graphics.get_apv_bake_status",
+        "graphics.cancel_apv_bake",
+        "graphics.capture_evaluation",
+        "graphics.capture_evidence",
+        "graphics.refine_direction",
+        "graphics.submit_visual_review",
+        "graphics.refine_from_visual_review",
+        "graphics.evaluate_capture",
+        "graphics.refine_from_evaluation",
+        "graphics.get_execution_status",
+        "graphics.cancel_execution",
+        "graphics.get_execution_history",
+        "graphics.get_error_catalog",
+        "graphics.get_support_matrix"
+      ],
+      "directUnityMutationAllowed": false
+    },
+    {"domainId": "unity_profiler_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_build_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_addressables_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_ui_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_animation_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_audio_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
+    {"domainId": "unity_cinematic_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false}
+  ]
+}
