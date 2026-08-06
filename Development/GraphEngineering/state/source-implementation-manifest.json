@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "branch": "feature/graph-engineering-master",
+  "status": "source_complete_validation_pending",
+  "terminal_goal_satisfied": false,
+  "modules": {
+    "phase_01_unity_agent_runtime": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json",
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpTools.cs",
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpRuntime.cs",
+        "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityAgentMcpRuntimeTests.cs"
+      ]
+    },
+    "phase_02_world_creator": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityWorldCreatorMcp.cs",
+        "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityCreatorContractTests.cs"
+      ]
+    },
+    "phase_03_profiler_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityProfilerMcp.cs"
+      ]
+    },
+    "phase_04_build_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityBuildMcp.cs"
+      ]
+    },
+    "phase_05_addressables_mcp": {
+      "status": "implemented_optional_backend_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAddressablesMcp.cs"
+      ]
+    },
+    "phase_06_ui_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityUiMcp.cs"
+      ]
+    },
+    "phase_07_animation_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAnimationMcpTools.cs",
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAnimationMcpRuntime.cs"
+      ]
+    },
+    "phase_08_audio_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityAudioMcp.cs"
+      ]
+    },
+    "phase_09_cinematic_mcp": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityCinematicMcp.cs"
+      ]
+    },
+    "phase_10_movie_creator": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityMovieCreatorMcp.cs"
+      ]
+    },
+    "phase_11_live_creator": {
+      "status": "implemented_unverified",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityLiveCreatorMcp.cs"
+      ]
+    },
+    "phase_12_production_hardening": {
+      "status": "implemented_validation_pending",
+      "files": [
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityDomainMcpCommon.cs",
+        "Packages/com.darumappap.my-unity-mcp/Editor/UnityMcpSecurityPolicy.cs",
+        "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityDomainSafetyContractTests.cs",
+        "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnitySecurityModeTests.cs",
+        "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityDevelopmentFaultInjectionTests.cs",
+        "Development/GraphEngineering/scripts/architecture_lint.py",
+        "Development/GraphEngineering/scripts/release_candidate_gate.py",
+        "Tests/ExternalClient/run_mcp_http_e2e.py",
+        "Tests/Compatibility/development-support-matrix.yaml",
+        "Tests/Compatibility/development-verification.yaml"
+      ]
+    }
+  },
+  "required_next_evidence": [
+    "unity_editor_ci",
+    "candidate_tool_discovery",
+    "external_mcp_client_e2e",
+    "addressables_package_present",
+    "desktop_player_build",
+    "security_modes",
+    "fault_injection",
+    "world_visual_review",
+    "movie_visual_review",
+    "live_operator_review",
+    "release_version_approval",
+    "artifact_only_delivery_validation"
+  ],
+  "updated_at": "2026-08-07T02:45:00+09:00"
+}
