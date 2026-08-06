@@ -12,13 +12,14 @@ Phase 0〜12をすべて実装・検証し、Production Hardening済みのMyUnit
 1. `MASTER_GOAL.md`
 2. `WORKFLOW.md`
 3. `docs/index.md`
-4. `docs/goals/acceptance-model.md`
-5. `docs/architecture/five-layer-model.md`
-6. `docs/architecture/two-graphs.md`
-7. `graph/implementation-graph.json`
-8. `state/roadmap-state.json`
-9. 現在Nodeの`docs/phases/*.md`
-10. 現在の`docs/plans/active/*.md`
+4. `docs/delivery/artifact-only-pr-policy.md`
+5. `docs/goals/acceptance-model.md`
+6. `docs/architecture/five-layer-model.md`
+7. `docs/architecture/two-graphs.md`
+8. `graph/implementation-graph.json`
+9. `state/roadmap-state.json`
+10. 現在Nodeの`docs/phases/*.md`
+11. 現在の`docs/plans/active/*.md`
 
 ## Required startup
 
@@ -32,6 +33,39 @@ git status --short --branch
 ```
 
 次NodeをPromptや記憶から推測せず、GraphとStateから決定する。
+
+## Branch model
+
+### Development environment
+
+`feature/graph-engineering-master`を長期開発環境として使用する。
+
+- Graph、State、Evidence、ExecPlanを保持
+- 実装途中の製品変更を保持
+- 失敗、再開、Human Gateを保持
+- このBranchを`main`へ直接Mergeしない
+- このBranchから`main`への直接PRを作成しない
+
+### Artifact delivery
+
+成果物を公開するときだけ、最新`main`から`delivery/*`を作成する。
+
+- Graph Engineering Branchから承認済み成果物だけを移植
+- `Development/GraphEngineering/`を含めない
+- `GRAPH_ENGINEERING.md`を含めない
+- Roadmap State、Evidence、Source Archive、開発Dashboardを含めない
+- 製品Code、製品Test、必要な公開Docs／CIだけを含める
+- `delivery/* → main`のPRだけを成果物PRとする
+
+PR作成前に次を実行する。
+
+```bash
+python Development/GraphEngineering/scripts/delivery_guard.py \
+  --base main \
+  --head delivery/<goal-or-capability>
+```
+
+Merge、Tag、Releaseは人間の明示指示がある場合だけ実行する。
 
 ## Optional visual inspection
 
@@ -104,7 +138,6 @@ Promptに書いただけでは制約を満たした扱いにしない。
 - Current Stateの確認: `python scripts/roadmap_harness.py viewer`
 
 ViewerはRead-only projectionであり、次Node判定、Evidence、CompletionはHarness CLIとGraph／Stateを正本とする。
-
 
 ## Visualize採用Dashboard
 
