@@ -28,6 +28,7 @@ DEVELOPMENT_SOURCE_NAMES = (
     "UnityMovieCreatorMcp.cs",
     "UnityLiveCreatorMcp.cs",
     "UnityDomainMcpCommon.cs",
+    "UnityMcpSecurityPolicy.cs",
 )
 
 CREATOR_SOURCE_NAMES = (
