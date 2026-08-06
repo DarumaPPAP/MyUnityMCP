@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "domains": [
     {
       "domainId": "unity_graphics_mcp",
@@ -41,12 +41,74 @@
       ],
       "directUnityMutationAllowed": false
     },
-    {"domainId": "unity_profiler_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_build_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_addressables_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_ui_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_animation_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_audio_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false},
-    {"domainId": "unity_cinematic_mcp", "status": "design_only_not_executable", "toolGroups": [], "tools": [], "directUnityMutationAllowed": false}
+    {
+      "domainId": "unity_profiler_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["profiler"],
+      "tools": ["profiler.inspect_environment", "profiler.inspect_counters", "profiler.prepare_capture", "profiler.start_capture", "profiler.get_capture_status", "profiler.cancel_capture", "profiler.summarize_capture", "profiler.compare_baseline"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_build_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["build"],
+      "tools": ["build.inspect_environment", "build.prepare_player", "build.start_player", "build.get_history", "build.cancel_player", "build.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_addressables_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["addressables"],
+      "tools": ["addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.prepare_content_build", "addressables.build_content", "addressables.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_ui_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["ui"],
+      "tools": ["ui.inspect", "ui.validate", "ui.prepare_rect_transform", "ui.apply_rect_transform", "ui.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_animation_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["animation"],
+      "tools": ["animation.inspect", "animation.validate", "animation.prepare_parameter", "animation.apply_parameter", "animation.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_audio_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["audio"],
+      "tools": ["audio.inspect", "audio.validate", "audio.prepare_source", "audio.apply_source", "audio.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_cinematic_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["cinematic"],
+      "tools": ["cinematic.inspect", "cinematic.validate", "cinematic.prepare_director", "cinematic.apply_director", "cinematic.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    }
+  ],
+  "creators": [
+    {
+      "creatorId": "world_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["world.compile_workflow", "world.start_preflight", "world.create_review_handoff"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "creatorId": "movie_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["movie.compile_production", "movie.preview_production", "movie.create_review_handoff"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "creatorId": "live_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["live.compile_show", "live.preview_show", "live.create_operator_handoff"],
+      "directUnityMutationAllowed": false
+    }
   ]
 }
