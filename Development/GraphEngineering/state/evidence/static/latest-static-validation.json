@@ -1,0 +1,49 @@
+{
+  "evidence_id": "graph-engineering-static-validation-20260807",
+  "kind": "static_development_validation",
+  "source_revision": "feature/graph-engineering-master",
+  "revision_precision": "branch_snapshot_downloaded_after_security_test_fix",
+  "created_at": "2026-08-07T03:05:00+09:00",
+  "environment": {
+    "repository": "DarumaPPAP/MyUnityMCP",
+    "branch": "feature/graph-engineering-master",
+    "validation_scope": "python_and_static_source"
+  },
+  "checks": {
+    "python_unit_tests": {
+      "result": "pass",
+      "tests_run": 38,
+      "failures": 0,
+      "errors": 0
+    },
+    "roadmap_harness_validate": {
+      "result": "pass"
+    },
+    "release_integrity_guard": {
+      "result": "pass",
+      "published_tag_moved": false
+    },
+    "architecture_lint": {
+      "result": "pass",
+      "discovered_tool_count": 91,
+      "auto_register_false_count": 91,
+      "manifest_tool_count": 91,
+      "violations": 0
+    },
+    "csharp_source_structure": {
+      "result": "pass",
+      "scope": "development source and editor test delimiter and preprocessor balance"
+    },
+    "release_candidate_gate": {
+      "result": "expected_fail",
+      "reason": "Unity Editor CI, external MCP E2E, optional backend matrix, human reviews, version approval, and delivery validation are pending"
+    }
+  },
+  "limitations": [
+    "This evidence does not prove Unity C# compilation.",
+    "This evidence does not prove EditMode test execution.",
+    "This evidence does not prove external MCP client E2E.",
+    "This evidence does not prove Addressables package-present compilation."
+  ],
+  "verdict": "pass_for_static_scope"
+}
