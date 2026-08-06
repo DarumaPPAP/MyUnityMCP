@@ -11,16 +11,18 @@ on:
       - .github/workflows/graph-engineering-unity-validation.yml
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 concurrency:
   group: graph-engineering-unity-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   editmode:
+    if: github.actor != 'github-actions[bot]'
     name: Compile and run development contracts
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout development branch
@@ -28,16 +30,21 @@ jobs:
         with:
           ref: feature/graph-engineering-master
           lfs: true
-          persist-credentials: false
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Validate Graph Engineering state
+        id: preflight
+        continue-on-error: true
         run: |
           python3 -m unittest discover -s Development/GraphEngineering/tests -v
           python3 Development/GraphEngineering/scripts/roadmap_harness.py validate
           python3 Development/GraphEngineering/scripts/release_integrity_guard.py --repo-root . --json
           python3 Development/GraphEngineering/scripts/architecture_lint.py --repo-root . --json
 
-      - name: Require Unity license secrets
+      - name: Check Unity license secrets
+        id: license
+        continue-on-error: true
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -51,15 +58,17 @@ jobs:
           if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; then
             exit 0
           fi
-          echo "::error::Unity license secrets are incomplete."
+          echo "Unity license secrets are incomplete."
           exit 1
 
       - name: Free disk space
+        if: steps.preflight.outcome == 'success' && steps.license.outcome == 'success'
         run: |
           docker system prune --all --force || true
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /opt/hostedtoolcache/CodeQL
 
       - name: Cache Unity Library
+        if: steps.preflight.outcome == 'success' && steps.license.outcome == 'success'
         uses: actions/cache@v4
         with:
           path: TestProjects/MyUnityMCPVerification/Library
@@ -69,6 +78,7 @@ jobs:
             MyUnityMCP-Editor-6000.0.75f1-
 
       - name: Run all MyUnityMCP EditMode tests
+        if: steps.preflight.outcome == 'success' && steps.license.outcome == 'success'
         id: tests
         continue-on-error: true
         uses: game-ci/unity-test-runner@v4
@@ -82,43 +92,150 @@ jobs:
           unityVersion: 6000.0.75f1
           testMode: editmode
 
-      - name: Verify Unity compile and NUnit result
+      - name: Evaluate Unity compile and NUnit result
         if: always()
+        id: evaluation
+        continue-on-error: true
         env:
           ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
           TEST_OUTCOME: ${{ steps.tests.outcome }}
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          LICENSE_OUTCOME: ${{ steps.license.outcome }}
         run: |
-          set -euo pipefail
-          if [ "$TEST_OUTCOME" != "success" ]; then
-            echo "::error::Unity test runner outcome was $TEST_OUTCOME."
-            find "$ARTIFACTS_PATH" -maxdepth 3 -type f -print 2>/dev/null || true
-            exit 1
-          fi
-          editmode_log=$(find "$ARTIFACTS_PATH" -name 'editmode.log' -type f -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
-          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log"; then
-            grep -n -E 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log" | tail -n 100
-            exit 1
-          fi
-          results_xml=$(find "$ARTIFACTS_PATH" -name '*.xml' -type f -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
-          python3 - "$results_xml" <<'PY'
-          import sys
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
           import xml.etree.ElementTree as ET
-          root = ET.parse(sys.argv[1]).getroot()
-          total = int(root.attrib.get("total", "0"))
-          passed = int(root.attrib.get("passed", "0"))
-          failed = int(root.attrib.get("failed", "0"))
-          skipped = int(root.attrib.get("skipped", "0"))
-          inconclusive = int(root.attrib.get("inconclusive", "0"))
-          print(f"Development contracts: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
-          if total < 158 or failed or skipped or inconclusive or passed != total:
+
+          result = {
+              "status": "failed",
+              "preflight": os.environ.get("PREFLIGHT_OUTCOME", "unknown"),
+              "license": os.environ.get("LICENSE_OUTCOME", "unknown"),
+              "unity_test_runner": os.environ.get("TEST_OUTCOME", "not_run"),
+              "unity_version": "6000.0.75f1",
+              "minimum_test_count": 158,
+              "compile_errors": [],
+              "tests": None,
+          }
+
+          artifacts = pathlib.Path(os.environ.get("ARTIFACTS_PATH") or "")
+          if result["preflight"] != "success":
+              result["status"] = "preflight_failed"
+          elif result["license"] != "success":
+              result["status"] = "blocked_unity_license"
+          elif result["unity_test_runner"] != "success":
+              result["status"] = "unity_test_runner_failed"
+          elif not artifacts.exists():
+              result["status"] = "unity_artifacts_missing"
+          else:
+              logs = sorted(artifacts.rglob("editmode.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+              if logs:
+                  text = logs[0].read_text(encoding="utf-8", errors="replace")
+                  result["compile_errors"] = [
+                      line for line in text.splitlines()
+                      if re.search(r"error CS\d{4}|Script Compilation Error|Scripts have compiler errors", line)
+                  ][-100:]
+              xml_files = sorted(artifacts.rglob("*.xml"), key=lambda p: p.stat().st_mtime, reverse=True)
+              if xml_files:
+                  root = ET.parse(xml_files[0]).getroot()
+                  result["tests"] = {
+                      "total": int(root.attrib.get("total", "0")),
+                      "passed": int(root.attrib.get("passed", "0")),
+                      "failed": int(root.attrib.get("failed", "0")),
+                      "skipped": int(root.attrib.get("skipped", "0")),
+                      "inconclusive": int(root.attrib.get("inconclusive", "0")),
+                  }
+              tests = result["tests"] or {}
+              if result["compile_errors"]:
+                  result["status"] = "compile_failed"
+              elif not tests:
+                  result["status"] = "test_result_missing"
+              elif tests.get("total", 0) < result["minimum_test_count"]:
+                  result["status"] = "test_count_below_minimum"
+              elif tests.get("failed") or tests.get("skipped") or tests.get("inconclusive"):
+                  result["status"] = "tests_failed"
+              elif tests.get("passed") != tests.get("total"):
+                  result["status"] = "test_count_mismatch"
+              else:
+                  result["status"] = "passed"
+
+          pathlib.Path("/tmp/graph-engineering-unity-evaluation.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          if result["status"] != "passed":
               raise SystemExit(1)
           PY
 
-      - name: Upload development evidence
+      - name: Write repository evidence
         if: always()
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          mkdir -p Development/GraphEngineering/state/evidence/ci
+          python3 - <<'PY'
+          import datetime
+          import json
+          import os
+          import pathlib
+
+          evaluation_path = pathlib.Path("/tmp/graph-engineering-unity-evaluation.json")
+          if evaluation_path.exists():
+              evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+          else:
+              evaluation = {"status": "evaluation_missing"}
+
+          evidence = {
+              "evidence_id": "graph-engineering-unity-latest",
+              "kind": "unity_editor_ci",
+              "source_revision": os.environ["SOURCE_SHA"],
+              "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "workflow_run_id": os.environ["RUN_ID"],
+              "workflow_run_attempt": os.environ["RUN_ATTEMPT"],
+              "evaluation": evaluation,
+              "verdict": "pass" if evaluation.get("status") == "passed" else "blocked_or_failed",
+          }
+          pathlib.Path(
+              "Development/GraphEngineering/state/evidence/ci/graph-engineering-unity-latest.json"
+          ).write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit CI evidence to development branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Development/GraphEngineering/state/evidence/ci/graph-engineering-unity-latest.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: record Graph Engineering Unity evidence [skip ci]"
+          git push origin HEAD:feature/graph-engineering-master
+
+      - name: Upload development evidence
+        if: always() && steps.tests.outcome != 'skipped'
         uses: actions/upload-artifact@v4
         with:
           name: Graph-Engineering-Unity-Evidence
           path: ${{ steps.tests.outputs.artifactsPath }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
+
+      - name: Enforce final gate
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+          path = pathlib.Path("/tmp/graph-engineering-unity-evaluation.json")
+          if not path.exists():
+              raise SystemExit("Unity evaluation was not created.")
+          result = json.loads(path.read_text(encoding="utf-8"))
+          if result.get("status") != "passed":
+              raise SystemExit(f"Graph Engineering Unity gate failed: {result.get('status')}")
+          PY
