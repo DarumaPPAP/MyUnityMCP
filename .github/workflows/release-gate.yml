@@ -28,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
+      - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Build preview distribution
         run: |
           set -euo pipefail
