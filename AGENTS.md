@@ -56,8 +56,12 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 
 ## Release rules
 
-- `VERSION`、Package、Manifest、Support Matrix、Changelog、Tagを一致させる。
+- `VERSION`、Package、Manifest、Support Matrix、Changelogを一致させる。
 - Release PRではEditor CIとRelease Gateを両方成功させる。
 - Known Issuesと未検証範囲を削除・婉曲化しない。
 - 一時Migration Script／WorkflowをRelease差分へ残さない。
-- TagはRelease Commitへ作成し、`main`と同一SHAであることを確認する。
+- 新規ReleaseのTagはRelease Commitへ作成し、公開時点の`main`と同一SHAであることを確認する。
+- 公開済みTagは不変とし、移動、削除、Force更新を行わない。
+- 公開済みTagの再検証・再配布は、現在の`main`ではなくTagが指すCommitをSourceにする。
+- 公開後の`main`更新は許容するが、製品内容を変更する場合はVersionを上げて新しいReleaseを作成する。
+- 既存公開Tagの扱い、Release公開、Version更新は人間の明示承認を必須とする。

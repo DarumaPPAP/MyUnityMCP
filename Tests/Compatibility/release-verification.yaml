@@ -62,8 +62,15 @@ evidence:
   distribution_artifact_sha256: 49ab6231eddf9dc564d838f5fa7edd4ec943b5fa88953bcfd254bebe2ea8b1c7
 
 release_identity:
-  release_commit: current_main_release_commit
+  release_commit: current_main_release_commit_at_publication
   tag: v1.0.0
+  published_tag_policy: immutable
+  tag_must_point_to_published_release_commit: true
+  main_must_point_to_release_commit_at_publication: true
+  main_may_advance_after_publication: true
+  existing_tag_rerun_source: tagged_commit
+  published_tag_move_allowed: false
+  future_product_change_requires_new_version: true
   publication_triggers:
     - version_change_on_main
     - workflow_dispatch
@@ -73,5 +80,3 @@ release_identity:
     - OWNER
     - MEMBER
     - COLLABORATOR
-  main_must_point_to_release_commit: true
-  tag_must_point_to_release_commit: true
