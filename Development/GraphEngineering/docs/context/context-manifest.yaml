@@ -1,0 +1,36 @@
+schema_version: "1.0"
+bundle:
+  required:
+    - terminal_goal_summary
+    - source_revision
+    - current_node
+    - node_acceptance
+    - prohibited_changes
+    - active_plan
+    - current_failures
+    - required_output_schema
+  optional:
+    - relevant_specs
+    - relevant_source_files
+    - related_tests
+    - catalog_entries
+    - package_versions
+    - official_references
+    - prior_decisions
+  excluded_by_default:
+    - all_repository_files
+    - all_phase_specs
+    - full_conversation_history
+    - stale_logs
+    - secrets
+    - customer_data
+    - internal_issue_numbers
+labels:
+  - SOURCE
+  - POLICY
+  - OBSERVATION
+  - EXPECTED
+  - ACTUAL
+  - DECISION
+  - UNKNOWN
+  - PROHIBITED

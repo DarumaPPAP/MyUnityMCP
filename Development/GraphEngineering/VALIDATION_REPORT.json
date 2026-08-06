@@ -1,0 +1,30 @@
+{
+  "artifact": "MyUnityMCP_GraphEngineering_Master",
+  "validated_at": "2026-08-06T19:20:00+09:00",
+  "source_archive": {
+    "name": "MyUnityMCP_GraphEngineering_Masters.zip",
+    "sha256": "6f1bbe47a56200a9361bd7d8038b28f9f432dfa1e2f25a29ed1c372fe26dde2d",
+    "zip_entries": 73,
+    "integrity": "pass"
+  },
+  "checks": {
+    "python_unit_tests": {
+      "result": "pass",
+      "tests_run": 12,
+      "failures": 0,
+      "errors": 0
+    },
+    "roadmap_harness_validate": {
+      "result": "pass",
+      "message": "graph and state are valid"
+    },
+    "roadmap_harness_status": {
+      "project_status": "proposed",
+      "terminal_goal_satisfied": false,
+      "eligible_nodes": [
+        "bootstrap_development_harness"
+      ]
+    }
+  },
+  "note": "The original environment-specific stderr trace was replaced with this portable validation summary. Product implementation and graph content were not changed."
+}

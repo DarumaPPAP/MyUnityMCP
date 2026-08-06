@@ -1,0 +1,178 @@
+schema_version: "1.0"
+graph_id: myunitymcp_codex_implementation
+terminal_node: project_complete
+default_concurrency: 1
+nodes:
+  bootstrap_development_harness:
+    type: llm_loop
+    depends_on:
+    spec: docs/harness/bootstrap-plan.md
+    required_evidence:
+      - harness_validation
+      - state_validation
+      - completion_gate_negative_test
+  phase_00_release_integrity:
+    type: llm_loop
+    phase: 0
+    depends_on:
+      - bootstrap_development_harness
+    spec: docs/phases/00-release-integrity.md
+    required_evidence:
+      - release_policy
+      - release_integrity_tests
+      - current_release_resolution
+  phase_01_unity_agent_runtime:
+    type: llm_loop
+    phase: 1
+    depends_on:
+      - phase_00_release_integrity
+    spec: docs/phases/01-unity-agent-runtime.md
+    required_evidence:
+      - agent_runtime_tests
+      - graphics_delegation_e2e
+      - safety_regression
+  phase_02_world_creator:
+    type: integration_gate
+    phase: 2
+    depends_on:
+      - phase_01_unity_agent_runtime
+    spec: docs/phases/02-world-creator-runtime.md
+    required_evidence:
+      - world_creator_e2e
+      - human_review_handoff
+      - creator_no_direct_mutation
+  phase_03_profiler_mcp:
+    type: llm_loop
+    phase: 3
+    depends_on:
+      - phase_02_world_creator
+    spec: docs/phases/03-profiler-mcp.md
+    required_evidence:
+      - profiler_capture_tests
+      - baseline_compare
+      - no_false_device_claim
+  phase_04_build_mcp:
+    type: llm_loop
+    phase: 4
+    depends_on:
+      - phase_03_profiler_mcp
+    spec: docs/phases/04-build-mcp.md
+    required_evidence:
+      - build_plan_tests
+      - build_report_evidence
+      - secret_redaction
+  phase_05_addressables_mcp:
+    type: llm_loop
+    phase: 5
+    depends_on:
+      - phase_04_build_mcp
+    spec: docs/phases/05-addressables-mcp.md
+    required_evidence:
+      - package_gate_tests
+      - addressables_mutation_tests
+      - content_build_evidence
+  phase_06_ui_mcp:
+    type: llm_loop
+    phase: 6
+    depends_on:
+      - phase_05_addressables_mcp
+    spec: docs/phases/06-ui-mcp.md
+    required_evidence:
+      - ui_backend_tests
+      - layout_validation
+      - visual_review_handoff
+  phase_07_animation_mcp:
+    type: llm_loop
+    phase: 7
+    depends_on:
+      - phase_06_ui_mcp
+    spec: docs/phases/07-animation-mcp.md
+    required_evidence:
+      - animator_graph_tests
+      - typed_mutation_tests
+      - undo_revision_tests
+  phase_08_audio_mcp:
+    type: llm_loop
+    phase: 8
+    depends_on:
+      - phase_07_animation_mcp
+    spec: docs/phases/08-audio-mcp.md
+    required_evidence:
+      - audio_scene_tests
+      - routing_mutation_tests
+      - unsupported_topology_test
+  phase_09_cinematic_mcp:
+    type: integration_gate
+    phase: 9
+    depends_on:
+      - phase_08_audio_mcp
+    spec: docs/phases/09-cinematic-mcp.md
+    required_evidence:
+      - package_version_gates
+      - timeline_cinemachine_e2e
+      - binding_validation
+  phase_10_movie_creator:
+    type: integration_gate
+    phase: 10
+    depends_on:
+      - phase_09_cinematic_mcp
+    spec: docs/phases/10-movie-creator.md
+    required_evidence:
+      - movie_creator_e2e
+      - continuity_review
+      - human_visual_handoff
+  phase_11_live_creator:
+    type: integration_gate
+    phase: 11
+    depends_on:
+      - phase_10_movie_creator
+    spec: docs/phases/11-live-creator.md
+    required_evidence:
+      - live_creator_e2e
+      - timing_validation
+      - character_visibility_review
+  phase_12_production_hardening:
+    type: integration_gate
+    phase: 12
+    depends_on:
+      - phase_11_live_creator
+    spec: docs/phases/12-production-hardening.md
+    required_evidence:
+      - compatibility_matrix
+      - external_client_e2e
+      - security_modes
+      - release_candidate
+  project_completion_gate:
+    type: terminal_gate
+    depends_on:
+      - bootstrap_development_harness
+      - phase_00_release_integrity
+      - phase_01_unity_agent_runtime
+      - phase_02_world_creator
+      - phase_03_profiler_mcp
+      - phase_04_build_mcp
+      - phase_05_addressables_mcp
+      - phase_06_ui_mcp
+      - phase_07_animation_mcp
+      - phase_08_audio_mcp
+      - phase_09_cinematic_mcp
+      - phase_10_movie_creator
+      - phase_11_live_creator
+      - phase_12_production_hardening
+    required_evidence:
+      - all_phase_evidence_valid
+      - graphics_regression
+      - catalog_manifest_docs_consistency
+      - no_critical_safety_issue
+      - release_candidate
+  human_final_release_approval:
+    type: human_gate
+    depends_on:
+      - project_completion_gate
+    required_evidence:
+      - human_release_approval
+  project_complete:
+    type: terminal
+    depends_on:
+      - human_final_release_approval
+    required_evidence:

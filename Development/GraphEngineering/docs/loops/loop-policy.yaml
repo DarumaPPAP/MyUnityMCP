@@ -1,0 +1,18 @@
+schema_version: "1.0"
+default:
+  unattended_iteration_budget: required_at_run_start
+  automatic_retry_side_effect_nodes: false
+  equivalent_failure_escalation: true
+  assistant_message_is_not_completion_evidence: true
+compaction:
+  preserve:
+    - decisions
+    - changed_files
+    - failing_evidence
+    - passing_evidence
+    - blockers
+    - next_node
+  discard_from_active_context:
+    - duplicate_logs
+    - superseded_hypotheses
+    - stale_tool_output

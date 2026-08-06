@@ -1,0 +1,41 @@
+schema_version: "1.0"
+tools:
+  repository_read:
+    mutation: false
+    approval: none
+  repository_edit:
+    mutation: workspace
+    approval: workspace_policy
+  unity_compile:
+    mutation: generated_library_and_logs
+    approval: none
+    evidence_required: true
+  unity_tests:
+    mutation: generated_library_and_reports
+    approval: none
+    evidence_required: true
+  git_commit:
+    mutation: repository_history
+    approval: user_scope
+  git_push:
+    mutation: remote_branch
+    approval: user_scope
+  github_pr:
+    mutation: remote_metadata
+    approval: user_scope
+  github_merge:
+    mutation: protected_branch
+    approval: human_explicit
+  release_tag:
+    mutation: release_identity
+    approval: human_explicit
+  release_publish:
+    mutation: public_or_private_release
+    approval: human_explicit
+  package_install:
+    mutation: project_dependencies
+    approval: human_explicit
+  platform_secret:
+    mutation: external_platform
+    approval: human_explicit
+    redact: always
