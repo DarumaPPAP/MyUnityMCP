@@ -1,6 +1,7 @@
-schema_version: "2.0"
+schema_version: "2.1"
 release_version: "1.0.0"
 development_branch: feature/graph-engineering-master
+development_specification: Specs/MyUnityMCPDevelopmentModules/spec.md
 
 modules:
   unity_graphics_mcp:
@@ -19,16 +20,6 @@ modules:
       - evaluate
       - review_and_refine
       - execution
-    use_when:
-      - Unity graphics project and scene inspection
-      - approval gated graphics mutation and save
-      - explicit dependency or APV bake
-      - capture evidence and visual evaluation
-      - long running execution tracking
-    do_not_use_when:
-      - gameplay logic only
-      - player build orchestration only
-      - shader source repair only
 
   unity_agent_mcp:
     kind: control_plane
@@ -37,8 +28,6 @@ modules:
     development_catalog: Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json
     direct_unity_mutation: false
     default_tool_group: agent
-    available_tool_groups:
-      - agent
     tools:
       - agent.inspect_capabilities
       - agent.validate_workflow
@@ -51,30 +40,143 @@ modules:
       - agent.get_execution_history
       - agent.get_error_catalog
 
-  unity_cinematic_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_ui_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_addressables_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_animation_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_audio_mcp:
-    kind: domain
-    status: design_only_not_executable
+  world_creator:
+    kind: creator
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    tools:
+      - world.compile_workflow
+      - world.start_preflight
+      - world.create_review_handoff
+
   unity_profiler_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: implementation_in_progress_unverified
+    default_tool_group: profiler
+    tools:
+      - profiler.inspect_environment
+      - profiler.inspect_counters
+      - profiler.prepare_capture
+      - profiler.start_capture
+      - profiler.get_capture_status
+      - profiler.cancel_capture
+      - profiler.summarize_capture
+      - profiler.compare_baseline
+
   unity_build_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: implementation_in_progress_unverified
+    default_tool_group: build
+    approval_required: true
+    tools:
+      - build.inspect_environment
+      - build.prepare_player
+      - build.start_player
+      - build.get_history
+      - build.cancel_player
+      - build.get_support_matrix
+
+  unity_addressables_mcp:
+    kind: optional_domain
+    status: implementation_in_progress_unverified
+    optional_package: com.unity.addressables
+    default_tool_group: addressables
+    approval_required: true
+    tools:
+      - addressables.inspect
+      - addressables.prepare_entry
+      - addressables.apply_entry
+      - addressables.prepare_content_build
+      - addressables.build_content
+      - addressables.get_support_matrix
+
+  unity_ui_mcp:
+    kind: domain
+    status: implementation_in_progress_unverified
+    default_tool_group: ui
+    approval_required: true
+    tools:
+      - ui.inspect
+      - ui.validate
+      - ui.prepare_rect_transform
+      - ui.apply_rect_transform
+      - ui.get_support_matrix
+
+  unity_animation_mcp:
+    kind: domain
+    status: implementation_in_progress_unverified
+    default_tool_group: animation
+    approval_required: true
+    tools:
+      - animation.inspect
+      - animation.validate
+      - animation.prepare_parameter
+      - animation.apply_parameter
+      - animation.get_support_matrix
+
+  unity_audio_mcp:
+    kind: domain
+    status: implementation_in_progress_unverified
+    default_tool_group: audio
+    approval_required: true
+    tools:
+      - audio.inspect
+      - audio.validate
+      - audio.prepare_source
+      - audio.apply_source
+      - audio.get_support_matrix
+
+  unity_cinematic_mcp:
+    kind: domain
+    status: implementation_in_progress_unverified
+    default_tool_group: cinematic
+    approval_required: true
+    tools:
+      - cinematic.inspect
+      - cinematic.validate
+      - cinematic.prepare_director
+      - cinematic.apply_director
+      - cinematic.get_support_matrix
+
+  movie_creator:
+    kind: creator
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    tools:
+      - movie.compile_production
+      - movie.preview_production
+      - movie.create_review_handoff
+
+  live_creator:
+    kind: creator
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    unattended_execution: prohibited
+    tools:
+      - live.compile_show
+      - live.preview_show
+      - live.create_operator_handoff
+
+security_modes:
+  default: RESTRICTED
+  available:
+    - PERSONAL
+    - TEAM
+    - RESTRICTED
+    - CI
+  team_mode_forbidden_collection:
+    - credentials
+    - authentication_tokens
+    - unity_project_id
+    - organization_information
+    - customer_names
+    - internal_issue_numbers
+    - private_screenshots
+    - operational_information
 
 selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
   explicit_tool_activation_required: true
   unverified_module_execution_allowed: false
+  agent_operational_status_required: editor_operational
