@@ -1,28 +1,166 @@
 {
   "schema_version": "1.0",
   "project_goal_id": "myunitymcp_complete_integrated_product",
-  "project_status": "proposed",
+  "project_status": "running",
   "terminal_goal_satisfied": false,
-  "source_revision": "",
-  "current_node": null,
+  "source_revision": "94cab7f93592f345d5b23e88f0ad295f8ae3e476",
+  "current_node": "phase_01_unity_agent_runtime",
   "nodes": {
-    "bootstrap_development_harness": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_00_release_integrity": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_01_unity_agent_runtime": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_02_world_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_03_profiler_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_04_build_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_05_addressables_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_06_ui_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_07_animation_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_08_audio_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_09_cinematic_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_10_movie_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_11_live_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_12_production_hardening": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "project_completion_gate": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "human_final_release_approval": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "project_complete": {"status":"pending","attempts":[],"evidence":{},"completed_at":null}
+    "bootstrap_development_harness": {
+      "status": "complete",
+      "attempts": [
+        {
+          "started_at": "2026-08-07T01:20:00+09:00",
+          "source_revision": "312651a34037b27f9125021aec88c28c8dd0951c",
+          "iteration_budget": 5,
+          "kind": "start"
+        }
+      ],
+      "evidence": {
+        "harness_validation": {
+          "path": "state/evidence/bootstrap_development_harness/harness_validation.json",
+          "sha256": "20ca51470d6757052272066c5e56350dca49d1014d14ce6b32ddc818b0150d31",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        },
+        "state_validation": {
+          "path": "state/evidence/bootstrap_development_harness/state_validation.json",
+          "sha256": "cf7fe26fe9493bb9de0a764cfee1c7aa14af0c33414db9643a6453732dc37cea",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        },
+        "completion_gate_negative_test": {
+          "path": "state/evidence/bootstrap_development_harness/completion_gate_negative_test.json",
+          "sha256": "26419ede424416f0d7cf94ff8a19d86ca31a6cc012b46add7feb20df0ce8f9c6",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        }
+      },
+      "completed_at": "2026-08-07T01:33:00+09:00"
+    },
+    "phase_00_release_integrity": {
+      "status": "complete",
+      "attempts": [
+        {
+          "started_at": "2026-08-07T01:24:00+09:00",
+          "source_revision": "312651a34037b27f9125021aec88c28c8dd0951c",
+          "iteration_budget": 7,
+          "kind": "start"
+        }
+      ],
+      "evidence": {
+        "release_policy": {
+          "path": "state/evidence/phase_00_release_integrity/release_policy.json",
+          "sha256": "036a0fdd812d1a728164860e10275ac6d151bdb18114924de984b53d4983ac24",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        },
+        "release_integrity_tests": {
+          "path": "state/evidence/phase_00_release_integrity/release_integrity_tests.json",
+          "sha256": "72a60634f8db8a18828cd750695fd7a2326c46f071f2cd5f95a9c3c0b72ef080",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        },
+        "current_release_resolution": {
+          "path": "state/evidence/phase_00_release_integrity/current_release_resolution.json",
+          "sha256": "84d2e2d5601f1370f247207d6d2df92c08943c6e73265163c609b94a17ce39f6",
+          "recorded_at": "2026-08-07T01:32:00+09:00"
+        }
+      },
+      "completed_at": "2026-08-07T01:35:00+09:00"
+    },
+    "phase_01_unity_agent_runtime": {
+      "status": "running",
+      "attempts": [
+        {
+          "started_at": "2026-08-07T01:36:00+09:00",
+          "source_revision": "94cab7f93592f345d5b23e88f0ad295f8ae3e476",
+          "iteration_budget": 10,
+          "kind": "start"
+        }
+      ],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_02_world_creator": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_03_profiler_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_04_build_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_05_addressables_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_06_ui_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_07_animation_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_08_audio_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_09_cinematic_mcp": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_10_movie_creator": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_11_live_creator": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "phase_12_production_hardening": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "project_completion_gate": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "human_final_release_approval": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    },
+    "project_complete": {
+      "status": "pending",
+      "attempts": [],
+      "evidence": {},
+      "completed_at": null
+    }
   },
   "approvals": {
     "human_final_release_approval": {
@@ -34,5 +172,5 @@
   },
   "blockers": [],
   "interruptions": [],
-  "updated_at": ""
+  "updated_at": "2026-08-07T01:36:00+09:00"
 }
