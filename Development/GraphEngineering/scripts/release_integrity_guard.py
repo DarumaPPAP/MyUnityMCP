@@ -25,6 +25,7 @@ class ReleaseSnapshot:
     support_version: str
     changelog_has_version: bool
     workflow_has_identity: bool
+    workflow_preserves_published_tag: bool
     tag_exists: bool
     tag_commit: str
     main_commit: str
@@ -51,6 +52,22 @@ def _git(repo_root: Path, *args: str) -> str:
             completed.stderr.strip() or f"git {' '.join(args)} failed"
         )
     return completed.stdout.strip()
+
+
+def _workflow_preserves_published_tag(workflow: str) -> bool:
+    required_fragments = (
+        'release_mode="verify_existing"',
+        'source_commit=$(git rev-parse "$tag^{commit}")',
+        'git checkout --detach "$source_commit"',
+    )
+    forbidden_fragments = (
+        "git tag -f",
+        "git push --force",
+        "git push -f",
+    )
+    return all(value in workflow for value in required_fragments) and not any(
+        value in workflow for value in forbidden_fragments
+    )
 
 
 def load_snapshot(repo_root: Path, *, tag: str | None = None) -> ReleaseSnapshot:
@@ -104,6 +121,7 @@ def load_snapshot(repo_root: Path, *, tag: str | None = None) -> ReleaseSnapshot
             'git config user.name "github-actions[bot]"' in workflow
             and "41898282+github-actions[bot]@users.noreply.github.com" in workflow
         ),
+        workflow_preserves_published_tag=_workflow_preserves_published_tag(workflow),
         tag_exists=tag_exists,
         tag_commit=tag_commit,
         main_commit=main_commit,
@@ -134,6 +152,8 @@ def validate_snapshot(
         mismatches.append("CHANGELOG does not contain the current VERSION")
     if not snapshot.workflow_has_identity:
         mismatches.append("release workflow git identity is missing")
+    if not snapshot.workflow_preserves_published_tag:
+        mismatches.append("release workflow does not preserve immutable published tags")
     if not snapshot.tag_exists:
         mismatches.append(f"published tag v{snapshot.version} is missing")
     if snapshot.release_evidence_status != "passed":
@@ -161,6 +181,7 @@ def validate_snapshot(
         "main_commit": snapshot.main_commit,
         "next_release_action": next_release_action,
         "tag_moved": False,
+        "rerun_source": "tag_commit" if snapshot.tag_commit != snapshot.main_commit else "main_commit",
     }
 
 
