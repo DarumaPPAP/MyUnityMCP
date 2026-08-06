@@ -1,0 +1,214 @@
+schema_version: "1.0"
+branch: feature/graph-engineering-master
+release_version: "1.0.0"
+development_candidate_tool_count: 91
+minimum_editmode_test_count: 158
+
+status_definitions:
+  editor_operational: implemented and verified in Unity Editor CI
+  implementation_in_progress_unverified: source and contracts exist, but Unity Editor CI or E2E evidence is incomplete
+  optional_backend_unverified: base package compiles without backend; backend-present matrix is incomplete
+  unsupported: no safe supported implementation
+
+modules:
+  unity_graphics_mcp:
+    status: editor_operational
+    public_api_only: true
+    verified_unity:
+      - "6000.0.75f1"
+    verified_tool_count: 32
+    verified_editmode_tests: 125
+
+  unity_agent_mcp:
+    status: implementation_in_progress_unverified
+    public_api_only: true
+    direct_unity_mutation: false
+    candidate_tools: 10
+    required_evidence:
+      - unity_editor_compile
+      - agent_contract_tests
+      - graphics_read_only_delegation_e2e
+      - external_mcp_client_e2e
+
+  world_creator:
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    candidate_tools: 3
+    required_evidence:
+      - unity_editor_compile
+      - preflight_graph_e2e
+      - human_review_handoff
+
+  unity_profiler_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - Unity.Profiling.ProfilerRecorder
+    candidate_tools: 8
+    measurement_scope: UNITY_EDITOR_LOCAL
+    target_device_claim: false
+    required_evidence:
+      - unity_editor_compile
+      - counter_availability
+      - reproducible_capture
+      - cancellation
+      - same_environment_baseline
+
+  unity_build_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - UnityEditor.BuildPipeline.BuildPlayer
+      - UnityEditor.Build.Reporting.BuildReport
+    candidate_tools: 6
+    output_root: Builds/MyUnityMCP/
+    unsupported:
+      - safe_force_cancel_of_running_build
+    required_evidence:
+      - unity_editor_compile
+      - successful_desktop_build
+      - failed_build_report
+      - platform_specific_build_matrix
+
+  unity_addressables_mcp:
+    status: optional_backend_unverified
+    optional_package: com.unity.addressables
+    candidate_tools: 6
+    package_absent_expected: UNSUPPORTED
+    automatic_settings_creation: false
+    automatic_group_creation: false
+    automatic_save: false
+    required_evidence:
+      - package_absent_compile
+      - package_absent_contract_test
+      - package_present_compile
+      - entry_mutation_test
+      - content_build_test
+
+  unity_ui_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - UnityEngine.Canvas
+      - UnityEngine.RectTransform
+      - UnityEngine.UIElements.UIDocument
+    candidate_tools: 5
+    required_evidence:
+      - unity_editor_compile
+      - ugui_scene_inspection
+      - ui_toolkit_scene_inspection
+      - undoable_rect_transform_mutation
+
+  unity_animation_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - UnityEngine.Animator
+      - UnityEditor.Animations.AnimatorController
+      - UnityEditor.AnimationUtility
+    candidate_tools: 5
+    initial_mutation_scope:
+      - animator_controller_parameter_addition
+    excluded_initial_mutation:
+      - state_machine_rewrite
+      - transition_rewrite
+      - animation_curve_rewrite
+      - clip_event_mutation
+
+  unity_audio_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - UnityEngine.AudioSource
+      - UnityEngine.AudioClip
+      - UnityEngine.AudioListener
+    candidate_tools: 5
+    initial_mutation_scope:
+      - volume
+      - pitch
+      - spatial_blend
+      - loop
+      - mute
+      - play_on_awake
+    excluded_initial_mutation:
+      - audio_clip_replacement
+      - audio_mixer_asset_creation
+
+  unity_cinematic_mcp:
+    status: implementation_in_progress_unverified
+    public_api:
+      - UnityEngine.Playables.PlayableDirector
+      - UnityEngine.Playables.PlayableBinding
+    candidate_tools: 5
+    optional_packages_unverified:
+      - com.unity.timeline
+      - com.unity.cinemachine
+    excluded_initial_mutation:
+      - timeline_track_creation
+      - timeline_clip_creation
+      - generic_binding_mutation
+      - cinemachine_shot_mutation
+
+  movie_creator:
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    candidate_tools: 3
+    automatic_visual_acceptance: false
+    execution_ready_requires:
+      - unity_cinematic_mcp_editor_operational
+      - human_mutation_approval
+      - human_visual_review
+
+  live_creator:
+    status: implementation_in_progress_unverified
+    direct_unity_mutation: false
+    candidate_tools: 3
+    unattended_execution: prohibited
+    automatic_go_live: false
+    operator_required: true
+
+security_modes:
+  PERSONAL:
+    machine_details: allowed
+    project_paths: allowed
+    screenshots: allowed
+    always_forbidden:
+      - credentials
+      - authentication_tokens
+      - unity_project_id
+      - organization_information
+      - customer_names
+      - internal_issue_numbers
+  TEAM:
+    machine_details: redacted
+    project_paths: redacted
+    object_names: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+  RESTRICTED:
+    default: true
+    machine_details: redacted
+    project_paths: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+  CI:
+    deterministic_minimal_output: true
+    machine_details: redacted
+    project_paths: redacted
+    object_names: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+
+platform_matrix:
+  Unity_6000_0_75f1_Editor:
+    graphics: verified
+    development_modules: pending_ci_evidence
+  Nintendo_Switch:
+    status: unverified_requires_platform_holder_environment
+  Nintendo_Switch_2:
+    status: unverified_requires_platform_holder_environment
+  PlayStation_4:
+    status: unverified_requires_platform_holder_environment
+  PlayStation_5:
+    status: unverified_requires_platform_holder_environment
+  Windows_Player:
+    status: unverified
+  macOS_Player:
+    status: unverified
+  Linux_Player:
+    status: unverified
