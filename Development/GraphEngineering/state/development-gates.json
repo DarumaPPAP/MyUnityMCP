@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "source_branch": "feature/graph-engineering-master",
+  "terminal_goal_satisfied": false,
+  "gates": {
+    "architecture_lint": {
+      "status": "pending_latest_ci",
+      "evidence": null
+    },
+    "python_harness_tests": {
+      "status": "pending_latest_ci",
+      "evidence": null
+    },
+    "unity_editor_ci": {
+      "status": "pending",
+      "minimum_test_count": 158,
+      "minimum_tool_count": 91,
+      "evidence": "state/evidence/ci/graph-engineering-unity-latest.json"
+    },
+    "external_mcp_client_e2e": {
+      "status": "pending",
+      "evidence": "state/evidence/external-client/latest.json"
+    },
+    "addressables_package_absent": {
+      "status": "pending_unity_ci",
+      "evidence": null
+    },
+    "addressables_package_present": {
+      "status": "pending_separate_matrix",
+      "evidence": null
+    },
+    "security_modes": {
+      "status": "pending_unity_ci",
+      "evidence": null
+    },
+    "fault_injection": {
+      "status": "pending_unity_ci",
+      "evidence": null
+    },
+    "world_visual_review": {
+      "status": "pending_human",
+      "evidence": null
+    },
+    "movie_visual_review": {
+      "status": "pending_human",
+      "evidence": null
+    },
+    "live_operator_review": {
+      "status": "pending_human",
+      "evidence": null
+    },
+    "release_version_approval": {
+      "status": "pending_human",
+      "approved_version": null,
+      "evidence": null
+    },
+    "artifact_only_delivery_validation": {
+      "status": "pending_delivery_branch",
+      "evidence": null
+    }
+  },
+  "updated_at": "2026-08-07T02:30:00+09:00"
+}
