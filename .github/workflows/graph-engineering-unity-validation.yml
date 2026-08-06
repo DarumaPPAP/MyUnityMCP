@@ -1,0 +1,123 @@
+name: Graph Engineering Unity Validation
+
+on:
+  push:
+    branches:
+      - feature/graph-engineering-master
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**
+      - TestProjects/MyUnityMCPVerification/**
+      - Development/GraphEngineering/**
+      - .github/workflows/graph-engineering-unity-validation.yml
+  workflow_dispatch: {}
+
+concurrency:
+  group: graph-engineering-unity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  editmode:
+    name: Compile and run development contracts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/graph-engineering-master
+          lfs: true
+          persist-credentials: false
+
+      - name: Validate Graph Engineering state
+        run: |
+          python3 -m unittest discover -s Development/GraphEngineering/tests -v
+          python3 Development/GraphEngineering/scripts/roadmap_harness.py validate
+          python3 Development/GraphEngineering/scripts/release_integrity_guard.py --repo-root . --json
+
+      - name: Require Unity license secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            exit 0
+          fi
+          if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; then
+            exit 0
+          fi
+          echo "::error::Unity license secrets are incomplete."
+          exit 1
+
+      - name: Free disk space
+        run: |
+          docker system prune --all --force || true
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /opt/hostedtoolcache/CodeQL
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: TestProjects/MyUnityMCPVerification/Library
+          key: GraphEngineering-Editor-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPVerification/Packages/manifest.json') }}
+          restore-keys: |
+            GraphEngineering-Editor-6000.0.75f1-
+            MyUnityMCP-Editor-6000.0.75f1-
+
+      - name: Run all MyUnityMCP EditMode tests
+        id: tests
+        continue-on-error: true
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+
+      - name: Verify Unity compile and NUnit result
+        if: always()
+        env:
+          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$TEST_OUTCOME" != "success" ]; then
+            echo "::error::Unity test runner outcome was $TEST_OUTCOME."
+            find "$ARTIFACTS_PATH" -maxdepth 3 -type f -print 2>/dev/null || true
+            exit 1
+          fi
+          editmode_log=$(find "$ARTIFACTS_PATH" -name 'editmode.log' -type f -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log"; then
+            grep -n -E 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log" | tail -n 100
+            exit 1
+          fi
+          results_xml=$(find "$ARTIFACTS_PATH" -name '*.xml' -type f -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+          python3 - "$results_xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          total = int(root.attrib.get("total", "0"))
+          passed = int(root.attrib.get("passed", "0"))
+          failed = int(root.attrib.get("failed", "0"))
+          skipped = int(root.attrib.get("skipped", "0"))
+          inconclusive = int(root.attrib.get("inconclusive", "0"))
+          print(f"Development contracts: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
+          if total < 135 or failed or skipped or inconclusive or passed != total:
+              raise SystemExit(1)
+          PY
+
+      - name: Upload development evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Graph-Engineering-Unity-Evidence
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          if-no-files-found: error
+          retention-days: 30
