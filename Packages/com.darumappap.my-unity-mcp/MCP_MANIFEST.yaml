@@ -1,8 +1,8 @@
-schema_version: "2.0"
+schema_version: "2.1"
 package_id: com.darumappap.my-unity-mcp
 version: "1.0.0"
-implementation_status: release
-verified_level: unity_editor_ci
+implementation_status: release_plus_development
+verified_level: unity_editor_ci_for_v1_graphics
 
 operational_domain:
   id: unity_graphics_mcp
@@ -11,17 +11,41 @@ operational_domain:
   architecture: ../../Specs/UnityGraphicsMCP/architecture.md
   support_matrix: ../../Tests/Compatibility/support-matrix.yaml
 
+development_control_plane:
+  id: unity_agent_mcp
+  status: implementation_in_progress_unverified
+  specification: ../../Specs/UnityAgentMCP/spec.md
+  catalog: Editor/UnityAgentMcpCatalog.json
+  direct_unity_mutation: false
+  candidate_tool_count: 10
+  release_in_v1: false
+
 bridge:
   package: com.coplaydev.unity-mcp
   declared_api_version: "10.1.2"
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
-  discovered_tool_count: 32
+  verified_release_tool_count: 32
+  development_candidate_tool_count: 42
   tools_enabled_by_default: false
   explicit_activation_required: true
   external_mcp_client_connection_verified: false
 
 tool_groups:
+  agent:
+    mutation: delegated_only
+    approval_required_for_side_effect_groups: true
+    tools:
+      - agent.inspect_capabilities
+      - agent.validate_workflow
+      - agent.compile_graph
+      - agent.preview_execution
+      - agent.submit_approval
+      - agent.start_execution
+      - agent.get_execution_status
+      - agent.cancel_execution
+      - agent.get_execution_history
+      - agent.get_error_catalog
   inspect:
     mutation: false
     tools:
@@ -87,6 +111,7 @@ safety:
   exact_preview_required: true
   expected_revision_required_for_mutation: true
   approval_token_required_for_mutation: true
+  control_plane_direct_mutation: prohibited
   automatic_save: prohibited
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
@@ -96,11 +121,12 @@ safety:
   automatic_execution_resume_after_restart: prohibited
 
 verification:
-  current_evidence: ../../Tests/Compatibility/release-verification.yaml
+  current_release_evidence: ../../Tests/Compatibility/release-verification.yaml
   historical_evidence_index: ../../Tests/Compatibility/README.md
-  unity_editor_compile: required
-  tool_discovery_count: 32
-  minimum_editmode_contracts: 125
+  unity_editor_compile_for_development_control_plane: pending
+  development_agent_contract_tests: 10
+  verified_graphics_tool_discovery_count: 32
+  verified_graphics_minimum_editmode_contracts: 125
   fresh_project_sample_workflow: required
 
 not_operational_in_v1:
