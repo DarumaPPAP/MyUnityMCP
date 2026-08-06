@@ -31,37 +31,47 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main release commit
+      - name: Checkout main release control
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Verify release contract and publish version tag
+      - name: Resolve immutable release source
         id: identity
+        shell: bash
         run: |
           set -euo pipefail
           version=$(cat VERSION)
           tag="v${version}"
           python3 Tests/Release/verify_release_contract.py --mode pr
           git fetch origin --tags --force
+
+          release_mode="create"
+          source_commit=$(git rev-parse HEAD)
+
           if git rev-parse "$tag" >/dev/null 2>&1; then
-            if [ "$(git rev-parse "$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
-              echo "::error::$tag already points to a different commit."
-              exit 1
-            fi
+            release_mode="verify_existing"
+            source_commit=$(git rev-parse "$tag^{commit}")
+            echo "::notice::$tag is already published and immutable. Reusing tagged source $source_commit."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$tag" -m "MyUnityMCP ${tag}"
             git push origin "$tag"
           fi
+
+          git checkout --detach "$source_commit"
           python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
+          echo "release_mode=$release_mode" >> "$GITHUB_OUTPUT"
 
-      - name: Build release distribution
+      - name: Build release distribution from immutable source
+        shell: bash
         run: |
           set -euo pipefail
           version="${{ steps.identity.outputs.version }}"
@@ -71,10 +81,11 @@ jobs:
           zip -qr "artifacts/MyUnityMCP-Templates-${version}.zip" Templates
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
 
-      - name: Publish GitHub Release
+      - name: Publish or verify GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.identity.outputs.tag }}
+        shell: bash
         run: |
           set -euo pipefail
           if gh release view "$TAG" >/dev/null 2>&1; then
