@@ -110,7 +110,7 @@ jobs:
           skipped = int(root.attrib.get("skipped", "0"))
           inconclusive = int(root.attrib.get("inconclusive", "0"))
           print(f"Development contracts: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
-          if total < 148 or failed or skipped or inconclusive or passed != total:
+          if total < 158 or failed or skipped or inconclusive or passed != total:
               raise SystemExit(1)
           PY
 
