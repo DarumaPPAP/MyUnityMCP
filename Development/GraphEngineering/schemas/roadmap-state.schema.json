@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MyUnityMCP Roadmap State",
+  "type": "object",
+  "required": ["schema_version", "project_goal_id", "project_status", "terminal_goal_satisfied", "source_revision", "nodes", "approvals", "updated_at"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "project_goal_id": {"type": "string"},
+    "project_status": {"enum": ["proposed", "running", "awaiting_approval", "blocked", "interrupted", "completed"]},
+    "terminal_goal_satisfied": {"type": "boolean"},
+    "source_revision": {"type": "string"},
+    "current_node": {"type": ["string", "null"]},
+    "nodes": {"type": "object"},
+    "approvals": {"type": "object"},
+    "blockers": {"type": "array"},
+    "interruptions": {"type": "array"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": true
+}
