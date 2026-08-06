@@ -64,6 +64,23 @@ development_modules:
     direct_unity_mutation: false
     unattended_execution: prohibited
     tool_count: 3
+  security_modes:
+    kind: shared_policy
+    status: implementation_in_progress_unverified
+    modes:
+      - PERSONAL
+      - TEAM
+      - RESTRICTED
+      - CI
+    forbidden_collection:
+      - credentials
+      - authentication_tokens
+      - unity_project_id
+      - organization_information
+      - customer_names
+      - internal_issue_numbers
+      - private_screenshots
+      - operational_information
 
 bridge:
   package: com.coplaydev.unity-mcp
@@ -188,21 +205,27 @@ safety:
   automatic_save: prohibited
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
+  reflection_in_development_modules: prohibited
   silent_fallback: prohibited
   automatic_visual_acceptance: prohibited
   human_review_required_for_visual_acceptance: true
   automatic_execution_resume_after_restart: prohibited
   live_unattended_execution: prohibited
   published_tag_move: prohibited
+  team_mode_sensitive_collection: prohibited
 
 verification:
   current_release_evidence: ../../Tests/Compatibility/release-verification.yaml
   historical_evidence_index: ../../Tests/Compatibility/README.md
   unity_editor_compile_for_development_modules: pending
   development_agent_contract_tests: 10
-  development_domain_and_creator_contract_tests: 14
-  development_contract_test_total: 24
-  development_expected_editmode_total_minimum: 148
+  development_domain_contract_tests_minimum: 8
+  development_creator_contract_tests: 5
+  development_security_contract_tests: 5
+  development_fault_injection_tests: 5
+  development_contract_test_total_minimum: 33
+  development_expected_editmode_total_minimum: 158
+  development_expected_editmode_total_without_addressables: 159
   verified_graphics_tool_discovery_count: 32
   development_candidate_tool_discovery_count: 91
   verified_graphics_minimum_editmode_contracts: 125
