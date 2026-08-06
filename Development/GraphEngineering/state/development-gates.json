@@ -55,9 +55,11 @@
       "evidence": null
     },
     "artifact_only_delivery_validation": {
-      "status": "pending_delivery_branch",
-      "evidence": null
+      "status": "passed",
+      "evidence": "state/evidence/delivery/release-integrity-immutable-tag.json",
+      "main_merge_sha": "a449f75328e09fc855a74dba1c2b0a29d15cdcbd",
+      "development_sync_sha": "591dca34997eefdec7d6a9fa53bd6b3b2b2f66fa"
     }
   },
-  "updated_at": "2026-08-07T02:30:00+09:00"
+  "updated_at": "2026-08-07T03:16:00+09:00"
 }
