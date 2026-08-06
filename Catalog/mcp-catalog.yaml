@@ -1,5 +1,6 @@
 schema_version: "2.0"
 release_version: "1.0.0"
+development_branch: feature/graph-engineering-master
 
 modules:
   unity_graphics_mcp:
@@ -31,8 +32,25 @@ modules:
 
   unity_agent_mcp:
     kind: control_plane
-    status: design_only_not_executable
+    status: implementation_in_progress_unverified
     specification: Specs/UnityAgentMCP/spec.md
+    development_catalog: Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json
+    direct_unity_mutation: false
+    default_tool_group: agent
+    available_tool_groups:
+      - agent
+    tools:
+      - agent.inspect_capabilities
+      - agent.validate_workflow
+      - agent.compile_graph
+      - agent.preview_execution
+      - agent.submit_approval
+      - agent.start_execution
+      - agent.get_execution_status
+      - agent.cancel_execution
+      - agent.get_execution_history
+      - agent.get_error_catalog
+
   unity_cinematic_mcp:
     kind: domain
     status: design_only_not_executable
@@ -59,3 +77,4 @@ selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
   explicit_tool_activation_required: true
+  unverified_module_execution_allowed: false
