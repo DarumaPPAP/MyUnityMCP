@@ -1,0 +1,97 @@
+schema_version: "1.0"
+branch: feature/graph-engineering-master
+status: implementation_complete_validation_pending
+terminal_goal_satisfied: false
+
+source_contracts:
+  release_integrity_guard: implemented
+  architecture_lint: implemented
+  artifact_only_delivery_guard: implemented
+  unity_agent_mcp: implemented_unverified
+  world_creator: implemented_unverified
+  unity_profiler_mcp: implemented_unverified
+  unity_build_mcp: implemented_unverified
+  unity_addressables_mcp: implemented_optional_backend_unverified
+  unity_ui_mcp: implemented_unverified
+  unity_animation_mcp: implemented_unverified
+  unity_audio_mcp: implemented_unverified
+  unity_cinematic_mcp: implemented_unverified
+  movie_creator: implemented_unverified
+  live_creator: implemented_unverified
+  security_modes: implemented_unverified
+  external_mcp_client_harness: implemented_not_executed
+
+static_validation:
+  graph_harness_tests: pending_latest_ci_evidence
+  architecture_lint: pending_latest_ci_evidence
+  release_integrity_guard: pending_latest_ci_evidence
+  external_client_parser_tests: pending_latest_ci_evidence
+
+unity_editor_validation:
+  unity_version: "6000.0.75f1"
+  compile: pending
+  minimum_editmode_tests: 158
+  expected_without_addressables: 159
+  failures_allowed: 0
+  skipped_allowed: 0
+  inconclusive_allowed: 0
+  evidence_path: Development/GraphEngineering/state/evidence/ci/graph-engineering-unity-latest.json
+
+external_client_validation:
+  transport: http
+  protocol_flow:
+    - initialize
+    - notifications_initialized
+    - tools_list
+    - graphics_inspect_project
+    - agent_inspect_capabilities
+  status: pending_running_unity_editor_bridge
+  evidence_path: Development/GraphEngineering/state/evidence/external-client/latest.json
+
+optional_backend_validation:
+  addressables_absent:
+    status: pending_unity_ci
+    expected: package_compiles_and_tools_return_unsupported
+  addressables_present:
+    status: pending_separate_matrix
+    required_package: com.unity.addressables
+    required_checks:
+      - editor_compile
+      - settings_inspection
+      - entry_preview
+      - approval_gated_entry_mutation
+      - content_build
+
+platform_validation:
+  editor_local:
+    status: pending_development_ci
+  windows_player:
+    status: pending
+  macos_player:
+    status: pending
+  linux_player:
+    status: pending
+  nintendo_switch:
+    status: requires_platform_holder_environment
+  nintendo_switch_2:
+    status: requires_platform_holder_environment
+  playstation_4:
+    status: requires_platform_holder_environment
+  playstation_5:
+    status: requires_platform_holder_environment
+
+human_gates:
+  world_visual_review: pending
+  movie_visual_review: pending
+  live_operator_review: pending
+  artifact_only_delivery_pr: pending_explicit_approval
+  merge: pending_separate_explicit_approval
+  version_and_release: pending_explicit_approval
+
+completion_blockers:
+  - latest Unity Editor CI evidence is missing
+  - external MCP Client E2E evidence is missing
+  - Addressables package-present matrix is missing
+  - platform-specific Build evidence is missing
+  - human visual and operator review evidence is missing
+  - release candidate version has not been approved
