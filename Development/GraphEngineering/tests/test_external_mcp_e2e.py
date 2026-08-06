@@ -1,12 +1,17 @@
 import importlib.util
 import json
 from pathlib import Path
+import sys
 import unittest
 
 MODULE_PATH = Path(__file__).resolve().parents[3] / "Tests/ExternalClient/run_mcp_http_e2e.py"
 SPEC = importlib.util.spec_from_file_location("run_mcp_http_e2e", MODULE_PATH)
 assert SPEC and SPEC.loader
 module = importlib.util.module_from_spec(SPEC)
+
+# Python 3.12のdataclassは、動的Import中のModuleをsys.modulesから参照します。
+# exec_moduleより前に登録し、通常Importと同じModule lifecycleを保証します。
+sys.modules[SPEC.name] = module
 SPEC.loader.exec_module(module)
 
 
