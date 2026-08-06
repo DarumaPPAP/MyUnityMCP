@@ -19,6 +19,7 @@ def snapshot(**overrides):
         "support_version": "1.0.0",
         "changelog_has_version": True,
         "workflow_has_identity": True,
+        "workflow_preserves_published_tag": True,
         "tag_exists": True,
         "tag_commit": "tag-sha",
         "main_commit": "tag-sha",
@@ -45,6 +46,7 @@ class ReleaseIntegrityGuardTests(unittest.TestCase):
             result["next_release_action"],
             "create_patch_release_for_future_product_changes",
         )
+        self.assertEqual(result["rerun_source"], "tag_commit")
         self.assertFalse(result["tag_moved"])
 
     def test_missing_tag_fails(self):
@@ -65,6 +67,13 @@ class ReleaseIntegrityGuardTests(unittest.TestCase):
         with self.assertRaises(guard.ReleaseIntegrityError):
             guard.validate_snapshot(
                 snapshot(workflow_has_identity=False),
+                published_tag_policy="immutable",
+            )
+
+    def test_mutable_rerun_workflow_fails(self):
+        with self.assertRaises(guard.ReleaseIntegrityError):
+            guard.validate_snapshot(
+                snapshot(workflow_preserves_published_tag=False),
                 published_tag_policy="immutable",
             )
 
