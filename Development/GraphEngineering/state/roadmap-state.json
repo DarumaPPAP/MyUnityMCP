@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "project_goal_id": "myunitymcp_complete_integrated_product",
+  "project_status": "proposed",
+  "terminal_goal_satisfied": false,
+  "source_revision": "",
+  "current_node": null,
+  "nodes": {
+    "bootstrap_development_harness": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_00_release_integrity": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_01_unity_agent_runtime": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_02_world_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_03_profiler_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_04_build_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_05_addressables_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_06_ui_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_07_animation_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_08_audio_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_09_cinematic_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_10_movie_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_11_live_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "phase_12_production_hardening": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "project_completion_gate": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "human_final_release_approval": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
+    "project_complete": {"status":"pending","attempts":[],"evidence":{},"completed_at":null}
+  },
+  "approvals": {
+    "human_final_release_approval": {
+      "status": "missing",
+      "approved_by": null,
+      "approved_at": null,
+      "scope": null
+    }
+  },
+  "blockers": [],
+  "updated_at": ""
+}
