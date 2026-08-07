@@ -3,7 +3,7 @@
   "project_goal_id": "myunitymcp_complete_integrated_product",
   "project_status": "running",
   "terminal_goal_satisfied": false,
-  "source_revision": "0e3b455ddb8af3c646d784a700d7b6844ce4a3a8",
+  "source_revision": "ad28fcb984ced3daac552610ade1baf3c87dc6c2",
   "current_node": "phase_01_unity_agent_runtime",
   "nodes": {
     "bootstrap_development_harness": {
@@ -78,6 +78,12 @@
           "source_revision": "0e3b455ddb8af3c646d784a700d7b6844ce4a3a8",
           "iteration_budget": 5,
           "kind": "resume"
+        },
+        {
+          "started_at": "2026-08-07T10:29:00+09:00",
+          "source_revision": "ad28fcb984ced3daac552610ade1baf3c87dc6c2",
+          "iteration_budget": 7,
+          "kind": "safety_hardening"
         }
       ],
       "evidence": {},
@@ -108,5 +114,5 @@
   },
   "blockers": [],
   "interruptions": [],
-  "updated_at": "2026-08-07T03:34:00+09:00"
+  "updated_at": "2026-08-07T10:29:00+09:00"
 }
