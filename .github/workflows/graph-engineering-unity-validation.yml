@@ -120,26 +120,38 @@ jobs:
               "tests": None,
           }
 
-          artifacts = pathlib.Path(os.environ.get("ARTIFACTS_PATH") or "")
-          if result["preflight"] != "success":
-              result["status"] = "preflight_failed"
-          elif result["license"] != "success":
-              result["status"] = "blocked_unity_license"
-          elif result["unity_test_runner"] != "success":
-              result["status"] = "unity_test_runner_failed"
-          elif not artifacts.exists():
-              result["status"] = "unity_artifacts_missing"
-          else:
-              logs = sorted(artifacts.rglob("editmode.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+          artifacts_value = os.environ.get("ARTIFACTS_PATH") or ""
+          artifacts = pathlib.Path(artifacts_value) if artifacts_value else None
+          artifacts_exist = artifacts is not None and artifacts.exists()
+
+          if artifacts_exist:
+              logs = sorted(
+                  artifacts.rglob("editmode.log"),
+                  key=lambda p: p.stat().st_mtime,
+                  reverse=True,
+              )
               if logs:
                   text = logs[0].read_text(encoding="utf-8", errors="replace")
                   result["compile_errors"] = [
                       line for line in text.splitlines()
-                      if re.search(r"error CS\d{4}|Script Compilation Error|Scripts have compiler errors", line)
+                      if re.search(
+                          r"error CS\d{4}|Script Compilation Error|Scripts have compiler errors",
+                          line,
+                      )
                   ][-100:]
-              xml_files = sorted(artifacts.rglob("*.xml"), key=lambda p: p.stat().st_mtime, reverse=True)
-              if xml_files:
-                  root = ET.parse(xml_files[0]).getroot()
+
+              xml_files = sorted(
+                  artifacts.rglob("*.xml"),
+                  key=lambda p: p.stat().st_mtime,
+                  reverse=True,
+              )
+              for xml_path in xml_files:
+                  try:
+                      root = ET.parse(xml_path).getroot()
+                  except (ET.ParseError, OSError):
+                      continue
+                  if "total" not in root.attrib:
+                      continue
                   result["tests"] = {
                       "total": int(root.attrib.get("total", "0")),
                       "passed": int(root.attrib.get("passed", "0")),
@@ -147,12 +159,17 @@ jobs:
                       "skipped": int(root.attrib.get("skipped", "0")),
                       "inconclusive": int(root.attrib.get("inconclusive", "0")),
                   }
-              tests = result["tests"] or {}
-              if result["compile_errors"]:
-                  result["status"] = "compile_failed"
-              elif not tests:
-                  result["status"] = "test_result_missing"
-              elif tests.get("total", 0) < result["minimum_test_count"]:
+                  break
+
+          tests = result["tests"] or {}
+          if result["preflight"] != "success":
+              result["status"] = "preflight_failed"
+          elif result["license"] != "success":
+              result["status"] = "blocked_unity_license"
+          elif result["compile_errors"]:
+              result["status"] = "compile_failed"
+          elif tests:
+              if tests.get("total", 0) < result["minimum_test_count"]:
                   result["status"] = "test_count_below_minimum"
               elif tests.get("failed") or tests.get("skipped") or tests.get("inconclusive"):
                   result["status"] = "tests_failed"
@@ -160,6 +177,12 @@ jobs:
                   result["status"] = "test_count_mismatch"
               else:
                   result["status"] = "passed"
+          elif not artifacts_exist:
+              result["status"] = "unity_artifacts_missing"
+          elif result["unity_test_runner"] != "success":
+              result["status"] = "unity_test_runner_failed"
+          else:
+              result["status"] = "test_result_missing"
 
           pathlib.Path("/tmp/graph-engineering-unity-evaluation.json").write_text(
               json.dumps(result, ensure_ascii=False, indent=2) + "\n",
@@ -173,11 +196,11 @@ jobs:
       - name: Write repository evidence
         if: always()
         env:
-          SOURCE_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           mkdir -p Development/GraphEngineering/state/evidence/ci
+          export SOURCE_SHA="$(git rev-parse HEAD)"
           python3 - <<'PY'
           import datetime
           import json
@@ -202,7 +225,10 @@ jobs:
           }
           pathlib.Path(
               "Development/GraphEngineering/state/evidence/ci/graph-engineering-unity-latest.json"
-          ).write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          ).write_text(
+              json.dumps(evidence, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
           PY
 
       - name: Commit CI evidence to development branch
