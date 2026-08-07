@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using UnityDomainMcp;
 using UnityEditor;
 using UnityEditor.PackageManager;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 using UnityEngine;
 #if MYUNITYMCP_ADDRESSABLES
 using UnityEditor.AddressableAssets;
