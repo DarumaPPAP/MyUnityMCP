@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "release_integrity_guard.py"
 SPEC = importlib.util.spec_from_file_location("release_integrity_guard", MODULE_PATH)
@@ -48,6 +49,24 @@ class ReleaseIntegrityGuardTests(unittest.TestCase):
         )
         self.assertEqual(result["rerun_source"], "tag_commit")
         self.assertFalse(result["tag_moved"])
+
+    def test_ci_checkout_resolves_origin_main_when_local_main_is_absent(self):
+        with mock.patch.object(
+            guard,
+            "_git_optional",
+            side_effect=["", "origin-main-sha"],
+        ) as resolver:
+            result = guard._resolve_main_commit(Path("."))
+
+        self.assertEqual(result, "origin-main-sha")
+        self.assertEqual(resolver.call_count, 2)
+        self.assertEqual(resolver.call_args_list[0].args[2], "main^{commit}")
+        self.assertEqual(resolver.call_args_list[1].args[2], "origin/main^{commit}")
+
+    def test_main_resolution_fails_when_no_allowed_main_ref_exists(self):
+        with mock.patch.object(guard, "_git_optional", return_value=""):
+            with self.assertRaises(guard.ReleaseIntegrityError):
+                guard._resolve_main_commit(Path("."))
 
     def test_missing_tag_fails(self):
         with self.assertRaises(guard.ReleaseIntegrityError):
