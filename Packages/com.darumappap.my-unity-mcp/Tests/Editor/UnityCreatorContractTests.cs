@@ -3,6 +3,7 @@
 using System.IO;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using UnityAgentMcp;
 using UnityGraphicsMcp;
 using UnityLiveCreatorMcp;
 using UnityMovieCreatorMcp;
@@ -12,6 +13,18 @@ namespace MyUnityMcp.EditorTests
 {
 	public sealed class UnityCreatorContractTests
 	{
+		[SetUp]
+		public void SetUp()
+		{
+			UnityAgentMcpRuntime.Instance.ResetExecutionsForTests();
+		}
+
+		[TearDown]
+		public void TearDown()
+		{
+			UnityAgentMcpRuntime.Instance.ResetExecutionsForTests();
+		}
+
 		[Test]
 		public void WorldCreator_CompilesAndExecutesReadOnlyPreflight()
 		{
@@ -26,17 +39,24 @@ namespace MyUnityMcp.EditorTests
 				new[] {"Validation completed"},
 				revision);
 
-			JObject executed = UnityWorldCreatorRuntime.StartPreflight(
+			JObject started = UnityWorldCreatorRuntime.StartPreflight(
 				compiled.Value<string>("graphId"),
 				revision);
+			Assert.That(started.Value<string>("status"), Is.EqualTo("RUNNING"), started.ToString());
+
+			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+			JObject completed = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
 			JObject handoff = UnityWorldCreatorRuntime.CreateReviewHandoff(
-				executed.Value<string>("executionId"),
+				started.Value<string>("executionId"),
 				"現在Sceneの構成とGraphics設定を確認する",
 				new[] {"Validation completed"});
 
 			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
 			Assert.That(compiled.Value<bool>("directUnityMutation"), Is.False);
-			Assert.That(executed.Value<string>("status"), Is.EqualTo("SUCCEEDED"), executed.ToString());
+			Assert.That(completed.Value<string>("status"), Is.EqualTo("SUCCEEDED"), completed.ToString());
+			Assert.That(completed.Value<bool>("executionSucceeded"), Is.True);
 			Assert.That(handoff.Value<string>("handoffStatus"), Is.EqualTo("HUMAN_REVIEW_REQUIRED"));
 			Assert.That(handoff.Value<bool>("automaticVisualAcceptance"), Is.False);
 		}
