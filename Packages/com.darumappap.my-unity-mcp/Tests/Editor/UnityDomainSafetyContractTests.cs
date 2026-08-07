@@ -252,9 +252,8 @@ namespace MyUnityMcp.EditorTests
 
 		private static GameObject CreatePersistentSceneObject(string objectName, params Type[] components)
 		{
-			Scene scene = StandardEditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+			Scene scene = StandardEditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 			GameObject gameObject = new GameObject(objectName, components);
-			SceneManager.MoveGameObjectToScene(gameObject, scene);
 			Assert.That(StandardEditorSceneManager.SaveScene(scene, DOMAIN_SCENE_PATH), Is.True);
 			return gameObject;
 		}
@@ -264,7 +263,7 @@ namespace MyUnityMcp.EditorTests
 			Scene scene = SceneManager.GetSceneByPath(DOMAIN_SCENE_PATH);
 			if (scene.IsValid() && scene.isLoaded)
 			{
-				StandardEditorSceneManager.CloseScene(scene, true);
+				StandardEditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 			}
 			AssetDatabase.DeleteAsset(DOMAIN_SCENE_PATH);
 		}
