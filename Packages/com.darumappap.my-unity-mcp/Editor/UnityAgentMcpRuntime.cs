@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
@@ -57,7 +59,7 @@ namespace UnityAgentMcp
 		public DateTime createdAtUtc;
 		public List<UnityAgentMcpStepInput> steps;
 		public HashSet<string> requiredApprovalGroups;
-		public string approvalToken;
+		public string approvalTokenHash;
 		public DateTime approvalExpiresAtUtc;
 		public bool approved;
 	}
@@ -69,10 +71,16 @@ namespace UnityAgentMcp
 		public E_AGENT_EXECUTION_STATUS status;
 		public DateTime startedAtUtc;
 		public DateTime completedAtUtc;
+		public DateTime deadlineUtc;
+		public int timeoutSeconds;
+		public long expectedRevision;
 		public string errorCode;
 		public string message;
+		public List<UnityAgentMcpStepInput> orderedSteps = new List<UnityAgentMcpStepInput>();
+		public int nextStepIndex;
 		public List<JObject> stepResults = new List<JObject>();
 		public bool cancelRequested;
+		public bool historyPersisted;
 	}
 
 	[InitializeOnLoad]
@@ -81,7 +89,8 @@ namespace UnityAgentMcp
 		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json";
 		private const string HISTORY_PATH = "Library/MyUnityMCP/AgentExecution/history.jsonl";
 		private const int APPROVAL_TTL_MINUTES = 10;
-		private const int EXECUTION_TIMEOUT_SECONDS = 60;
+		private const int DEFAULT_EXECUTION_TIMEOUT_SECONDS = 60;
+		private const int MAX_EXECUTION_TIMEOUT_SECONDS = 3600;
 
 		private static readonly HashSet<string> APPROVAL_GROUPS = new HashSet<string>(StringComparer.Ordinal)
 		{
@@ -113,10 +122,13 @@ namespace UnityAgentMcp
 		private UnityAgentMcpCatalogData _catalog;
 		private string _catalogError;
 
+		internal static Func<DateTime> UtcNowOverrideForTests { get; set; }
+
 		public static UnityAgentMcpRuntime Instance => _instance;
 
 		static UnityAgentMcpRuntime()
 		{
+			EditorApplication.update += _instance.Tick;
 			AssemblyReloadEvents.beforeAssemblyReload += () => _instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", "DOMAIN_RELOAD");
 			CompilationPipeline.compilationStarted += _ => _instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", "COMPILATION_STARTED");
 			EditorApplication.playModeStateChanged += state =>
@@ -135,6 +147,8 @@ namespace UnityAgentMcp
 			LoadHistory();
 		}
 
+		private static DateTime UtcNow => UtcNowOverrideForTests?.Invoke() ?? DateTime.UtcNow;
+
 		public JObject InspectCapabilities()
 		{
 			if (_catalog == null)
@@ -147,7 +161,9 @@ namespace UnityAgentMcp
 				["catalogPath"] = CATALOG_PATH,
 				["domains"] = JArray.FromObject(_catalog.domains ?? Array.Empty<UnityAgentMcpDomainData>()),
 				["directUnityMutation"] = false,
-				["executionTimeoutSeconds"] = EXECUTION_TIMEOUT_SECONDS
+				["defaultExecutionTimeoutSeconds"] = DEFAULT_EXECUTION_TIMEOUT_SECONDS,
+				["maxExecutionTimeoutSeconds"] = MAX_EXECUTION_TIMEOUT_SECONDS,
+				["cooperativeExecution"] = true
 			});
 		}
 
@@ -182,7 +198,7 @@ namespace UnityAgentMcp
 			{
 				graphId = graphId,
 				expectedRevision = expectedRevision,
-				createdAtUtc = DateTime.UtcNow,
+				createdAtUtc = UtcNow,
 				steps = normalized,
 				requiredApprovalGroups = new HashSet<string>(
 					normalized.Where(value => APPROVAL_GROUPS.Contains(value.toolGroup))
@@ -197,7 +213,7 @@ namespace UnityAgentMcp
 				["expectedRevision"] = expectedRevision,
 				["stepCount"] = normalized.Count,
 				["requiredApprovalGroups"] = new JArray(graph.requiredApprovalGroups),
-				["executionTimeoutSeconds"] = EXECUTION_TIMEOUT_SECONDS
+				["defaultExecutionTimeoutSeconds"] = DEFAULT_EXECUTION_TIMEOUT_SECONDS
 			});
 		}
 
@@ -244,18 +260,19 @@ namespace UnityAgentMcp
 				return Error("AGENT-APPROVAL-INCOMPLETE", "必要なTool Groupがすべて承認されていません。");
 			}
 
+			string approvalToken = Guid.NewGuid().ToString("N");
 			graph.approved = true;
-			graph.approvalToken = Guid.NewGuid().ToString("N");
-			graph.approvalExpiresAtUtc = DateTime.UtcNow.AddMinutes(APPROVAL_TTL_MINUTES);
+			graph.approvalTokenHash = HashToken(approvalToken);
+			graph.approvalExpiresAtUtc = UtcNow.AddMinutes(APPROVAL_TTL_MINUTES);
 			return Success(new JObject
 			{
 				["graphId"] = graph.graphId,
-				["approvalToken"] = graph.approvalToken,
+				["approvalToken"] = approvalToken,
 				["expiresAtUtc"] = graph.approvalExpiresAtUtc.ToString("O")
 			});
 		}
 
-		public JObject StartExecution(string graphId, long currentRevision, string approvalToken)
+		public JObject StartExecution(string graphId, long currentRevision, string approvalToken, int timeoutSeconds = DEFAULT_EXECUTION_TIMEOUT_SECONDS)
 		{
 			if (!TryGetGraph(graphId, out UnityAgentMcpCompiledGraph graph, out JObject error))
 			{
@@ -265,80 +282,38 @@ namespace UnityAgentMcp
 			{
 				return Error("AGENT-REVISION-CHANGED", "Preview後にEditor Revisionが変更されました。");
 			}
+			if (timeoutSeconds < 1 || timeoutSeconds > MAX_EXECUTION_TIMEOUT_SECONDS)
+			{
+				return Error("AGENT-TIMEOUT-INVALID", $"timeoutSecondsは1～{MAX_EXECUTION_TIMEOUT_SECONDS}で指定してください。");
+			}
 			if (graph.requiredApprovalGroups.Count > 0)
 			{
-				if (!graph.approved || DateTime.UtcNow > graph.approvalExpiresAtUtc)
+				if (!graph.approved || UtcNow > graph.approvalExpiresAtUtc)
 				{
 					return Error("AGENT-APPROVAL-MISSING-OR-EXPIRED", "承認が存在しないか期限切れです。");
 				}
-				if (!string.Equals(approvalToken, graph.approvalToken, StringComparison.Ordinal))
+				if (string.IsNullOrWhiteSpace(approvalToken) ||
+					!string.Equals(HashToken(approvalToken), graph.approvalTokenHash, StringComparison.Ordinal))
 				{
 					return Error("AGENT-APPROVAL-TOKEN-MISMATCH", "Approval Tokenが一致しません。");
 				}
 			}
 
+			DateTime startedAtUtc = UtcNow;
 			UnityAgentMcpExecutionRecord execution = new UnityAgentMcpExecutionRecord
 			{
 				executionId = $"agent-exec-{Guid.NewGuid():N}",
 				graphId = graph.graphId,
 				status = E_AGENT_EXECUTION_STATUS.RUNNING,
-				startedAtUtc = DateTime.UtcNow
+				startedAtUtc = startedAtUtc,
+				deadlineUtc = startedAtUtc.AddSeconds(timeoutSeconds),
+				timeoutSeconds = timeoutSeconds,
+				expectedRevision = graph.expectedRevision,
+				orderedSteps = TopologicalOrder(graph.steps).ToList(),
+				message = "Execution accepted and queued."
 			};
 			_executions[execution.executionId] = execution;
-			DateTime deadlineUtc = execution.startedAtUtc.AddSeconds(EXECUTION_TIMEOUT_SECONDS);
-
-			foreach (UnityAgentMcpStepInput step in TopologicalOrder(graph.steps))
-			{
-				if (execution.cancelRequested)
-				{
-					execution.status = E_AGENT_EXECUTION_STATUS.CANCELLED;
-					execution.message = "Cancellation was requested before the next safe step.";
-					break;
-				}
-				if (DateTime.UtcNow > deadlineUtc)
-				{
-					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
-					execution.errorCode = "AGENT-EXECUTION-TIMEOUT";
-					execution.message = "Execution exceeded the cooperative timeout before the next step.";
-					break;
-				}
-				if (UnityGraphicsMcpSession.Revision != graph.expectedRevision)
-				{
-					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
-					execution.errorCode = "AGENT-REVISION-CHANGED";
-					execution.message = "Editor Revision changed before the next delegated step.";
-					break;
-				}
-
-				JObject stepResult = DelegateStep(step);
-				stepResult["stepId"] = step.stepId;
-				execution.stepResults.Add(stepResult);
-
-				if (DateTime.UtcNow > deadlineUtc)
-				{
-					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
-					execution.errorCode = "AGENT-EXECUTION-TIMEOUT";
-					execution.message = "A delegated step exceeded the cooperative timeout.";
-					break;
-				}
-				if (!(stepResult.Value<bool?>("success") ?? false))
-				{
-					execution.status = execution.stepResults.Count > 1
-						? E_AGENT_EXECUTION_STATUS.PARTIAL
-						: E_AGENT_EXECUTION_STATUS.FAILED;
-					execution.errorCode = stepResult.Value<string>("errorCode") ?? "AGENT-DELEGATE-FAILED";
-					execution.message = stepResult.Value<string>("message") ?? "Delegated tool failed.";
-					break;
-				}
-			}
-
-			if (execution.status == E_AGENT_EXECUTION_STATUS.RUNNING)
-			{
-				execution.status = E_AGENT_EXECUTION_STATUS.SUCCEEDED;
-				execution.message = "Execution completed.";
-			}
-			execution.completedAtUtc = DateTime.UtcNow;
-			PersistHistory(execution);
+			EditorApplication.QueuePlayerLoopUpdate();
 			return ExecutionPayload(execution);
 		}
 
@@ -359,11 +334,18 @@ namespace UnityAgentMcp
 			{
 				return Error("AGENT-EXECUTION-NOT-CANCELLABLE", "Running状態のExecutionだけをCancelできます。");
 			}
+
 			execution.cancelRequested = true;
+			CompleteExecution(
+				execution,
+				E_AGENT_EXECUTION_STATUS.CANCELLED,
+				null,
+				"Cancellation was accepted at a safe Agent step boundary.");
 			return Success(new JObject
 			{
 				["executionId"] = execution.executionId,
-				["cancelRequested"] = true
+				["cancelRequested"] = true,
+				["status"] = execution.status.ToString()
 			});
 		}
 
@@ -397,9 +379,104 @@ namespace UnityAgentMcp
 					ErrorEntry("AGENT-DELEGATE-NOT-REGISTERED", false),
 					ErrorEntry("AGENT-EXECUTION-INTERRUPTED", true),
 					ErrorEntry("AGENT-EXECUTION-TIMEOUT", true),
-					ErrorEntry("AGENT-CLIENT-DISCONNECTED", true)
+					ErrorEntry("AGENT-CLIENT-DISCONNECTED", true),
+					ErrorEntry("AGENT-TIMEOUT-INVALID", false)
 				}
 			});
+		}
+
+		internal void ProcessPendingExecutionsForTests()
+		{
+			Tick();
+		}
+
+		internal void ResetExecutionsForTests()
+		{
+			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values
+				.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING)
+				.ToArray())
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.CANCELLED, null, "Test reset.");
+			}
+			_graphs.Clear();
+			_executions.Clear();
+			UtcNowOverrideForTests = null;
+		}
+
+		private void Tick()
+		{
+			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values
+				.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING)
+				.ToArray())
+			{
+				AdvanceExecution(execution);
+			}
+		}
+
+		private void AdvanceExecution(UnityAgentMcpExecutionRecord execution)
+		{
+			if (execution == null || execution.status != E_AGENT_EXECUTION_STATUS.RUNNING)
+			{
+				return;
+			}
+			if (execution.cancelRequested)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.CANCELLED, null, "Cancellation was requested before the next safe step.");
+				return;
+			}
+			if (UtcNow > execution.deadlineUtc)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-EXECUTION-TIMEOUT", "Execution exceeded the cooperative timeout before the next step.");
+				return;
+			}
+			if (UnityGraphicsMcpSession.Revision != execution.expectedRevision)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-REVISION-CHANGED", "Editor Revision changed before the next delegated step.");
+				return;
+			}
+			if (execution.nextStepIndex >= execution.orderedSteps.Count)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.SUCCEEDED, null, "Execution completed.");
+				return;
+			}
+
+			UnityAgentMcpStepInput step = execution.orderedSteps[execution.nextStepIndex];
+			long revisionBefore = UnityGraphicsMcpSession.Revision;
+			JObject stepResult = DelegateStep(step);
+			stepResult["stepId"] = step.stepId;
+			execution.stepResults.Add(stepResult);
+
+			if (UtcNow > execution.deadlineUtc)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-EXECUTION-TIMEOUT", "A delegated step exceeded the cooperative timeout.");
+				return;
+			}
+			if (!(stepResult.Value<bool?>("success") ?? false))
+			{
+				CompleteExecution(
+					execution,
+					execution.stepResults.Count > 1 ? E_AGENT_EXECUTION_STATUS.PARTIAL : E_AGENT_EXECUTION_STATUS.FAILED,
+					stepResult.Value<string>("errorCode") ?? "AGENT-DELEGATE-FAILED",
+					stepResult.Value<string>("message") ?? "Delegated tool failed.");
+				return;
+			}
+
+			long revisionAfter = UnityGraphicsMcpSession.Revision;
+			if (APPROVAL_GROUPS.Contains(step.toolGroup))
+			{
+				execution.expectedRevision = revisionAfter;
+			}
+			else if (revisionAfter != revisionBefore)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-UNEXPECTED-MUTATION", "Read-only delegated step changed the Editor Revision.");
+				return;
+			}
+
+			execution.nextStepIndex++;
+			if (execution.nextStepIndex >= execution.orderedSteps.Count)
+			{
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.SUCCEEDED, null, "Execution completed.");
+			}
 		}
 
 		private bool TryValidateSteps(
@@ -638,6 +715,23 @@ namespace UnityAgentMcp
 			}
 		}
 
+		private void CompleteExecution(UnityAgentMcpExecutionRecord execution, E_AGENT_EXECUTION_STATUS status, string errorCode, string message)
+		{
+			if (execution == null || execution.status != E_AGENT_EXECUTION_STATUS.RUNNING)
+			{
+				return;
+			}
+			execution.status = status;
+			execution.errorCode = errorCode;
+			execution.message = message;
+			execution.completedAtUtc = UtcNow;
+			if (!execution.historyPersisted)
+			{
+				PersistHistory(execution);
+				execution.historyPersisted = true;
+			}
+		}
+
 		private void PersistHistory(UnityAgentMcpExecutionRecord execution)
 		{
 			try
@@ -645,25 +739,24 @@ namespace UnityAgentMcp
 				Directory.CreateDirectory(Path.GetDirectoryName(HISTORY_PATH));
 				JObject payload = ExecutionPayload(execution);
 				File.AppendAllText(HISTORY_PATH, payload.ToString(Formatting.None) + Environment.NewLine);
+				_history.Add(payload);
 			}
 			catch (Exception exception)
 			{
 				execution.status = E_AGENT_EXECUTION_STATUS.PARTIAL;
 				execution.errorCode = "AGENT-HISTORY-PERSISTENCE-FAILED";
 				execution.message = exception.Message;
+				_history.Add(ExecutionPayload(execution));
 			}
-			_history.Add(ExecutionPayload(execution));
 		}
 
 		private void InterruptRunning(string errorCode, string reason)
 		{
-			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING).ToArray())
+			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values
+				.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING)
+				.ToArray())
 			{
-				execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
-				execution.errorCode = errorCode;
-				execution.message = reason;
-				execution.completedAtUtc = DateTime.UtcNow;
-				PersistHistory(execution);
+				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, errorCode, reason);
 			}
 		}
 
@@ -671,16 +764,28 @@ namespace UnityAgentMcp
 		{
 			return new JObject
 			{
-				["success"] = execution.status == E_AGENT_EXECUTION_STATUS.SUCCEEDED,
+				["success"] = true,
+				["executionSucceeded"] = execution.status == E_AGENT_EXECUTION_STATUS.SUCCEEDED,
 				["executionId"] = execution.executionId,
 				["graphId"] = execution.graphId,
 				["status"] = execution.status.ToString(),
 				["startedAtUtc"] = execution.startedAtUtc == default ? null : execution.startedAtUtc.ToString("O"),
 				["completedAtUtc"] = execution.completedAtUtc == default ? null : execution.completedAtUtc.ToString("O"),
+				["timeoutSeconds"] = execution.timeoutSeconds,
+				["completedStepCount"] = execution.stepResults.Count,
+				["totalStepCount"] = execution.orderedSteps.Count,
 				["errorCode"] = execution.errorCode,
 				["message"] = execution.message,
 				["stepResults"] = new JArray(execution.stepResults)
 			};
+		}
+
+		private static string HashToken(string value)
+		{
+			using (SHA256 sha = SHA256.Create())
+			{
+				return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(value ?? string.Empty)));
+			}
 		}
 
 		private static JObject Success(JObject data)
