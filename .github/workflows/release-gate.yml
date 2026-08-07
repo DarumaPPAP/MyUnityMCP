@@ -8,12 +8,14 @@ on:
       - README.md
       - CHANGELOG.md
       - RELEASE_NOTES.md
+      - Catalog/**
       - Packages/com.darumappap.my-unity-mcp/**
       - SampleProjects/MyUnityMCPGettingStarted/**
       - Templates/**
       - Specs/UnityGraphicsMCP/**
       - Tests/Compatibility/**
       - Tests/Release/**
+      - Tests/Routing/**
       - .github/workflows/release-gate.yml
   workflow_dispatch: {}
 
@@ -27,6 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install contract validator dependencies
+        run: python3 -m pip install --disable-pip-version-check pyyaml
+      - run: python3 Tests/Release/verify_capability_contract.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Build preview distribution
