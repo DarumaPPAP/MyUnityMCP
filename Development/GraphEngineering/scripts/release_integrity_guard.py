@@ -54,6 +54,33 @@ def _git(repo_root: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
+def _git_optional(repo_root: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    return completed.stdout.strip() if completed.returncode == 0 else ""
+
+
+def _resolve_main_commit(repo_root: Path) -> str:
+    # actions/checkoutでfeature branchを明示Checkoutした場合、ローカルmainは作られず
+    # origin/mainだけが存在します。Releaseの基準Branchを変えず、その2形だけを許可します。
+    for reference in (
+        "main^{commit}",
+        "origin/main^{commit}",
+        "refs/remotes/origin/main^{commit}",
+    ):
+        resolved = _git_optional(repo_root, "rev-parse", reference)
+        if resolved:
+            return resolved
+    raise ReleaseIntegrityError(
+        "main commit could not be resolved from local main or origin/main"
+    )
+
+
 def _workflow_preserves_published_tag(workflow: str) -> bool:
     required_fragments = (
         'release_mode="verify_existing"',
@@ -103,7 +130,7 @@ def load_snapshot(repo_root: Path, *, tag: str | None = None) -> ReleaseSnapshot
         == 0
     )
     tag_commit = _git(repo_root, "rev-parse", f"{resolved_tag}^{{commit}}") if tag_exists else ""
-    main_commit = _git(repo_root, "rev-parse", "main^{commit}")
+    main_commit = _resolve_main_commit(repo_root)
 
     return ReleaseSnapshot(
         version=version,
