@@ -81,6 +81,7 @@ namespace UnityAgentMcp
 		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json";
 		private const string HISTORY_PATH = "Library/MyUnityMCP/AgentExecution/history.jsonl";
 		private const int APPROVAL_TTL_MINUTES = 10;
+		private const int EXECUTION_TIMEOUT_SECONDS = 60;
 
 		private static readonly HashSet<string> APPROVAL_GROUPS = new HashSet<string>(StringComparer.Ordinal)
 		{
@@ -116,9 +117,16 @@ namespace UnityAgentMcp
 
 		static UnityAgentMcpRuntime()
 		{
-			AssemblyReloadEvents.beforeAssemblyReload += () => _instance.InterruptRunning("DOMAIN_RELOAD");
-			CompilationPipeline.compilationStarted += _ => _instance.InterruptRunning("COMPILATION_STARTED");
-			EditorApplication.quitting += () => _instance.InterruptRunning("EDITOR_QUITTING");
+			AssemblyReloadEvents.beforeAssemblyReload += () => _instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", "DOMAIN_RELOAD");
+			CompilationPipeline.compilationStarted += _ => _instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", "COMPILATION_STARTED");
+			EditorApplication.playModeStateChanged += state =>
+			{
+				if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.ExitingPlayMode)
+				{
+					_instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", state.ToString());
+				}
+			};
+			EditorApplication.quitting += () => _instance.InterruptRunning("AGENT-EXECUTION-INTERRUPTED", "EDITOR_QUITTING");
 		}
 
 		private UnityAgentMcpRuntime()
@@ -138,7 +146,8 @@ namespace UnityAgentMcp
 			{
 				["catalogPath"] = CATALOG_PATH,
 				["domains"] = JArray.FromObject(_catalog.domains ?? Array.Empty<UnityAgentMcpDomainData>()),
-				["directUnityMutation"] = false
+				["directUnityMutation"] = false,
+				["executionTimeoutSeconds"] = EXECUTION_TIMEOUT_SECONDS
 			});
 		}
 
@@ -159,6 +168,10 @@ namespace UnityAgentMcp
 
 		public JObject CompileGraph(long expectedRevision, UnityAgentMcpStepInput[] steps)
 		{
+			if (expectedRevision != UnityGraphicsMcpSession.Revision)
+			{
+				return Error("AGENT-REVISION-CHANGED", "Graph作成前にEditor Revisionが変更されました。");
+			}
 			if (!TryValidateSteps(steps, out List<UnityAgentMcpStepInput> normalized, out JObject error))
 			{
 				return error;
@@ -183,13 +196,14 @@ namespace UnityAgentMcp
 				["graphId"] = graphId,
 				["expectedRevision"] = expectedRevision,
 				["stepCount"] = normalized.Count,
-				["requiredApprovalGroups"] = new JArray(graph.requiredApprovalGroups)
+				["requiredApprovalGroups"] = new JArray(graph.requiredApprovalGroups),
+				["executionTimeoutSeconds"] = EXECUTION_TIMEOUT_SECONDS
 			});
 		}
 
 		public JObject PreviewExecution(string graphId)
 		{
-			if (!TryGetGraph(graphId, out UnityAgentMcpCompiledGraph graph, out JObject error))
+			if (!TryGetCurrentGraph(graphId, out UnityAgentMcpCompiledGraph graph, out JObject error))
 			{
 				return error;
 			}
@@ -215,7 +229,7 @@ namespace UnityAgentMcp
 
 		public JObject SubmitApproval(string graphId, string[] approvedGroups, string confirmation)
 		{
-			if (!TryGetGraph(graphId, out UnityAgentMcpCompiledGraph graph, out JObject error))
+			if (!TryGetCurrentGraph(graphId, out UnityAgentMcpCompiledGraph graph, out JObject error))
 			{
 				return error;
 			}
@@ -247,9 +261,9 @@ namespace UnityAgentMcp
 			{
 				return error;
 			}
-			if (graph.expectedRevision != currentRevision)
+			if (graph.expectedRevision != currentRevision || currentRevision != UnityGraphicsMcpSession.Revision)
 			{
-				return Error("AGENT-REVISION-CHANGED", "Preview後にRevisionが変更されました。");
+				return Error("AGENT-REVISION-CHANGED", "Preview後にEditor Revisionが変更されました。");
 			}
 			if (graph.requiredApprovalGroups.Count > 0)
 			{
@@ -271,6 +285,7 @@ namespace UnityAgentMcp
 				startedAtUtc = DateTime.UtcNow
 			};
 			_executions[execution.executionId] = execution;
+			DateTime deadlineUtc = execution.startedAtUtc.AddSeconds(EXECUTION_TIMEOUT_SECONDS);
 
 			foreach (UnityAgentMcpStepInput step in TopologicalOrder(graph.steps))
 			{
@@ -280,10 +295,32 @@ namespace UnityAgentMcp
 					execution.message = "Cancellation was requested before the next safe step.";
 					break;
 				}
+				if (DateTime.UtcNow > deadlineUtc)
+				{
+					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
+					execution.errorCode = "AGENT-EXECUTION-TIMEOUT";
+					execution.message = "Execution exceeded the cooperative timeout before the next step.";
+					break;
+				}
+				if (UnityGraphicsMcpSession.Revision != graph.expectedRevision)
+				{
+					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
+					execution.errorCode = "AGENT-REVISION-CHANGED";
+					execution.message = "Editor Revision changed before the next delegated step.";
+					break;
+				}
 
 				JObject stepResult = DelegateStep(step);
 				stepResult["stepId"] = step.stepId;
 				execution.stepResults.Add(stepResult);
+
+				if (DateTime.UtcNow > deadlineUtc)
+				{
+					execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
+					execution.errorCode = "AGENT-EXECUTION-TIMEOUT";
+					execution.message = "A delegated step exceeded the cooperative timeout.";
+					break;
+				}
 				if (!(stepResult.Value<bool?>("success") ?? false))
 				{
 					execution.status = execution.stepResults.Count > 1
@@ -330,6 +367,11 @@ namespace UnityAgentMcp
 			});
 		}
 
+		public void NotifyClientDisconnected()
+		{
+			InterruptRunning("AGENT-CLIENT-DISCONNECTED", "MCP_CLIENT_DISCONNECTED");
+		}
+
 		public JObject GetExecutionHistory(int maxItems)
 		{
 			int count = Mathf.Clamp(maxItems, 1, 100);
@@ -353,7 +395,9 @@ namespace UnityAgentMcp
 					ErrorEntry("AGENT-APPROVAL-MISSING-OR-EXPIRED", true),
 					ErrorEntry("AGENT-REVISION-CHANGED", true),
 					ErrorEntry("AGENT-DELEGATE-NOT-REGISTERED", false),
-					ErrorEntry("AGENT-EXECUTION-INTERRUPTED", true)
+					ErrorEntry("AGENT-EXECUTION-INTERRUPTED", true),
+					ErrorEntry("AGENT-EXECUTION-TIMEOUT", true),
+					ErrorEntry("AGENT-CLIENT-DISCONNECTED", true)
 				}
 			});
 		}
@@ -527,6 +571,20 @@ namespace UnityAgentMcp
 			}
 		}
 
+		private bool TryGetCurrentGraph(string graphId, out UnityAgentMcpCompiledGraph graph, out JObject error)
+		{
+			if (!TryGetGraph(graphId, out graph, out error))
+			{
+				return false;
+			}
+			if (graph.expectedRevision != UnityGraphicsMcpSession.Revision)
+			{
+				error = Error("AGENT-REVISION-CHANGED", "Graph作成後にEditor Revisionが変更されました。");
+				return false;
+			}
+			return true;
+		}
+
 		private bool TryGetGraph(string graphId, out UnityAgentMcpCompiledGraph graph, out JObject error)
 		{
 			if (!_graphs.TryGetValue(graphId ?? string.Empty, out graph))
@@ -582,11 +640,10 @@ namespace UnityAgentMcp
 
 		private void PersistHistory(UnityAgentMcpExecutionRecord execution)
 		{
-			JObject payload = ExecutionPayload(execution);
-			_history.Add(payload);
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(HISTORY_PATH));
+				JObject payload = ExecutionPayload(execution);
 				File.AppendAllText(HISTORY_PATH, payload.ToString(Formatting.None) + Environment.NewLine);
 			}
 			catch (Exception exception)
@@ -595,14 +652,15 @@ namespace UnityAgentMcp
 				execution.errorCode = "AGENT-HISTORY-PERSISTENCE-FAILED";
 				execution.message = exception.Message;
 			}
+			_history.Add(ExecutionPayload(execution));
 		}
 
-		private void InterruptRunning(string reason)
+		private void InterruptRunning(string errorCode, string reason)
 		{
-			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING))
+			foreach (UnityAgentMcpExecutionRecord execution in _executions.Values.Where(value => value.status == E_AGENT_EXECUTION_STATUS.RUNNING).ToArray())
 			{
 				execution.status = E_AGENT_EXECUTION_STATUS.INTERRUPTED;
-				execution.errorCode = "AGENT-EXECUTION-INTERRUPTED";
+				execution.errorCode = errorCode;
 				execution.message = reason;
 				execution.completedAtUtc = DateTime.UtcNow;
 				PersistHistory(execution);
