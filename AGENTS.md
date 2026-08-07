@@ -12,6 +12,8 @@
 - UPM metadata: `Packages/com.darumappap.my-unity-mcp/package.json`
 - MCP contract: `Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml`
 - Tool implementation: `Packages/com.darumappap.my-unity-mcp/Editor`
+- MCP catalog: `Catalog/mcp-catalog.yaml`
+- Capability activation / evidence contract: `Catalog/capability-contracts.yaml`
 - Support: `Tests/Compatibility/support-matrix.yaml`
 - Current verification: `Tests/Compatibility/release-verification.yaml`
 - Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
@@ -31,6 +33,11 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 - SaveとBakeは別承認。
 - Automatic Save、Automatic Full Bake、Silent Fallbackは禁止。
 - Human ReviewなしにVisual Acceptedとしない。
+- Operational Tool Groupは`Catalog/capability-contracts.yaml`に`use_when`、`requires`、`must_not`、`success_evidence`を持つ。
+- Tool Group追加時はCatalogだけでなくCapability ContractとRouting Caseも同時更新する。
+- `unavailable`は`passed`へ昇格しない。
+- Capture成功はVisual Acceptanceではなく、Compile成功はRuntime / target-device Acceptanceではない。
+- AgentまたはClientは現在選択されたCapability Contractだけを読み、全Tool Group契約を常時Contextへロードしない。
 
 ## Environment resolution
 
@@ -58,6 +65,7 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 
 - `VERSION`、Package、Manifest、Support Matrix、Changelogを一致させる。
 - Release PRではEditor CIとRelease Gateを両方成功させる。
+- `Catalog/mcp-catalog.yaml`のOperational Tool Groupと`Catalog/capability-contracts.yaml`のCapabilityを一致させる。
 - Known Issuesと未検証範囲を削除・婉曲化しない。
 - 一時Migration Script／WorkflowをRelease差分へ残さない。
 - 新規ReleaseのTagはRelease Commitへ作成し、公開時点の`main`と同一SHAであることを確認する。
