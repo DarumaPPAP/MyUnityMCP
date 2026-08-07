@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityAgentMcp;
+using UnityGraphicsMcp;
 
 namespace MyUnityMcp.EditorTests
 {
@@ -23,6 +24,19 @@ namespace MyUnityMcp.EditorTests
 			};
 		}
 
+		private static UnityAgentMcpStepInput GraphicsMutationStep(string stepId = "mutate", params string[] dependsOn)
+		{
+			return new UnityAgentMcpStepInput
+			{
+				stepId = stepId,
+				domainId = "unity_graphics_mcp",
+				toolName = "graphics.apply_plan",
+				toolGroup = "mutate",
+				dependsOn = dependsOn ?? new string[0],
+				parameters = new JObject()
+			};
+		}
+
 		[Test]
 		public void InspectCapabilities_LoadsCatalogAndKeepsDirectMutationDisabled()
 		{
@@ -30,6 +44,7 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(result.Value<bool>("success"), Is.True, result.ToString());
 			Assert.That(result.Value<bool>("directUnityMutation"), Is.False);
+			Assert.That(result.Value<int>("executionTimeoutSeconds"), Is.GreaterThan(0));
 			Assert.That(result["domains"]?.Any(), Is.True);
 		}
 
@@ -78,11 +93,12 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void CompilePreviewStart_DelegatesExistingGraphicsInspection()
 		{
-			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(10, new[] {GraphicsInspectStep()});
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			string graphId = compiled.Value<string>("graphId");
 
 			JObject preview = UnityAgentMcpRuntime.Instance.PreviewExecution(graphId);
-			JObject executed = UnityAgentMcpRuntime.Instance.StartExecution(graphId, 10, null);
+			JObject executed = UnityAgentMcpRuntime.Instance.StartExecution(graphId, revision, null);
 
 			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
 			Assert.That(preview.Value<string>("status"), Is.EqualTo("PREVIEW"));
@@ -91,41 +107,74 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
-		public void StartExecution_RejectsChangedRevision()
+		public void CompileGraph_RejectsRevisionThatIsNotCurrentEditorRevision()
 		{
-			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(20, new[] {GraphicsInspectStep()});
+			long revision = UnityGraphicsMcpSession.Revision;
+
+			JObject result = UnityAgentMcpRuntime.Instance.CompileGraph(revision + 1, new[] {GraphicsInspectStep()});
+
+			Assert.That(result.Value<bool>("success"), Is.False);
+			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-REVISION-CHANGED"));
+		}
+
+		[Test]
+		public void StartExecution_RejectsChangedCallerRevision()
+		{
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
-				21,
+				revision + 1,
 				null);
 
 			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-REVISION-CHANGED"));
 		}
 
 		[Test]
+		public void StartExecution_RejectsActualEditorRevisionChangeEvenWithOldCallerValue()
+		{
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+			UnityGraphicsMcpSession.NotifyMutationApplied();
+
+			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
+				compiled.Value<string>("graphId"),
+				revision,
+				null);
+
+			Assert.That(result.Value<bool>("success"), Is.False);
+			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-REVISION-CHANGED"));
+		}
+
+		[Test]
+		public void PreviewExecution_RejectsGraphAfterEditorRevisionChanges()
+		{
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+			UnityGraphicsMcpSession.NotifyMutationApplied();
+
+			JObject result = UnityAgentMcpRuntime.Instance.PreviewExecution(compiled.Value<string>("graphId"));
+
+			Assert.That(result.Value<bool>("success"), Is.False);
+			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-REVISION-CHANGED"));
+		}
+
+		[Test]
 		public void MutationGroup_RequiresApprovalAndStillUsesRegisteredDelegateOnly()
 		{
-			UnityAgentMcpStepInput step = new UnityAgentMcpStepInput
-			{
-				stepId = "mutate",
-				domainId = "unity_graphics_mcp",
-				toolName = "graphics.apply_plan",
-				toolGroup = "mutate",
-				dependsOn = new string[0],
-				parameters = new JObject()
-			};
-			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(30, new[] {step});
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsMutationStep()});
 			string graphId = compiled.Value<string>("graphId");
 
-			JObject missing = UnityAgentMcpRuntime.Instance.StartExecution(graphId, 30, null);
+			JObject missing = UnityAgentMcpRuntime.Instance.StartExecution(graphId, revision, null);
 			JObject approval = UnityAgentMcpRuntime.Instance.SubmitApproval(
 				graphId,
 				new[] {"mutate"},
 				"APPROVE_AGENT_EXECUTION");
 			JObject delegated = UnityAgentMcpRuntime.Instance.StartExecution(
 				graphId,
-				30,
+				revision,
 				approval.Value<string>("approvalToken"));
 
 			Assert.That(missing.Value<string>("errorCode"), Is.EqualTo("AGENT-APPROVAL-MISSING-OR-EXPIRED"));
@@ -135,15 +184,51 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
+		public void LaterDelegateFailure_ProducesPartialInsteadOfFalseSuccess()
+		{
+			long revision = UnityGraphicsMcpSession.Revision;
+			UnityAgentMcpStepInput inspect = GraphicsInspectStep("inspect");
+			UnityAgentMcpStepInput mutate = GraphicsMutationStep("mutate", "inspect");
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {inspect, mutate});
+			string graphId = compiled.Value<string>("graphId");
+			JObject approval = UnityAgentMcpRuntime.Instance.SubmitApproval(
+				graphId,
+				new[] {"mutate"},
+				"APPROVE_AGENT_EXECUTION");
+
+			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
+				graphId,
+				revision,
+				approval.Value<string>("approvalToken"));
+
+			Assert.That(result.Value<bool>("success"), Is.False);
+			Assert.That(result.Value<string>("status"), Is.EqualTo("PARTIAL"));
+			Assert.That(result["stepResults"]?.Count(), Is.EqualTo(2));
+		}
+
+		[Test]
 		public void ExecutionHistory_ContainsCompletedExecution()
 		{
-			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(40, new[] {GraphicsInspectStep()});
-			UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), 40, null);
+			long revision = UnityGraphicsMcpSession.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+			UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
 
 			JObject history = UnityAgentMcpRuntime.Instance.GetExecutionHistory(100);
 
 			Assert.That(history.Value<bool>("success"), Is.True);
 			Assert.That(history.Value<int>("total"), Is.GreaterThan(0));
+		}
+
+		[Test]
+		public void ErrorCatalog_DeclaresTimeoutAndDisconnectRecovery()
+		{
+			JObject result = UnityAgentMcpRuntime.Instance.GetErrorCatalog();
+			string[] codes = result["errors"]?.Values<JObject>()
+				.Select(value => value.Value<string>("code"))
+				.ToArray();
+
+			CollectionAssert.Contains(codes, "AGENT-EXECUTION-TIMEOUT");
+			CollectionAssert.Contains(codes, "AGENT-CLIENT-DISCONNECTED");
 		}
 
 		[Test]
