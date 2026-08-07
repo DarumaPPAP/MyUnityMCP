@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 
+using System;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -11,8 +12,10 @@ using UnityCinematicMcp;
 using UnityDomainMcp;
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
 using UnityGraphicsMcp;
 using UnityProfilerMcp;
 using UnityUiMcp;
@@ -21,10 +24,19 @@ namespace MyUnityMcp.EditorTests
 {
 	public sealed class UnityDomainSafetyContractTests
 	{
+		private const string DOMAIN_SCENE_PATH = "Assets/__MyUnityMcpDomainSafetyContract.unity";
+
 		[SetUp]
 		public void SetUp()
 		{
 			UnityDomainMcpPlanStore.ClearForTests();
+			CleanupDomainScene();
+		}
+
+		[TearDown]
+		public void TearDown()
+		{
+			CleanupDomainScene();
 		}
 
 		[Test]
@@ -112,97 +124,85 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void UiMutation_RequiresPreviewAndApproval()
 		{
-			GameObject gameObject = new GameObject("UiTarget", typeof(RectTransform));
-			try
-			{
-				RectTransform target = gameObject.GetComponent<RectTransform>();
-				long revision = UnityGraphicsMcpSession.Revision;
-				UnityDomainMcpResult prepared = UnityUiMcpRuntime.PrepareRectTransform(
-					UnityDomainMcpCommon.ObjectId(target),
-					new UnityUiMcpVector2Input {x = 12f, y = 34f},
-					null,
-					null,
-					null,
-					null,
-					revision);
-				JObject data = (JObject)prepared.data;
-				UnityDomainMcpResult applied = UnityUiMcpRuntime.ApplyRectTransform(
-					data.Value<string>("planId"),
-					revision,
-					data.Value<string>("approvalToken"));
+			GameObject gameObject = CreatePersistentSceneObject("UiTarget", typeof(RectTransform));
+			RectTransform target = gameObject.GetComponent<RectTransform>();
+			long revision = UnityGraphicsMcpSession.Revision;
+			UnityDomainMcpResult prepared = UnityUiMcpRuntime.PrepareRectTransform(
+				UnityDomainMcpCommon.ObjectId(target),
+				new UnityUiMcpVector2Input {x = 12f, y = 34f},
+				null,
+				null,
+				null,
+				null,
+				revision);
 
-				Assert.That(applied.success, Is.True, applied.summary);
-				Assert.That(target.anchoredPosition, Is.EqualTo(new Vector2(12f, 34f)));
-			}
-			finally
-			{
-				Object.DestroyImmediate(gameObject);
-			}
+			Assert.That(prepared.success, Is.True, prepared.summary);
+			JObject data = prepared.data as JObject;
+			Assert.That(data, Is.Not.Null);
+			UnityDomainMcpResult applied = UnityUiMcpRuntime.ApplyRectTransform(
+				data.Value<string>("planId"),
+				revision,
+				data.Value<string>("approvalToken"));
+
+			Assert.That(applied.success, Is.True, applied.summary);
+			Assert.That(target.anchoredPosition, Is.EqualTo(new Vector2(12f, 34f)));
 		}
 
 		[Test]
 		public void AudioMutation_UpdatesOnlyApprovedProperties()
 		{
-			GameObject gameObject = new GameObject("AudioTarget", typeof(AudioSource));
-			try
-			{
-				AudioSource target = gameObject.GetComponent<AudioSource>();
-				long revision = UnityGraphicsMcpSession.Revision;
-				UnityDomainMcpResult prepared = UnityAudioMcpRuntime.PrepareSource(
-					UnityDomainMcpCommon.ObjectId(target),
-					0.25f,
-					1.1f,
-					0.5f,
-					true,
-					false,
-					false,
-					revision);
-				JObject data = (JObject)prepared.data;
-				UnityDomainMcpResult applied = UnityAudioMcpRuntime.ApplySource(
-					data.Value<string>("planId"),
-					revision,
-					data.Value<string>("approvalToken"));
+			GameObject gameObject = CreatePersistentSceneObject("AudioTarget", typeof(AudioSource));
+			AudioSource target = gameObject.GetComponent<AudioSource>();
+			long revision = UnityGraphicsMcpSession.Revision;
+			UnityDomainMcpResult prepared = UnityAudioMcpRuntime.PrepareSource(
+				UnityDomainMcpCommon.ObjectId(target),
+				0.25f,
+				1.1f,
+				0.5f,
+				true,
+				false,
+				false,
+				revision);
 
-				Assert.That(applied.success, Is.True, applied.summary);
-				Assert.That(target.volume, Is.EqualTo(0.25f));
-				Assert.That(target.spatialBlend, Is.EqualTo(0.5f));
-				Assert.That(target.clip, Is.Null);
-			}
-			finally
-			{
-				Object.DestroyImmediate(gameObject);
-			}
+			Assert.That(prepared.success, Is.True, prepared.summary);
+			JObject data = prepared.data as JObject;
+			Assert.That(data, Is.Not.Null);
+			UnityDomainMcpResult applied = UnityAudioMcpRuntime.ApplySource(
+				data.Value<string>("planId"),
+				revision,
+				data.Value<string>("approvalToken"));
+
+			Assert.That(applied.success, Is.True, applied.summary);
+			Assert.That(target.volume, Is.EqualTo(0.25f));
+			Assert.That(target.spatialBlend, Is.EqualTo(0.5f));
+			Assert.That(target.clip, Is.Null);
 		}
 
 		[Test]
 		public void CinematicMutation_DoesNotChangePlayableAssetOrBindings()
 		{
-			GameObject gameObject = new GameObject("DirectorTarget", typeof(PlayableDirector));
-			try
-			{
-				PlayableDirector target = gameObject.GetComponent<PlayableDirector>();
-				long revision = UnityGraphicsMcpSession.Revision;
-				UnityDomainMcpResult prepared = UnityCinematicMcpRuntime.PrepareDirector(
-					UnityDomainMcpCommon.ObjectId(target),
-					0.0,
-					DirectorUpdateMode.Manual.ToString(),
-					DirectorWrapMode.Hold.ToString(),
-					false,
-					revision);
-				JObject data = (JObject)prepared.data;
-				UnityDomainMcpResult applied = UnityCinematicMcpRuntime.ApplyDirector(
-					data.Value<string>("planId"),
-					revision,
-					data.Value<string>("approvalToken"));
+			GameObject gameObject = CreatePersistentSceneObject("DirectorTarget", typeof(PlayableDirector));
+			PlayableDirector target = gameObject.GetComponent<PlayableDirector>();
+			long revision = UnityGraphicsMcpSession.Revision;
+			UnityDomainMcpResult prepared = UnityCinematicMcpRuntime.PrepareDirector(
+				UnityDomainMcpCommon.ObjectId(target),
+				0.0,
+				DirectorUpdateMode.Manual.ToString(),
+				DirectorWrapMode.Hold.ToString(),
+				false,
+				revision);
 
-				Assert.That(applied.success, Is.True, applied.summary);
-				Assert.That(target.timeUpdateMode, Is.EqualTo(DirectorUpdateMode.Manual));
-				Assert.That(target.playableAsset, Is.Null);
-			}
-			finally
-			{
-				Object.DestroyImmediate(gameObject);
-			}
+			Assert.That(prepared.success, Is.True, prepared.summary);
+			JObject data = prepared.data as JObject;
+			Assert.That(data, Is.Not.Null);
+			UnityDomainMcpResult applied = UnityCinematicMcpRuntime.ApplyDirector(
+				data.Value<string>("planId"),
+				revision,
+				data.Value<string>("approvalToken"));
+
+			Assert.That(applied.success, Is.True, applied.summary);
+			Assert.That(target.timeUpdateMode, Is.EqualTo(DirectorUpdateMode.Manual));
+			Assert.That(target.playableAsset, Is.Null);
 		}
 
 		[Test]
@@ -249,9 +249,28 @@ namespace MyUnityMcp.EditorTests
 		}
 #endif
 
+		private static GameObject CreatePersistentSceneObject(string objectName, params Type[] components)
+		{
+			Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+			GameObject gameObject = new GameObject(objectName, components);
+			SceneManager.MoveGameObjectToScene(gameObject, scene);
+			Assert.That(EditorSceneManager.SaveScene(scene, DOMAIN_SCENE_PATH), Is.True);
+			return gameObject;
+		}
+
+		private static void CleanupDomainScene()
+		{
+			Scene scene = SceneManager.GetSceneByPath(DOMAIN_SCENE_PATH);
+			if (scene.IsValid() && scene.isLoaded)
+			{
+				EditorSceneManager.CloseScene(scene, true);
+			}
+			AssetDatabase.DeleteAsset(DOMAIN_SCENE_PATH);
+		}
+
 		private static int Count(string value, string token)
 		{
-			return value.Split(new[] {token}, System.StringSplitOptions.None).Length - 1;
+			return value.Split(new[] {token}, StringSplitOptions.None).Length - 1;
 		}
 	}
 }
