@@ -27,10 +27,21 @@ class AgentRuntimeStaticContractTests(unittest.TestCase):
 
     def test_step_boundary_rechecks_revision_and_timeout(self):
         self.assertIn(
-            "UnityGraphicsMcpSession.Revision != graph.expectedRevision",
+            "UnityGraphicsMcpSession.Revision != execution.expectedRevision",
             self.source,
         )
         self.assertIn("AGENT-EXECUTION-TIMEOUT", self.source)
+
+    def test_execution_is_cooperative_and_cancellable(self):
+        self.assertIn("EditorApplication.update += _instance.Tick", self.source)
+        self.assertIn("Execution accepted and queued.", self.source)
+        self.assertIn("E_AGENT_EXECUTION_STATUS.CANCELLED", self.source)
+        self.assertIn("NotifyClientDisconnected", self.source)
+
+    def test_approval_token_is_not_retained_in_plaintext(self):
+        self.assertIn("approvalTokenHash", self.source)
+        self.assertIn("HashToken(approvalToken)", self.source)
+        self.assertNotIn("public string approvalToken;", self.source)
 
     def test_control_plane_has_no_direct_mutation_calls(self):
         for forbidden in (
