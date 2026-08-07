@@ -784,7 +784,8 @@ namespace UnityAgentMcp
 		{
 			using (SHA256 sha = SHA256.Create())
 			{
-				return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(value ?? string.Empty)));
+				byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(value ?? string.Empty));
+				return BitConverter.ToString(hash).Replace("-", string.Empty);
 			}
 		}
 
