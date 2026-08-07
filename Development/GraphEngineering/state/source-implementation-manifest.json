@@ -1,82 +1,149 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "branch": "feature/graph-engineering-master",
-  "status": "source_complete_validation_pending",
+  "status": "implementation_in_progress_validation_pending",
   "terminal_goal_satisfied": false,
   "modules": {
     "phase_01_unity_agent_runtime": {
-      "status": "implemented_unverified",
+      "status": "implementation_hardened_unity_validation_pending",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json",
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpTools.cs",
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpRuntime.cs",
         "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityAgentMcpRuntimeTests.cs"
+      ],
+      "remaining": [
+        "Unity 6000.0.75f1 compile and EditMode evidence",
+        "external bridge disconnect hook integration is deferred to production E2E"
       ]
     },
     "phase_02_world_creator": {
-      "status": "implemented_unverified",
+      "status": "partial_readonly_preflight_only",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityWorldCreatorMcp.cs",
         "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityCreatorContractTests.cs"
+      ],
+      "remaining": [
+        "direction and preview execution through UnityAgentMCP",
+        "approval-gated domain mutation",
+        "optional save or bake",
+        "capture and machine evaluation",
+        "human visual review handoff after production execution"
       ]
     },
     "phase_03_profiler_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_runtime_tests_pending",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityProfilerMcp.cs"
+      ],
+      "remaining": [
+        "capture lifecycle tests",
+        "positive same-environment baseline comparison",
+        "cancel and unavailable-counter contracts",
+        "execution history or equivalent reproducible capture evidence"
       ]
     },
     "phase_04_build_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_build_runtime",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityBuildMcp.cs"
+      ],
+      "remaining": [
+        "typed settings plan and separate approval boundary",
+        "platform module capability gate",
+        "artifact hash evidence",
+        "overwrite confirmation boundary",
+        "supported local sample build and failure evidence"
       ]
     },
     "phase_05_addressables_mcp": {
-      "status": "implemented_optional_backend_unverified",
+      "status": "partial_optional_backend",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAddressablesMcp.cs"
+      ],
+      "remaining": [
+        "package version support gate",
+        "duplicate address and dependency validation",
+        "package-present mutation matrix",
+        "package-present content build evidence"
       ]
     },
     "phase_06_ui_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_ugui_vertical_slice",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityUiMcp.cs"
+      ],
+      "remaining": [
+        "layout validation acceptance matrix",
+        "visual review handoff",
+        "verified support matrix for non-operational UI backends"
       ]
     },
     "phase_07_animation_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_parameter_mutation_only",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAnimationMcpTools.cs",
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAnimationMcpRuntime.cs"
+      ],
+      "remaining": [
+        "state and transition graph inspection",
+        "typed state or transition mutation",
+        "revision-safe explicit undo contract",
+        "graph findings required by phase specification"
       ]
     },
     "phase_08_audio_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_source_property_mutation",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityAudioMcp.cs"
+      ],
+      "remaining": [
+        "existing mixer group routing mutation",
+        "priority and rolloff operational scope",
+        "explicit undo and revision contract",
+        "unsupported mixer topology rejection evidence"
       ]
     },
     "phase_09_cinematic_mcp": {
-      "status": "implemented_unverified",
+      "status": "partial_playable_director_only",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityCinematicMcp.cs"
+      ],
+      "remaining": [
+        "Timeline package/version gate",
+        "Cinemachine major-version gate",
+        "Timeline tracks clips and bindings",
+        "Cinemachine shot authoring",
+        "camera cuts and continuity validation",
+        "multi-shot capture E2E"
       ]
     },
     "phase_10_movie_creator": {
-      "status": "implemented_unverified",
+      "status": "partial_compiler_blocked_by_phase_09",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityMovieCreatorMcp.cs"
+      ],
+      "remaining": [
+        "operational CinematicMCP dependency",
+        "ordered integrated domain execution",
+        "sequence capture and continuity review",
+        "human visual review handoff after executed sample movie"
       ]
     },
     "phase_11_live_creator": {
-      "status": "implemented_unverified",
+      "status": "partial_cue_compiler",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityLiveCreatorMcp.cs"
+      ],
+      "remaining": [
+        "operational Cinematic Animation and Audio domain execution",
+        "timing validation against cue or timecode source",
+        "character visibility review evidence",
+        "operator-controlled sample live E2E"
       ]
     },
     "phase_12_production_hardening": {
-      "status": "implemented_validation_pending",
+      "status": "partial_hardening_foundation",
       "files": [
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityDomainMcpCommon.cs",
         "Packages/com.darumappap.my-unity-mcp/Editor/UnityMcpSecurityPolicy.cs",
@@ -88,6 +155,14 @@
         "Tests/ExternalClient/run_mcp_http_e2e.py",
         "Tests/Compatibility/development-support-matrix.yaml",
         "Tests/Compatibility/development-verification.yaml"
+      ],
+      "remaining": [
+        "latest Unity editor CI",
+        "external MCP client E2E",
+        "Addressables package-present matrix",
+        "player build evidence",
+        "human world movie and live reviews",
+        "release candidate and upgrade evidence"
       ]
     }
   },
@@ -105,5 +180,5 @@
     "release_version_approval",
     "artifact_only_delivery_validation"
   ],
-  "updated_at": "2026-08-07T02:45:00+09:00"
+  "updated_at": "2026-08-07T10:29:00+09:00"
 }
