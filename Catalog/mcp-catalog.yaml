@@ -1,5 +1,6 @@
-schema_version: "2.0"
+schema_version: "2.1"
 release_version: "1.0.0"
+capability_contracts: Catalog/capability-contracts.yaml
 
 modules:
   unity_graphics_mcp:
@@ -7,6 +8,7 @@ modules:
     status: editor_operational
     manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
     specification: Specs/UnityGraphicsMCP/spec.md
+    capability_contract: Catalog/capability-contracts.yaml
     default_tool_group: inspect
     available_tool_groups:
       - inspect
@@ -59,3 +61,5 @@ selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
   explicit_tool_activation_required: true
+  capability_contract_required_for_operational_module: true
+  load_only_selected_capability_contract: true
