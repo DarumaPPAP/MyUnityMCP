@@ -73,7 +73,7 @@ namespace UnityAgentMcp
 				UnityAgentMcpRuntime.Instance.SubmitApproval(value.graphId, value.approvedGroups, value.confirmation));
 	}
 
-	[McpForUnityTool("agent.start_execution", Description = "RevisionとApprovalを再検証し、Domain Toolへ委譲してGraphを実行します。Control PlaneはUnity APIを直接Mutationしません。", AutoRegister = false, Group = "agent")]
+	[McpForUnityTool("agent.start_execution", Description = "RevisionとApprovalを再検証して協調Executionを開始します。StepはEditor Update境界でDomain Toolへ委譲し、Control PlaneはUnity APIを直接Mutationしません。", AutoRegister = false, Group = "agent")]
 	public static class AgentStartExecutionTool
 	{
 		public sealed class Parameters
@@ -84,11 +84,17 @@ namespace UnityAgentMcp
 			public long? currentRevision { get; set; }
 			[ToolParameter("Side Effectがある場合のApproval Token。", Required = false)]
 			public string approvalToken { get; set; }
+			[ToolParameter("Execution Timeout秒。1～3600。未指定時60秒。", Required = false)]
+			public int? timeoutSeconds { get; set; }
 		}
 		public static object HandleCommand(JObject @params) =>
 			UnityAgentMcpToolBridge.Execute<Parameters>(@params, value =>
 				value.currentRevision.HasValue
-					? UnityAgentMcpRuntime.Instance.StartExecution(value.graphId, value.currentRevision.Value, value.approvalToken)
+					? UnityAgentMcpRuntime.Instance.StartExecution(
+						value.graphId,
+						value.currentRevision.Value,
+						value.approvalToken,
+						value.timeoutSeconds ?? 60)
 					: UnityAgentMcpToolBridge.Error("AGENT-REVISION-MISSING", "currentRevisionが必要です。"));
 	}
 
@@ -104,7 +110,7 @@ namespace UnityAgentMcp
 			UnityAgentMcpToolBridge.Execute<Parameters>(@params, value => UnityAgentMcpRuntime.Instance.GetExecutionStatus(value.executionId));
 	}
 
-	[McpForUnityTool("agent.cancel_execution", Description = "Running中のAgent Executionへ協調Cancellationを要求します。", AutoRegister = false, Group = "agent")]
+	[McpForUnityTool("agent.cancel_execution", Description = "Running中のAgent Executionを次の安全なStep境界より前に協調Cancelします。", AutoRegister = false, Group = "agent")]
 	public static class AgentCancelExecutionTool
 	{
 		public sealed class Parameters
