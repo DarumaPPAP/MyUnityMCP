@@ -61,7 +61,7 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(result.Value<bool>("success"), Is.True);
 			Assert.That(result.Value<bool>("executionReady"), Is.False);
-			Assert.That(result["blockingConditions"]?.Count, Is.GreaterThan(0));
+			Assert.That((result["blockingConditions"] as JArray)?.Count, Is.GreaterThan(0));
 			Assert.That(result.Value<bool>("directUnityMutation"), Is.False);
 		}
 
