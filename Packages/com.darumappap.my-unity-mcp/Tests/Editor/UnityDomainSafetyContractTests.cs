@@ -13,6 +13,7 @@ using UnityDomainMcp;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
+using StandardEditorSceneManager = UnityEditor.SceneManagement.EditorSceneManager;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
@@ -251,10 +252,10 @@ namespace MyUnityMcp.EditorTests
 
 		private static GameObject CreatePersistentSceneObject(string objectName, params Type[] components)
 		{
-			Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+			Scene scene = StandardEditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
 			GameObject gameObject = new GameObject(objectName, components);
 			SceneManager.MoveGameObjectToScene(gameObject, scene);
-			Assert.That(EditorSceneManager.SaveScene(scene, DOMAIN_SCENE_PATH), Is.True);
+			Assert.That(StandardEditorSceneManager.SaveScene(scene, DOMAIN_SCENE_PATH), Is.True);
 			return gameObject;
 		}
 
@@ -263,7 +264,7 @@ namespace MyUnityMcp.EditorTests
 			Scene scene = SceneManager.GetSceneByPath(DOMAIN_SCENE_PATH);
 			if (scene.IsValid() && scene.isLoaded)
 			{
-				EditorSceneManager.CloseScene(scene, true);
+				StandardEditorSceneManager.CloseScene(scene, true);
 			}
 			AssetDatabase.DeleteAsset(DOMAIN_SCENE_PATH);
 		}
