@@ -36,7 +36,8 @@
     "The Addressables optional backend delta was manually verified in both package-absent and package-present configurations; the exact Unity 6000.0.75f1 + Addressables 2.7.6 CI lane could not be refreshed because GitHub Actions jobs failed before runner steps started.",
     "fresh_project is integration_verified using an external Unity project installed through the UPM Git URL. This is not a claim that the pristine SampleProjects workflow executed.",
     "external_mcp_e2e is complete by explicit repository-owner acceptance. The recorded technical observation still shows instance_count=0 and no read-only tool calls; completion is an operator acceptance decision, not a protocol-level tool-call PASS.",
-    "No evidence entry rewrites unavailable or unexecuted automation as a technical PASS; operator acceptance and carry-forward evidence are recorded separately."
+    "No evidence entry rewrites unavailable or unexecuted automation as a technical PASS; operator acceptance and carry-forward evidence are recorded separately.",
+    "The repository owner approved proceeding with Graph finalization and capability-scoped delivery-promotion preparation on 2026-08-12."
   ],
   "terminalGoalSatisfied": true
 }
