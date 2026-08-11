@@ -1,34 +1,53 @@
-# MyUnityMCP v1.0.1 Release Notes
+# MyUnityMCP v1.0.2-test.1 Test Release Notes
 
-MyUnityMCP v1.0.1は、v1.0.0の実行機能・Safety Contractを維持したまま、Repository構造とRelease運用を整理するPatch Releaseです。
+MyUnityMCP v1.0.2-test.1は、Unity 6.7での直接確認を目的としたPre-releaseです。正式Releaseではありません。
 
-## Highlights
+## Test Target
 
-- 実行可能な製品資産とDesign-only資産を分離
-- UnityAgentMCP、LiveCreator、MovieCreatorなど未実装設計を`Design/`へ集約
-- Operational Catalogを`unity_graphics_mcp`中心に整理
-- Release ContractのTool Discoveryを再帰検索へ変更し、Editorコードの責務別フォルダ化に対応
-- Release GateのDistribution Preview名／ZIP名を`VERSION`から動的生成
-- Package、Manifest、Catalog、Support Matrix、Installation Guideをv1.0.1へ同期
+- Primary manual verification: Unity 6.7
+- Package: `com.darumappap.my-unity-mcp`
+- Base CI reference: Unity `6000.0.75f1`
+- Unity 6.7 automated Editor verification: pending
 
-## Runtime Compatibility
+## Included
 
-- MCP Tool: 32（変更なし）
-- Unity Editor `6000.0`以上
-- CI検証環境: Unity `6000.0.75f1`
-- Mutation／Save／Bakeの承認境界に変更なし
-- Player Runtime／実機上でのTool実行は対象外
+- Unity API Compatibility Registry
+  - `BASE`
+  - `UNITY_6000_4`
+  - `UNITY_6000_5`
+  - `UNITY_6000_7`
+- Unity 6.6由来変更の6.7 Roll-up管理
+- Compatibility lifecycleの`CONFIRMED` / `PLANNED`分離
+- Package Versionを含むCompatibility Context
+- MyUnityMCP変更時にCompatibility更新を要求するSkill
+- Compatibility Contract / Editor Matrix CI
 
-## Upgrade from v1.0.0
+## Unity 6.7 Manual Check
 
-Package参照を`v1.0.1`へ更新してください。Tool Schema、Safety Boundary、保存済みProject AssetのMigrationは不要です。
+次を優先して確認してください。
+
+1. Package Managerから正常に導入できる
+2. Script Compile Errorが発生しない
+3. MCP Toolが32個Discoveryされる
+4. `graphics.inspect_project`が応答する
+5. `apiCompatibility`に6.7 Bucketが出力される
+6. Inspect / Plan系のRead-only Toolが正常動作する
+7. Mutation系は従来どおりApproval Boundaryを維持する
+
+## Install
+
+Git URL:
 
 ```text
-https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.1
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.2-test.1
 ```
 
-`v1.0.0` Tagはimmutableのまま保持され、v1.0.1は新しいRelease Commitから発行されます。
+GitHub Release AssetとしてPackage `.tgz`、Sample Project、Templates、SHA256SUMSも生成します。
 
-## Known Issues
+## Verification Status
 
-詳細は`Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md`を参照してください。
+- Base Editor CI: passed
+- Unity 6.7: manual_test_pending
+- This release: PRE-RELEASE / UNVERIFIED ON UNITY 6.7
+
+Unity 6.7で問題が確認された場合は、このPre-releaseを正式版へ昇格せず修正版`test.2`以降で再検証します。
