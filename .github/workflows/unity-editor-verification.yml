@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   editmode:
-    name: Compile, 32 Tool Discovery and 125 EditMode Contracts
+    name: Compile, Production Tool Discovery and Editor Contracts
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -122,7 +122,6 @@ jobs:
           projectPath: TestProjects/MyUnityMCPVerification
           unityVersion: 6000.0.75f1
           testMode: editmode
-          customParameters: -testFilter UnityGraphicsMcp
 
       - name: Verify Unity compile and NUnit result
         if: always() && steps.license.outputs.available == 'true'
