@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: graph-package-matrix-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   # Unity 6000.0 package documentation lists Addressables 2.7.6 as the released version.
   ADDRESSABLES_RELEASED_6000_0: "2.7.6"
