@@ -2,6 +2,27 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [1.0.2-test.1] - 2026-08-11
+
+### Added
+
+- Unity API Compatibility Registryを`BASE + UNITY_6000_4 + UNITY_6000_5 + UNITY_6000_7`の4保守Bucketとして追加
+- `skills/myunitymcp-unity-api-compatibility/SKILL.md`を追加し、MyUnityMCP変更時のCompatibility再評価をAGENTS.mdから必須化
+- `graphics.inspect_project`へ`apiCompatibility`とPackage Version由来の互換判断情報を追加
+- Unity API Compatibility Contract / Editor Matrix CIを追加
+
+### Changed
+
+- Unity 6.6由来の変更を6.7 Roll-up Bucketで保守しつつ、Ruleごとの実適用開始Versionを保持
+- Pre-release Versionでは正式Release Evidence Gateと分離してGitHub Pre-releaseを発行できるRelease経路を追加
+
+### Verification
+
+- Base Unity `6000.0.75f1`の既存Editor CIは通過済み
+- Unity 6.7はGameCI image未提供のため自動Editor検証未完了
+- Unity 6.7での直接導入・コンパイル・Tool Discovery・主要Workflow確認をManual Test対象とする
+- このVersionは検証用Pre-releaseであり正式Releaseではない
+
 ## [1.0.1] - 2026-08-11
 
 ### Changed
