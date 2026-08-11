@@ -6,7 +6,6 @@ using MCPForUnity.Editor.Helpers;
 using MCPForUnity.Editor.Tools;
 using Newtonsoft.Json.Linq;
 using UnityDomainMcp;
-using UnityEditor.PackageManager;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace UnityAddressablesMcp
@@ -73,13 +72,62 @@ namespace UnityAddressablesMcp
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, _ => UnityAddressablesMcpRuntime.GetSupportMatrix());
 	}
 
-	internal interface IUnityAddressablesMcpBackend
+	public interface IUnityAddressablesMcpBackend
 	{
-		UnityDomainMcpResult Inspect(PackageInfo package);
+		UnityDomainMcpResult Inspect(bool packageInstalled, string packageVersion);
 		UnityDomainMcpResult PrepareEntry(string assetPath, string groupName, string address, string[] labels, long? expectedRevision);
 		UnityDomainMcpResult ApplyEntry(string planId, long? currentRevision, string approvalToken);
 		UnityDomainMcpResult PrepareContentBuild(long? expectedRevision);
 		UnityDomainMcpResult BuildContent(string planId, long? currentRevision, string approvalToken);
+	}
+
+	public sealed class UnityAddressablesMcpApprovedPlan
+	{
+		public JObject Payload { get; }
+
+		internal UnityAddressablesMcpApprovedPlan(JObject payload)
+		{
+			Payload = payload ?? new JObject();
+		}
+	}
+
+	public static class UnityAddressablesMcpBridge
+	{
+		public static UnityDomainMcpResult Result(string tool, E_DOMAIN_TOOL_STATUS status, string summary, object data)
+		{
+			return UnityDomainMcpCommon.Result(tool, status, summary, data);
+		}
+
+		public static UnityDomainMcpResult Error(string tool, E_DOMAIN_TOOL_STATUS status, string message)
+		{
+			return UnityDomainMcpCommon.Error(tool, status, message);
+		}
+
+		public static UnityDomainMcpResult Prepare(string tool, string domainId, string operation, long? expectedRevision, bool requiresApproval, JObject payload)
+		{
+			return UnityDomainMcpCommon.Prepare(tool, domainId, operation, expectedRevision, requiresApproval, payload);
+		}
+
+		public static bool TryConsume(string tool, string domainId, string planId, long? currentRevision, string approvalToken, out UnityAddressablesMcpApprovedPlan plan, out UnityDomainMcpResult failure)
+		{
+			plan = null;
+			if (!currentRevision.HasValue)
+			{
+				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "currentRevisionが必要です。");
+				return false;
+			}
+			if (!UnityDomainMcpPlanStore.TryConsume(tool, domainId, planId, currentRevision.Value, approvalToken, out UnityDomainMcpPlan internalPlan, out failure))
+			{
+				return false;
+			}
+			plan = new UnityAddressablesMcpApprovedPlan(internalPlan.Payload);
+			return true;
+		}
+
+		public static void CompleteMutation(UnityEngine.Object target)
+		{
+			UnityDomainMcpCommon.CompleteMutation(target);
+		}
 	}
 
 	public static class UnityAddressablesMcpRuntime
@@ -93,7 +141,7 @@ namespace UnityAddressablesMcp
 			IUnityAddressablesMcpBackend backend = GetBackend();
 			if (backend != null)
 			{
-				return backend.Inspect(package);
+				return backend.Inspect(package != null, package?.version);
 			}
 			return Unsupported("addressables.inspect", package);
 		}
