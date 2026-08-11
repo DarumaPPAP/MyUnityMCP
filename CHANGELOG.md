@@ -2,6 +2,30 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [1.0.2-test.2] - 2026-08-11
+
+### Fixed
+
+- Unity 6.7でError化した`SceneHandle`と`int` / `uint`の暗黙変換依存を除去し、Scene比較をSession Tokenへ移行
+- `Object.GetInstanceID()` / `EditorUtility.InstanceIDToObject(int)`依存をMyUnityMCP Session Tokenへ分離
+- `UnityApiCompatibility`系の新規Package Assetに`.meta`が無く、immutable Packageで無視される問題を修正
+- Scene Handleを数値文字列化する処理をSession Token経由へ変更し、Unity 6.7での型不一致を修正
+
+### Changed
+
+- `SceneHandle`の実測Lifecycleを`UNITY_6000_4` Bucketへ移動し、Unity `6000.4.12f1`でWarning、`6000.5.5f1`でErrorとして記録
+- Object / Sceneの一時識別をUnity内部ID表現から切り離す`UnityGraphicsMcpIdentityCompatibility`を追加
+- Compatibility SkillへScene identityとimmutable Package `.meta`ルール、実Editor Evidenceを反映
+
+### Verification
+
+- Base Unity `6000.0.75f1`: Compile / 32 Tool Discovery / EditMode Contracts PASS
+- Unity `6000.4.12f1`: Compatibility EditMode / Compile Verify PASS
+- Unity `6000.5.5f1`: Compatibility EditMode / Compile Verify PASS
+- Fresh Project / Sample Workflow / Release Contract PASS
+- Unity 6.7はGameCI image未提供のためManual Test継続
+- このVersionは検証用Pre-releaseであり正式Releaseではない
+
 ## [1.0.2-test.1] - 2026-08-11
 
 ### Added
@@ -74,4 +98,4 @@
 
 ## [0.8.0] - 2026-08-05
 
-- 長時間AI制作向けIntegration Hardening、Fault Injection、Execution Runtimeを追加。
+- 長時間AI制作向けIntegration Hardening、Fault Injection、Execution Runtimeを追加.
