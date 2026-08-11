@@ -46,7 +46,7 @@ namespace MyUnityMcp.EditorTests
 			string[] sources = Directory.GetFiles(
 				"Packages/com.darumappap.my-unity-mcp/Editor",
 				"*.cs",
-				SearchOption.TopDirectoryOnly);
+				SearchOption.AllDirectories);
 			string combined = string.Join("\n", sources.Select(File.ReadAllText));
 			int toolCount = Count(combined, "[McpForUnityTool(");
 			int disabledCount = Count(combined, "AutoRegister = false");
