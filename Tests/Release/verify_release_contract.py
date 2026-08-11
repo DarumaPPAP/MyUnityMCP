@@ -45,12 +45,21 @@ if package['version'] != version: raise SystemExit('VERSION and package.json dif
 manifest=(ROOT/'Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml').read_text(encoding='utf-8')
 support=(ROOT/'Tests/Compatibility/support-matrix.yaml').read_text(encoding='utf-8')
 changelog=(ROOT/'CHANGELOG.md').read_text(encoding='utf-8')
+verification=(ROOT/'Tests/Compatibility/release-verification.yaml').read_text(encoding='utf-8')
 for name,text,pattern in [
     ('manifest',manifest,rf'^version: "{re.escape(version)}"$'),
     ('support matrix',support,rf'^package_version: "{re.escape(version)}"$'),
     ('changelog',changelog,rf'^## \[{re.escape(version)}\] - '),
 ]:
     if not re.search(pattern,text,re.MULTILINE): raise SystemExit(f'{name} version mismatch')
+
+manifest_tool_count_match = re.search(r'^\s*discovered_tool_count:\s*(\d+)\s*$', manifest, re.MULTILINE)
+verification_tool_count_match = re.search(r'^\s*tool_discovery_count:\s*(\d+)\s*$', manifest, re.MULTILINE)
+if not manifest_tool_count_match or not verification_tool_count_match:
+    raise SystemExit('Manifest must declare bridge.discovered_tool_count and verification.tool_discovery_count')
+expected_tool_count = int(manifest_tool_count_match.group(1))
+if int(verification_tool_count_match.group(1)) != expected_tool_count:
+    raise SystemExit('Manifest discovery counts disagree')
 
 for path in [
     'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json',
@@ -64,8 +73,10 @@ editor_root=ROOT/'Packages/com.darumappap.my-unity-mcp/Editor'
 source='\n'.join(p.read_text(encoding='utf-8') for p in editor_root.rglob('*.cs'))
 count=len(re.findall(r'\[McpForUnityTool\s*\(',source))
 disabled=len(re.findall(r'AutoRegister\s*=\s*false',source))
-if count != 32: raise SystemExit(f'Expected 32 MCP tools, found {count}')
-if disabled < 32: raise SystemExit(f'Expected every tool to be disabled by default, found {disabled}/32')
+if count != expected_tool_count:
+    raise SystemExit(f'Expected {expected_tool_count} MCP tools from manifest, found {count}')
+if disabled != count:
+    raise SystemExit(f'Expected every tool to be disabled by default, found {disabled}/{count}')
 
 active_paths=[ROOT/'README.md',ROOT/'AGENTS.md',ROOT/'Catalog',ROOT/'Design',ROOT/'Packages/com.darumappap.my-unity-mcp/Editor',ROOT/'Packages/com.darumappap.my-unity-mcp/Tests/Editor']
 for base in active_paths:
@@ -85,9 +96,12 @@ for obsolete in [
 ]:
     if (ROOT/obsolete).exists(): raise SystemExit(f'Obsolete or temporary file remains: {obsolete}')
 
-verification=(ROOT/'Tests/Compatibility/release-verification.yaml').read_text(encoding='utf-8')
 if args.mode == 'tag':
     if args.tag != 'v'+version: raise SystemExit('Tag and VERSION differ')
-    if 'verification_status: passed' not in verification: raise SystemExit('Release evidence is not passed')
+    verification_version = re.search(r'^release_version:\s*"?([^"\s]+)"?\s*$', verification, re.MULTILINE)
+    if not verification_version or verification_version.group(1) != version:
+        raise SystemExit('Release evidence version does not match VERSION')
+    if 'verification_status: passed' not in verification:
+        raise SystemExit('Release evidence is not passed')
 
 print(f'Release contract PASS: version={version}, tools={count}, required_files={len(required)}')
