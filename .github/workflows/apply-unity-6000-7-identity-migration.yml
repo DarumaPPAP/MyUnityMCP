@@ -7,6 +7,13 @@ on:
     paths:
       - Tools/Compatibility/apply-unity-6000-7-identity-migration.py
       - .github/workflows/apply-unity-6000-7-identity-migration.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Tools/Compatibility/apply-unity-6000-7-identity-migration.py
+      - .github/workflows/apply-unity-6000-7-identity-migration.yml
+      - Packages/com.darumappap.my-unity-mcp/**
 
 permissions:
   contents: write
