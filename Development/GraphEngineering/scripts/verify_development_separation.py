@@ -51,9 +51,11 @@ def main():
     errors.extend(package_meta_errors(DEV_SOURCE))
     errors.extend(package_meta_errors(DEV_TESTS))
 
-    temporary_blockers = []
-    if (DEV_SOURCE / "Compatibility/SessionMigrationBridge.cs").exists():
-        temporary_blockers.append("SessionMigrationBridge")
+    compatibility_root = DEV_SOURCE / "Compatibility"
+    temporary_blockers = [
+        path.stem
+        for path in sorted(compatibility_root.glob("*MigrationBridge.cs"))
+    ] if compatibility_root.exists() else []
     if (PACKAGE / "Editor/UnityAgentMcpCatalog.json").exists():
         temporary_blockers.append("root Agent catalog compatibility copy")
 
