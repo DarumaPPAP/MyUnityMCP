@@ -1,0 +1,40 @@
+name: Apply Unity 6.7 Identity Migration
+
+on:
+  push:
+    branches:
+      - fix/unity-6000-7-test2
+    paths:
+      - Tools/Compatibility/apply-unity-6000-7-identity-migration.py
+      - .github/workflows/apply-unity-6000-7-identity-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/unity-6000-7-test2
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Apply guarded migration
+        run: python3 Tools/Compatibility/apply-unity-6000-7-identity-migration.py
+      - name: Validate diff
+        run: git diff --check
+      - name: Commit generated migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Migration already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Packages/com.darumappap.my-unity-mcp
+          git commit -m "Migrate Unity 6.7 identity API usage [skip ci]"
+          git push origin HEAD:fix/unity-6000-7-test2
