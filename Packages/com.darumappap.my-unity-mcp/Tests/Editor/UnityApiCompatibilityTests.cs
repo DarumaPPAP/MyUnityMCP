@@ -93,18 +93,27 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
-		public void Resolve_6000_7_ContainsConfirmedSceneHandleBoundary()
+		public void Resolve_6000_4_And_6000_5_TrackConfirmedSceneHandleBoundary()
 		{
-			Dictionary<string, object> summary =
-				UnityApiCompatibility.BuildProjectSummary("6000.7.0a3");
-			List<Dictionary<string, object>> rules =
-				summary["rules"] as List<Dictionary<string, object>>;
+			Dictionary<string, object> warningSummary =
+				UnityApiCompatibility.BuildProjectSummary("6000.4.12f1");
+			List<Dictionary<string, object>> warningRules =
+				warningSummary["rules"] as List<Dictionary<string, object>>;
+			Dictionary<string, object> errorSummary =
+				UnityApiCompatibility.BuildProjectSummary("6000.5.5f1");
+			List<Dictionary<string, object>> errorRules =
+				errorSummary["rules"] as List<Dictionary<string, object>>;
 
 			Assert.That(
-				rules.Any(item =>
-					(string)item["ruleId"] == "UNITY-6000-7-SCENE-HANDLE-RAW-DATA" &&
-					(string)item["state"] == "ERROR" &&
+				warningRules.Any(item =>
+					(string)item["ruleId"] == "UNITY-6000-4-SCENE-HANDLE-RAW-DATA" &&
+					(string)item["state"] == "WARNING" &&
 					(string)item["sourceStatus"] == E_UNITY_API_SOURCE_STATUS.CONFIRMED.ToString()),
+				Is.True);
+			Assert.That(
+				errorRules.Any(item =>
+					(string)item["ruleId"] == "UNITY-6000-4-SCENE-HANDLE-RAW-DATA" &&
+					(string)item["state"] == "ERROR"),
 				Is.True);
 		}
 
