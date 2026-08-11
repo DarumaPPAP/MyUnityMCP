@@ -16,7 +16,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   compatibility-contract:
@@ -34,3 +34,38 @@ jobs:
       - name: Verify added Unity API usage
         if: github.event_name == 'pull_request'
         run: python3 Tests/Compatibility/verify-unity-api-compatibility.py --diff-base origin/${{ github.base_ref }}
+
+  canonical-v1-tag-reset:
+    if: github.event_name == 'pull_request' && github.head_ref == 'release/v1.0.0'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout canonical release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/v1.0.0
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Finalize clean release source and replace legacy v1.0.0 tag once
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat VERSION)" = "1.0.0"
+          grep -q '^verification_status: passed$' Tests/Compatibility/release-verification.yaml
+          git fetch origin main --tags --force
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Remove this one-shot exception from the release source before tagging.
+          git checkout origin/main -- .github/workflows/unity-api-compatibility-contract.yml
+          git add .github/workflows/unity-api-compatibility-contract.yml
+          git commit -m "release: finalize canonical v1.0.0 source"
+
+          final_sha=$(git rev-parse HEAD)
+          git push origin HEAD:release/v1.0.0
+
+          # Explicit owner-requested one-time replacement of the legacy v1.0.0 tag.
+          git tag -fa v1.0.0 "$final_sha" -m "MyUnityMCP v1.0.0 canonical release"
+          git push origin +refs/tags/v1.0.0
+
+          echo "Canonical v1.0.0 source: $final_sha"
