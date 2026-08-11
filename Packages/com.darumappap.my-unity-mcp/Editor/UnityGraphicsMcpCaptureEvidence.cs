@@ -958,7 +958,7 @@ namespace UnityGraphicsMcp
 				{
 					Revision = startRevision,
 					CameraObjectId = cameraObjectId,
-					CameraSceneHandle = cameraScene.handle,
+					CameraSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(cameraScene),
 					CameraScenePath = cameraScene.path,
 					CameraBaselineDigest =
 						BuildCaptureEvidenceCameraBaselineDigest(camera),
@@ -1382,7 +1382,7 @@ namespace UnityGraphicsMcp
 					renderer => BuildSaveEvaluationStableHierarchyPath(renderer.gameObject),
 					StringComparer.Ordinal)
 				.ThenBy(renderer => renderer.GetType().FullName, StringComparer.Ordinal)
-				.ThenBy(renderer => renderer.GetInstanceID())
+				.ThenBy(renderer => UnityGraphicsMcpIdentityCompatibility.GetObjectToken(renderer))
 				.ToList();
 		}
 
@@ -1781,7 +1781,7 @@ namespace UnityGraphicsMcp
 			builder.Append(
 				GlobalObjectId.GetGlobalObjectIdSlow(camera).ToString())
 				.Append('|');
-			builder.Append(camera.gameObject.scene.handle).Append('|');
+			builder.Append(UnityGraphicsMcpIdentityCompatibility.GetSceneToken(camera.gameObject.scene)).Append('|');
 			builder.Append(camera.gameObject.scene.path).Append('|');
 			builder.Append(EditorJsonUtility.ToJson(camera, false)).Append('|');
 			AppendSaveEvaluationVector(builder, camera.transform.position);

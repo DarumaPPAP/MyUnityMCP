@@ -167,7 +167,7 @@ namespace UnityGraphicsMcp
 			GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
 			Renderer renderer = cube.GetComponent<Renderer>();
 			Material materialBefore = renderer.sharedMaterial;
-			int materialIdBefore = materialBefore == null ? 0 : materialBefore.GetInstanceID();
+			int materialIdBefore = materialBefore == null ? 0 : UnityGraphicsMcpIdentityCompatibility.GetObjectToken(materialBefore);
 
 			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.InspectScene(
 				"test-material-readonly",
@@ -178,7 +178,7 @@ namespace UnityGraphicsMcp
 				null);
 
 			Material materialAfter = renderer.sharedMaterial;
-			int materialIdAfter = materialAfter == null ? 0 : materialAfter.GetInstanceID();
+			int materialIdAfter = materialAfter == null ? 0 : UnityGraphicsMcpIdentityCompatibility.GetObjectToken(materialAfter);
 
 			Assert.That(result.IsSuccessful, Is.True);
 			Assert.That(materialIdAfter, Is.EqualTo(materialIdBefore));

@@ -717,7 +717,7 @@ namespace UnityGraphicsMcp
 						}
 
 						GameObject gameObject = new GameObject(operation.Name);
-						if (gameObject.scene.handle != scene.handle)
+						if (UnityGraphicsMcpIdentityCompatibility.GetSceneToken(gameObject.scene) != UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene))
 						{
 							SceneManager.MoveGameObjectToScene(gameObject, scene);
 						}
@@ -728,15 +728,15 @@ namespace UnityGraphicsMcp
 						EditorSceneManager.MarkSceneDirty(scene);
 
 						UnityGraphicsMcpLightState afterState = CaptureLightState(light);
-						transaction.CreatedInstanceIds.Add(light.GetInstanceID());
-						transaction.AfterStates[light.GetInstanceID()] = afterState;
+						transaction.CreatedInstanceIds.Add(UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light));
+						transaction.AfterStates[UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light)] = afterState;
 						createdIds.Add(afterState.ObjectId);
 						dirtyScenes.Add(NormalizeSceneLabel(scene));
 					}
 					else
 					{
 						Light light = ResolveLightByInstanceId(operation.TargetInstanceId);
-						transaction.BeforeStates[light.GetInstanceID()] = CaptureLightState(light);
+						transaction.BeforeStates[UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light)] = CaptureLightState(light);
 						Undo.RecordObject(light.gameObject, undoName);
 						Undo.RecordObject(light.transform, undoName);
 						Undo.RecordObject(light, undoName);
@@ -744,7 +744,7 @@ namespace UnityGraphicsMcp
 						EditorSceneManager.MarkSceneDirty(light.gameObject.scene);
 
 						UnityGraphicsMcpLightState afterState = CaptureLightState(light);
-						transaction.AfterStates[light.GetInstanceID()] = afterState;
+						transaction.AfterStates[UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light)] = afterState;
 						modifiedIds.Add(afterState.ObjectId);
 						dirtyScenes.Add(NormalizeSceneLabel(light.gameObject.scene));
 					}
@@ -1038,7 +1038,7 @@ namespace UnityGraphicsMcp
 				return false;
 			}
 
-			operation.TargetSceneHandle = scene.handle;
+			operation.TargetSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene);
 			operation.TargetScenePath = NormalizeSceneLabel(scene);
 			return true;
 		}
@@ -1079,8 +1079,8 @@ namespace UnityGraphicsMcp
 				return false;
 			}
 
-			operation.TargetInstanceId = light.GetInstanceID();
-			operation.TargetSceneHandle = light.gameObject.scene.handle;
+			operation.TargetInstanceId = UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light);
+			operation.TargetSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(light.gameObject.scene);
 			operation.TargetScenePath = NormalizeSceneLabel(light.gameObject.scene);
 			operation.BaselineState = CaptureLightState(light);
 			return true;
@@ -1324,7 +1324,7 @@ namespace UnityGraphicsMcp
 			string stability;
 			return new UnityGraphicsMcpLightState
 			{
-				InstanceId = light.GetInstanceID(),
+				InstanceId = UnityGraphicsMcpIdentityCompatibility.GetObjectToken(light),
 				ObjectId = ResolveObjectId(light, out stability),
 				Name = light.gameObject.name,
 				ScenePath = NormalizeSceneLabel(light.gameObject.scene),
@@ -1565,7 +1565,7 @@ namespace UnityGraphicsMcp
 			for (int index = 0; index < SceneManager.sceneCount; index++)
 			{
 				Scene candidate = SceneManager.GetSceneAt(index);
-				if (candidate.IsValid() && candidate.isLoaded && candidate.handle == handle)
+				if (candidate.IsValid() && candidate.isLoaded && UnityGraphicsMcpIdentityCompatibility.GetSceneToken(candidate) == handle)
 				{
 					scene = candidate;
 					return true;
@@ -1603,7 +1603,7 @@ namespace UnityGraphicsMcp
 		private static string NormalizeSceneLabel(Scene scene)
 		{
 			return string.IsNullOrEmpty(scene.path)
-				? "UNTITLED_SCENE:" + scene.handle.ToString(CultureInfo.InvariantCulture)
+				? "UNTITLED_SCENE:" + UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene).ToString(CultureInfo.InvariantCulture)
 				: scene.path;
 		}
 
@@ -1631,7 +1631,7 @@ namespace UnityGraphicsMcp
 
 		private static Light ResolveLightByInstanceId(int instanceId)
 		{
-			Object target = EditorUtility.InstanceIDToObject(instanceId);
+			Object target = UnityGraphicsMcpIdentityCompatibility.ResolveObjectToken(instanceId);
 			return target as Light;
 		}
 
