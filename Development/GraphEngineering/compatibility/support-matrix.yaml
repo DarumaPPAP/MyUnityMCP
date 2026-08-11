@@ -15,9 +15,12 @@ unity_editor:
     expected_scope: [removed_apis, importer, ecs_boundaries]
     status: not_verified
   "6000.7":
-    target: manual_or_available_editor
+    target: 6000.7.0a3
+    maintenance_bucket: UNITY_6000_7
+    includes_rollup: UNITY_6000_6
     expected_scope: [unity_6000_6_rollup, identity, build, ui, rendergraph, input, ar, netcode]
-    automation: UNAVAILABLE_IMAGE
+    automation: GAMECI_IMAGE_GATE
+    unavailable_image_result: not_verified
     status: not_verified
 
 packages:
