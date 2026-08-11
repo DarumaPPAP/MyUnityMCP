@@ -1,0 +1,127 @@
+schema_version: "1.0"
+production_contracts: Catalog/capability-contracts.yaml
+production_baseline_sha: 12add57a3a8be1c7d5d01055c91ea2a60bb782e8
+scope: development_only
+
+shared_mutation_contract:
+  prepare_is_read_only: true
+  expected_revision_required: true
+  approval_token_required: true
+  one_time_plan_required: true
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
+  automatic_execution_resume: prohibited
+
+contracts:
+  unity_agent_mcp:
+    kind: control_plane
+    tool_count: 10
+    direct_unity_mutation: prohibited
+    responsibilities:
+      - capability_discovery
+      - workflow_validation
+      - execution_graph_compilation
+      - preview
+      - approval_orchestration
+      - domain_routing
+      - execution_state
+      - cancellation
+      - error_aggregation
+      - evidence_aggregation
+    delegates_to_domain_mcp: required
+
+  unity_profiler_mcp:
+    kind: domain
+    tool_count: 8
+    mutation_scope: capture_control_only
+    target_device_claim_without_evidence: prohibited
+    same_environment_baseline_required: true
+
+  unity_build_mcp:
+    kind: domain
+    tool_count: 6
+    build_execution_requires_approval: true
+    automatic_platform_fallback: prohibited
+    output_scope_must_be_explicit: true
+
+  unity_addressables_mcp:
+    kind: optional_domain
+    tool_count: 6
+    required_package: com.unity.addressables
+    package_absent_result: UNSUPPORTED
+    automatic_settings_creation: prohibited
+    automatic_group_creation: prohibited
+    automatic_save: prohibited
+    content_build_requires_approval: true
+
+  unity_ui_mcp:
+    kind: domain
+    tool_count: 5
+    mutation_scope:
+      - rect_transform
+    mutation_requires_approval: true
+    automatic_save: prohibited
+
+  unity_animation_mcp:
+    kind: domain
+    tool_count: 5
+    mutation_scope:
+      - animator_controller_parameter
+    excluded_mutation:
+      - state_machine_rewrite
+      - transition_rewrite
+      - animation_curve_rewrite
+      - clip_event_mutation
+    mutation_requires_approval: true
+
+  unity_audio_mcp:
+    kind: domain
+    tool_count: 5
+    mutation_scope:
+      - volume
+      - pitch
+      - spatial_blend
+      - loop
+      - mute
+      - play_on_awake
+    excluded_mutation:
+      - audio_clip_replacement
+      - audio_mixer_asset_creation
+    mutation_requires_approval: true
+
+  unity_cinematic_mcp:
+    kind: domain
+    tool_count: 5
+    mutation_requires_approval: true
+    excluded_mutation:
+      - timeline_track_creation
+      - timeline_clip_creation
+      - generic_binding_mutation
+      - cinemachine_shot_mutation
+
+  world_creator:
+    kind: creator
+    tool_count: 3
+    direct_unity_mutation: prohibited
+    execution_route: UnityAgentMCP -> DomainMCP
+    human_review_handoff: required
+
+  movie_creator:
+    kind: creator
+    tool_count: 3
+    direct_unity_mutation: prohibited
+    automatic_visual_acceptance: prohibited
+    execution_route: UnityAgentMCP -> DomainMCP
+    human_review_handoff: required
+
+  live_creator:
+    kind: creator
+    tool_count: 3
+    direct_unity_mutation: prohibited
+    unattended_execution: prohibited
+    automatic_go_live: prohibited
+    operator_required: true
+    execution_route: UnityAgentMCP -> DomainMCP
