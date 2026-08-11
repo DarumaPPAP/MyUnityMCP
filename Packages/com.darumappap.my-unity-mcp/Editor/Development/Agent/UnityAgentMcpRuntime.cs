@@ -86,7 +86,7 @@ namespace UnityAgentMcp
 	[InitializeOnLoad]
 	public sealed class UnityAgentMcpRuntime
 	{
-		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json";
+		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpCatalog.json";
 		private const string HISTORY_PATH = "Library/MyUnityMCP/AgentExecution/history.jsonl";
 		private const int APPROVAL_TTL_MINUTES = 10;
 		private const int DEFAULT_EXECUTION_TIMEOUT_SECONDS = 60;
@@ -104,12 +104,12 @@ namespace UnityAgentMcp
 		private static readonly Dictionary<string, Func<JObject, object>> GRAPHICS_DELEGATES =
 			new Dictionary<string, Func<JObject, object>>(StringComparer.Ordinal)
 			{
-				{"graphics.inspect_project", GraphicsInspectProjectTool.HandleCommand},
-				{"graphics.inspect_scene", GraphicsInspectSceneTool.HandleCommand},
-				{"graphics.validate_scene", GraphicsValidateSceneTool.HandleCommand},
-				{"graphics.get_execution_history", GraphicsGetExecutionHistoryTool.HandleCommand},
-				{"graphics.get_error_catalog", GraphicsGetErrorCatalogTool.HandleCommand},
-				{"graphics.get_support_matrix", GraphicsGetSupportMatrixTool.HandleCommand}
+				{"graphics.inspect_project", InspectProjectTool.HandleCommand},
+				{"graphics.inspect_scene", InspectSceneTool.HandleCommand},
+				{"graphics.validate_scene", ValidateSceneTool.HandleCommand},
+				{"graphics.get_execution_history", GetExecutionHistoryTool.HandleCommand},
+				{"graphics.get_error_catalog", GetErrorCatalogTool.HandleCommand},
+				{"graphics.get_support_matrix", GetSupportMatrixTool.HandleCommand}
 			};
 
 		private static readonly UnityAgentMcpRuntime _instance = new UnityAgentMcpRuntime();
@@ -184,7 +184,7 @@ namespace UnityAgentMcp
 
 		public JObject CompileGraph(long expectedRevision, UnityAgentMcpStepInput[] steps)
 		{
-			if (expectedRevision != UnityGraphicsMcpSession.Revision)
+			if (expectedRevision != Session.Revision)
 			{
 				return Error("AGENT-REVISION-CHANGED", "Graph作成前にEditor Revisionが変更されました。");
 			}
@@ -278,7 +278,7 @@ namespace UnityAgentMcp
 			{
 				return error;
 			}
-			if (graph.expectedRevision != currentRevision || currentRevision != UnityGraphicsMcpSession.Revision)
+			if (graph.expectedRevision != currentRevision || currentRevision != Session.Revision)
 			{
 				return Error("AGENT-REVISION-CHANGED", "Preview後にEditor Revisionが変更されました。");
 			}
@@ -429,7 +429,7 @@ namespace UnityAgentMcp
 				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-EXECUTION-TIMEOUT", "Execution exceeded the cooperative timeout before the next step.");
 				return;
 			}
-			if (UnityGraphicsMcpSession.Revision != execution.expectedRevision)
+			if (Session.Revision != execution.expectedRevision)
 			{
 				CompleteExecution(execution, E_AGENT_EXECUTION_STATUS.INTERRUPTED, "AGENT-REVISION-CHANGED", "Editor Revision changed before the next delegated step.");
 				return;
@@ -441,7 +441,7 @@ namespace UnityAgentMcp
 			}
 
 			UnityAgentMcpStepInput step = execution.orderedSteps[execution.nextStepIndex];
-			long revisionBefore = UnityGraphicsMcpSession.Revision;
+			long revisionBefore = Session.Revision;
 			JObject stepResult = DelegateStep(step);
 			stepResult["stepId"] = step.stepId;
 			execution.stepResults.Add(stepResult);
@@ -461,7 +461,7 @@ namespace UnityAgentMcp
 				return;
 			}
 
-			long revisionAfter = UnityGraphicsMcpSession.Revision;
+			long revisionAfter = Session.Revision;
 			if (APPROVAL_GROUPS.Contains(step.toolGroup))
 			{
 				execution.expectedRevision = revisionAfter;
@@ -654,7 +654,7 @@ namespace UnityAgentMcp
 			{
 				return false;
 			}
-			if (graph.expectedRevision != UnityGraphicsMcpSession.Revision)
+			if (graph.expectedRevision != Session.Revision)
 			{
 				error = Error("AGENT-REVISION-CHANGED", "Graph作成後にEditor Revisionが変更されました。");
 				return false;
