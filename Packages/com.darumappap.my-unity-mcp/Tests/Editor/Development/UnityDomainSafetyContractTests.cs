@@ -58,7 +58,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void SharedPlan_RequiresApprovalAndRejectsReuse()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityDomainMcpPlanStore.Prepare(
 				"test.prepare",
 				"test_domain",
@@ -127,7 +127,7 @@ namespace MyUnityMcp.EditorTests
 		{
 			GameObject gameObject = CreatePersistentSceneObject("UiTarget", typeof(RectTransform));
 			RectTransform target = gameObject.GetComponent<RectTransform>();
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityUiMcpRuntime.PrepareRectTransform(
 				UnityDomainMcpCommon.ObjectId(target),
 				new UnityUiMcpVector2Input {x = 12f, y = 34f},
@@ -154,7 +154,7 @@ namespace MyUnityMcp.EditorTests
 		{
 			GameObject gameObject = CreatePersistentSceneObject("AudioTarget", typeof(AudioSource));
 			AudioSource target = gameObject.GetComponent<AudioSource>();
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityAudioMcpRuntime.PrepareSource(
 				UnityDomainMcpCommon.ObjectId(target),
 				0.25f,
@@ -184,7 +184,7 @@ namespace MyUnityMcp.EditorTests
 		{
 			GameObject gameObject = CreatePersistentSceneObject("DirectorTarget", typeof(PlayableDirector));
 			PlayableDirector target = gameObject.GetComponent<PlayableDirector>();
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityCinematicMcpRuntime.PrepareDirector(
 				UnityDomainMcpCommon.ObjectId(target),
 				0.0,
@@ -214,7 +214,7 @@ namespace MyUnityMcp.EditorTests
 			AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(path);
 			try
 			{
-				long revision = UnityGraphicsMcpSession.Revision;
+				long revision = Session.Revision;
 				UnityDomainMcpResult prepared = UnityAnimationMcpRuntime.PrepareParameter(
 					path,
 					"ContractTrigger",
