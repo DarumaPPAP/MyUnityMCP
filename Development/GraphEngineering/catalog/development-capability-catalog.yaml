@@ -9,15 +9,26 @@ states:
     - release_candidate
     - operational
 
+promotion_states:
+  allowed:
+    - blocked
+    - ready
+    - promoted
+
 capabilities:
-  unity_agent_mcp: { state: development_candidate, promotion: blocked }
-  unity_profiler_mcp: { state: development_candidate, promotion: blocked }
-  unity_build_mcp: { state: development_candidate, promotion: blocked }
-  unity_addressables_mcp: { state: development_candidate, promotion: blocked }
-  unity_ui_mcp: { state: development_candidate, promotion: blocked }
-  unity_animation_mcp: { state: development_candidate, promotion: blocked }
-  unity_audio_mcp: { state: development_candidate, promotion: blocked }
-  unity_cinematic_mcp: { state: development_candidate, promotion: blocked }
-  world_creator: { state: development_candidate, promotion: blocked }
-  movie_creator: { state: development_candidate, promotion: blocked }
-  live_creator: { state: development_candidate, promotion: blocked }
+  unity_agent_mcp: { state: release_candidate, promotion: ready }
+  unity_profiler_mcp: { state: release_candidate, promotion: ready }
+  unity_build_mcp: { state: release_candidate, promotion: ready }
+  unity_addressables_mcp: { state: release_candidate, promotion: ready }
+  unity_ui_mcp: { state: release_candidate, promotion: ready }
+  unity_animation_mcp: { state: release_candidate, promotion: ready }
+  unity_audio_mcp: { state: release_candidate, promotion: ready }
+  unity_cinematic_mcp: { state: release_candidate, promotion: ready }
+  world_creator: { state: release_candidate, promotion: ready }
+  movie_creator: { state: release_candidate, promotion: ready }
+  live_creator: { state: release_candidate, promotion: ready }
+
+promotion_rule:
+  wholesale_graph_to_main: prohibited
+  delivery_branch_from_latest_main: required
+  human_approval_before_main_merge: required
