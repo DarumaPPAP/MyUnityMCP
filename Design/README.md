@@ -8,6 +8,8 @@
 
 ```text
 Design/
+├─ README.md
+├─ module-catalog.yaml
 ├─ UnityAgentMCP/
 │  └─ spec.md
 └─ Creators/
