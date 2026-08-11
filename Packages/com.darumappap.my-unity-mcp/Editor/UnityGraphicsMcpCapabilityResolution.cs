@@ -69,6 +69,8 @@ namespace UnityGraphicsMcp
 				: Application.unityVersion;
 			detectedProject["apiCompatibility"] =
 				UnityApiCompatibility.BuildProjectSummary(unityVersion);
+			detectedProject["apiCompatibilityPackages"] =
+				UnityApiCompatibilityPackageInspection.Inspect();
 
 			Dictionary<string, object> requestedTarget = new Dictionary<string, object>
 			{
