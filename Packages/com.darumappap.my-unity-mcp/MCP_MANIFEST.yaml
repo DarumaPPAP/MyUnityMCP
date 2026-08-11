@@ -1,8 +1,8 @@
 schema_version: "2.0"
 package_id: com.darumappap.my-unity-mcp
-version: "1.0.2-test.2"
+version: "1.0.0"
 implementation_status: release
-verified_level: unity_editor_ci
+verified_level: unity_editor_ci_plus_manual_6000_7
 
 operational_domain:
   id: unity_graphics_mcp
@@ -19,7 +19,7 @@ bridge:
   discovered_tool_count: 32
   tools_enabled_by_default: false
   explicit_activation_required: true
-  external_mcp_client_connection_verified: false
+  external_mcp_client_connection_verified: true
 
 tool_groups:
   inspect:
