@@ -2,6 +2,23 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [1.0.1] - 2026-08-11
+
+### Changed
+
+- Repository構造を整理し、実行可能な製品資産とDesign-only資産を物理的に分離
+- UnityAgentMCP、LiveCreator、MovieCreatorなど未実装設計を`Design/`へ集約
+- `Catalog/mcp-catalog.yaml`を実行可能な`unity_graphics_mcp`中心のCatalogへ整理
+- Release ContractのTool Discoveryを再帰検索へ変更し、Editor実装の責務別サブフォルダ化に対応
+- Release GateのDistribution Previewを`VERSION`から動的生成する構成へ変更
+- Package、Manifest、Catalog、Support Matrix、Installation Guideを`1.0.1`へ同期
+
+### Compatibility
+
+- MCP Tool数、Tool Contract、Safety Boundary、対応Unity Versionに変更なし
+- Player／Target Device上のTool実行は引き続き非対応
+- `v1.0.0` Tagはimmutableのまま維持し、`v1.0.1`を新しいReleaseとして発行
+
 ## [1.0.0] - 2026-08-06
 
 ### Added

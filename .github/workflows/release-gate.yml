@@ -35,17 +35,23 @@ jobs:
       - run: python3 Tests/Release/verify_capability_contract.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
+      - name: Resolve preview version
+        id: preview-version
+        shell: bash
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
       - name: Build preview distribution
+        shell: bash
         run: |
           set -euo pipefail
+          version="${{ steps.preview-version.outputs.version }}"
           mkdir -p artifacts
           (cd Packages/com.darumappap.my-unity-mcp && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
-          zip -qr artifacts/MyUnityMCP-SampleProject-1.0.0.zip SampleProjects/MyUnityMCPGettingStarted
-          zip -qr artifacts/MyUnityMCP-Templates-1.0.0.zip Templates
+          zip -qr "artifacts/MyUnityMCP-SampleProject-${version}.zip" SampleProjects/MyUnityMCPGettingStarted
+          zip -qr "artifacts/MyUnityMCP-Templates-${version}.zip" Templates
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: MyUnityMCP-v1.0.0-Distribution-Preview
+          name: MyUnityMCP-v${{ steps.preview-version.outputs.version }}-Distribution-Preview
           path: artifacts
           retention-days: 14
 
