@@ -1,5 +1,5 @@
 schema_version: "1.0"
-package_version: "1.0.1"
+package_version: "1.0.2-test.1"
 
 verification_contract:
   discovered_mcp_tools: 32
@@ -38,7 +38,7 @@ unity:
       editor_ci: not_verified
     unity_6000_7:
       rule_status: planned
-      editor_ci: not_verified
+      editor_ci: manual_test_pending
     package_versions_required_for_package_api_decisions: true
 
 pipelines:
