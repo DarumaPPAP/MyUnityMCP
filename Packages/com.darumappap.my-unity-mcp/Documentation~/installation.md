@@ -20,14 +20,14 @@ https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#9f84072c38906e3ca90
 ### Git tag
 
 ```text
-https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.0
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.1
 ```
 
 Private Repositoryの場合は、Unityを起動するOS UserのGit資格情報が必要です。
 
 ### Release `.tgz`
 
-Release Assetの`com.darumappap.my-unity-mcp-1.0.0.tgz`を取得し、Package ManagerからローカルTarballを追加します。
+Release Assetの`com.darumappap.my-unity-mcp-1.0.1.tgz`を取得し、Package ManagerからローカルTarballを追加します。
 
 ### Embedded package
 
