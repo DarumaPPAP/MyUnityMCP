@@ -1,16 +1,16 @@
 schema_version: "1.0"
 release_version: "1.0.1"
-verification_status: pending
+verification_status: passed
 
 required_gates:
-  release_contract: pending
-  unity_editor_compile: pending
-  tool_discovery_32: pending
-  editmode_contracts_125: pending
-  fresh_project_package_compile: pending
-  sample_workflow: pending
-  distribution_preview: pending
-  all_ci: pending
+  release_contract: passed
+  unity_editor_compile: passed
+  tool_discovery_32: passed
+  editmode_contracts_125: passed
+  fresh_project_package_compile: passed
+  sample_workflow: passed
+  distribution_preview: passed
+  all_ci: passed
   support_matrix_documented: true
   known_issues_documented: true
   version_manifest_changelog_aligned: true
@@ -18,36 +18,37 @@ required_gates:
 
 editor_verification:
   unity_version: "6000.0.75f1"
-  result: pending
+  result: passed
   minimum_contracts: 125
+  namespace_filter: UnityGraphicsMcp
 
 fresh_project_verification:
   unity_version: "6000.0.75f1"
-  package_compile: pending
-  expected_tool_discovery_count: 32
-  sample_workflow_required: true
+  package_compile: passed
+  tool_discovery_count: 32
+  sample_workflow: passed
 
 release_distribution:
   package: com.darumappap.my-unity-mcp-1.0.1.tgz
   sample_project: MyUnityMCP-SampleProject-1.0.1.zip
   templates: MyUnityMCP-Templates-1.0.1.zip
   checksums: SHA256SUMS.txt
-  package_sha256: pending
-  sample_project_sha256: pending
-  templates_sha256: pending
+  package_sha256: cafdbc09709fa3c453ffbe1d93d6127ad3c3d991f69868bf38b28166ea5d2171
+  sample_project_sha256: 13415db6cbf9b82d360569611fb084377fc86a8b7efa69167029007a60976cf0
+  templates_sha256: bd2ff2c3e6b1084c212524a474983d0903f0b9c18681fa07f3be41b89d10f7c6
 
 evidence:
-  verified_source_commit: pending
-  editor_workflow_run: pending
-  editor_job: pending
-  editor_artifact_id: pending
+  verified_source_commit: 430276344cc71a81302151b807f62c8bad016941
+  editor_workflow_run: 31453631982
+  editor_job: 93662876536
+  editor_artifact_id: 9087333599
   editor_artifact_name: MyUnityMCP-Unity-Editor-Evidence
-  sample_workflow_run: pending
-  sample_job: pending
-  sample_artifact_id: pending
+  sample_workflow_run: 31453631958
+  sample_job: 93662875937
+  sample_artifact_id: 9087302469
   sample_artifact_name: MyUnityMCP-Fresh-Project-Sample-Evidence
-  distribution_job: pending
-  distribution_artifact_id: pending
+  distribution_job: 93662876263
+  distribution_artifact_id: 9087215939
   distribution_artifact_name: MyUnityMCP-v1.0.1-Distribution-Preview
 
 release_identity:
