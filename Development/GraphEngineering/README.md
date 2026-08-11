@@ -66,7 +66,7 @@ The final Graph integration cycle combines:
 - scoped fault-injection carry-forward evidence;
 - explicit repository-owner acceptance for the External MCP limitation and final delivery-promotion preparation.
 
-`roadmap-state.json` is now `ready_for_delivery_promotion` with no remaining Graph integration blockers.
+`roadmap-state.json` is `ready_for_delivery_promotion` with no remaining Graph integration blockers.
 
 ## Promotion rule
 
