@@ -2,7 +2,7 @@
   "name": "com.darumappap.my-unity-mcp",
   "version": "1.0.0",
   "displayName": "MyUnityMCP",
-  "description": "Unity EditorのGraphics制作をInspect、承認制Mutation・Save・Bake、Capture Evidence、Visual Evaluation、Execution Historyまで安全に自動化するMCP Packageです。",
+  "description": "Unity EditorのGraphics制作をInspect、承認制Mutation・Save・Bake、Capture Evidence、Visual Evaluation、Execution Historyまで安全に自動化し、UnityAgentMCP Control Planeで複数Tool WorkflowをOrchestrationするMCP Packageです。",
   "dependencies": {
     "com.coplaydev.unity-mcp": "10.1.2",
     "com.unity.nuget.newtonsoft-json": "3.0.2"
@@ -16,6 +16,8 @@
     "ai",
     "editor",
     "graphics",
+    "agent",
+    "workflow",
     "apv",
     "visual-acceptance"
   ],

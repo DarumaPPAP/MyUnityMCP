@@ -2,14 +2,14 @@
 
 ## Repository role
 
-このRepositoryのRelease対象は、Unity Editor向け`unity_graphics_mcp` Package、Tool Schema、Safety Contract、Test、Sample、配布Templateです。
+このRepositoryの実行可能製品Sourceは、Unity Editor向け`unity_graphics_mcp` Domainと`unity_agent_mcp` Control Plane、そのTool Schema、Safety Contract、Test、Sample、配布Templateです。
 
-実行可能な製品資産と将来設計は物理的に分離します。
+実行可能な製品資産と将来設計は物理的・契約的に分離します。
 
-- 実行可能製品: `Packages/`、`Catalog/`、`Specs/UnityGraphicsMCP/`、`Tests/`、`SampleProjects/`、`Templates/`
-- Design Only: `Design/`
+- 実行可能製品: `Packages/`、`Catalog/`、`Specs/`、`Tests/`、`SampleProjects/`、`Templates/`
+- Design Only / Historical Design: `Design/`
 
-`UnityAgentMCP`、Creator Workflow、Graphics以外の未実装Domain MCPは`Design/`配下の設計資産であり、実行可能なControl PlaneまたはDomainとして扱いません。
+`UnityAgentMCP`はCurrent mainで実行可能なControl Planeです。Creator Workflowと、Graphics以外でまだProduction DeliveryされていないDomain MCPは`Design/`配下の設計資産であり、Operational Domainとして扱いません。
 
 対象Unity Project固有のScene、Prefab、Material、Lighting Data、認証情報、組織情報、顧客情報をこのRepositoryへ保存しません。
 
@@ -20,28 +20,35 @@
 - MCP contract: `Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml`
 - Tool implementation: `Packages/com.darumappap.my-unity-mcp/Editor`
 - MCP catalog: `Catalog/mcp-catalog.yaml`
-- Capability activation / evidence contract: `Catalog/capability-contracts.yaml`
+- Graphics capability contract: `Catalog/capability-contracts.yaml`
+- UnityAgent capability contract: `Catalog/unity-agent-capability-contracts.yaml`
+- UnityAgent operational spec: `Specs/UnityAgentMCP/spec.md`
 - Support: `Tests/Compatibility/support-matrix.yaml`
-- Current verification: `Tests/Compatibility/release-verification.yaml`
+- Stable release evidence: `Tests/Compatibility/release-verification.yaml`
 - Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
 
 開発順を示す段階名を、現行型名、File名、Tool説明、Error Code、Test名、運用文書へ使用しません。
 
-## Design-only source of truth
+## Design source of truth
 
 - Design module registry: `Design/module-catalog.yaml`
 - Creator registry: `Design/Creators/catalog.yaml`
-- UnityAgentMCP design: `Design/UnityAgentMCP/spec.md`
 - Creator workflows: `Design/Creators/`
+- UnityAgent historical design: `Design/UnityAgentMCP/spec.md`
 
-Design資産はRelease対象の実装済みCapabilityとして数えません。実装へ昇格する場合は、Package、Operational Catalog、Test、Documentation、Release Contractを同一変更で更新します。
+Design資産はRelease対象の実装済みCapabilityとして数えません。実装へ昇格する場合は、Package、Operational Catalog、Capability Contract、Test、Documentation、Current Spec、Release Contractを同一Delivery変更で更新します。昇格後は`Catalog/`と`Specs/`を現在の実行契約の正本にし、`Design/`はHistorical Designとしてのみ保持できます。
 
 ## Tool exposure
 
 全Toolは`AutoRegister = false`を維持し、ClientまたはBridgeの許可リストで必要なToolだけを公開します。
 
 ```text
+Direct Domain:
 inspect → plan → mutate → save → bake → capture → evaluate → review/refine
+
+Agent Control Plane:
+inspect capabilities → validate workflow → compile graph → preview
+                     → explicit approval → delegate → status/cancel/history
 ```
 
 - Inspect／Plan／PrepareはRead-only。
@@ -49,8 +56,10 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 - SaveとBakeは別承認。
 - Automatic Save、Automatic Full Bake、Silent Fallbackは禁止。
 - Human ReviewなしにVisual Acceptedとしない。
-- Operational Tool Groupは`Catalog/capability-contracts.yaml`に`use_when`、`requires`、`must_not`、`success_evidence`を持つ。
-- Tool Group追加時はCatalogだけでなくCapability ContractとRouting Caseも同時更新する。
+- UnityAgentMCPはUnity APIを直接Mutationせず、Operational Catalogに登録されたDomainだけへ委譲する。
+- Agentは非Operational Domain、未知Tool Group、依存Cycle、古いEditor Revision、未承認Mutation Groupを拒否する。
+- Operational Tool Groupは各Moduleの`capability_contract`に`use_when`、`requires`、`must_not`、`success_evidence`を持つ。
+- Tool Group追加時はCatalogだけでなくCapability ContractとRouting／Contract Testも同時更新する。
 - `unavailable`は`passed`へ昇格しない。
 - Capture成功はVisual Acceptanceではなく、Compile成功はRuntime / target-device Acceptanceではない。
 - AgentまたはClientは現在選択されたCapability Contractだけを読み、全Tool Group契約を常時Contextへロードしない。
@@ -83,6 +92,7 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 
 - namespaceはFeature単位の単一階層。
 - `UnityGraphicsMcp` namespace配下の内部型名へ`UnityGraphicsMcp` prefixを重ねない。外部`graphics.*` Tool名は変更しない。
+- UnityAgentの外部Tool名は`agent.*`、namespaceは`UnityAgentMcp`を維持する。
 - enumは`E_UPPER_SNAKE_CASE`。
 - private fieldは`_camelCase`、constは`SCREAMING_SNAKE_CASE`。
 - Editor機能はEditor-only Assemblyへ隔離。
@@ -97,18 +107,20 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 - ルート`Workflows/`は作成しない。GitHub Actionsは`.github/workflows/`、Creator設計は`Design/Creators/`を使用する。
 - `Specs/`は現行の実行可能製品仕様を優先し、将来構想は`Design/`へ隔離する。
 - Package内のEditor実装はAssembly境界を維持したまま責務別サブフォルダへ整理可能とし、Release検証は再帰的にToolを検出する。
-- Editor実装の標準区分は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`とし、Toolごとの過剰なFile分割は行わない。
+- Graphics Editor実装の標準区分は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`とする。
+- 昇格済みControl PlaneはDomain実装と混在させず、専用Feature Folderと専用Contract Testを維持する。
+- Toolごとの過剰なFile分割は行わない。
 - 同一内容の仕様をPackage DocumentationとRepository Specsで二重の正本にしない。Package Documentationは利用者向け、Specsは開発・契約向けとする。
 
 ## Release rules
 
 - `VERSION`、Package、Manifest、Support Matrix、Changelogを一致させる。
 - Release PRではEditor CIとRelease Gateを両方成功させる。
-- `Catalog/mcp-catalog.yaml`のOperational Tool Groupと`Catalog/capability-contracts.yaml`のCapabilityを一致させる。
+- `Catalog/mcp-catalog.yaml`の全Operational Module／Tool Groupと各`capability_contract`を一致させる。
 - Known Issuesと未検証範囲を削除・婉曲化しない。
 - 一時Migration Script／WorkflowをRelease差分へ残さない。
 - 新規ReleaseのTagはRelease Commitへ作成し、公開時点の`main`と同一SHAであることを確認する。
 - 公開済みTagは不変とし、移動、削除、Force更新を行わない。
 - 公開済みTagの再検証・再配布は、現在の`main`ではなくTagが指すCommitをSourceにする。
-- 公開後の`main`更新は許容するが、製品内容を変更する場合はVersionを上げて新しいReleaseを作成する。
+- 公開後の`main`更新は許容するが、製品内容を次に公開する場合はVersionを上げて新しいReleaseを作成する。
 - 既存公開Tagの扱い、Release公開、Version更新は人間の明示承認を必須とする。

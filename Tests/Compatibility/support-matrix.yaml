@@ -1,12 +1,19 @@
-schema_version: "1.0"
+schema_version: "1.1"
 package_version: "1.0.0"
+source_channel: main_post_v1_release_candidate
 
 verification_contract:
-  discovered_mcp_tools: 32
+  discovered_mcp_tools: 42
+  production_graphics_tools: 32
+  production_agent_tools: 10
   minimum_editmode_contracts: 125
   fresh_project_sample_required: true
   canonical_end_to_end_required: true
   major_fault_injection_scene_safety_required: true
+
+operational_modules:
+  unity_graphics_mcp: editor_operational
+  unity_agent_mcp: editor_operational
 
 execution_surface:
   unity_editor: supported
@@ -47,11 +54,28 @@ unity:
       manual_evidence:
         package_install: passed
         script_compile: passed
-        tool_discovery_32: passed
+        v1_graphics_tool_discovery_32: passed
+        graph_engineering_combined_tool_discovery_91: passed
+        unity_agent_included_in_combined_discovery: true
         graphics_inspect_project: passed
         compatibility_buckets: passed
       automated_canary: gameci_image_unavailable
     package_versions_required_for_package_api_decisions: true
+
+unity_agent:
+  source_evidence:
+    graph_modernization_run_52: passed
+    unchanged_agent_source_carry_forward: accepted
+    unity_6000_7_combined_discovery: passed
+  direct_unity_mutation: prohibited
+  operational_delegate_domains:
+    - unity_graphics_mcp
+  non_operational_domain_execution: rejected
+  approval_groups: explicit
+  expected_revision: required_for_compile_and_execution
+  execution_timeout: cooperative_1_to_3600_seconds_default_60
+  cancellation: cooperative_step_boundary
+  automatic_resume_after_reload_or_disconnect: prohibited
 
 pipelines:
   built_in:
@@ -100,3 +124,4 @@ not_verified:
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
   - every_project_specific_apv_baking_set
+  - delivery_unity_agent_exact_42_tool_ci_after_runner_recovery

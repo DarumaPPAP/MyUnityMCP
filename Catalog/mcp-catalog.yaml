@@ -1,4 +1,4 @@
-schema_version: "2.1"
+schema_version: "2.2"
 release_version: "1.0.1"
 capability_contracts: Catalog/capability-contracts.yaml
 
@@ -30,6 +30,25 @@ modules:
       - gameplay logic only
       - player build orchestration only
       - shader source repair only
+
+  unity_agent_mcp:
+    kind: control_plane
+    status: editor_operational
+    manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
+    runtime_catalog: Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpCatalog.json
+    capability_contract: Catalog/unity-agent-capability-contracts.yaml
+    default_tool_group: agent
+    available_tool_groups:
+      - agent
+    use_when:
+      - multiple MCP steps require dependency validation and deterministic ordering
+      - a workflow requires preview, approval orchestration, cancellation, timeout, or execution history
+      - execution must delegate to an operational Domain MCP without direct control-plane mutation
+    do_not_use_when:
+      - a single direct read-only Domain tool is sufficient
+      - the requested Domain is not operational in the current production catalog
+      - the workflow would require bypassing explicit approval or revision checks
+    direct_unity_mutation_allowed: false
 
 selection:
   load_all_tool_schemas: false

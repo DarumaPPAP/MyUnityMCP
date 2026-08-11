@@ -2,6 +2,10 @@
 
 全Toolは`AutoRegister = false`です。`requestId`は追跡用で、多くのToolでは省略可能です。Mutation系ID、Revision、Tokenは直前Responseをそのまま使用します。
 
+Current mainのProduction Tool Surfaceは **42 Tool = 32 Graphics + 10 Agent** です。`v1.0.0` Tagは32 Graphics Toolのimmutable baselineです。
+
+## Graphics Domain
+
 | Group | Tool | Purpose | Side effect |
 |---|---|---|---|
 | Inspection | `graphics.inspect_project` | Project環境、Pipeline、Package、Build TargetをRead-only取得 | なし |
@@ -37,7 +41,28 @@
 | Execution | `graphics.get_error_catalog` | Error CodeとRetry手順を取得 | なし |
 | Execution | `graphics.get_support_matrix` | 実行中PackageのSupport Contractを取得 | なし |
 
+## UnityAgent Control Plane
+
+UnityAgentMCPはUnity APIを直接Mutationしません。Workflowを検証／Compileして、Operational Domain MCPへStep単位で委譲します。Current mainでOperationalなDelegate Domainは`unity_graphics_mcp`です。
+
+| Group | Tool | Purpose | Side effect |
+|---|---|---|---|
+| Agent | `agent.inspect_capabilities` | Domain、Tool Group、実行可否をRead-only取得 | なし |
+| Agent | `agent.validate_workflow` | Step、依存関係、Domain／Tool宣言をRead-only検証 | なし |
+| Agent | `agent.compile_graph` | WorkflowをRevision固定のExecution GraphへCompile | なし |
+| Agent | `agent.preview_execution` | Step、Mutation Group、必要ApprovalをPreview | なし |
+| Agent | `agent.submit_approval` | 必要Groupを明示承認し期限付きTokenを発行 | Session内承認状態 |
+| Agent | `agent.start_execution` | Revision／Approvalを再検証して協調Executionを開始 | Domainへ委譲 |
+| Agent | `agent.get_execution_status` | Agent Execution状態とStep Resultを取得 | なし |
+| Agent | `agent.cancel_execution` | Running Executionを安全なStep境界でCancel | 実行制御 |
+| Agent | `agent.get_execution_history` | 永続Agent Execution Historyを取得 | なし |
+| Agent | `agent.get_error_catalog` | Agent Error CodeとRetryabilityを取得 | なし |
+
+AgentのMutationを伴うWorkflowでは、`compile_graph` → `preview_execution` → `submit_approval` → `start_execution`の境界を省略できません。非Operational Domainは`agent.validate_workflow`で拒否されます。
+
 ## Common response
+
+Graphics Domain Responseでは主に次を使用します。
 
 - `status`: Tool結果
 - `sessionId`／`revision`: Editor状態の同一性
@@ -45,5 +70,7 @@
 - `issues`: Domain Finding
 - `error`: Code、Category、Retryability、Retry Action、Remediation
 - `execution`: Execution ID、Trace ID、Duration、Progress
+
+Agent Responseでは`success`、`errorCode`、`message`、Graph／Execution ID、Step Resultを返します。
 
 Parameterの正確なSchemaはBridgeが公開するMCP Tool Schemaを正本とします。
