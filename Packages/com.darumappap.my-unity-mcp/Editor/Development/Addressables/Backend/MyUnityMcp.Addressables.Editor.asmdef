@@ -1,20 +1,22 @@
 {
-  "name": "MyUnityMcp.Editor.Tests",
+  "name": "MyUnityMcp.Addressables.Editor",
   "references": [
     "MyUnityMcp.Editor",
-    "MCPForUnity.Editor"
+    "Unity.Addressables",
+    "Unity.Addressables.Editor"
   ],
   "includePlatforms": [
     "Editor"
   ],
   "excludePlatforms": [],
-  "allowUnsafeCode": false,
   "overrideReferences": true,
   "precompiledReferences": [
     "Newtonsoft.Json.dll"
   ],
-  "autoReferenced": false,
-  "defineConstraints": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "MYUNITYMCP_ADDRESSABLES"
+  ],
   "versionDefines": [
     {
       "name": "com.unity.addressables",
@@ -22,8 +24,5 @@
       "define": "MYUNITYMCP_ADDRESSABLES"
     }
   ],
-  "noEngineReferences": false,
-  "optionalUnityReferences": [
-    "TestAssemblies"
-  ]
+  "noEngineReferences": false
 }
