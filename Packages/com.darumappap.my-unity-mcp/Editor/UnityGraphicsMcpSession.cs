@@ -185,16 +185,17 @@ namespace UnityGraphicsMcp
 			IncrementRevision();
 		}
 
-		private static Dictionary<int, bool> CaptureSceneDirtyState()
+		private static Dictionary<ulong, bool> CaptureSceneDirtyState()
 		{
-			Dictionary<int, bool> states = new Dictionary<int, bool>();
+			Dictionary<ulong, bool> states = new Dictionary<ulong, bool>();
 
 			for (int index = 0; index < SceneManager.sceneCount; index++)
 			{
 				Scene scene = SceneManager.GetSceneAt(index);
 				if (scene.IsValid())
 				{
-					states[scene.handle] = scene.isDirty;
+					states[UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene)] =
+						scene.isDirty;
 				}
 			}
 
@@ -395,12 +396,12 @@ namespace UnityGraphicsMcp
 
 	public sealed class UnityGraphicsMcpReadOnlyGuard
 	{
-		private readonly Dictionary<int, bool> _sceneDirtyState;
+		private readonly Dictionary<ulong, bool> _sceneDirtyState;
 		private readonly Dictionary<Object, bool> _assetDirtyState;
 		private readonly int _undoGroup;
 
 		internal UnityGraphicsMcpReadOnlyGuard(
-			Dictionary<int, bool> sceneDirtyState,
+			Dictionary<ulong, bool> sceneDirtyState,
 			Dictionary<Object, bool> assetDirtyState,
 			int undoGroup)
 		{
@@ -432,7 +433,9 @@ namespace UnityGraphicsMcp
 				}
 
 				bool beforeDirty;
-				if (!_sceneDirtyState.TryGetValue(scene.handle, out beforeDirty) ||
+				ulong sceneHandle =
+					UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene);
+				if (!_sceneDirtyState.TryGetValue(sceneHandle, out beforeDirty) ||
 					beforeDirty != scene.isDirty)
 				{
 					changedScenes.Add(new Dictionary<string, object>
