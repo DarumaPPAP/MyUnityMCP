@@ -66,6 +66,19 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 
 `UNVERIFIED`、`UNSUPPORTED`、`BACKEND_NOT_IMPLEMENTED`を区別します。
 
+## Unity API compatibility skill
+
+MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity Package依存、Unity support versionへ変更を加える場合は、`skills/myunitymcp-unity-api-compatibility/SKILL.md`を必ず適用します。
+
+- Unity API互換性は`BASE`、`UNITY_6000_4`、`UNITY_6000_5`、`UNITY_6000_7`の4 Bucketで保守する。
+- Unity 6.6専用Patchを追加せず、6.6由来の変更は`UNITY_6000_7`へRoll-upし、実際の適用VersionはRule lifecycleで保持する。
+- 新APIが最低対応Unityでも利用できる場合はVersion Patchへ先送りせずBaseを更新する。
+- 正式情報は`CONFIRMED`、Planned breaking changeは`PLANNED`として分離する。
+- Package APIはEditor Versionだけで判断せず、対象Package Versionも確認する。
+- Compatibility-sensitiveな変更では`Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs`と`UnityApiCompatibilityTests.cs`を同一PRで再評価する。
+- 新しいLegacy Unity API呼び出しを追加しない。必要なLegacy対応はCompatibility boundaryへ隔離する。
+- 新しいPatch Bucketを追加する場合は、Baseまたは既存Roll-upへ吸収できないことを示し、人間の明示承認を得る。
+
 ## C# rules
 
 - namespaceはFeature単位の単一階層。
