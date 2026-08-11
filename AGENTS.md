@@ -75,13 +75,14 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 - 新APIが最低対応Unityでも利用できる場合はVersion Patchへ先送りせずBaseを更新する。
 - 正式情報は`CONFIRMED`、Planned breaking changeは`PLANNED`として分離する。
 - Package APIはEditor Versionだけで判断せず、対象Package Versionも確認する。
-- Compatibility-sensitiveな変更では`Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs`と`UnityApiCompatibilityTests.cs`を同一PRで再評価する。
+- Compatibility-sensitiveな変更では`Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs`と`ApiCompatibilityTests.cs`を同一PRで再評価する。
 - 新しいLegacy Unity API呼び出しを追加しない。必要なLegacy対応はCompatibility boundaryへ隔離する。
 - 新しいPatch Bucketを追加する場合は、Baseまたは既存Roll-upへ吸収できないことを示し、人間の明示承認を得る。
 
 ## C# rules
 
 - namespaceはFeature単位の単一階層。
+- `UnityGraphicsMcp` namespace配下の内部型名へ`UnityGraphicsMcp` prefixを重ねない。外部`graphics.*` Tool名は変更しない。
 - enumは`E_UPPER_SNAKE_CASE`。
 - private fieldは`_camelCase`、constは`SCREAMING_SNAKE_CASE`。
 - Editor機能はEditor-only Assemblyへ隔離。
@@ -96,6 +97,7 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 - ルート`Workflows/`は作成しない。GitHub Actionsは`.github/workflows/`、Creator設計は`Design/Creators/`を使用する。
 - `Specs/`は現行の実行可能製品仕様を優先し、将来構想は`Design/`へ隔離する。
 - Package内のEditor実装はAssembly境界を維持したまま責務別サブフォルダへ整理可能とし、Release検証は再帰的にToolを検出する。
+- Editor実装の標準区分は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`とし、Toolごとの過剰なFile分割は行わない。
 - 同一内容の仕様をPackage DocumentationとRepository Specsで二重の正本にしない。Package Documentationは利用者向け、Specsは開発・契約向けとする。
 
 ## Release rules

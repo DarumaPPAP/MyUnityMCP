@@ -15,7 +15,7 @@ MyUnityMCP v1.0.2-test.2は、`v1.0.2-test.1`をUnity 6.7へ直接導入した�
 - `SceneHandle.implicit operator int/uint` / `int -> SceneHandle`依存を除去
 - Sceneの一時識別をMyUnityMCP Session Tokenへ移行
 - `Object.GetInstanceID()` / `EditorUtility.InstanceIDToObject(int)`依存をSession Tokenへ分離
-- `UnityApiCompatibility.cs` / `UnityApiCompatibilityPackageInspection.cs`等の不足`.meta`を追加
+- `ApiCompatibility.cs` / `PackageInspection.cs`等の不足`.meta`を追加
 - immutable Package内でCompatibility C#が無視され、型が見つからなくなる問題を修正
 - Scene Handleの文字列化で発生したUnity 6.7型不一致を修正
 

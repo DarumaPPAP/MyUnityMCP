@@ -16,7 +16,7 @@ UNITY_6000_5
 UNITY_6000_7  # 6.6変更もここへRoll-up
 ```
 
-実装正本: `Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs`
+実装正本: `Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs`
 
 契約: `Specs/Compatibility/unity-api-compatibility.md`
 
@@ -126,8 +126,8 @@ Unity-version-sensitiveな変更を行ったPRでは、影響が無いと判断�
 
 影響がある場合は同一PRで必ず更新:
 
-- `UnityApiCompatibility.cs`
-- `UnityApiCompatibilityTests.cs`
+- `ApiCompatibility.cs`
+- `ApiCompatibilityTests.cs`
 - 必要なら`Specs/Compatibility/unity-api-compatibility.md`
 - 新しい実機/Editor検証Evidenceがある場合はSkillのKnown verified migrationも更新
 

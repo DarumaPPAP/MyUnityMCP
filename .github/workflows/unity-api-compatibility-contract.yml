@@ -13,45 +13,12 @@ on:
       - skills/myunitymcp-unity-api-compatibility/**
       - AGENTS.md
       - .github/workflows/unity-api-compatibility-contract.yml
-      - Tools/refactor-domain-layout.py
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  domain-layout-migration:
-    if: github.event_name == 'pull_request' && github.head_ref == 'refactor/domain-layout-naming'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout refactor branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Apply one-shot refactor
-        run: python3 Tools/refactor-domain-layout.py
-
-      - name: Verify static contracts before commit
-        run: |
-          python3 Tests/Compatibility/verify-semantic-names.py
-          python3 Tests/Compatibility/verify-unity-api-compatibility.py
-
-      - name: Commit refactor and restore normal CI
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/unity-api-compatibility-contract.yml
-          git rm -f --ignore-unmatch .github/workflows/refactor-domain-layout.yml Tools/refactor-domain-layout.py
-          git add -A
-          git commit -m "Refactor MyUnityMCP internal naming and domain layout"
-          git push origin HEAD:${{ github.head_ref }}
-
   compatibility-contract:
     runs-on: ubuntu-latest
     steps:

@@ -14,7 +14,7 @@ UNITY_6000_5
 UNITY_6000_7  ← Unity 6.6由来の変更もRoll-up
 ```
 
-Source of truthとなる実装は`Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs`です。
+Source of truthとなる実装は`Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs`です。
 
 ## Core policy
 
@@ -92,7 +92,7 @@ MyUnityMCPのC#、asmdef、RendererFeature、Build、UI Toolkit、ECS、XR/AR、
 2. 変更をBaseへ吸収できるか最初に判定する。
 3. Version固有差分だけ既存4 Bucketへ追加する。
 4. 新しいminor version用Bucketを安易に増やさない。
-5. `UnityApiCompatibilityTests.cs`を更新する。
+5. `ApiCompatibilityTests.cs`を更新する。
 6. `Tests/Compatibility/verify-unity-api-compatibility.py`を通す。
 7. `CONFIRMED` / `PLANNED`の根拠を再確認する。
 
