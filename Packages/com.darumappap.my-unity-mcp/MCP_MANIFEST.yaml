@@ -1,7 +1,8 @@
-schema_version: "2.0"
+schema_version: "2.1"
 package_id: com.darumappap.my-unity-mcp
 version: "1.0.0"
-implementation_status: release
+implementation_status: main_release_candidate
+release_baseline: v1.0.0
 verified_level: unity_editor_ci_plus_manual_6000_7
 
 operational_domain:
@@ -11,12 +12,21 @@ operational_domain:
   architecture: ../../Specs/UnityGraphicsMCP/architecture.md
   support_matrix: ../../Tests/Compatibility/support-matrix.yaml
 
+operational_control_plane:
+  id: unity_agent_mcp
+  status: editor_operational
+  runtime_catalog: Editor/Development/Agent/UnityAgentMcpCatalog.json
+  capability_contract: ../../Catalog/unity-agent-capability-contracts.yaml
+  direct_unity_mutation_allowed: false
+  operational_delegate_domains:
+    - unity_graphics_mcp
+
 bridge:
   package: com.coplaydev.unity-mcp
   declared_api_version: "10.1.2"
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
-  discovered_tool_count: 32
+  discovered_tool_count: 42
   tools_enabled_by_default: false
   explicit_activation_required: true
   external_mcp_client_connection_verified: true
@@ -81,6 +91,20 @@ tool_groups:
       - graphics.get_execution_history
       - graphics.get_error_catalog
       - graphics.get_support_matrix
+  agent:
+    mutation: control_plane_only
+    direct_unity_mutation: false
+    tools:
+      - agent.inspect_capabilities
+      - agent.validate_workflow
+      - agent.compile_graph
+      - agent.preview_execution
+      - agent.submit_approval
+      - agent.start_execution
+      - agent.get_execution_status
+      - agent.cancel_execution
+      - agent.get_execution_history
+      - agent.get_error_catalog
 
 safety:
   read_only_prepare: true
@@ -94,17 +118,18 @@ safety:
   automatic_visual_acceptance: prohibited
   human_review_required_for_visual_acceptance: true
   automatic_execution_resume_after_restart: prohibited
+  control_plane_direct_mutation: prohibited
 
 verification:
-  current_evidence: ../../Tests/Compatibility/release-verification.yaml
+  release_baseline_evidence: ../../Tests/Compatibility/release-verification.yaml
+  current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
   historical_evidence_index: ../../Tests/Compatibility/README.md
   unity_editor_compile: required
-  tool_discovery_count: 32
+  tool_discovery_count: 42
   minimum_editmode_contracts: 125
   fresh_project_sample_workflow: required
 
-not_operational_in_v1:
-  - unity_agent_mcp_runtime
+not_operational_current_main:
   - live_creator_runtime
   - movie_creator_runtime
   - unity_cinematic_mcp
