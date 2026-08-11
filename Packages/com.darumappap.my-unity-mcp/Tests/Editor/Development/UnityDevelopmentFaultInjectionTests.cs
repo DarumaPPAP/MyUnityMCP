@@ -21,7 +21,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void RevisionRace_InvalidatesPreparedPlan()
 		{
-			long originalRevision = UnityGraphicsMcpSession.Revision;
+			long originalRevision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityDomainMcpPlanStore.Prepare(
 				"fault.prepare",
 				"fault_domain",
@@ -30,13 +30,13 @@ namespace MyUnityMcp.EditorTests
 				true,
 				new JObject());
 			JObject data = (JObject)prepared.data;
-			UnityGraphicsMcpSession.NotifyMutationApplied();
+			Session.NotifyMutationApplied();
 
 			bool consumed = UnityDomainMcpPlanStore.TryConsume(
 				"fault.apply",
 				"fault_domain",
 				data.Value<string>("planId"),
-				UnityGraphicsMcpSession.Revision,
+				Session.Revision,
 				data.Value<string>("approvalToken"),
 				out _,
 				out UnityDomainMcpResult failure);
@@ -48,7 +48,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void ReloadEquivalentClear_InvalidatesPreparedPlan()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityDomainMcpResult prepared = UnityDomainMcpPlanStore.Prepare(
 				"fault.prepare",
 				"fault_domain",
