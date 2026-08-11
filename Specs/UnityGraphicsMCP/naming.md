@@ -20,3 +20,30 @@ Production code、Editor Test、Workflow、運用中の仕様書およびEvidenc
 - APV Visual Acceptance Tools
 
 Delivery Phaseは、過去のPR、Release Note、Task履歴など履歴を説明する文脈だけで使用できる。
+
+## Internal C# naming
+
+- Root namespaceは`UnityGraphicsMcp`を維持する。
+- `UnityGraphicsMcp` namespace配下の型名へ`UnityGraphicsMcp` prefixを重ねない。
+- 外部MCP Tool名の`graphics.*`は安定契約として変更しない。
+- C#型名・File名の整理を理由にTool名、Request/Response schema、Approval Boundaryを変更しない。
+- MCP Tool wrapperは`InspectProjectTool`のように責務名 + `Tool`で命名する。
+- File名は主責務を表し、Domain実装は原則として主責務単位、Tool wrapperはDomain単位でまとめる。
+
+## Editor layout
+
+```text
+Editor/
+  Core/
+  Compatibility/
+  Inspection/
+  Planning/
+  Mutation/
+  Save/
+  Bake/
+  Capture/
+  Execution/
+  Tools/
+```
+
+Testも同じDomain区分へ寄せる。1 Tool = 1 Fileのような過剰分割は行わない。

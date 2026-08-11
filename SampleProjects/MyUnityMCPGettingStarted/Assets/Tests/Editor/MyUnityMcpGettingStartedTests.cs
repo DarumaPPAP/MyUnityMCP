@@ -33,7 +33,7 @@ namespace MyUnityMcpGettingStarted
 				"Assets/Scenes/MyUnityMcpGettingStarted.unity",
 				OpenSceneMode.Single);
 
-			string[] discoveredToolNames = typeof(GraphicsInspectProjectTool)
+			string[] discoveredToolNames = typeof(InspectProjectTool)
 				.Assembly
 				.GetTypes()
 				.SelectMany(type => type.GetCustomAttributesData())
@@ -49,18 +49,18 @@ namespace MyUnityMcpGettingStarted
 				.ToArray();
 			Assert.That(discoveredToolNames, Is.EquivalentTo(TOOL_NAMES));
 
-			UnityGraphicsMcpToolResult project =
-				UnityGraphicsMcpInspection.InspectProject("sample-project");
+			ToolResult project =
+				Inspection.InspectProject("sample-project");
 			Assert.That(project.IsSuccessful, Is.True, project.summary);
 
-			UnityGraphicsMcpToolResult scene = UnityGraphicsMcpInspection.InspectScene(
+			ToolResult scene = Inspection.InspectScene(
 				"sample-scene", true, 50, null, null, null);
 			Assert.That(scene.IsSuccessful, Is.True, scene.summary);
 			Dictionary<string, object> sceneData = scene.data as Dictionary<string, object>;
 			Assert.That(sceneData, Is.Not.Null);
 			Assert.That(sceneData["snapshotId"] as string, Is.Not.Empty);
 
-			UnityGraphicsMcpToolResult plan = UnityGraphicsMcpInspection.CompileDirection(
+			ToolResult plan = Inspection.CompileDirection(
 				"sample-plan",
 				"被写体が読みやすい安全なGetting Started Scene",
 				new[] { "Main Camera and Directional Light are present" },

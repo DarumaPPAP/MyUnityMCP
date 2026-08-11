@@ -60,13 +60,14 @@ for path in [
 ]:
     json.loads((ROOT/path).read_text(encoding='utf-8'))
 
-source='\n'.join(p.read_text(encoding='utf-8') for p in (ROOT/'Packages/com.darumappap.my-unity-mcp/Editor').glob('*.cs'))
+editor_root=ROOT/'Packages/com.darumappap.my-unity-mcp/Editor'
+source='\n'.join(p.read_text(encoding='utf-8') for p in editor_root.rglob('*.cs'))
 count=len(re.findall(r'\[McpForUnityTool\s*\(',source))
 disabled=len(re.findall(r'AutoRegister\s*=\s*false',source))
 if count != 32: raise SystemExit(f'Expected 32 MCP tools, found {count}')
 if disabled < 32: raise SystemExit(f'Expected every tool to be disabled by default, found {disabled}/32')
 
-active_paths=[ROOT/'README.md',ROOT/'AGENTS.md',ROOT/'Catalog',ROOT/'Workflows',ROOT/'Packages/com.darumappap.my-unity-mcp/Editor',ROOT/'Packages/com.darumappap.my-unity-mcp/Tests/Editor']
+active_paths=[ROOT/'README.md',ROOT/'AGENTS.md',ROOT/'Catalog',ROOT/'Design',ROOT/'Packages/com.darumappap.my-unity-mcp/Editor',ROOT/'Packages/com.darumappap.my-unity-mcp/Tests/Editor']
 for base in active_paths:
     files=[base] if base.is_file() else [p for p in base.rglob('*') if p.is_file() and p.suffix in {'.md','.yaml','.cs'}]
     for path in files:

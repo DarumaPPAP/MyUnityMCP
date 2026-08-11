@@ -45,11 +45,18 @@ cases:
       - approved_plan
       - expected_revision
       - explicit_mutation_permission
-      - diff
+      - exact_diff
       - undo_contract
+      - baseline_revalidation
+    success_evidence:
+      - applied_diff
+      - resulting_revision
+      - undo_record
+      - mutation_validation_result
     must_not:
       - automatic_save
       - automatic_bake
+      - mutate_outside_approved_scope
 
   - id: MYMCP-ROUTE-005
     prompt: "変更でDirtyになったLightingだけBakeして。"
@@ -59,8 +66,14 @@ cases:
     requires:
       - explicit_bake_permission
       - dirty_dependency_set
+      - bake_scope
+    success_evidence:
+      - bake_scope_executed
+      - bake_result_status
+      - remaining_dirty_dependencies
     must_not:
       - unconditional_full_bake
+      - automatic_save_without_permission
 
   - id: MYMCP-ROUTE-006
     prompt: "映画的な8秒の振り返りカットを作るPlanを出して。"
@@ -83,6 +96,72 @@ cases:
       - inspect
       - plan
     must_not_load:
-      - Packages_source
+      - package_source
       - unselected_tool_schemas
       - unrelated_domain_knowledge
+
+  - id: MYMCP-ROUTE-008
+    prompt: "さっき承認して適用したMaterial変更だけ保存して。Bakeはしないで。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - save
+    requires:
+      - explicit_save_permission
+      - known_dirty_assets
+      - current_revision
+    success_evidence:
+      - saved_asset_set
+      - resulting_revision
+      - remaining_dirty_assets
+    must_not:
+      - save_unrelated_assets
+      - automatic_bake
+      - automatic_full_project_save
+
+  - id: MYMCP-ROUTE-009
+    prompt: "変更後のGame ViewをCaptureして。Captureできたら自動的に見た目OKにはしないで。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - capture
+    requires:
+      - capture_target
+      - capture_conditions
+    success_evidence:
+      - capture_artifact
+      - capture_conditions
+      - source_revision
+    must_not:
+      - claim_visual_acceptance
+      - mutate_scene_to_make_capture_pass
+      - replace_runtime_validation_with_screenshot
+
+  - id: MYMCP-ROUTE-010
+    prompt: "Captureと計測結果をAcceptance Criteriaに照らして評価して。足りないEvidenceは足りないまま報告して。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - evaluate
+    requires:
+      - evidence_set
+      - acceptance_criteria
+    success_evidence:
+      - evaluation_findings
+      - passed_failed_unavailable_status
+      - missing_evidence
+    must_not:
+      - infer_missing_evidence
+      - convert_capture_success_into_visual_acceptance
+      - claim_target_device_success_from_editor_only_evidence
+
+  - id: MYMCP-ROUTE-011
+    prompt: "実機検証環境が今ないけど、Editorで通ったから実機もpassed扱いにして。"
+    expected_primary: unity_graphics_mcp
+    expected_tool_groups:
+      - evaluate
+    expected_status: unavailable
+    requires:
+      - evidence_set
+      - acceptance_criteria
+    must_not:
+      - reinterpret_unavailable_as_success
+      - claim_target_device_success_from_editor_only_evidence
+    reason: "Capability-independent validationでは未利用環境をpassedへ昇格しない。"

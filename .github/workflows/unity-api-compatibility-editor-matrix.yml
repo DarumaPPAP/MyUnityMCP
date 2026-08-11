@@ -1,0 +1,200 @@
+name: Unity API Compatibility Editor Matrix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**
+      - TestProjects/MyUnityMCPVerification/**
+      - Specs/Compatibility/**
+      - Tests/Compatibility/**
+      - skills/myunitymcp-unity-api-compatibility/**
+      - AGENTS.md
+      - .github/workflows/unity-api-compatibility-editor-matrix.yml
+  workflow_dispatch: {}
+
+concurrency:
+  group: myunitymcp-api-matrix-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility-editor:
+    name: Unity ${{ matrix.unity_version }} / ${{ matrix.bucket }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - unity_version: 6000.4.12f1
+            bucket: UNITY_6000_4
+            experimental: false
+          - unity_version: 6000.5.5f1
+            bucket: UNITY_6000_5
+            experimental: false
+          - unity_version: 6000.7.0a3
+            bucket: UNITY_6000_7_CANARY
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+
+      - name: Require Unity license secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            exit 0
+          fi
+          if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; then
+            exit 0
+          fi
+          echo "::error::Unity license secrets are incomplete."
+          exit 1
+
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+          docker system prune --all --force || true
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+      - name: Check GameCI editor image
+        id: image
+        env:
+          UNITY_VERSION: ${{ matrix.unity_version }}
+          EXPERIMENTAL: ${{ matrix.experimental }}
+        run: |
+          set -euo pipefail
+          image="unityci/editor:ubuntu-${UNITY_VERSION}-linux-il2cpp-3"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+          if docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$EXPERIMENTAL" = "true" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$image is not published yet. Experimental Unity canary is recorded as unavailable, not failed."
+            exit 0
+          fi
+
+          echo "::error::$image is unavailable for a blocking compatibility lane."
+          exit 1
+
+      - name: Cache Unity Library
+        if: steps.image.outputs.available == 'true'
+        uses: actions/cache@v4
+        with:
+          path: TestProjects/MyUnityMCPVerification/Library
+          key: MyUnityMCP-ApiCompatibility-${{ matrix.unity_version }}-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'TestProjects/MyUnityMCPVerification/Packages/manifest.json') }}
+          restore-keys: |
+            MyUnityMCP-ApiCompatibility-${{ matrix.unity_version }}-
+
+      - name: Run compatibility EditMode tests
+        if: steps.image.outputs.available == 'true'
+        id: tests
+        continue-on-error: true
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: ${{ matrix.unity_version }}
+          testMode: editmode
+          customParameters: -testFilter UnityApiCompatibilityTests
+
+      - name: Verify compile and compatibility contracts
+        if: always() && steps.image.outputs.available == 'true'
+        env:
+          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          UNITY_VERSION: ${{ matrix.unity_version }}
+          PATCH_BUCKET: ${{ matrix.bucket }}
+        run: |
+          set -euo pipefail
+
+          if [ "$TEST_OUTCOME" != "success" ]; then
+            echo "::error::Unity $UNITY_VERSION ($PATCH_BUCKET) test runner outcome was $TEST_OUTCOME."
+            exit 1
+          fi
+
+          editmode_log=$(find "$ARTIFACTS_PATH" -name 'editmode.log' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2- || true)
+          if [ -z "$editmode_log" ]; then
+            echo "::error::Unity $UNITY_VERSION produced no editmode.log."
+            exit 1
+          fi
+
+          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log"; then
+            echo "::error::Unity $UNITY_VERSION C# compilation failed."
+            grep -n -E 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log" | tail -n 120 || true
+            exit 1
+          fi
+
+          results_xml=$(find "$ARTIFACTS_PATH" -name '*.xml' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2- || true)
+          if [ -z "$results_xml" ]; then
+            echo "::error::Unity $UNITY_VERSION produced no NUnit XML."
+            exit 1
+          fi
+
+          python3 - "$results_xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          total = int(root.attrib.get("total", "0"))
+          passed = int(root.attrib.get("passed", "0"))
+          failed = int(root.attrib.get("failed", "0"))
+          skipped = int(root.attrib.get("skipped", "0"))
+          inconclusive = int(root.attrib.get("inconclusive", "0"))
+
+          print(f"Compatibility results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}")
+          if total < 8:
+              raise SystemExit(f"Expected at least 8 compatibility tests, but only {total} ran.")
+          if failed != 0 or skipped != 0 or inconclusive != 0 or passed != total:
+              raise SystemExit(1)
+          PY
+
+      - name: Record unavailable experimental canary
+        if: steps.image.outputs.available == 'false'
+        env:
+          UNITY_VERSION: ${{ matrix.unity_version }}
+          PATCH_BUCKET: ${{ matrix.bucket }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          {
+            echo "## Unity API compatibility canary"
+            echo
+            echo "- Unity: $UNITY_VERSION"
+            echo "- Bucket: $PATCH_BUCKET"
+            echo "- Status: UNVERIFIED_IMAGE_NOT_PUBLISHED"
+            echo "- Expected image: $IMAGE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload compatibility evidence
+        if: always() && steps.image.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyUnityMCP-ApiCompatibility-${{ matrix.unity_version }}
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          if-no-files-found: warn
+          retention-days: 30
