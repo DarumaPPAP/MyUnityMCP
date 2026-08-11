@@ -28,7 +28,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void WorldCreator_CompilesAndExecutesReadOnlyPreflight()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityWorldCreatorRuntime.CompileWorkflow(
 				"現在Sceneの構成とGraphics設定を確認する",
 				null,
