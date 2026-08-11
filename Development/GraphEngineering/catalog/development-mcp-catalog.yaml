@@ -6,65 +6,81 @@ combined_discovery_target_with_graphics: 91
 modules:
   unity_agent_mcp:
     kind: control_plane
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 10
     direct_unity_mutation: false
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent
   unity_profiler_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 8
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Profiler
   unity_build_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 6
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Build
   unity_addressables_mcp:
     kind: optional_domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 6
     required_package: com.unity.addressables
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Addressables
   unity_ui_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 5
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/UI
   unity_animation_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 5
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Animation
   unity_audio_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 5
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Audio
   unity_cinematic_mcp:
     kind: domain
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 5
     approval_required: true
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Cinematic
   world_creator:
     kind: creator
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 3
     direct_unity_mutation: false
   movie_creator:
     kind: creator
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 3
     direct_unity_mutation: false
   live_creator:
     kind: creator
-    status: development_candidate
+    status: release_candidate
+    promotion: ready
     tools: 3
     direct_unity_mutation: false
     unattended_execution: prohibited
+
+promotion_rule:
+  wholesale_graph_to_main: prohibited
+  delivery_branch_from_latest_main: required
+  capability_scoped_only: true
