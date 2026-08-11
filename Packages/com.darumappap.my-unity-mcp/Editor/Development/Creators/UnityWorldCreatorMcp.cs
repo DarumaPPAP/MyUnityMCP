@@ -105,7 +105,7 @@ namespace UnityWorldCreatorMcp
 			{
 				return Error("WORLD-GOAL-MISSING", "visualGoalが必要です。");
 			}
-			if (!expectedRevision.HasValue || expectedRevision.Value != UnityGraphicsMcpSession.Revision)
+			if (!expectedRevision.HasValue || expectedRevision.Value != Session.Revision)
 			{
 				return Error("WORLD-REVISION-STALE", "expectedRevisionが現在のEditor Revisionと一致しません。");
 			}
