@@ -2,6 +2,31 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [Unreleased]
+
+### Added
+
+- UnityAgentMCP Control Planeと10個の`agent.*` Tool
+- Workflow Validation、Dependency Graph Compile、Execution Preview、Approval Orchestration、Cancellation／Timeout／History
+- `Catalog/unity-agent-capability-contracts.yaml`と`Specs/UnityAgentMCP/spec.md`
+
+### Changed
+
+- Current mainのProduction Tool Surfaceを32 Graphics + 10 Agent = 42 Toolへ拡張
+- Release ContractのTool CountをManifest基準へ変更し、将来のCapability昇格で固定値を書き換えない構成へ変更
+- Editor VerificationでGraphics限定Filterを外し、昇格済みCapabilityのContract Testを含める
+- UnityAgentMCPをDesign Only RegistryからOperational Catalogへ昇格
+
+### Verification
+
+- Agent SourceはGraph Engineering Run #52でUnity `6000.0.75f1` / `6000.4.12f1` / `6000.5.5f1`のEditMode ContractをPASS
+- Unity `6000.7.0a2`のGraph Engineering Manual CanaryでPackage Compile／Recognition／Agentを含む91 Tool Discoveryを確認
+- Current Delivery PRのGitHub ActionsはRunner Step開始前失敗が発生しているため、Runner復旧後の42 Tool Production CIを未検証としてSupport Matrixに保持
+
+### Release note
+
+`VERSION`／TagはこのSource Promotionでは変更しません。Version更新とGitHub Release Publicationは人間の明示承認を必要とする別操作です。
+
 ## [1.0.0] - 2026-08-11
 
 ### Added
