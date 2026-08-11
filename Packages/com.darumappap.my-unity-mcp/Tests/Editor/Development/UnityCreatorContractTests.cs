@@ -140,9 +140,9 @@ namespace MyUnityMcp.EditorTests
 		public void Creators_DoNotCallUnityMutationApisDirectly()
 		{
 			string source = string.Join("\n",
-				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/UnityWorldCreatorMcp.cs"),
-				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/UnityMovieCreatorMcp.cs"),
-				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/UnityLiveCreatorMcp.cs"));
+				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/Development/Creators/UnityWorldCreatorMcp.cs"),
+				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/Development/Creators/UnityMovieCreatorMcp.cs"),
+				File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/Development/Creators/UnityLiveCreatorMcp.cs"));
 
 			Assert.That(source, Does.Not.Contain("Undo.RecordObject"));
 			Assert.That(source, Does.Not.Contain("EditorUtility.SetDirty"));
