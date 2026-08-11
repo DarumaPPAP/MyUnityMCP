@@ -149,7 +149,7 @@ namespace UnityDomainMcp
 				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "Planは使用済みです。");
 				return false;
 			}
-			if (plan.ExpectedRevision != currentRevision || currentRevision != UnityGraphicsMcpSession.Revision)
+			if (plan.ExpectedRevision != currentRevision || currentRevision != Session.Revision)
 			{
 				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.STALE_REVISION, "Preview後にEditor Revisionが変更されました。");
 				return false;
@@ -227,7 +227,7 @@ namespace UnityDomainMcp
 				status = status.ToString(),
 				summary = summary,
 				data = data,
-				revision = UnityGraphicsMcpSession.Revision,
+				revision = Session.Revision,
 				success = status == E_DOMAIN_TOOL_STATUS.SUCCESS || status == E_DOMAIN_TOOL_STATUS.PARTIAL
 			};
 		}
@@ -271,7 +271,7 @@ namespace UnityDomainMcp
 			{
 				return Error(tool, E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。");
 			}
-			if (expectedRevision.Value != UnityGraphicsMcpSession.Revision)
+			if (expectedRevision.Value != Session.Revision)
 			{
 				return Error(tool, E_DOMAIN_TOOL_STATUS.STALE_REVISION, "expectedRevisionが現在のEditor Revisionと一致しません。");
 			}
@@ -284,7 +284,7 @@ namespace UnityDomainMcp
 			{
 				EditorUtility.SetDirty(target);
 			}
-			UnityGraphicsMcpSession.NotifyMutationApplied();
+			Session.NotifyMutationApplied();
 		}
 	}
 }
