@@ -1,118 +1,41 @@
 {
-  "schema_version": "1.0",
-  "project_goal_id": "myunitymcp_complete_integrated_product",
-  "project_status": "running",
-  "terminal_goal_satisfied": false,
-  "source_revision": "ad28fcb984ced3daac552610ade1baf3c87dc6c2",
-  "current_node": "phase_01_unity_agent_runtime",
+  "schemaVersion": "2.0",
+  "workingBranch": "refactor/graph-engineering-modernization",
+  "productionBaselineSha": "12add57a3a8be1c7d5d01055c91ea2a60bb782e8",
+  "graphBaselineSha": "f859e22ba06f58acbb4787987d6a373254a2b127",
+  "modernizationStatus": "in_progress",
   "nodes": {
-    "bootstrap_development_harness": {
-      "status": "complete",
-      "attempts": [
-        {
-          "started_at": "2026-08-07T01:20:00+09:00",
-          "source_revision": "312651a34037b27f9125021aec88c28c8dd0951c",
-          "iteration_budget": 5,
-          "kind": "start"
-        }
-      ],
-      "evidence": {
-        "harness_validation": {
-          "path": "state/evidence/bootstrap_development_harness/harness_validation.json",
-          "sha256": "20ca51470d6757052272066c5e56350dca49d1014d14ce6b32ddc818b0150d31",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        },
-        "state_validation": {
-          "path": "state/evidence/bootstrap_development_harness/state_validation.json",
-          "sha256": "cf7fe26fe9493bb9de0a764cfee1c7aa14af0c33414db9643a6453732dc37cea",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        },
-        "completion_gate_negative_test": {
-          "path": "state/evidence/bootstrap_development_harness/completion_gate_negative_test.json",
-          "sha256": "26419ede424416f0d7cf94ff8a19d86ca31a6cc012b46add7feb20df0ce8f9c6",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        }
-      },
-      "completed_at": "2026-08-07T01:33:00+09:00"
-    },
-    "phase_00_release_integrity": {
-      "status": "complete",
-      "attempts": [
-        {
-          "started_at": "2026-08-07T01:24:00+09:00",
-          "source_revision": "312651a34037b27f9125021aec88c28c8dd0951c",
-          "iteration_budget": 7,
-          "kind": "start"
-        }
-      ],
-      "evidence": {
-        "release_policy": {
-          "path": "state/evidence/phase_00_release_integrity/release_policy.json",
-          "sha256": "036a0fdd812d1a728164860e10275ac6d151bdb18114924de984b53d4983ac24",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        },
-        "release_integrity_tests": {
-          "path": "state/evidence/phase_00_release_integrity/release_integrity_tests.json",
-          "sha256": "72a60634f8db8a18828cd750695fd7a2326c46f071f2cd5f95a9c3c0b72ef080",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        },
-        "current_release_resolution": {
-          "path": "state/evidence/phase_00_release_integrity/current_release_resolution.json",
-          "sha256": "84d2e2d5601f1370f247207d6d2df92c08943c6e73265163c609b94a17ce39f6",
-          "recorded_at": "2026-08-07T01:32:00+09:00"
-        }
-      },
-      "completed_at": "2026-08-07T01:35:00+09:00"
-    },
-    "phase_01_unity_agent_runtime": {
-      "status": "running",
-      "attempts": [
-        {
-          "started_at": "2026-08-07T01:36:00+09:00",
-          "source_revision": "94cab7f93592f345d5b23e88f0ad295f8ae3e476",
-          "iteration_budget": 10,
-          "kind": "start"
-        },
-        {
-          "started_at": "2026-08-07T03:34:00+09:00",
-          "source_revision": "0e3b455ddb8af3c646d784a700d7b6844ce4a3a8",
-          "iteration_budget": 5,
-          "kind": "resume"
-        },
-        {
-          "started_at": "2026-08-07T10:29:00+09:00",
-          "source_revision": "ad28fcb984ced3daac552610ade1baf3c87dc6c2",
-          "iteration_budget": 7,
-          "kind": "safety_hardening"
-        }
-      ],
-      "evidence": {},
-      "completed_at": null
-    },
-    "phase_02_world_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_03_profiler_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_04_build_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_05_addressables_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_06_ui_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_07_animation_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_08_audio_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_09_cinematic_mcp": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_10_movie_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_11_live_creator": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "phase_12_production_hardening": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "project_completion_gate": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "human_final_release_approval": {"status":"pending","attempts":[],"evidence":{},"completed_at":null},
-    "project_complete": {"status":"pending","attempts":[],"evidence":{},"completed_at":null}
+    "baseline_capture": "complete",
+    "candidate_quarantine": "complete",
+    "canonical_graphics_replacement": "source_complete",
+    "production_development_separation": "source_complete",
+    "compatibility_registry_inheritance": "source_complete",
+    "candidate_base_modernization": "source_complete",
+    "unity_agent_refactor": "source_complete",
+    "profiler_refactor": "not_verified",
+    "build_refactor": "not_verified",
+    "addressables_refactor": "not_verified",
+    "ui_refactor": "not_verified",
+    "animation_refactor": "not_verified",
+    "audio_refactor": "not_verified",
+    "cinematic_refactor": "not_verified",
+    "world_creator_refactor": "source_complete",
+    "movie_creator_refactor": "not_verified",
+    "live_creator_refactor": "not_verified",
+    "multi_version_editor_matrix": "not_verified",
+    "package_matrix": "not_verified",
+    "external_mcp_e2e": "not_verified",
+    "fresh_project": "not_verified",
+    "fault_injection": "not_verified",
+    "promotion_gate": "blocked"
   },
-  "approvals": {
-    "human_final_release_approval": {
-      "status": "missing",
-      "approved_by": null,
-      "approved_at": null,
-      "scope": null
-    }
-  },
-  "blockers": [],
-  "interruptions": [],
-  "updated_at": "2026-08-07T10:29:00+09:00"
+  "blockers": [
+    "current BASE-modernized HEAD requires fresh Unity Editor evidence",
+    "Unity 6000.7 automated image is not established; manual evidence required",
+    "package-present/package-absent matrix has not been rerun",
+    "External MCP Client E2E has not been rerun",
+    "Fresh Project verification has not been rerun",
+    "human final approval is required"
+  ],
+  "terminalGoalSatisfied": false
 }

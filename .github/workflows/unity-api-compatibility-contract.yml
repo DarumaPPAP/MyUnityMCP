@@ -1,0 +1,36 @@
+name: Unity API Compatibility Contract
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**/*.cs
+      - Packages/com.darumappap.my-unity-mcp/**/*.asmdef
+      - Packages/com.darumappap.my-unity-mcp/package.json
+      - Specs/Compatibility/**
+      - Tests/Compatibility/**
+      - skills/myunitymcp-unity-api-compatibility/**
+      - AGENTS.md
+      - .github/workflows/unity-api-compatibility-contract.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify compatibility source of truth
+        run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
+
+      - name: Verify added Unity API usage
+        if: github.event_name == 'pull_request'
+        run: python3 Tests/Compatibility/verify-unity-api-compatibility.py --diff-base origin/${{ github.base_ref }}

@@ -1,0 +1,47 @@
+schema_version: "1.0"
+canonical_main_sha: 12add57a3a8be1c7d5d01055c91ea2a60bb782e8
+canonical_roots:
+  - Packages/com.darumappap.my-unity-mcp/Editor/Core
+  - Packages/com.darumappap.my-unity-mcp/Editor/Compatibility
+  - Packages/com.darumappap.my-unity-mcp/Editor/Inspection
+  - Packages/com.darumappap.my-unity-mcp/Editor/Planning
+  - Packages/com.darumappap.my-unity-mcp/Editor/Mutation
+  - Packages/com.darumappap.my-unity-mcp/Editor/Save
+  - Packages/com.darumappap.my-unity-mcp/Editor/Bake
+  - Packages/com.darumappap.my-unity-mcp/Editor/Capture
+  - Packages/com.darumappap.my-unity-mcp/Editor/Execution
+  - Packages/com.darumappap.my-unity-mcp/Editor/Tools
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Bake
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Capture
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Compatibility
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Core
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Execution
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Inspection
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Mutation
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Planning
+  - Packages/com.darumappap.my-unity-mcp/Tests/Editor/Save
+  - Specs/UnityGraphicsMCP
+  - Specs/Compatibility
+  - Tests/Compatibility
+  - Tests/Release
+  - skills/myunitymcp-unity-api-compatibility
+
+production_files_locked_to_main:
+  - Catalog/mcp-catalog.yaml
+  - Catalog/capability-catalog.yaml
+  - Catalog/capability-contracts.yaml
+  - Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
+
+development_overlays:
+  - path: Packages/com.darumappap.my-unity-mcp/Editor/Development
+    purpose: rescued candidate runtime
+  - path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development
+    purpose: rescued candidate contract tests
+  - path: Packages/com.darumappap.my-unity-mcp/Editor/MyUnityMcp.Editor.asmdef
+    purpose: optional Addressables package version define for Graph candidates
+    production_promotion: forbidden
+  - path: Packages/com.darumappap.my-unity-mcp/Editor/UnityAgentMcpCatalog.json
+    purpose: temporary path compatibility for rescued Agent runtime
+    production_promotion: forbidden
+
+mechanical_verification: Development/GraphEngineering/scripts/verify_canonical_graphics.py

@@ -1,0 +1,23 @@
+schema_version: "1.0"
+states:
+  allowed:
+    - design_only
+    - development_candidate
+    - editor_compiled
+    - contract_verified
+    - integration_verified
+    - release_candidate
+    - operational
+
+capabilities:
+  unity_agent_mcp: { state: development_candidate, promotion: blocked }
+  unity_profiler_mcp: { state: development_candidate, promotion: blocked }
+  unity_build_mcp: { state: development_candidate, promotion: blocked }
+  unity_addressables_mcp: { state: development_candidate, promotion: blocked }
+  unity_ui_mcp: { state: development_candidate, promotion: blocked }
+  unity_animation_mcp: { state: development_candidate, promotion: blocked }
+  unity_audio_mcp: { state: development_candidate, promotion: blocked }
+  unity_cinematic_mcp: { state: development_candidate, promotion: blocked }
+  world_creator: { state: development_candidate, promotion: blocked }
+  movie_creator: { state: development_candidate, promotion: blocked }
+  live_creator: { state: development_candidate, promotion: blocked }

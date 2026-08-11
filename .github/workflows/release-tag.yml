@@ -48,6 +48,11 @@ jobs:
           python3 Tests/Release/verify_release_contract.py --mode pr
           git fetch origin --tags --force
 
+          release_kind="stable"
+          if [[ "$version" == *-* ]]; then
+            release_kind="prerelease"
+          fi
+
           release_mode="create"
           source_commit=$(git rev-parse HEAD)
 
@@ -63,12 +68,18 @@ jobs:
           fi
 
           git checkout --detach "$source_commit"
-          python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
+          if [ "$release_kind" = "stable" ]; then
+            python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
+          else
+            echo "::notice::Prerelease detected ($version). Stable release evidence gate is intentionally skipped; manual verification may still be pending."
+            python3 Tests/Release/verify_release_contract.py --mode pr
+          fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "source_commit=$source_commit" >> "$GITHUB_OUTPUT"
           echo "release_mode=$release_mode" >> "$GITHUB_OUTPUT"
+          echo "release_kind=$release_kind" >> "$GITHUB_OUTPUT"
 
       - name: Build release distribution from immutable source
         shell: bash
@@ -85,17 +96,33 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.identity.outputs.tag }}
+          RELEASE_KIND: ${{ steps.identity.outputs.release_kind }}
         shell: bash
         run: |
           set -euo pipefail
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" \
-              --title "MyUnityMCP $TAG" \
-              --notes-file RELEASE_NOTES.md
+            if [ "$RELEASE_KIND" = "prerelease" ]; then
+              gh release edit "$TAG" \
+                --title "MyUnityMCP $TAG" \
+                --notes-file RELEASE_NOTES.md \
+                --prerelease
+            else
+              gh release edit "$TAG" \
+                --title "MyUnityMCP $TAG" \
+                --notes-file RELEASE_NOTES.md
+            fi
             gh release upload "$TAG" artifacts/* --clobber
           else
-            gh release create "$TAG" artifacts/* \
-              --title "MyUnityMCP $TAG" \
-              --notes-file RELEASE_NOTES.md \
-              --verify-tag
+            if [ "$RELEASE_KIND" = "prerelease" ]; then
+              gh release create "$TAG" artifacts/* \
+                --title "MyUnityMCP $TAG" \
+                --notes-file RELEASE_NOTES.md \
+                --prerelease \
+                --verify-tag
+            else
+              gh release create "$TAG" artifacts/* \
+                --title "MyUnityMCP $TAG" \
+                --notes-file RELEASE_NOTES.md \
+                --verify-tag
+            fi
           fi

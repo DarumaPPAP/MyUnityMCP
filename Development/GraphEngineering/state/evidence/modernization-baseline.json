@@ -1,0 +1,11 @@
+{
+  "evidence_id": "graph-modernization-baseline",
+  "kind": "source_baseline",
+  "created_at": "2026-08-11T18:00:00+09:00",
+  "main_sha": "12add57a3a8be1c7d5d01055c91ea2a60bb782e8",
+  "graph_sha": "f859e22ba06f58acbb4787987d6a373254a2b127",
+  "canonical_graphics_source": "main",
+  "historical_editor_evidence_reused": false,
+  "verification": "not_verified",
+  "terminal_goal_satisfied": false
+}

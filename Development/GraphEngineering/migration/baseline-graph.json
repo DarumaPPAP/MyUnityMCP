@@ -1,0 +1,18 @@
+{
+  "captured_at": "2026-08-11T18:00:00+09:00",
+  "branch": "feature/graph-engineering-master",
+  "head_sha": "f859e22ba06f58acbb4787987d6a373254a2b127",
+  "merge_base_with_main": "a449f75328e09fc855a74dba1c2b0a29d15cdcbd",
+  "ahead_of_main": 162,
+  "behind_main": 130,
+  "production_graphics_tool_count": 32,
+  "development_candidate_tool_count": 59,
+  "combined_tool_discovery_target": 91,
+  "historical_unity_evidence": {
+    "source_revision": "d92345cd5a2ba341aa4cb7cdf69f6026901d5eee",
+    "unity_version": "6000.0.75f1",
+    "tests_total": 168,
+    "tests_passed": 168,
+    "usable_for_modernized_head": false
+  }
+}

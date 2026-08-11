@@ -1,0 +1,102 @@
+schema_version: "1.0"
+source_branch: feature/graph-engineering-master
+source_sha: f859e22ba06f58acbb4787987d6a373254a2b127
+working_branch: refactor/graph-engineering-modernization
+
+classification:
+  canonical_graphics:
+    action: REPLACE_WITH_MAIN
+    reason: old Graph UnityGraphicsMCP is not repaired; latest main is canonical
+  production_catalog_and_manifest:
+    action: REPLACE_WITH_MAIN
+    reason: development candidates must not be exposed as production capabilities
+  old_phase_oriented_graph_state:
+    action: DELETE
+    reason: product identifiers must not use delivery phase names
+  historical_evidence:
+    action: MOVE
+    reason: historical evidence cannot verify the modernized HEAD
+
+candidates:
+  - id: unity_agent_mcp
+    kind: control_plane
+    tool_count: 10
+    action: REFACTOR
+    source: Editor/Development/Agent
+    priority: 1
+  - id: unity_profiler_mcp
+    kind: domain
+    tool_count: 8
+    action: REFACTOR
+    source: Editor/Development/Profiler
+    priority: 2
+  - id: unity_build_mcp
+    kind: domain
+    tool_count: 6
+    action: REFACTOR
+    source: Editor/Development/Build
+    priority: 3
+  - id: unity_addressables_mcp
+    kind: optional_domain
+    tool_count: 6
+    action: REFACTOR
+    source: Editor/Development/Addressables
+    required_package: com.unity.addressables
+    priority: 4
+  - id: unity_ui_mcp
+    kind: domain
+    tool_count: 5
+    action: REFACTOR
+    source: Editor/Development/UI
+    priority: 5
+  - id: unity_animation_mcp
+    kind: domain
+    tool_count: 5
+    action: REFACTOR
+    source: Editor/Development/Animation
+    priority: 6
+  - id: unity_audio_mcp
+    kind: domain
+    tool_count: 5
+    action: REFACTOR
+    source: Editor/Development/Audio
+    priority: 7
+  - id: unity_cinematic_mcp
+    kind: domain
+    tool_count: 5
+    action: REFACTOR
+    source: Editor/Development/Cinematic
+    priority: 8
+  - id: world_creator
+    kind: creator
+    tool_count: 3
+    action: REFACTOR
+    source: Editor/Development/Creators/UnityWorldCreatorMcp.cs
+    priority: 9
+  - id: movie_creator
+    kind: creator
+    tool_count: 3
+    action: REFACTOR
+    source: Editor/Development/Creators/UnityMovieCreatorMcp.cs
+    priority: 10
+  - id: live_creator
+    kind: creator
+    tool_count: 3
+    action: REFACTOR
+    source: Editor/Development/Creators/UnityLiveCreatorMcp.cs
+    priority: 11
+  - id: security_modes
+    kind: shared_policy
+    action: KEEP
+    source: Editor/Development/Security
+
+migration_blockers:
+  - id: internal_session_rename
+    action: REFACTOR
+    temporary_asset: Editor/Development/Compatibility/SessionMigrationBridge.cs
+    removal_required_before: release_candidate
+  - id: agent_catalog_legacy_path
+    action: MOVE
+    temporary_asset: Editor/UnityAgentMcpCatalog.json
+    canonical_development_copy: Editor/Development/Agent/UnityAgentMcpCatalog.json
+    removal_required_before: release_candidate

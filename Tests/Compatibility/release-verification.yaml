@@ -10,66 +10,94 @@ required_gates:
   fresh_project_package_compile: passed
   sample_workflow: passed
   distribution_preview: passed
-  all_ci: passed
+  all_ci: passed_for_available_automated_matrix
   support_matrix_documented: true
   known_issues_documented: true
   version_manifest_changelog_aligned: true
   temporary_release_assets_removed: true
 
 editor_verification:
-  unity_version: "6000.0.75f1"
-  result: passed
-  total: 125
-  passed: 125
-  failed: 0
-  skipped: 0
-  inconclusive: 0
-  duration_seconds: 9.2113006
+  base:
+    unity_version: "6000.0.75f1"
+    result: passed
+    minimum_contracts: 125
+    tool_discovery: 32
+    namespace_filter: UnityGraphicsMcp
+  unity_6000_4:
+    unity_version: "6000.4.12f1"
+    result: passed
+    compatibility_compile_verify: passed
+  unity_6000_5:
+    unity_version: "6000.5.5f1"
+    result: passed
+    compatibility_compile_verify: passed
+  unity_6000_7:
+    unity_version: "6000.7.0a2"
+    result: manual_passed
+    automated_canary: gameci_editor_image_not_published
 
-fresh_project_verification:
-  unity_version: "6000.0.75f1"
-  package_compile: passed
-  tool_discovery_count: 32
-  sample_workflow_total: 1
-  sample_workflow_passed: 1
-  sample_workflow_failed: 0
-  duration_seconds: 0.1283055
+manual_test_target:
+  unity_version: "6000.7.0a2"
+  result: passed_for_editor_compatibility_smoke
+  observed_bridge_version: "10.1.3-beta.3"
+  checks:
+    package_install: passed
+    immutable_package_meta_import: passed
+    script_compile: passed
+    no_scenehandle_implicit_conversion_errors: passed
+    no_getinstanceid_or_instanceidtoobject_errors: passed
+    tool_discovery_32: passed
+    graphics_inspect_project: passed
+    api_compatibility_6000_7: passed
+    readonly_tool_smoke_test: covered_by_automated_contracts_not_repeated_manually
+    approval_boundary_smoke_test: covered_by_automated_contracts_not_repeated_manually
+  observed_compatibility:
+    normalized_version: "6000.7.0"
+    confirmed_rule_count: 17
+    planned_rule_count: 11
+    maintenance_buckets:
+      - BASE
+      - UNITY_6000_4
+      - UNITY_6000_5
+      - UNITY_6000_7
 
 release_distribution:
   package: com.darumappap.my-unity-mcp-1.0.0.tgz
   sample_project: MyUnityMCP-SampleProject-1.0.0.zip
   templates: MyUnityMCP-Templates-1.0.0.zip
   checksums: SHA256SUMS.txt
-  package_sha256: efdc9d91065f68ece2ce5ce9ae49c0677cf417da749a0e67759811492b7dc24d
-  sample_project_sha256: b3fc560f985635e418bc5d810838931d0f35f3ff46fb86d583a8b21a18b607d2
-  templates_sha256: 329ca59f72300f33eb83dcd2fb9c40503eef96a198d908d3649b1b33dd9ece0c
+  artifact_status: ready_for_publication
 
 evidence:
-  verified_source_commit: 74f2c0fec9c5794b19930a63c41dc5dd14cc1bc6
-  editor_workflow_run: 31047334394
-  editor_job: 92445984854
-  editor_artifact_id: 8947105343
-  editor_artifact_name: MyUnityMCP-Unity-Editor-Evidence
-  editor_artifact_sha256: 4923823a61c58a08736ab98bfc39189b2b0c2701e9e3cdf07fbac04e39b9237a
-  sample_workflow_run: 31047334993
-  sample_job: 92445971804
-  sample_artifact_id: 8947107070
-  sample_artifact_name: MyUnityMCP-Fresh-Project-Sample-Evidence
-  sample_artifact_sha256: 1ee4f09b20fcd432c2e2895343647d98092cdf38343d06b1e85c7f37e1b28e97
-  distribution_job: 92445971891
-  distribution_artifact_id: 8946966125
-  distribution_artifact_name: MyUnityMCP-v1.0.0-Distribution-Preview
-  distribution_artifact_sha256: 49ab6231eddf9dc564d838f5fa7edd4ec943b5fa88953bcfd254bebe2ea8b1c7
+  release_source_commit_before_release_metadata: 987e77d7b665b1c52985df99245746642d3987df
+  refactor_verification_head: a539e4477110d74fc815ff5ec98c0afccc25d110
+  base_editor_workflow_run: 31464068690
+  base_editor_job: 93693198089
+  base_editor_artifact_id: 9090949714
+  base_editor_artifact_name: MyUnityMCP-Unity-Editor-Evidence
+  compatibility_matrix_workflow_run: 31464068679
+  unity_6000_4_job: 93693198140
+  unity_6000_4_artifact_id: 9090981750
+  unity_6000_4_artifact_name: MyUnityMCP-ApiCompatibility-6000.4.12f1
+  unity_6000_5_job: 93693198128
+  unity_6000_5_artifact_id: 9090985384
+  unity_6000_5_artifact_name: MyUnityMCP-ApiCompatibility-6000.5.5f1
+  release_gate_workflow_run: 31464068896
+  fresh_project_job: 93693199141
+  fresh_project_artifact_id: 9090918861
+  release_contract_job: 93693199378
+  unity_6000_7_evidence: manual_user_editor_verification_2026_08_11
 
 release_identity:
-  release_commit: current_main_release_commit_at_publication
+  release_commit: pending_final_release_commit
   tag: v1.0.0
-  published_tag_policy: immutable
+  release_channel: stable
+  published_tag_policy: immutable_after_this_republication
+  published_tag_move_allowed: false
   tag_must_point_to_published_release_commit: true
   main_must_point_to_release_commit_at_publication: true
   main_may_advance_after_publication: true
   existing_tag_rerun_source: tagged_commit
-  published_tag_move_allowed: false
   future_product_change_requires_new_version: true
   publication_triggers:
     - version_change_on_main

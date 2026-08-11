@@ -1,0 +1,44 @@
+schema_version: "1.0"
+source_revision_policy: evidence_must_match_modernized_source
+
+unity_editor:
+  "6000.0":
+    target: 6000.0.75f1
+    expected_scope: [base_compile, canonical_graphics_regression, candidate_core_contracts]
+    status: not_verified
+  "6000.4":
+    target: 6000.4.12f1
+    expected_scope: [entity_id, scene_handle, editor_api]
+    status: not_verified
+  "6000.5":
+    target: 6000.5.5f1
+    expected_scope: [removed_apis, importer, ecs_boundaries]
+    status: not_verified
+  "6000.7":
+    target: 6000.7.0a3
+    maintenance_bucket: UNITY_6000_7
+    includes_rollup: UNITY_6000_6
+    expected_scope: [unity_6000_6_rollup, identity, build, ui, rendergraph, input, ar, netcode]
+    automation: GAMECI_IMAGE_GATE
+    unavailable_image_result: not_verified
+    status: not_verified
+
+packages:
+  addressables:
+    required_by: unity_addressables_mcp
+    absent: not_verified
+    present: not_verified
+  urp: { absent: not_verified, present: not_verified }
+  hdrp: { absent: not_verified, present: not_verified }
+  entities: { absent: not_verified, present: not_verified }
+  input_system: { absent: not_verified, present: not_verified }
+  netcode: { absent: not_verified, present: not_verified }
+  openxr: { absent: not_verified, present: not_verified }
+  xr_management: { absent: not_verified, present: not_verified }
+  ar_packages: { absent: not_verified, present: not_verified }
+
+historical_evidence:
+  graph_6000_0_75f1:
+    source_revision: d92345cd5a2ba341aa4cb7cdf69f6026901d5eee
+    result: 168_of_168_passed
+    current_head_verdict: historical_only

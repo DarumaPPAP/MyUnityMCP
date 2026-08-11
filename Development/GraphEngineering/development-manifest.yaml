@@ -1,0 +1,50 @@
+schema_version: "1.0"
+role: development_integration_lab
+production_source_of_truth:
+  branch: main
+  sha: 12add57a3a8be1c7d5d01055c91ea2a60bb782e8
+rescued_graph_source:
+  branch: feature/graph-engineering-master
+  sha: f859e22ba06f58acbb4787987d6a373254a2b127
+working_branch: refactor/graph-engineering-modernization
+
+production:
+  graphics_tool_count: 32
+  manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
+  catalog: Catalog/mcp-catalog.yaml
+  canonical_graphics_mutation_allowed: false
+
+development:
+  candidate_tool_count: 59
+  combined_discovery_target: 91
+  catalog: Development/GraphEngineering/catalog/development-mcp-catalog.yaml
+  capability_catalog: Development/GraphEngineering/catalog/development-capability-catalog.yaml
+  source_root: Packages/com.darumappap.my-unity-mcp/Editor/Development
+  test_root: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development
+
+compatibility:
+  source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs
+  buckets: [BASE, UNITY_6000_4, UNITY_6000_5, UNITY_6000_7]
+  unity_6000_6_rollup: UNITY_6000_7
+  package_aware: true
+
+safety:
+  explicit_tool_activation: required
+  read_only_prepare: required
+  expected_revision: required
+  approval_token: required
+  one_time_plan: required
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
+  automatic_execution_resume: prohibited
+  control_plane_direct_mutation: prohibited
+  creator_direct_mutation: prohibited
+
+promotion:
+  state: blocked
+  graph_wholesale_merge_to_main: prohibited
+  delivery_branch_required: true
+  terminal_goal_satisfied: false

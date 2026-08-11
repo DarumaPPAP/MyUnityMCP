@@ -1,0 +1,92 @@
+name: Graph Engineering Package Matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      addressablesVersion:
+        description: Exact com.unity.addressables version to verify. Leave empty to record package-present as not_verified.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  addressables-absent:
+    name: Addressables absent compile and contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Assert Addressables is absent
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('TestProjects/MyUnityMCPVerification/Packages/manifest.json').read_text())
+          assert 'com.unity.addressables' not in manifest['dependencies']
+          PY
+      - name: Run EditMode contracts without Addressables
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+
+  addressables-present:
+    name: Addressables present compile and contracts
+    if: ${{ inputs.addressablesVersion != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Add explicitly supplied Addressables version
+        env:
+          ADDRESSABLES_VERSION: ${{ inputs.addressablesVersion }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('TestProjects/MyUnityMCPVerification/Packages/manifest.json')
+          manifest = json.loads(path.read_text())
+          manifest['dependencies']['com.unity.addressables'] = os.environ['ADDRESSABLES_VERSION']
+          path.write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+      - name: Run EditMode contracts with Addressables
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+
+  addressables-present-unverified:
+    name: Addressables present evidence boundary
+    if: ${{ inputs.addressablesVersion == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record missing package version as not verified
+        run: |
+          mkdir -p evidence
+          cat > evidence/addressables-present.json <<'JSON'
+          {
+            "package": "com.unity.addressables",
+            "status": "not_verified",
+            "reason": "required_package_version_not_supplied"
+          }
+          JSON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: graph-modernization-addressables-present-not-verified
+          path: evidence/addressables-present.json

@@ -7,10 +7,29 @@ MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEdi
 - Unity Editor専用
 - Unity `6000.0`以上
 - CI検証環境: Unity `6000.0.75f1`
+- Compatibility CI: Unity `6000.4.12f1` / `6000.5.5f1`
+- Manual Compatibility: Unity `6000.7.0a2`
 - MCP Tool: 32
 - Toolはすべて既定で非公開（`AutoRegister = false`）
 - Mutation、Save、Bakeはそれぞれ別の承認境界
 - Player／実機上でのTool実行は非対応
+
+## Repository Layout
+
+```text
+MyUnityMCP/
+├─ Packages/        # 実行可能なUPM Package
+├─ Catalog/         # 実行可能MCPのCatalog / Capability Contract
+├─ Specs/           # 現行製品の開発・契約仕様
+├─ Tests/           # Release / Compatibility / Routing検証
+├─ TestProjects/    # Unity Editor検証Project
+├─ SampleProjects/  # Standalone Sample Project
+├─ Templates/       # MCP Client / CI / Acceptance Profile配布物
+├─ Design/          # 未実装Control Plane / Domain / Creatorの設計専用資産
+└─ .github/         # GitHub Actions等のRepository automation
+```
+
+Package内Editor実装は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`へ責務別に整理しています。`UnityGraphicsMcp` namespaceを維持しつつ、内部型へ同prefixを重ねません。
 
 ## Quick Start
 
@@ -54,6 +73,7 @@ Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
 
 ## Distribution
 
+- Git Tag: `v1.0.0`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
 - Package Sample: `Samples~/Getting Started`
 - Standalone Sample Project: `SampleProjects/MyUnityMCPGettingStarted`
@@ -79,7 +99,7 @@ Release Gateは次を検証します。
 
 ## Design-only assets
 
-`UnityAgentMCP`、`LiveCreator`、`MovieCreator`、Graphics以外のDomain MCPは設計資産です。v1.0で実行可能なのは`unity_graphics_mcp`のUnity Editor Tool群であり、未実装Domainを実行可能とは表現しません。
+`Design/`は将来設計専用です。実装済みCapabilityとして数えません。v1.0で実行可能なのは`Catalog/mcp-catalog.yaml`に登録された`unity_graphics_mcp`のUnity Editor Tool群です。
 
 ## License
 

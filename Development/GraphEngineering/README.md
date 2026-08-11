@@ -1,74 +1,60 @@
-# MyUnityMCP Graph Engineering Master
+# Graph Engineering Modernization
 
-このDirectoryは、MyUnityMCP Phase 0〜12を実装・検証するための**長期開発環境**です。
-既存のRelease Package、Root `AGENTS.md`、Version、Tag、Release Workflowを置き換えません。
+`Development/GraphEngineering` is the Development Integration Lab for MyUnityMCP.
 
-## Branch role
+## Source of truth
 
-```text
-feature/graph-engineering-master
-```
+- Production baseline: `main` at `12add57a3a8be1c7d5d01055c91ea2a60bb782e8`
+- Rescued Graph source: `feature/graph-engineering-master` at `f859e22ba06f58acbb4787987d6a373254a2b127`
+- Working branch: `refactor/graph-engineering-modernization`
+- Production UnityGraphicsMCP is read-only canonical source. Graph-specific code must not modify canonical Graphics roots.
 
-このBranchには、Graph Engineering環境と実装途中の製品変更を保持します。
-このBranch自体を`main`へ直接Mergeしません。
-
-成果物を`main`へ届ける場合は、最新`main`から`delivery/*`を作り、
-承認済みの成果物だけを移植してPRを作成します。
+## Repository model
 
 ```text
-feature/graph-engineering-master
-    └─ 開発、Graph、State、Evidence、検証
-
-main
-    └─ delivery/<goal>を分岐
-          └─ 成果物だけ移植
-                └─ Pull Request → main
+main (production source of truth)
+  -> Graph Engineering canonical production baseline
+  -> Editor/Development (candidate source overlay)
+  -> Development/GraphEngineering (catalog, manifest, state, evidence, migration data)
+  -> validated capability artifact
+  -> delivery/<capability> from latest main
 ```
 
-詳細は`docs/delivery/artifact-only-pr-policy.md`を参照してください。
+Production Catalog and `MCP_MANIFEST.yaml` remain main-identical. Candidate metadata lives only below this directory.
 
-## Start here
+## Candidate order
 
-1. `MASTER_GOAL.md`
-2. `CODEX_MASTER_PROMPT.md`
-3. `WORKFLOW.md`
-4. `docs/delivery/artifact-only-pr-policy.md`
-5. `graph/implementation-graph.json`
-6. `state/roadmap-state.json`
-7. `scripts/roadmap_harness.py`
-8. `visualize/MyUnityMCP_GraphDashboard.html`
+1. UnityAgentMCP
+2. ProfilerMCP
+3. BuildMCP
+4. AddressablesMCP
+5. UIMCP
+6. AnimationMCP
+7. AudioMCP
+8. CinematicMCP
+9. WorldCreator
+10. MovieCreator
+11. LiveCreator
 
-## Commands
+The priority is compile, architecture, compatibility, safety, and testability before feature expansion.
 
-Repository Rootから実行します。
+## Compatibility
 
-```powershell
-py Development/GraphEngineering/scripts/roadmap_harness.py validate
-py Development/GraphEngineering/scripts/roadmap_harness.py status
-py Development/GraphEngineering/scripts/roadmap_harness.py next
-py Development/GraphEngineering/scripts/roadmap_harness.py viewer
+The canonical compatibility registry is `Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs` from main.
+Maintenance buckets are `BASE`, `UNITY_6000_4`, `UNITY_6000_5`, and `UNITY_6000_7`; 6.6 changes roll into the 6000.7 maintenance bucket.
+
+A temporary internal `SessionMigrationBridge` exists only to keep rescued candidates buildable after the main naming modernization. It is a promotion blocker and must be removed by BASE modernization; it is not a Unity-version patch.
+
+## Verification semantics
+
+Old Graph evidence is historical only. A new HEAD must be verified again. `unavailable`, `not_verified`, `blocked`, and `awaiting_approval` must never be promoted to PASS.
+
+Run locally:
+
+```bash
+python3 Development/GraphEngineering/scripts/verify_canonical_graphics.py
+python3 Development/GraphEngineering/scripts/verify_development_separation.py
+python3 Development/GraphEngineering/scripts/verify_promotion_gate.py
 ```
 
-成果物Branchの混入検査:
-
-```powershell
-py Development/GraphEngineering/scripts/delivery_guard.py `
-  --base main `
-  --head delivery/<goal-or-capability>
-```
-
-## Safety
-
-- Graph Engineering Branchから`main`へ直接PRしない。
-- Delivery Branchは必ず最新`main`から作る。
-- `Development/GraphEngineering/`を成果物PRへ含めない。
-- Merge、Tag、Releaseは明示承認なしに実行しない。
-- Phase完了とProject完了を混同しない。
-- Test未実行・Evidence不足を完了扱いしない。
-- UnityAgentMCPと未実装Domainは、実装・E2E検証前に実行可能と表現しない。
-- Repository固有PolicyはRootの`AGENTS.md`が最優先。
-
-## Terminal goal
-
-Phase 0〜12を実装・検証し、Project Completion Gateを通過し、
-Human Final Release Approvalを得ること。
+The promotion gate is expected to remain blocked until the migration bridge, fresh multi-version Editor verification, package matrix, External MCP E2E, Fresh Project verification, and human approval are complete.
