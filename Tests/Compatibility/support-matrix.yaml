@@ -1,5 +1,5 @@
 schema_version: "1.0"
-package_version: "1.0.2-test.2"
+package_version: "1.0.0"
 
 verification_contract:
   discovered_mcp_tools: 32
@@ -30,19 +30,26 @@ unity:
       rule_status: confirmed
       editor_ci: passed
       verified_version: "6000.4.12f1"
-      evidence_artifact_id: 9089810771
+      evidence_artifact_id: 9090981750
     unity_6000_5:
       rule_status: confirmed
       editor_ci: passed
       verified_version: "6000.5.5f1"
-      evidence_artifact_id: 9089835261
+      evidence_artifact_id: 9090985384
     unity_6000_6:
       patch_bucket: UNITY_6000_7
       rule_status: planned_or_confirmed_per_rule
       editor_ci: not_verified
     unity_6000_7:
       rule_status: planned_or_confirmed_per_rule
-      editor_ci: manual_test_pending
+      editor_ci: manual_passed
+      verified_version: "6000.7.0a2"
+      manual_evidence:
+        package_install: passed
+        script_compile: passed
+        tool_discovery_32: passed
+        graphics_inspect_project: passed
+        compatibility_buckets: passed
       automated_canary: gameci_image_unavailable
     package_versions_required_for_package_api_decisions: true
 
@@ -89,7 +96,6 @@ not_verified:
   - target_device_tool_execution
   - every_unity_6000_patch
   - unity_6000_6_editor_compile_for_new_compatibility_registry
-  - unity_6000_7_editor_compile_for_new_compatibility_registry
   - every_render_pipeline_package_version
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
