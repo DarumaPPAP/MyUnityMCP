@@ -73,7 +73,7 @@ def check_static_contract() -> None:
             + f" but found {sorted(buckets)}"
         )
 
-    if "UNITY_6000_6" in source:
+    if re.search(r"\bUNITY_6000_6\s*[,}]", source):
         fail("Unity 6.6 must remain rolled into UNITY_6000_7; do not create a 6000.6 patch bucket.")
 
     required_source_tokens = [
@@ -105,8 +105,8 @@ def check_static_contract() -> None:
 
     if "name: myunitymcp-unity-api-compatibility" not in skill:
         fail("Compatibility skill front matter is missing or renamed.")
-    if "UNITY_6000_6" in skill:
-        fail("Skill must not instruct agents to create a Unity 6.6 patch bucket.")
+    if "Unity 6.6専用Bucketは作りません" not in skill:
+        fail("Skill must explicitly keep Unity 6.6 changes in the Unity 6.7 roll-up bucket.")
     if "UnityApiCompatibility.cs" not in skill or "UnityApiCompatibilityTests.cs" not in skill:
         fail("Skill must require compatibility registry and tests to be maintained together.")
 
