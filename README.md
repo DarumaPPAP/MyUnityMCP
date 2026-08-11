@@ -78,7 +78,7 @@ Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
 - Acceptance Profile Example: `Templates/AcceptanceProfiles`
 - CI Template: `Templates/CI`
 
-Tag `v1.0.0`のRelease WorkflowはPackage `.tgz`、Sample Project ZIP、Template ZIP、SHA-256一覧を生成します。
+Tag `v1.0.1`のRelease WorkflowはPackage `.tgz`、Sample Project ZIP、Template ZIP、SHA-256一覧を生成します。
 
 ## Verification
 
