@@ -106,9 +106,9 @@ def check_static_contract() -> None:
     required_source_tokens = [
         "UNITY-6000-4-OBJECT-ENTITY-ID",
         "UNITY-6000-4-URP-COMPATIBILITY-MODE",
+        "UNITY-6000-4-SCENE-HANDLE-RAW-DATA",
         "UNITY-6000-5-LEGACY-COMPONENT-REMOVAL",
         "UNITY-6000-5-ENTITIES-FOREACH",
-        "UNITY-6000-7-SCENE-HANDLE-RAW-DATA",
         "UNITY-6000-7-ROLLUP-UXML-FACTORY",
         "UNITY-6000-7-ROLLUP-HIERARCHY-API",
         "UNITY-6000-7-RENDERGRAPH-Y-FLIP",
@@ -125,7 +125,7 @@ def check_static_contract() -> None:
         "Resolve_6000_2_ActivatesEntityIdInside6000_4MaintenanceBucket",
         "Resolve_6000_5_TreatsLegacyComponentShortcutsAsRemoved",
         "Resolve_6000_6_Uses6000_7RollupInsteadOfCreating6000_6Bucket",
-        "Resolve_6000_7_ContainsConfirmedSceneHandleBoundary",
+        "Resolve_6000_4_And_6000_5_TrackConfirmedSceneHandleBoundary",
         "Resolve_6000_7_ExposesPlannedRenderGraphBehaviorChanges",
     ]
     for token in required_test_tokens:
@@ -137,7 +137,7 @@ def check_static_contract() -> None:
         "GetSceneToken",
         "GetObjectToken",
         "ResolveObjectToken",
-        "UNITY_6000_7_OR_NEWER",
+        "UNITY_6000_4_OR_NEWER",
         "scene.handle.GetRawData()",
     ]
     for token in required_identity_tokens:
