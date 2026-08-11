@@ -1,0 +1,113 @@
+name: Graph Engineering Fresh Project
+
+on:
+  pull_request:
+    branches:
+      - feature/graph-engineering-master
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**
+      - SampleProjects/MyUnityMCPGettingStarted/**
+      - .github/workflows/graph-engineering-fresh-project.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-project:
+    name: Fresh project compile, 91 Tool Discovery and read-only inspection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Require Unity license secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
+          if [ -n "$UNITY_SERIAL" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
+          echo "::error::Unity license secrets are incomplete."
+          exit 1
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+          docker system prune --all --force || true
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /opt/hostedtoolcache/CodeQL
+      - uses: actions/cache@v4
+        with:
+          path: SampleProjects/MyUnityMCPGettingStarted/Library
+          key: GraphEngineering-Fresh-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json', 'SampleProjects/MyUnityMCPGettingStarted/Assets/Tests/Editor/GraphEngineeringFreshProjectTests.cs') }}
+      - name: Run Graph fresh-project contract
+        id: tests
+        continue-on-error: true
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: SampleProjects/MyUnityMCPGettingStarted
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+          customParameters: -testFilter GraphEngineeringFreshProjectTests
+      - name: Verify fresh-project result
+        if: always()
+        env:
+          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          set -euo pipefail
+          [ "$TEST_OUTCOME" = success ] || { echo "::error::Fresh Project Unity run failed."; exit 1; }
+          log=$(find "$ARTIFACTS_PATH" -name editmode.log -type f | head -1)
+          [ -n "$log" ] || { echo "::error::No editmode.log"; exit 1; }
+          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log"; then
+            grep -nE 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log" | tail -100
+            exit 1
+          fi
+          xml=$(find "$ARTIFACTS_PATH" -name '*.xml' -type f | head -1)
+          [ -n "$xml" ] || { echo "::error::No NUnit XML result"; exit 1; }
+          python3 - "$xml" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          total = int(root.attrib.get('total', '0'))
+          passed = int(root.attrib.get('passed', '0'))
+          failed = int(root.attrib.get('failed', '0'))
+          skipped = int(root.attrib.get('skipped', '0'))
+          inconclusive = int(root.attrib.get('inconclusive', '0'))
+          print(f'Fresh Project results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}')
+          if total < 1 or passed != total or failed or skipped or inconclusive:
+              raise SystemExit(1)
+          PY
+      - name: Record Fresh Project metadata
+        if: always()
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          mkdir -p evidence
+          cat > evidence/fresh-project.json <<JSON
+          {
+            "node": "fresh_project",
+            "source_revision": "${SOURCE_SHA}",
+            "unity_version": "6000.0.75f1",
+            "expected_custom_tool_count": 91,
+            "read_only_calls": ["graphics.inspect_project", "graphics.inspect_scene"],
+            "test_outcome": "${TEST_OUTCOME}"
+          }
+          JSON
+      - name: Upload Fresh Project evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-modernization-fresh-project
+          path: |
+            ${{ steps.tests.outputs.artifactsPath }}
+            evidence/fresh-project.json
+          if-no-files-found: warn
+          retention-days: 30
