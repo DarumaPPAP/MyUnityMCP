@@ -16,7 +16,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   compatibility-contract:
@@ -34,3 +34,45 @@ jobs:
       - name: Verify added Unity API usage
         if: github.event_name == 'pull_request'
         run: python3 Tests/Compatibility/verify-unity-api-compatibility.py --diff-base origin/${{ github.base_ref }}
+
+  verify-canonical-v1-release:
+    if: github.event_name == 'pull_request' && github.head_ref == 'maintenance/verify-v1-release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification branch
+        uses: actions/checkout@v4
+        with:
+          ref: maintenance/verify-v1-release
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify v1.0.0 release identity and assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags --force
+          main_sha=$(git rev-parse origin/main)
+          tag_sha=$(git rev-parse 'v1.0.0^{commit}')
+          test "$main_sha" = "$tag_sha"
+
+          gh release view v1.0.0 --json tagName,name,isPrerelease,assets > /tmp/release.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/release.json', encoding='utf-8'))
+          assert data['tagName'] == 'v1.0.0'
+          assert data['isPrerelease'] is False
+          names = {asset['name'] for asset in data['assets']}
+          required = {
+              'com.darumappap.my-unity-mcp-1.0.0.tgz',
+              'MyUnityMCP-SampleProject-1.0.0.zip',
+              'MyUnityMCP-Templates-1.0.0.zip',
+              'SHA256SUMS.txt',
+          }
+          missing = required - names
+          assert not missing, f'Missing release assets: {sorted(missing)}'
+          print('Canonical v1.0.0 GitHub Release verified:', sorted(required))
+          PY
+
+          git push origin --delete maintenance/verify-v1-release
