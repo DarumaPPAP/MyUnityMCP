@@ -14,6 +14,11 @@ BLOCKING_PATTERNS = {
     "legacy_uxml": re.compile(r"\b(UxmlFactory|UxmlTraits)\b"),
     "legacy_importer": re.compile(r"\b(isFileScaleUsed|normalImportMode|optimizeMesh)\b"),
     "legacy_entities": re.compile(r"\bEntities\.ForEach\b|\.WithCode\s*\(|\bIAspect\b"),
+    "legacy_graphics_internal_alias": re.compile(
+        r"\b(UnityGraphicsMcpSession|GraphicsInspectProjectTool|GraphicsInspectSceneTool|"
+        r"GraphicsValidateSceneTool|GraphicsGetExecutionHistoryTool|GraphicsGetErrorCatalogTool|"
+        r"GraphicsGetSupportMatrixTool)\b"
+    ),
 }
 
 OBSERVATION_PATTERNS = {
@@ -50,7 +55,7 @@ def main():
         "blocking_findings": blockers,
         "observations": observations,
         "status": "pass" if not blockers else "failed",
-        "note": "UNITY_EDITOR and package versionDefines are allowed. Version-specific Unity API branches belong at the Compatibility boundary."
+        "note": "UNITY_EDITOR and package versionDefines are allowed. Version-specific Unity API branches belong at the Compatibility boundary. Candidate source must use canonical main Graphics internal names directly."
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if not blockers else 1
