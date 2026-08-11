@@ -1,0 +1,38 @@
+schema_version: "1.0"
+module: unity_agent_mcp
+status_values:
+  - passed
+  - failed
+  - unavailable
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  agent:
+    mode: control_plane
+    use_when:
+      - multiple MCP steps require dependency validation and deterministic ordering
+      - a workflow requires preview, explicit approval orchestration, cancellation, timeout, or execution history
+    requires:
+      - explicit_workflow_steps
+      - declared_domain_and_tool_group
+      - current_editor_revision_for_compile_and_execution
+      - operational_domain_delegate
+    must_not:
+      - directly_mutate_unity
+      - execute_non_operational_domain
+      - bypass_required_approval_groups
+      - silently_resume_after_reload_or_disconnect
+      - reinterpret_delegate_failure_as_success
+    success_evidence:
+      - validated_dependency_graph
+      - previewed_execution_scope
+      - delegated_domain_results
+      - terminal_execution_status_or_current_progress
+      - structured_error_when_execution_cannot_continue
