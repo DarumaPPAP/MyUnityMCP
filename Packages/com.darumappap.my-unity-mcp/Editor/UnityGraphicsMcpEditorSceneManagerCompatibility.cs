@@ -25,10 +25,10 @@ namespace UnityGraphicsMcp
 				null,
 				new[] { typeof(Scene) },
 				null);
-		private static readonly HashSet<int> _knownDirtySceneHandles =
-			new HashSet<int>();
-		private static readonly HashSet<int> _loadedSceneHandles =
-			new HashSet<int>();
+		private static readonly HashSet<ulong> _knownDirtySceneHandles =
+			new HashSet<ulong>();
+		private static readonly HashSet<ulong> _loadedSceneHandles =
+			new HashSet<ulong>();
 
 		static EditorSceneManager()
 		{
@@ -79,7 +79,8 @@ namespace UnityGraphicsMcp
 			bool marked = UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
 			if (marked && scene.IsValid())
 			{
-				_knownDirtySceneHandles.Add(scene.handle);
+				_knownDirtySceneHandles.Add(
+					UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene));
 				sceneDirtied?.Invoke(scene);
 			}
 
@@ -107,7 +108,8 @@ namespace UnityGraphicsMcp
 			if (_clearSceneDirtinessMethod != null)
 			{
 				_clearSceneDirtinessMethod.Invoke(null, new object[] { scene });
-				_knownDirtySceneHandles.Remove(scene.handle);
+				_knownDirtySceneHandles.Remove(
+					UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene));
 				return;
 			}
 
@@ -124,7 +126,8 @@ namespace UnityGraphicsMcp
 				EditorUtility.ClearDirty(root);
 			}
 
-			_knownDirtySceneHandles.Remove(scene.handle);
+			_knownDirtySceneHandles.Remove(
+				UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene));
 		}
 
 		private static void PollSceneDirtiness()
@@ -139,17 +142,19 @@ namespace UnityGraphicsMcp
 					continue;
 				}
 
-				_loadedSceneHandles.Add(scene.handle);
+				ulong sceneHandle =
+					UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene);
+				_loadedSceneHandles.Add(sceneHandle);
 				if (scene.isDirty)
 				{
-					if (_knownDirtySceneHandles.Add(scene.handle))
+					if (_knownDirtySceneHandles.Add(sceneHandle))
 					{
 						sceneDirtied?.Invoke(scene);
 					}
 				}
 				else
 				{
-					_knownDirtySceneHandles.Remove(scene.handle);
+					_knownDirtySceneHandles.Remove(sceneHandle);
 				}
 			}
 
@@ -159,7 +164,8 @@ namespace UnityGraphicsMcp
 
 		private static void OnSceneClosed(Scene scene)
 		{
-			_knownDirtySceneHandles.Remove(scene.handle);
+			_knownDirtySceneHandles.Remove(
+				UnityGraphicsMcpIdentityCompatibility.GetSceneHandle(scene));
 		}
 	}
 }
