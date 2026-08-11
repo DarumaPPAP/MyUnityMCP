@@ -76,6 +76,7 @@ Baseへ吸収できない場合だけ次へ分類します。
 - Hierarchy / Project Window callback
 - SerializedProperty EntityId
 - URP Compatibility Mode removal
+- SceneHandleのint/uint暗黙変換。6000.4でwarning開始、6000.5でerror化するため`GetRawData()` / Session Tokenへ先行移行
 
 `Object.GetEntityId()`のように6.4より前から利用できるAPIでも、関連変更をまとめる保守単位として6000.4 Bucketへ置いて構いません。実際の適用開始VersionはRuleのLifecycle fieldで保持します。
 
@@ -108,7 +109,6 @@ Unity 6.6専用Bucketは作りません。
 - RenderGraph Blit destination slice
 - NetcodeConfig
 - 大量Legacy API Error化
-- `SceneHandle` と `int` の暗黙変換廃止
 - `Object.GetInstanceID()` / `EditorUtility.InstanceIDToObject(int)` のError Obsolete化
 
 ### 4. Keep confirmed and planned facts separate
@@ -169,10 +169,10 @@ Unity-version-sensitiveな変更を行ったPRでは、影響が無いと判断�
 
 ## Scene identity rule
 
-Unity 6.7系では`SceneHandle`と`int`の暗黙変換へ依存しません。
+Unity 6.4以降では`SceneHandle`と`int`/`uint`の暗黙変換へ依存しません。
 
 - `Scene.handle`を`int` field / Dictionary keyへ直接代入しない。
-- raw handleが本当に必要なら、対応Versionでは`SceneHandle.GetRawData()`を使用する。
+- Unity 6000.4以降でraw handleが本当に必要なら`SceneHandle.GetRawData()`を使用する。
 - MyUnityMCP内部の一時Scene識別は`UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene)`を優先する。
 - Scene Tokenは同一Editor Session内だけ有効。保存Asset、Release metadata、別Sessionへ永続化しない。
 - Sceneの永続的な識別が必要ならAsset path / GUID等を使用する。
@@ -191,6 +191,15 @@ Git/UPM経由のPackageへAssetを追加するときは、対応する`.meta`を
 `.meta`が無いPackage Assetはimmutable package folderで無視され、型そのものがCompile対象から消える可能性があります。新規Package file追加後は「file本体 + `.meta`」を1セットとしてレビューします。
 
 ## Known verified migrations
+
+### Unity 6000.4 / 6000.5 Editor CI — 2026-08-11
+
+実Editor CIで`SceneHandle`のLifecycle境界を確認しました。
+
+- Unity `6000.4.12f1`: `SceneHandle → uint/int`暗黙変換はCS0618 warning。`GetRawData()`への移行指示。
+- Unity `6000.5.5f1`: 同暗黙変換はCS0619 error。
+- このためRuleは`UNITY_6000_4` Bucketで管理し、`warningFrom=6000.4` / `errorFrom=6000.5`を正本とします。
+- Base実装はUnity 6000.4以降で`GetRawData()`を使用し、内部TransactionはSession Tokenへ隔離します。
 
 ### Unity 6000.7 manual verification — 2026-08-11
 
@@ -225,7 +234,7 @@ Unity Editorが利用可能ならEditMode Testも実行します。
 - Package Version依存をEditor Versionだけで判断していない
 - Package新規Assetに`.meta`が存在する
 - 新規`GetInstanceID()` / `InstanceIDToObject(int)`依存を増やしていない
-- SceneHandleをintへ暗黙変換していない
+- SceneHandleをint/uintへ暗黙変換していない
 
 ## Stop conditions
 
