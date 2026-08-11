@@ -14,7 +14,7 @@
     "unity_agent_refactor": "source_complete",
     "profiler_refactor": "not_verified",
     "build_refactor": "not_verified",
-    "addressables_refactor": "not_verified",
+    "addressables_refactor": "source_complete",
     "ui_refactor": "not_verified",
     "animation_refactor": "not_verified",
     "audio_refactor": "not_verified",
@@ -22,7 +22,7 @@
     "world_creator_refactor": "source_complete",
     "movie_creator_refactor": "not_verified",
     "live_creator_refactor": "not_verified",
-    "multi_version_editor_matrix": "complete",
+    "multi_version_editor_matrix": "not_verified",
     "package_matrix": "not_verified",
     "external_mcp_e2e": "not_verified",
     "fresh_project": "not_verified",
@@ -30,7 +30,9 @@
     "promotion_gate": "blocked"
   },
   "blockers": [
+    "multi-version Editor matrix requires fresh evidence after the Addressables backend source change",
     "package-present/package-absent matrix requires fresh verification",
+    "GitHub Actions jobs are currently failing before runner steps start, so CI evidence cannot be refreshed yet",
     "External MCP Client E2E has not been rerun",
     "Fresh Project verification has not been rerun",
     "human final approval is required"
