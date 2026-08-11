@@ -14,7 +14,7 @@
     "unity_agent_refactor": "source_complete",
     "profiler_refactor": "not_verified",
     "build_refactor": "not_verified",
-    "addressables_refactor": "source_complete",
+    "addressables_refactor": "complete",
     "ui_refactor": "not_verified",
     "animation_refactor": "not_verified",
     "audio_refactor": "not_verified",
@@ -31,7 +31,7 @@
   },
   "blockers": [
     "multi-version Editor matrix requires fresh evidence after the Addressables backend source change",
-    "package-present/package-absent matrix requires fresh verification",
+    "formal GitHub Actions package-present/package-absent matrix on Unity 6000.0.75f1 remains not_verified; human manual package-absent/package-present verification passed",
     "GitHub Actions jobs are currently failing before runner steps start, so CI evidence cannot be refreshed yet",
     "External MCP Client E2E has not been rerun",
     "Fresh Project verification has not been rerun",
