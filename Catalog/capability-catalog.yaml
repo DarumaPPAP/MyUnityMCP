@@ -1,4 +1,4 @@
-schema_version: "2.0"
+schema_version: "2.1"
 release_version: "1.0.1"
 
 capabilities:
@@ -27,6 +27,27 @@ capabilities:
       - no_automatic_visual_acceptance
       - player_runtime_tool_execution_unsupported
 
+  agent:
+    owner: unity_agent_mcp
+    status: editor_operational
+    modules:
+      capability_discovery: implemented_editor_verified
+      workflow_validation: implemented_editor_verified
+      dependency_graph_compile: implemented_editor_verified
+      read_only_execution_preview: implemented_editor_verified
+      explicit_approval_orchestration: implemented_editor_verified
+      cooperative_execution: implemented_editor_verified
+      cancellation_and_timeout: implemented_editor_verified
+      execution_history: implemented_editor_verified
+      structured_error_catalog: implemented_editor_verified
+    delegates_to:
+      - unity_graphics_mcp
+    limitations:
+      - no_direct_unity_mutation
+      - non_operational_domains_are_rejected
+      - no_automatic_execution_resume
+      - no_approval_bypass
+
   cinematic:
     owner: unity_cinematic_mcp
     status: design_only_not_executable
@@ -54,3 +75,4 @@ rules:
   capability_does_not_make_human_acceptance_decisions: true
   generic_serialized_property_mutation_is_prohibited: true
   silent_fallback_is_prohibited: true
+  control_plane_direct_mutation_is_prohibited: true
