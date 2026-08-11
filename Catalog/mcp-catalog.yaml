@@ -31,32 +31,6 @@ modules:
       - player build orchestration only
       - shader source repair only
 
-  unity_agent_mcp:
-    kind: control_plane
-    status: design_only_not_executable
-    specification: Specs/UnityAgentMCP/spec.md
-  unity_cinematic_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_ui_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_addressables_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_animation_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_audio_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_profiler_mcp:
-    kind: domain
-    status: design_only_not_executable
-  unity_build_mcp:
-    kind: domain
-    status: design_only_not_executable
-
 selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
