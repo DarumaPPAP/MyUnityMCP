@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "2.0",
+  "node": "external_mcp_e2e",
+  "status": "manual_verified",
+  "verification_kind": "human_operator_acceptance",
+  "source_revision": "c0c278f21be5cf2100cb10e45f4a7677c69d3d3f",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp/Editor"
+  ],
+  "observed": {
+    "unity_editor_version": "6000.7.0a2",
+    "mcp_transport": "http",
+    "unity_mcp_server_running": true,
+    "unity_session_ui": "Session Active (CG)",
+    "codex_client_configured": true,
+    "http_endpoint": "http://127.0.0.1:8090/mcp",
+    "instance_discovery_count": 0,
+    "graphics_inspect_project_executed": false,
+    "agent_inspect_capabilities_executed": false,
+    "addressables_inspect_executed": false
+  },
+  "technical_result": "instance_discovery_incomplete",
+  "operator_decision": "complete",
+  "operator_note": "Repository owner explicitly accepted the observed Unity/MCP connection state as sufficient and requested this node be treated as complete. This evidence does not claim that instance discovery or the three read-only tool calls technically passed.",
+  "recorded_at_local": "2026-08-12T00:18:00+09:00"
+}
