@@ -1,11 +1,6 @@
-schema_version: "1.0"
+schema_version: "1.1"
 
 modules:
-  unity_agent_mcp:
-    kind: control_plane
-    status: design_only_not_executable
-    specification: Design/UnityAgentMCP/spec.md
-
   unity_cinematic_mcp:
     kind: domain
     status: design_only_not_executable
@@ -34,6 +29,15 @@ modules:
     kind: domain
     status: design_only_not_executable
 
+promoted_modules:
+  unity_agent_mcp:
+    kind: control_plane
+    status: promoted_to_operational_catalog
+    operational_catalog: Catalog/mcp-catalog.yaml
+    specification: Specs/UnityAgentMCP/spec.md
+    historical_design: Design/UnityAgentMCP/spec.md
+
 rules:
   design_entries_are_not_runtime_capabilities: true
   runtime_promotion_requires_package_catalog_tests_and_docs: true
+  promoted_modules_use_operational_catalog_and_specs_as_source_of_truth: true
