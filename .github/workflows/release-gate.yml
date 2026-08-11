@@ -9,6 +9,7 @@ on:
       - CHANGELOG.md
       - RELEASE_NOTES.md
       - Catalog/**
+      - Design/**
       - Packages/com.darumappap.my-unity-mcp/**
       - SampleProjects/MyUnityMCPGettingStarted/**
       - Templates/**
