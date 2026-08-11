@@ -663,7 +663,7 @@ namespace UnityGraphicsMcp
 				{
 					Revision = UnityGraphicsMcpSession.Revision,
 					CameraObjectId = "GlobalObjectId_V1-TestCamera",
-					CameraSceneHandle = SceneManager.GetActiveScene().handle,
+					CameraSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(SceneManager.GetActiveScene()),
 					CameraScenePath = SceneManager.GetActiveScene().path,
 					CameraBaselineDigest = "camera-digest",
 					EvidenceDigest = "apv-visual-acceptance-evidence-digest-" + Guid.NewGuid().ToString("N"),
