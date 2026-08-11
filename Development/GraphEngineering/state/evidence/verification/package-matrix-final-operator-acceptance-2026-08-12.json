@@ -1,0 +1,27 @@
+{
+  "node": "package_matrix",
+  "status": "manual_verified",
+  "source_revision": "d1ff2a9782e54c46136c4ca48e34d493e4af4837",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Addressables",
+    "Packages/com.darumappap.my-unity-mcp/Editor/MyUnityMcp.Editor.asmdef",
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityAddressablesPackageContractTests.cs",
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/MyUnityMcp.Editor.Tests.asmdef"
+  ],
+  "recorded_at": "2026-08-12T00:22:00+09:00",
+  "package_absent": {
+    "editor_compile": "pass",
+    "custom_tool_discovery": "91/91",
+    "behavior": "Addressables frontend remains discoverable and returns structured unsupported behavior when backend is unavailable."
+  },
+  "package_present": {
+    "editor_compile": "pass",
+    "addressables_inspect_package_installed": true,
+    "addressables_inspect_backend_compiled": true
+  },
+  "acceptance": "Human operator accepted the manual package-present/package-absent verification for Graph integration because GitHub Actions jobs were failing before runner steps started.",
+  "limitations": [
+    "The formal Unity 6000.0.75f1 + Addressables 2.7.6 GitHub Actions lane could not be refreshed due runner-side failure.",
+    "This evidence verifies optional-package architecture behavior in the manually tested Unity environment rather than claiming that exact CI matrix combination executed."
+  ]
+}
