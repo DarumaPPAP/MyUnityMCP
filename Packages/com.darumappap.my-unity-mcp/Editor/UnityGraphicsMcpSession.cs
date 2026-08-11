@@ -201,9 +201,9 @@ namespace UnityGraphicsMcp
 			return states;
 		}
 
-		private static Dictionary<int, bool> CaptureAssetDirtyState()
+		private static Dictionary<Object, bool> CaptureAssetDirtyState()
 		{
-			Dictionary<int, bool> states = new Dictionary<int, bool>();
+			Dictionary<Object, bool> states = new Dictionary<Object, bool>();
 			Object[] loadedObjects = Resources.FindObjectsOfTypeAll<Object>();
 
 			foreach (Object target in loadedObjects)
@@ -213,7 +213,7 @@ namespace UnityGraphicsMcp
 					continue;
 				}
 
-				states[target.GetInstanceID()] = EditorUtility.IsDirty(target);
+				states[target] = EditorUtility.IsDirty(target);
 			}
 
 			return states;
@@ -396,12 +396,12 @@ namespace UnityGraphicsMcp
 	public sealed class UnityGraphicsMcpReadOnlyGuard
 	{
 		private readonly Dictionary<int, bool> _sceneDirtyState;
-		private readonly Dictionary<int, bool> _assetDirtyState;
+		private readonly Dictionary<Object, bool> _assetDirtyState;
 		private readonly int _undoGroup;
 
 		internal UnityGraphicsMcpReadOnlyGuard(
 			Dictionary<int, bool> sceneDirtyState,
-			Dictionary<int, bool> assetDirtyState,
+			Dictionary<Object, bool> assetDirtyState,
 			int undoGroup)
 		{
 			_sceneDirtyState = sceneDirtyState;
@@ -454,8 +454,7 @@ namespace UnityGraphicsMcp
 
 				bool afterDirty = EditorUtility.IsDirty(target);
 				bool beforeDirty;
-				bool existedBefore =
-					_assetDirtyState.TryGetValue(target.GetInstanceID(), out beforeDirty);
+				bool existedBefore = _assetDirtyState.TryGetValue(target, out beforeDirty);
 
 				if ((existedBefore && beforeDirty != afterDirty) ||
 					(!existedBefore && afterDirty))

@@ -64,6 +64,13 @@ namespace UnityGraphicsMcp
 			}
 
 			detectedProject["renderPipeline"] = pipeline;
+			string unityVersion = detectedProject.ContainsKey("unityVersion")
+				? detectedProject["unityVersion"] as string ?? Application.unityVersion
+				: Application.unityVersion;
+			detectedProject["apiCompatibility"] =
+				UnityApiCompatibility.BuildProjectSummary(unityVersion);
+			detectedProject["apiCompatibilityPackages"] =
+				UnityApiCompatibilityPackageInspection.Inspect();
 
 			Dictionary<string, object> requestedTarget = new Dictionary<string, object>
 			{
@@ -85,6 +92,7 @@ namespace UnityGraphicsMcp
 			Dictionary<string, object> capabilities = new Dictionary<string, object>
 			{
 				{ "projectEnvironmentInspection", E_MCP_CAPABILITY_STATUS.AVAILABLE.ToString() },
+				{ "unityApiCompatibility", E_MCP_CAPABILITY_STATUS.AVAILABLE.ToString() },
 				{ "sceneCoreInspection", E_MCP_CAPABILITY_STATUS.AVAILABLE.ToString() },
 				{ "graphicsValidation", E_MCP_CAPABILITY_STATUS.AVAILABLE.ToString() },
 				{ "rendererFeatureInspection", ResolveRendererFeatureCapability(pipelineKind) },

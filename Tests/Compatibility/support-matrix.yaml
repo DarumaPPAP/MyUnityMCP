@@ -17,6 +17,29 @@ unity:
   minimum_version: "6000.0"
   ci_verified_version: "6000.0.75f1"
   all_6000_patches_verified: false
+  api_compatibility:
+    source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs
+    maintenance_skill: skills/myunitymcp-unity-api-compatibility/SKILL.md
+    maintenance_buckets:
+      - BASE
+      - UNITY_6000_4
+      - UNITY_6000_5
+      - UNITY_6000_7
+    base_policy: modernize_when_replacement_is_available_without_waiting_for_deprecation
+    unity_6000_4:
+      rule_status: confirmed
+      editor_ci: not_verified
+    unity_6000_5:
+      rule_status: confirmed
+      editor_ci: not_verified
+    unity_6000_6:
+      patch_bucket: UNITY_6000_7
+      rule_status: planned_or_confirmed_per_rule
+      editor_ci: not_verified
+    unity_6000_7:
+      rule_status: planned
+      editor_ci: not_verified
+    package_versions_required_for_package_api_decisions: true
 
 pipelines:
   built_in:
@@ -60,6 +83,10 @@ not_verified:
   - player_runtime_tool_execution
   - target_device_tool_execution
   - every_unity_6000_patch
+  - unity_6000_4_editor_compile_for_new_compatibility_registry
+  - unity_6000_5_editor_compile_for_new_compatibility_registry
+  - unity_6000_6_editor_compile_for_new_compatibility_registry
+  - unity_6000_7_editor_compile_for_new_compatibility_registry
   - every_render_pipeline_package_version
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
