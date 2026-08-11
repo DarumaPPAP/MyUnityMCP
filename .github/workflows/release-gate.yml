@@ -56,7 +56,7 @@ jobs:
           retention-days: 14
 
   fresh-project:
-    name: Fresh project compile, 32 Tool Discovery and Sample Workflow
+    name: Fresh project compile, Production Tool Discovery and Sample Workflow
     runs-on: ubuntu-latest
     permissions:
       contents: read
