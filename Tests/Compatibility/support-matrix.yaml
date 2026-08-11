@@ -18,7 +18,7 @@ unity:
   ci_verified_version: "6000.0.75f1"
   all_6000_patches_verified: false
   api_compatibility:
-    source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs
+    source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs
     maintenance_skill: skills/myunitymcp-unity-api-compatibility/SKILL.md
     maintenance_buckets:
       - BASE

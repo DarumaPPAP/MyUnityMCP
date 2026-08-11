@@ -10,9 +10,9 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PACKAGE_ROOT = ROOT / "Packages/com.darumappap.my-unity-mcp"
-COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/UnityApiCompatibility.cs"
-COMPATIBILITY_TESTS = PACKAGE_ROOT / "Tests/Editor/UnityApiCompatibilityTests.cs"
-IDENTITY_COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/UnityGraphicsMcpIdentityCompatibility.cs"
+COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/Compatibility/ApiCompatibility.cs"
+COMPATIBILITY_TESTS = PACKAGE_ROOT / "Tests/Editor/Compatibility/ApiCompatibilityTests.cs"
+IDENTITY_COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/Compatibility/IdentityCompatibility.cs"
 SKILL = ROOT / "skills/myunitymcp-unity-api-compatibility/SKILL.md"
 SPEC = ROOT / "Specs/Compatibility/unity-api-compatibility.md"
 AGENTS = ROOT / "AGENTS.md"
@@ -41,7 +41,7 @@ REQUIRED_PACKAGE_META_PAIRS = [
     PACKAGE_ROOT / "README.md",
     PACKAGE_ROOT / "LICENSE.md",
     COMPATIBILITY_CS,
-    PACKAGE_ROOT / "Editor/UnityApiCompatibilityPackageInspection.cs",
+    PACKAGE_ROOT / "Editor/Compatibility/PackageInspection.cs",
     IDENTITY_COMPATIBILITY_CS,
     COMPATIBILITY_TESTS,
 ]
@@ -151,7 +151,7 @@ def check_static_contract() -> None:
         fail("Compatibility skill front matter is missing or renamed.")
     if "Unity 6.6専用Bucketは作りません" not in skill:
         fail("Skill must explicitly keep Unity 6.6 changes in the Unity 6.7 roll-up bucket.")
-    if "UnityApiCompatibility.cs" not in skill or "UnityApiCompatibilityTests.cs" not in skill:
+    if "ApiCompatibility.cs" not in skill or "ApiCompatibilityTests.cs" not in skill:
         fail("Skill must require compatibility registry and tests to be maintained together.")
     if "Immutable package asset rule" not in skill or "Scene identity rule" not in skill:
         fail("Skill must preserve the Unity 6.7 SceneHandle and package .meta lessons.")
@@ -200,7 +200,7 @@ def check_diff_contract(base: str) -> None:
     compatibility_path = COMPATIBILITY_CS.relative_to(ROOT).as_posix()
     tests_path = COMPATIBILITY_TESTS.relative_to(ROOT).as_posix()
     if compatibility_path in files and tests_path not in files:
-        fail("UnityApiCompatibility.cs changed without UnityApiCompatibilityTests.cs in the same change.")
+        fail("ApiCompatibility.cs changed without ApiCompatibilityTests.cs in the same change.")
 
     current_file = None
     violations: list[str] = []
