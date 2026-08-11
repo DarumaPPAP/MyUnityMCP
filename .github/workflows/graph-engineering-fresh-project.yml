@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: graph-fresh-project-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fresh-project:
     name: Fresh project compile, 91 Tool Discovery and read-only inspection
