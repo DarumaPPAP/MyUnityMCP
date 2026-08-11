@@ -1,7 +1,7 @@
 # Support Matrix
 
 Contract Version: `1.0`  
-Package Version: `1.0.0`
+Package Version: `1.0.1`
 
 ## Environment
 
