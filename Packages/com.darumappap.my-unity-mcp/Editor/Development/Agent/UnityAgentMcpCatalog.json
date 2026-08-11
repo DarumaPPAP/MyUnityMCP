@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 2,
+  "domains": [
+    {
+      "domainId": "unity_graphics_mcp",
+      "status": "editor_operational",
+      "toolGroups": ["inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"],
+      "tools": [
+        "graphics.inspect_project",
+        "graphics.inspect_scene",
+        "graphics.validate_scene",
+        "graphics.compile_direction",
+        "graphics.preview_plan",
+        "graphics.prepare_light_plan",
+        "graphics.prepare_environment_plan",
+        "graphics.prepare_save_plan",
+        "graphics.prepare_bake_plan",
+        "graphics.prepare_apv_bake_plan",
+        "graphics.prepare_acceptance_profile",
+        "graphics.apply_plan",
+        "graphics.undo_last_transaction",
+        "graphics.apply_environment_plan",
+        "graphics.undo_last_environment_transaction",
+        "graphics.apply_save_plan",
+        "graphics.bake_dependencies",
+        "graphics.start_apv_bake",
+        "graphics.get_apv_bake_status",
+        "graphics.cancel_apv_bake",
+        "graphics.capture_evaluation",
+        "graphics.capture_evidence",
+        "graphics.refine_direction",
+        "graphics.submit_visual_review",
+        "graphics.refine_from_visual_review",
+        "graphics.evaluate_capture",
+        "graphics.refine_from_evaluation",
+        "graphics.get_execution_status",
+        "graphics.cancel_execution",
+        "graphics.get_execution_history",
+        "graphics.get_error_catalog",
+        "graphics.get_support_matrix"
+      ],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_profiler_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["profiler"],
+      "tools": ["profiler.inspect_environment", "profiler.inspect_counters", "profiler.prepare_capture", "profiler.start_capture", "profiler.get_capture_status", "profiler.cancel_capture", "profiler.summarize_capture", "profiler.compare_baseline"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_build_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["build"],
+      "tools": ["build.inspect_environment", "build.prepare_player", "build.start_player", "build.get_history", "build.cancel_player", "build.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_addressables_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["addressables"],
+      "tools": ["addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.prepare_content_build", "addressables.build_content", "addressables.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_ui_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["ui"],
+      "tools": ["ui.inspect", "ui.validate", "ui.prepare_rect_transform", "ui.apply_rect_transform", "ui.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_animation_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["animation"],
+      "tools": ["animation.inspect", "animation.validate", "animation.prepare_parameter", "animation.apply_parameter", "animation.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_audio_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["audio"],
+      "tools": ["audio.inspect", "audio.validate", "audio.prepare_source", "audio.apply_source", "audio.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "domainId": "unity_cinematic_mcp",
+      "status": "implementation_in_progress_unverified",
+      "toolGroups": ["cinematic"],
+      "tools": ["cinematic.inspect", "cinematic.validate", "cinematic.prepare_director", "cinematic.apply_director", "cinematic.get_support_matrix"],
+      "directUnityMutationAllowed": false
+    }
+  ],
+  "creators": [
+    {
+      "creatorId": "world_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["world.compile_workflow", "world.start_preflight", "world.create_review_handoff"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "creatorId": "movie_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["movie.compile_production", "movie.preview_production", "movie.create_review_handoff"],
+      "directUnityMutationAllowed": false
+    },
+    {
+      "creatorId": "live_creator",
+      "status": "implementation_in_progress_unverified",
+      "tools": ["live.compile_show", "live.preview_show", "live.create_operator_handoff"],
+      "directUnityMutationAllowed": false
+    }
+  ]
+}
