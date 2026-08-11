@@ -330,11 +330,11 @@ namespace UnityGraphicsMcp
 					continue;
 				}
 
-				materialIds.Add(material.GetInstanceID());
+				materialIds.Add(UnityGraphicsMcpIdentityCompatibility.GetObjectToken(material));
 				Shader shader = material.shader;
 				if (shader != null)
 				{
-					shaderIds.Add(shader.GetInstanceID());
+					shaderIds.Add(UnityGraphicsMcpIdentityCompatibility.GetObjectToken(shader));
 				}
 
 				string stability;

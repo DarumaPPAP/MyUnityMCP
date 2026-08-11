@@ -150,6 +150,15 @@ namespace UnityGraphicsMcp
 					"6000.0", null, null, "6000.4", null,
 					E_UNITY_API_SOURCE_STATUS.CONFIRMED,
 					"6000.4以降ではCompatibility Modeの存在確認へFallbackしません。"),
+				CreateRule(
+					"UNITY-6000-4-SCENE-HANDLE-RAW-DATA",
+					E_UNITY_API_PATCH_BUCKET.UNITY_6000_4,
+					"Core",
+					"SceneHandleとint/uintの暗黙変換",
+					"SceneHandle.GetRawData() / SceneHandle.FromRawData(ulong)、またはMyUnityMCP Session Token",
+					"6000.4", "6000.4", "6000.5", null, null,
+					E_UNITY_API_SOURCE_STATUS.CONFIRMED,
+					"6000.4.12f1でCS0618 warning、6000.5.5f1でCS0619 errorをEditor CI実測。6.7 manual testでもerrorを確認。"),
 
 				// Unity 6.5 maintenance bucket.
 				CreateRule(

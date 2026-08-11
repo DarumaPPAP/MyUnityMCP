@@ -787,7 +787,7 @@ namespace UnityGraphicsMcp
 				{
 					Revision = UnityGraphicsMcpSession.Revision,
 					CameraObjectId = GlobalObjectId.GetGlobalObjectIdSlow(camera).ToString(),
-					CameraSceneHandle = camera.gameObject.scene.handle,
+					CameraSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(camera.gameObject.scene),
 					CameraScenePath = camera.gameObject.scene.path,
 					CameraBaselineDigest = "camera-digest",
 					EvidenceDigest = "hardening-evidence-" + Guid.NewGuid().ToString("N"),

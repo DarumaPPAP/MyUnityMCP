@@ -452,7 +452,7 @@ namespace UnityGraphicsMcp
 			}
 
 			stability = "SESSION_ONLY";
-			return "instance:" + target.GetInstanceID();
+			return "instance:" + UnityGraphicsMcpIdentityCompatibility.GetObjectToken(target);
 		}
 
 		private static bool TryReadMember(object target, string memberName, out object value)

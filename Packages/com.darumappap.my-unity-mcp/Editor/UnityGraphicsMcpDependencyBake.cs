@@ -299,9 +299,9 @@ namespace UnityGraphicsMcp
 				dependencySetChanged = true;
 			}
 
-			if (record.SceneHandle != scene.handle)
+			if (record.SceneHandle != UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene))
 			{
-				record.SceneHandle = scene.handle;
+				record.SceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene);
 				dependencySetChanged = true;
 			}
 
@@ -787,7 +787,7 @@ namespace UnityGraphicsMcp
 						"全てのLoaded SceneがAssets配下の保存済みSceneである必要があります。",
 						new Dictionary<string, object>
 						{
-							{ "sceneHandle", scene.handle },
+							{ "sceneHandle", UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene) },
 							{ "scenePath", path }
 						});
 					return false;
@@ -796,7 +796,7 @@ namespace UnityGraphicsMcp
 				scenes.Add(
 					new UnityGraphicsMcpBakeSceneBaseline
 					{
-						SceneHandle = scene.handle,
+						SceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene),
 						ScenePath = scene.path,
 						WasDirty = scene.isDirty,
 						ContentDigest = BuildSaveEvaluationSceneContentDigest(scene)
@@ -970,7 +970,7 @@ namespace UnityGraphicsMcp
 							DependencyId = "BAKE-" + Guid.NewGuid().ToString("N"),
 							Kind = parsedKind.ToString(),
 							ScenePath = scenePath,
-							SceneHandle = scene.handle,
+							SceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene),
 							BaselineDigest = BuildSaveEvaluationSceneContentDigest(scene),
 							Backend = "UNITY_LIGHTMAPPING_SCENE"
 						});
@@ -1024,7 +1024,7 @@ namespace UnityGraphicsMcp
 			{
 				ReflectionProbe probe;
 				if (!TryResolveSaveEvaluationReflectionProbe(objectId, out probe) ||
-					probe.gameObject.scene.handle != scene.handle)
+					UnityGraphicsMcpIdentityCompatibility.GetSceneToken(probe.gameObject.scene) != UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene))
 				{
 					failure = CreateResult(
 						"graphics.prepare_bake_plan",
@@ -1114,7 +1114,7 @@ namespace UnityGraphicsMcp
 						Kind =
 							E_GRAPHICS_BAKE_DEPENDENCY_KIND.REFLECTION_PROBE.ToString(),
 						ScenePath = scene.path,
-						SceneHandle = scene.handle,
+						SceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene),
 						ObjectId = objectId,
 						OutputAssetPath = outputAssetPath,
 						BaselineDigest =
@@ -1469,7 +1469,7 @@ namespace UnityGraphicsMcp
 			StringBuilder builder = new StringBuilder();
 			builder.Append(
 				GlobalObjectId.GetGlobalObjectIdSlow(probe).ToString()).Append('|');
-			builder.Append(probe.gameObject.scene.handle).Append('|');
+			builder.Append(UnityGraphicsMcpIdentityCompatibility.GetSceneToken(probe.gameObject.scene)).Append('|');
 			builder.Append(probe.gameObject.scene.path).Append('|');
 			builder.Append(outputAssetPath).Append('|');
 			builder.Append(EditorJsonUtility.ToJson(probe, false));

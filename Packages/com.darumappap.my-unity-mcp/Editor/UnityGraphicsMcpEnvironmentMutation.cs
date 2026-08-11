@@ -395,7 +395,7 @@ namespace UnityGraphicsMcp
 						Dictionary<string, object> after = CaptureEnvironmentState(component, operation.ComponentKind);
 						targets.Add(new UnityGraphicsMcpEnvironmentTransactionTarget
 						{
-							InstanceId = component.GetInstanceID(),
+							InstanceId = UnityGraphicsMcpIdentityCompatibility.GetObjectToken(component),
 							ComponentKind = operation.ComponentKind,
 							AfterDigest = HashEnvironmentDictionary(after)
 						});
@@ -590,8 +590,8 @@ namespace UnityGraphicsMcp
 				Operation = operation,
 				ComponentKind = kind,
 				TargetObjectId = create ? null : input.targetObjectId,
-				TargetInstanceId = create ? 0 : target.GetInstanceID(),
-				TargetSceneHandle = targetScene.handle,
+				TargetInstanceId = create ? 0 : UnityGraphicsMcpIdentityCompatibility.GetObjectToken(target),
+				TargetSceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(targetScene),
 				TargetScenePath = targetScene.path,
 				RequestedValues = values,
 				BaselinePreview = create ? null : CaptureEnvironmentState((Component)target, kind)
@@ -754,7 +754,7 @@ namespace UnityGraphicsMcp
 				}
 				else
 				{
-					Component component = EditorUtility.InstanceIDToObject(operation.TargetInstanceId) as Component;
+					Component component = UnityGraphicsMcpIdentityCompatibility.ResolveObjectToken(operation.TargetInstanceId) as Component;
 					if (component == null ||
 						!IsExpectedEnvironmentComponent(component, operation.ComponentKind) ||
 						!string.Equals(operation.BaselineDigest, HashEnvironmentDictionary(CaptureEnvironmentState(component, operation.ComponentKind)), StringComparison.Ordinal))
@@ -785,7 +785,7 @@ namespace UnityGraphicsMcp
 			}
 			else
 			{
-				component = EditorUtility.InstanceIDToObject(operation.TargetInstanceId) as Component;
+				component = UnityGraphicsMcpIdentityCompatibility.ResolveObjectToken(operation.TargetInstanceId) as Component;
 				if (component == null)
 				{
 					throw new InvalidOperationException("更新対象Componentが失われました。");
@@ -936,7 +936,7 @@ namespace UnityGraphicsMcp
 		{
 			foreach (UnityGraphicsMcpEnvironmentTransactionTarget target in transaction.Targets)
 			{
-				Component component = EditorUtility.InstanceIDToObject(target.InstanceId) as Component;
+				Component component = UnityGraphicsMcpIdentityCompatibility.ResolveObjectToken(target.InstanceId) as Component;
 				if (component == null || !IsExpectedEnvironmentComponent(component, target.ComponentKind)) return false;
 				if (!string.Equals(target.AfterDigest, HashEnvironmentDictionary(CaptureEnvironmentState(component, target.ComponentKind)), StringComparison.Ordinal)) return false;
 			}
@@ -975,7 +975,7 @@ namespace UnityGraphicsMcp
 
 		private static string BuildEnvironmentCreateBaselineDigest(Scene scene, string kind)
 		{
-			return UnityGraphicsMcpEnvironmentMutationSession.HashText(scene.handle + "|" + scene.path + "|" + scene.rootCount + "|" + kind);
+			return UnityGraphicsMcpEnvironmentMutationSession.HashText(UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene) + "|" + scene.path + "|" + scene.rootCount + "|" + kind);
 		}
 
 		private static string HashEnvironmentDictionary(Dictionary<string, object> values)
@@ -1032,7 +1032,7 @@ namespace UnityGraphicsMcp
 			for (int index = 0; index < SceneManager.sceneCount; index++)
 			{
 				Scene candidate = SceneManager.GetSceneAt(index);
-				if (candidate.IsValid() && candidate.handle == handle)
+				if (candidate.IsValid() && UnityGraphicsMcpIdentityCompatibility.GetSceneToken(candidate) == handle)
 				{
 					scene = candidate;
 					return true;

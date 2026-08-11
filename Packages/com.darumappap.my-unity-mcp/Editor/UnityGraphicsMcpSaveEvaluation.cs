@@ -1079,7 +1079,7 @@ namespace UnityGraphicsMcp
 				Scene scene = SceneManager.GetSceneAt(index);
 				if (scene.IsValid())
 				{
-					states[scene.handle] = scene.isDirty;
+					states[UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene)] = scene.isDirty;
 				}
 			}
 			return states;
@@ -1094,7 +1094,7 @@ namespace UnityGraphicsMcp
 				{
 					continue;
 				}
-				states[target.GetInstanceID()] = EditorUtility.IsDirty(target);
+				states[UnityGraphicsMcpIdentityCompatibility.GetObjectToken(target)] = EditorUtility.IsDirty(target);
 			}
 			return states;
 		}
@@ -1122,7 +1122,7 @@ namespace UnityGraphicsMcp
 				Scene scene = SceneManager.GetSceneAt(index);
 				bool beforeDirty;
 				if (scene.IsValid() &&
-					(!sceneDirtyState.TryGetValue(scene.handle, out beforeDirty) ||
+					(!sceneDirtyState.TryGetValue(UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene), out beforeDirty) ||
 					 beforeDirty != scene.isDirty))
 				{
 					changedScenes.Add(new Dictionary<string, object>
@@ -1144,7 +1144,7 @@ namespace UnityGraphicsMcp
 				bool beforeDirty;
 				bool afterDirty = EditorUtility.IsDirty(target);
 				bool existedBefore = assetDirtyState.TryGetValue(
-					target.GetInstanceID(),
+					UnityGraphicsMcpIdentityCompatibility.GetObjectToken(target),
 					out beforeDirty);
 				if ((existedBefore && beforeDirty != afterDirty) ||
 					(!existedBefore && afterDirty))
@@ -1222,7 +1222,7 @@ namespace UnityGraphicsMcp
 		{
 			return new UnityGraphicsMcpSaveSceneBaseline
 			{
-				SceneHandle = scene.handle,
+				SceneHandle = UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene),
 				ScenePath = scene.path,
 				WasDirty = scene.isDirty,
 				ContentDigest = BuildSaveEvaluationSceneContentDigest(scene)
@@ -1244,7 +1244,7 @@ namespace UnityGraphicsMcp
 		private static string BuildSaveEvaluationSceneContentDigest(Scene scene)
 		{
 			StringBuilder builder = new StringBuilder();
-			builder.Append(scene.handle).Append('|');
+			builder.Append(UnityGraphicsMcpIdentityCompatibility.GetSceneToken(scene)).Append('|');
 			builder.Append(scene.path).Append('|');
 			builder.Append(scene.isDirty).Append('|');
 
@@ -1272,7 +1272,7 @@ namespace UnityGraphicsMcp
 					.GetComponents<Component>()
 					.Where(component => component != null)
 					.OrderBy(component => component.GetType().AssemblyQualifiedName)
-					.ThenBy(component => component.GetInstanceID())
+					.ThenBy(component => UnityGraphicsMcpIdentityCompatibility.GetObjectToken(component))
 					.ToArray();
 				foreach (Component component in components)
 				{
@@ -1356,7 +1356,7 @@ namespace UnityGraphicsMcp
 				Scene candidate = SceneManager.GetSceneAt(index);
 				if (candidate.IsValid() &&
 					candidate.isLoaded &&
-					candidate.handle == sceneHandle &&
+					UnityGraphicsMcpIdentityCompatibility.GetSceneToken(candidate) == sceneHandle &&
 					string.Equals(candidate.path, scenePath, StringComparison.Ordinal))
 				{
 					scene = candidate;
