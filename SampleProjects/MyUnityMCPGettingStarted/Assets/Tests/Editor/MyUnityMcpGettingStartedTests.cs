@@ -23,7 +23,11 @@ namespace MyUnityMcpGettingStarted
 			"graphics.prepare_apv_bake_plan", "graphics.start_apv_bake", "graphics.get_apv_bake_status",
 			"graphics.cancel_apv_bake", "graphics.prepare_acceptance_profile", "graphics.evaluate_capture",
 			"graphics.refine_from_evaluation", "graphics.get_execution_status", "graphics.cancel_execution",
-			"graphics.get_execution_history", "graphics.get_error_catalog", "graphics.get_support_matrix"
+			"graphics.get_execution_history", "graphics.get_error_catalog", "graphics.get_support_matrix",
+			"agent.inspect_capabilities", "agent.validate_workflow", "agent.compile_graph",
+			"agent.preview_execution", "agent.submit_approval", "agent.start_execution",
+			"agent.get_execution_status", "agent.cancel_execution", "agent.get_execution_history",
+			"agent.get_error_catalog"
 		};
 
 		[Test]
