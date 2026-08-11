@@ -93,6 +93,7 @@ release_identity:
   tag: v1.0.0
   release_channel: stable
   published_tag_policy: immutable_after_this_republication
+  published_tag_move_allowed: false
   tag_must_point_to_published_release_commit: true
   main_must_point_to_release_commit_at_publication: true
   main_may_advance_after_publication: true
