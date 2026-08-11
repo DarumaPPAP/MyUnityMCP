@@ -9,8 +9,10 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-COMPATIBILITY_CS = ROOT / "Packages/com.darumappap.my-unity-mcp/Editor/UnityApiCompatibility.cs"
-COMPATIBILITY_TESTS = ROOT / "Packages/com.darumappap.my-unity-mcp/Tests/Editor/UnityApiCompatibilityTests.cs"
+PACKAGE_ROOT = ROOT / "Packages/com.darumappap.my-unity-mcp"
+COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/UnityApiCompatibility.cs"
+COMPATIBILITY_TESTS = PACKAGE_ROOT / "Tests/Editor/UnityApiCompatibilityTests.cs"
+IDENTITY_COMPATIBILITY_CS = PACKAGE_ROOT / "Editor/UnityGraphicsMcpIdentityCompatibility.cs"
 SKILL = ROOT / "skills/myunitymcp-unity-api-compatibility/SKILL.md"
 SPEC = ROOT / "Specs/Compatibility/unity-api-compatibility.md"
 AGENTS = ROOT / "AGENTS.md"
@@ -24,6 +26,7 @@ EXPECTED_BUCKETS = {
 
 FORBIDDEN_NEW_LEGACY_PATTERNS = {
     r"\bGetInstanceID\s*\(": "Use EntityId/compatibility identity handling instead of adding new GetInstanceID calls.",
+    r"\bInstanceIDToObject\s*\(": "Use EntityIdToObject or MyUnityMCP session-local identity handling.",
     r"\.renderer\b": "Use GetComponent<Renderer>() or a cached Renderer reference.",
     r"\.camera\b": "Use GetComponent<Camera>() or a cached Camera reference.",
     r"\.audio\b": "Use GetComponent<AudioSource>() or a cached AudioSource reference.",
@@ -32,6 +35,16 @@ FORBIDDEN_NEW_LEGACY_PATTERNS = {
     r"\bUxmlTraits\b": "Use UxmlElement/UxmlAttribute authoring.",
     r"\bURP_COMPATIBILITY_MODE\b": "New URP code must use RenderGraph rather than Compatibility Mode.",
 }
+
+REQUIRED_PACKAGE_META_PAIRS = [
+    PACKAGE_ROOT / "CHANGELOG.md",
+    PACKAGE_ROOT / "README.md",
+    PACKAGE_ROOT / "LICENSE.md",
+    COMPATIBILITY_CS,
+    PACKAGE_ROOT / "Editor/UnityApiCompatibilityPackageInspection.cs",
+    IDENTITY_COMPATIBILITY_CS,
+    COMPATIBILITY_TESTS,
+]
 
 
 def fail(message: str) -> None:
@@ -45,12 +58,26 @@ def read(path: pathlib.Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def check_required_package_meta() -> None:
+    for asset in REQUIRED_PACKAGE_META_PAIRS:
+        read(asset)
+        meta = pathlib.Path(str(asset) + ".meta")
+        if not meta.is_file():
+            fail(
+                "Unity immutable package asset is missing its .meta file: "
+                + str(asset.relative_to(ROOT))
+            )
+
+
 def check_static_contract() -> None:
     source = read(COMPATIBILITY_CS)
     tests = read(COMPATIBILITY_TESTS)
+    identity_source = read(IDENTITY_COMPATIBILITY_CS)
     skill = read(SKILL)
     spec = read(SPEC)
     agents = read(AGENTS)
+
+    check_required_package_meta()
 
     enum_match = re.search(
         r"public enum E_UNITY_API_PATCH_BUCKET\s*\{(?P<body>.*?)\}",
@@ -81,6 +108,7 @@ def check_static_contract() -> None:
         "UNITY-6000-4-URP-COMPATIBILITY-MODE",
         "UNITY-6000-5-LEGACY-COMPONENT-REMOVAL",
         "UNITY-6000-5-ENTITIES-FOREACH",
+        "UNITY-6000-7-SCENE-HANDLE-RAW-DATA",
         "UNITY-6000-7-ROLLUP-UXML-FACTORY",
         "UNITY-6000-7-ROLLUP-HIERARCHY-API",
         "UNITY-6000-7-RENDERGRAPH-Y-FLIP",
@@ -97,11 +125,27 @@ def check_static_contract() -> None:
         "Resolve_6000_2_ActivatesEntityIdInside6000_4MaintenanceBucket",
         "Resolve_6000_5_TreatsLegacyComponentShortcutsAsRemoved",
         "Resolve_6000_6_Uses6000_7RollupInsteadOfCreating6000_6Bucket",
+        "Resolve_6000_7_ContainsConfirmedSceneHandleBoundary",
         "Resolve_6000_7_ExposesPlannedRenderGraphBehaviorChanges",
     ]
     for token in required_test_tokens:
         if token not in tests:
             fail(f"Compatibility tests are missing required coverage: {token}")
+
+    required_identity_tokens = [
+        "GetSceneHandle",
+        "GetSceneToken",
+        "GetObjectToken",
+        "ResolveObjectToken",
+        "UNITY_6000_7_OR_NEWER",
+        "scene.handle.GetRawData()",
+    ]
+    for token in required_identity_tokens:
+        if token not in identity_source:
+            fail(f"Identity compatibility helper is missing required contract token: {token}")
+
+    if "GetInstanceID(" in identity_source or "InstanceIDToObject(" in identity_source:
+        fail("Identity compatibility helper must not reintroduce legacy InstanceID APIs.")
 
     if "name: myunitymcp-unity-api-compatibility" not in skill:
         fail("Compatibility skill front matter is missing or renamed.")
@@ -109,6 +153,8 @@ def check_static_contract() -> None:
         fail("Skill must explicitly keep Unity 6.6 changes in the Unity 6.7 roll-up bucket.")
     if "UnityApiCompatibility.cs" not in skill or "UnityApiCompatibilityTests.cs" not in skill:
         fail("Skill must require compatibility registry and tests to be maintained together.")
+    if "Immutable package asset rule" not in skill or "Scene identity rule" not in skill:
+        fail("Skill must preserve the Unity 6.7 SceneHandle and package .meta lessons.")
 
     if "BASE" not in spec or "UNITY_6000_7" not in spec:
         fail("Compatibility spec no longer documents the Base + 6.4 + 6.5 + 6.7 policy.")
