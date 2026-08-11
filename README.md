@@ -7,6 +7,8 @@ MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEdi
 - Unity Editor専用
 - Unity `6000.0`以上
 - CI検証環境: Unity `6000.0.75f1`
+- Compatibility CI: Unity `6000.4.12f1` / `6000.5.5f1`
+- Manual Compatibility: Unity `6000.7.0a2`
 - MCP Tool: 32
 - Toolはすべて既定で非公開（`AutoRegister = false`）
 - Mutation、Save、Bakeはそれぞれ別の承認境界
@@ -27,7 +29,7 @@ MyUnityMCP/
 └─ .github/         # GitHub Actions等のRepository automation
 ```
 
-`Catalog/`と`Specs/`には現行の実行可能製品を優先して置き、未実装のUnityAgentMCPやCreator Workflowは`Design/`へ隔離します。Creator設計をルート`Workflows/`へ置かず、GitHub Actionsの`.github/workflows/`と明確に区別します。
+Package内Editor実装は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`へ責務別に整理しています。`UnityGraphicsMcp` namespaceを維持しつつ、内部型へ同prefixを重ねません。
 
 ## Quick Start
 
@@ -71,6 +73,7 @@ Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
 
 ## Distribution
 
+- Git Tag: `v1.0.0`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
 - Package Sample: `Samples~/Getting Started`
 - Standalone Sample Project: `SampleProjects/MyUnityMCPGettingStarted`
@@ -78,7 +81,7 @@ Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
 - Acceptance Profile Example: `Templates/AcceptanceProfiles`
 - CI Template: `Templates/CI`
 
-Tag `v1.0.1`のRelease WorkflowはPackage `.tgz`、Sample Project ZIP、Template ZIP、SHA-256一覧を生成します。
+Tag `v1.0.0`のRelease WorkflowはPackage `.tgz`、Sample Project ZIP、Template ZIP、SHA-256一覧を生成します。
 
 ## Verification
 
@@ -96,14 +99,7 @@ Release Gateは次を検証します。
 
 ## Design-only assets
 
-`Design/`は将来設計専用です。
-
-- `Design/module-catalog.yaml`: UnityAgentMCPおよび未実装Domain MCP
-- `Design/UnityAgentMCP/spec.md`: Control Plane設計
-- `Design/Creators/catalog.yaml`: Creator設計Catalog
-- `Design/Creators/`: LiveCreator / MovieCreator Workflow
-
-これらは実装済みCapabilityではありません。v1.0で実行可能なのは`Catalog/mcp-catalog.yaml`に登録された`unity_graphics_mcp`のUnity Editor Tool群です。
+`Design/`は将来設計専用です。実装済みCapabilityとして数えません。v1.0で実行可能なのは`Catalog/mcp-catalog.yaml`に登録された`unity_graphics_mcp`のUnity Editor Tool群です。
 
 ## License
 
