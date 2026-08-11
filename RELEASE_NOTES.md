@@ -1,27 +1,33 @@
-# MyUnityMCP v1.0.0 Release Notes
+# MyUnityMCP v1.0.1 Release Notes
 
-MyUnityMCP v1.0.0は、Unity Editor内のGraphics制作を「個別Toolが動く状態」から「長時間運用で停止・診断・再実行できる状態」へ固定する最初の安定Releaseです。
+MyUnityMCP v1.0.1は、v1.0.0の実行機能・Safety Contractを維持したまま、Repository構造とRelease運用を整理するPatch Releaseです。
 
 ## Highlights
 
-- 32 ToolをInspection、Planning、Mutation、Save、Bake、Capture、Evaluation、Hardeningへ整理
-- Exact Diffと一時Approval Tokenによる承認制Mutation
-- Dirty Dependency Setによる限定Bake
-- COLOR／LINEAR_DEPTH／OBJECT_ID Capture Evidence Bundle
-- Human Reviewと自動Evaluationを分離
-- Execution History、Progress、Timeout、Cancellation、Lifecycle Recovery
-- 新規Unity Project用Getting Started SampleとCI Release Gate
+- 実行可能な製品資産とDesign-only資産を分離
+- UnityAgentMCP、LiveCreator、MovieCreatorなど未実装設計を`Design/`へ集約
+- Operational Catalogを`unity_graphics_mcp`中心に整理
+- Release ContractのTool Discoveryを再帰検索へ変更し、Editorコードの責務別フォルダ化に対応
+- Release GateのDistribution Preview名／ZIP名を`VERSION`から動的生成
+- Package、Manifest、Catalog、Support Matrix、Installation Guideをv1.0.1へ同期
 
-## Compatibility
+## Runtime Compatibility
 
+- MCP Tool: 32（変更なし）
 - Unity Editor `6000.0`以上
-- CI検証: `6000.0.75f1`
-- Built-in／URP／HDRPはCapability単位で対応状況が異なります。
-- Player Runtime、実機上のTool実行は対象外です。
+- CI検証環境: Unity `6000.0.75f1`
+- Mutation／Save／Bakeの承認境界に変更なし
+- Player Runtime／実機上でのTool実行は対象外
 
-## Upgrade
+## Upgrade from v1.0.0
 
-`0.8.0`からはPackage参照を`v1.0.0`へ固定し、Client設定で必要なToolを明示許可してください。旧Plan、Snapshot、Approval Token、Job ID、Capture IDはSessionを跨いで再利用できません。
+Package参照を`v1.0.1`へ更新してください。Tool Schema、Safety Boundary、保存済みProject AssetのMigrationは不要です。
+
+```text
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.1
+```
+
+`v1.0.0` Tagはimmutableのまま保持され、v1.0.1は新しいRelease Commitから発行されます。
 
 ## Known Issues
 
