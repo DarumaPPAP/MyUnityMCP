@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "decision": "approved_for_delivery_promotion",
+  "recorded_at": "2026-08-12T00:22:00+09:00",
+  "source_revision_before_record_commit": "d1ff2a9782e54c46136c4ca48e34d493e4af4837",
+  "scope": "Graph Engineering integration completion and preparation for capability-scoped delivery promotion from latest main",
+  "operator_direction": "Proceed with the remaining finalization work and main-promotion preparation.",
+  "constraints": [
+    "Do not wholesale merge feature/graph-engineering-master into main.",
+    "Promote through delivery/<capability> branches created from latest main.",
+    "Preserve technical limitations in evidence rather than rewriting operator acceptance as automated PASS.",
+    "Canonical Production Graphics roots remain protected."
+  ]
+}
