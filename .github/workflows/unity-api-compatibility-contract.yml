@@ -47,7 +47,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git checkout origin/main -- .github/workflows/unity-api-compatibility-contract.yml
-          git rm --ignore-unmatch .github/workflows/refactor-domain-layout.yml Tools/refactor-domain-layout.py
+          git rm -f --ignore-unmatch .github/workflows/refactor-domain-layout.yml Tools/refactor-domain-layout.py
           git add -A
           git commit -m "Refactor MyUnityMCP internal naming and domain layout"
           git push origin HEAD:${{ github.head_ref }}
