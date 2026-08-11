@@ -1,0 +1,116 @@
+schema_version: "1.0"
+id: movie_creator
+kind: workflow
+status: specified_not_executable
+blocked_by:
+  - unity_agent_mcp_runtime_not_implemented
+  - unity_cinematic_mcp_not_implemented
+
+use_when:
+  - narrative cutscene production
+  - movie sequence production
+  - shot list blocking camera lighting and final capture
+
+required_inputs:
+  - narrative_goal
+  - emotional_intent
+  - actors_or_subjects
+  - expected_duration
+  - visual_reference_when_available
+  - unity_version
+  - render_pipeline
+  - target_platforms
+  - prohibited_changes
+
+required_domains:
+  - unity_graphics_mcp
+  - unity_cinematic_mcp
+
+conditional_domains:
+  character_animation_required:
+    - unity_animation_mcp
+  dialogue_music_or_sound_required:
+    - unity_audio_mcp
+  performance_claim:
+    - unity_profiler_mcp
+
+workflow:
+  - id: narrative_visual_intent
+    owner: unity_agent
+    outputs:
+      - emotional_arc
+      - experiential_subject
+      - camera_language
+      - lighting_hierarchy
+      - color_script
+      - continuity_constraints
+      - disqualifiers
+
+  - id: inspect
+    owner: unity_agent_mcp
+    domains:
+      - unity_graphics_mcp
+      - unity_cinematic_mcp
+    tool_group: inspect
+
+  - id: blocking_and_shot_plan
+    owner: unity_cinematic_mcp
+    tool_group: plan
+    outputs:
+      - shot_list
+      - subject_blocking
+      - lens_and_composition_plan
+      - transition_plan
+
+  - id: visual_direction_plan
+    owner: unity_graphics_mcp
+    tool_group: plan
+    outputs:
+      - lighting_plan
+      - gi_and_reflection_plan
+      - atmosphere_plan
+      - look_transition_plan
+
+  - id: integrated_preview
+    owner: movie_creator
+    outputs:
+      - ordered_domain_plan
+      - continuity_review
+      - cross_domain_conflicts
+      - approval_questions
+
+  - id: mutation
+    owner: unity_agent_mcp
+    tool_group: mutate
+    requires:
+      - approved_integrated_plan
+      - explicit_mutation_permission
+
+  - id: bake
+    owner: unity_graphics_mcp
+    tool_group: bake
+    requires:
+      - explicit_bake_permission
+      - dirty_dependency_set
+
+  - id: capture_and_review
+    owner: movie_creator
+    tool_group: capture
+    outputs:
+      - required_frame_captures
+      - continuity_review
+      - technical_review
+      - human_beauty_review_questions
+
+completion:
+  - shot_sequence_supports_the_emotional_arc
+  - subject_continuity_is_reviewed
+  - lighting_and_camera_have_clear_hierarchy
+  - visual_acceptance_requires_human_review
+
+prohibited:
+  - creator_direct_unity_api_mutation
+  - copying_reference_specific_characters_logos_or_layouts
+  - automatic_save
+  - automatic_full_bake
+  - visual_acceptance_without_human_review
