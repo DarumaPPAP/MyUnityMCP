@@ -93,6 +93,22 @@ namespace UnityGraphicsMcp
 		}
 
 		[Test]
+		public void Resolve_6000_7_ContainsConfirmedSceneHandleBoundary()
+		{
+			Dictionary<string, object> summary =
+				UnityApiCompatibility.BuildProjectSummary("6000.7.0a3");
+			List<Dictionary<string, object>> rules =
+				summary["rules"] as List<Dictionary<string, object>>;
+
+			Assert.That(
+				rules.Any(item =>
+					(string)item["ruleId"] == "UNITY-6000-7-SCENE-HANDLE-RAW-DATA" &&
+					(string)item["state"] == "ERROR" &&
+					(string)item["sourceStatus"] == E_UNITY_API_SOURCE_STATUS.CONFIRMED.ToString()),
+				Is.True);
+		}
+
+		[Test]
 		public void Resolve_6000_7_ExposesPlannedRenderGraphBehaviorChanges()
 		{
 			Dictionary<string, object> summary =
