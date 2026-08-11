@@ -105,7 +105,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void CompilePreviewStart_DelegatesExistingGraphicsInspectionCooperatively()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			string graphId = compiled.Value<string>("graphId");
 			JObject preview = UnityAgentMcpRuntime.Instance.PreviewExecution(graphId);
@@ -125,7 +125,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void CompileGraph_RejectsRevisionThatIsNotCurrentEditorRevision()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 
 			JObject result = UnityAgentMcpRuntime.Instance.CompileGraph(revision + 1, new[] {GraphicsInspectStep()});
 
@@ -136,7 +136,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void StartExecution_RejectsChangedCallerRevision()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
@@ -150,9 +150,9 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void StartExecution_RejectsActualEditorRevisionChangeEvenWithOldCallerValue()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
-			UnityGraphicsMcpSession.NotifyMutationApplied();
+			Session.NotifyMutationApplied();
 
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
@@ -166,9 +166,9 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void PreviewExecution_RejectsGraphAfterEditorRevisionChanges()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
-			UnityGraphicsMcpSession.NotifyMutationApplied();
+			Session.NotifyMutationApplied();
 
 			JObject result = UnityAgentMcpRuntime.Instance.PreviewExecution(compiled.Value<string>("graphId"));
 
@@ -179,7 +179,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void MutationGroup_RequiresApprovalAndStillUsesRegisteredDelegateOnly()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsMutationStep()});
 			string graphId = compiled.Value<string>("graphId");
 
@@ -206,7 +206,7 @@ namespace MyUnityMcp.EditorTests
 		{
 			DateTime now = DateTime.UtcNow;
 			UnityAgentMcpRuntime.UtcNowOverrideForTests = () => now;
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsMutationStep()});
 			string graphId = compiled.Value<string>("graphId");
 			JObject approval = UnityAgentMcpRuntime.Instance.SubmitApproval(
@@ -227,7 +227,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void LaterDelegateFailure_ProducesPartialInsteadOfFalseSuccess()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			UnityAgentMcpStepInput inspect = GraphicsInspectStep("inspect");
 			UnityAgentMcpStepInput mutate = GraphicsMutationStep("mutate", "inspect");
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {inspect, mutate});
@@ -253,7 +253,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void CancelExecution_StopsQueuedExecutionBeforeDelegation()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[]
 			{
 				GraphicsInspectStep("first"),
@@ -279,7 +279,7 @@ namespace MyUnityMcp.EditorTests
 		{
 			DateTime now = DateTime.UtcNow;
 			UnityAgentMcpRuntime.UtcNowOverrideForTests = () => now;
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			JObject started = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
@@ -299,7 +299,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void ClientDisconnect_InterruptsRunningExecution()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			JObject started = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
@@ -316,7 +316,7 @@ namespace MyUnityMcp.EditorTests
 		[Test]
 		public void ExecutionHistory_ContainsCompletedExecution()
 		{
-			long revision = UnityGraphicsMcpSession.Revision;
+			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			JObject started = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
 			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
