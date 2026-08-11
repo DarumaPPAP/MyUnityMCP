@@ -2,6 +2,27 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [Unreleased]
+
+### Added
+
+- UnityAgentMCP Control Planeと10個の`agent.*` Tool
+- Workflow Validation、Graph Compile、Preview、Approval、Execution／Cancel／History Contract
+- UnityAgent Operational SpecとCapability Contract
+
+### Changed
+
+- Current mainのTool Surfaceを32 Graphics + 10 Agent = 42 Toolへ拡張
+- Fresh Project Tool DiscoveryとEditor Contract Gateを昇格済みAgentへ対応
+
+### Verification
+
+- Graph Engineering Run #52でAgent SourceのUnity 6000.0 / 6000.4 / 6000.5 Contractを検証
+- Unity 6000.7.0a2 Manual CanaryでAgentを含むCombined Tool Discoveryを確認
+- Delivery固有42 Tool CIはGitHub Actions RunnerがStep開始前に失敗しているため再検証待ち
+
+`VERSION`／TagはこのSource Promotionでは変更しません。
+
 ## [1.0.0] - 2026-08-11
 
 ### Added
