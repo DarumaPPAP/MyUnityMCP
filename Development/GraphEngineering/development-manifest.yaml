@@ -6,7 +6,7 @@ production_source_of_truth:
 rescued_graph_source:
   branch: feature/graph-engineering-master
   sha: f859e22ba06f58acbb4787987d6a373254a2b127
-working_branch: refactor/graph-engineering-modernization
+integration_branch: feature/graph-engineering-master
 
 production:
   graphics_tool_count: 32
@@ -44,7 +44,9 @@ safety:
   creator_direct_mutation: prohibited
 
 promotion:
-  state: blocked
+  state: ready_for_delivery_promotion
   graph_wholesale_merge_to_main: prohibited
   delivery_branch_required: true
-  terminal_goal_satisfied: false
+  terminal_goal_satisfied: true
+  blockers: []
+  rule: capability_scoped_only
