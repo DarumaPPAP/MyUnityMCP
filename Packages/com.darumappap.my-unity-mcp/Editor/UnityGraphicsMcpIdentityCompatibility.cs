@@ -28,7 +28,7 @@ namespace UnityGraphicsMcp
 
 		public static ulong GetSceneHandle(Scene scene)
 		{
-#if UNITY_6000_7_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
 			return scene.handle.GetRawData();
 #else
 			return unchecked((ulong)(uint)scene.handle);
