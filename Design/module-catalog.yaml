@@ -1,0 +1,39 @@
+schema_version: "1.0"
+
+modules:
+  unity_agent_mcp:
+    kind: control_plane
+    status: design_only_not_executable
+    specification: Design/UnityAgentMCP/spec.md
+
+  unity_cinematic_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_ui_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_addressables_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_animation_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_audio_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_profiler_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+  unity_build_mcp:
+    kind: domain
+    status: design_only_not_executable
+
+rules:
+  design_entries_are_not_runtime_capabilities: true
+  runtime_promotion_requires_package_catalog_tests_and_docs: true

@@ -5,14 +5,14 @@ creators:
   live_creator:
     kind: workflow_design
     status: specified_not_executable
-    workflow: Workflows/LiveCreator.yaml
+    workflow: Design/Creators/LiveCreator.yaml
     blocked_by:
       - unity_agent_mcp_runtime_not_implemented
       - unity_cinematic_mcp_not_implemented
   movie_creator:
     kind: workflow_design
     status: specified_not_executable
-    workflow: Workflows/MovieCreator.yaml
+    workflow: Design/Creators/MovieCreator.yaml
     blocked_by:
       - unity_agent_mcp_runtime_not_implemented
       - unity_cinematic_mcp_not_implemented

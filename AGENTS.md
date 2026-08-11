@@ -2,7 +2,14 @@
 
 ## Repository role
 
-このRepositoryのRelease対象は、Unity Editor向け`unity_graphics_mcp` Package、Tool Schema、Safety Contract、Test、Sample、配布Templateです。UnityAgentMCPとCreator Workflowは設計資産であり、実行可能なControl Planeとして扱いません。
+このRepositoryのRelease対象は、Unity Editor向け`unity_graphics_mcp` Package、Tool Schema、Safety Contract、Test、Sample、配布Templateです。
+
+実行可能な製品資産と将来設計は物理的に分離します。
+
+- 実行可能製品: `Packages/`、`Catalog/`、`Specs/UnityGraphicsMCP/`、`Tests/`、`SampleProjects/`、`Templates/`
+- Design Only: `Design/`
+
+`UnityAgentMCP`、Creator Workflow、Graphics以外の未実装Domain MCPは`Design/`配下の設計資産であり、実行可能なControl PlaneまたはDomainとして扱いません。
 
 対象Unity Project固有のScene、Prefab、Material、Lighting Data、認証情報、組織情報、顧客情報をこのRepositoryへ保存しません。
 
@@ -19,6 +26,15 @@
 - Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
 
 開発順を示す段階名を、現行型名、File名、Tool説明、Error Code、Test名、運用文書へ使用しません。
+
+## Design-only source of truth
+
+- Design module registry: `Design/module-catalog.yaml`
+- Creator registry: `Design/Creators/catalog.yaml`
+- UnityAgentMCP design: `Design/UnityAgentMCP/spec.md`
+- Creator workflows: `Design/Creators/`
+
+Design資産はRelease対象の実装済みCapabilityとして数えません。実装へ昇格する場合は、Package、Operational Catalog、Test、Documentation、Release Contractを同一変更で更新します。
 
 ## Tool exposure
 
@@ -60,6 +76,14 @@ inspect → plan → mutate → save → bake → capture → evaluate → revie
 - 小規模DTOやEnumを理由なく別Fileへ分割しない。
 - Runtimeから`UnityEditor`を参照しない。
 - 任意`SerializedProperty`を書き換える汎用Toolを追加しない。
+
+## Repository layout rules
+
+- `Catalog/`にDesign Only moduleを混在させない。
+- ルート`Workflows/`は作成しない。GitHub Actionsは`.github/workflows/`、Creator設計は`Design/Creators/`を使用する。
+- `Specs/`は現行の実行可能製品仕様を優先し、将来構想は`Design/`へ隔離する。
+- Package内のEditor実装はAssembly境界を維持したまま責務別サブフォルダへ整理可能とし、Release検証は再帰的にToolを検出する。
+- 同一内容の仕様をPackage DocumentationとRepository Specsで二重の正本にしない。Package Documentationは利用者向け、Specsは開発・契約向けとする。
 
 ## Release rules
 
