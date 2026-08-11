@@ -1,3 +1,4 @@
+# one-shot migration trigger
 name: One-shot MyUnityMCP internal layout refactor
 
 on:
