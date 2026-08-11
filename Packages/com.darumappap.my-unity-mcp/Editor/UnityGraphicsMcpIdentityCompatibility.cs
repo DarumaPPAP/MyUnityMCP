@@ -9,7 +9,7 @@ namespace UnityGraphicsMcp
 {
 	/// <summary>
 	/// Unity 6世代で変化するScene/Objectの内部ID表現をMyUnityMCPから隔離します。
-	/// raw Handleは比較専用、Session Tokenは既存のintベース内部Transaction互換専用です。
+	/// Scene raw Handleは比較専用、Session Tokenは既存のintベース内部Transaction互換専用です。
 	/// 永続識別にはGlobalObjectIdを使用し、Session Tokenを保存Assetや別Sessionへ持ち越しません。
 	/// </summary>
 	internal static class UnityGraphicsMcpIdentityCompatibility
@@ -73,20 +73,6 @@ namespace UnityGraphicsMcp
 
 			scene = default(Scene);
 			return false;
-		}
-
-		public static ulong GetObjectHandle(Object target)
-		{
-			if (target == null)
-			{
-				return 0UL;
-			}
-
-#if UNITY_6000_4_OR_NEWER
-			return target.GetEntityId().ToULong();
-#else
-			return unchecked((ulong)(uint)target.GetInstanceID());
-#endif
 		}
 
 		public static int GetObjectToken(Object target)
