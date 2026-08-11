@@ -24,7 +24,7 @@
     "live_creator_refactor": "not_verified",
     "multi_version_editor_matrix": "not_verified",
     "package_matrix": "not_verified",
-    "external_mcp_e2e": "not_verified",
+    "external_mcp_e2e": "complete",
     "fresh_project": "not_verified",
     "fault_injection": "not_verified",
     "promotion_gate": "blocked"
@@ -33,9 +33,11 @@
     "multi-version Editor matrix requires fresh evidence after the Addressables backend source change",
     "formal GitHub Actions package-present/package-absent matrix on Unity 6000.0.75f1 remains not_verified; human manual package-absent/package-present verification passed",
     "GitHub Actions jobs are currently failing before runner steps start, so CI evidence cannot be refreshed yet",
-    "External MCP Client E2E has not been rerun",
     "Fresh Project verification has not been rerun",
     "human final approval is required"
+  ],
+  "notes": [
+    "external_mcp_e2e is complete by explicit repository-owner acceptance on 2026-08-12. The recorded technical observation still shows instance_count=0 and no read-only tool calls; completion is a human acceptance decision, not a claim of protocol-level tool-call PASS."
   ],
   "terminalGoalSatisfied": false
 }
