@@ -118,6 +118,27 @@ namespace UnityGraphicsMcp
 			Assert.That(UnityApiCompatibility.ParseUnityVersion("6000.7.0a2").ToString(3), Is.EqualTo("6000.7.0"));
 			Assert.That(UnityApiCompatibility.ParseUnityVersion("6000.4.11f1").ToString(3), Is.EqualTo("6000.4.11"));
 		}
+
+		[Test]
+		public void InspectProject_ExposesApiCompatibilityInDetectedProject()
+		{
+			UnityGraphicsMcpToolResult result = UnityGraphicsMcpInspection.InspectProject(
+				"test-api-compatibility-project-context",
+				new string[0],
+				new string[0]);
+
+			Assert.That(result.IsSuccessful, Is.True);
+			Dictionary<string, object> data = result.data as Dictionary<string, object>;
+			Dictionary<string, object> detectedProject =
+				data["detectedProject"] as Dictionary<string, object>;
+			Dictionary<string, object> compatibility =
+				detectedProject["apiCompatibility"] as Dictionary<string, object>;
+
+			Assert.That(compatibility, Is.Not.Null);
+			Assert.That(
+				compatibility["policy"],
+				Is.EqualTo("BASE_THEN_6000_4_THEN_6000_5_THEN_6000_7_ROLLUP"));
+		}
 	}
 }
 
