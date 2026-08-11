@@ -74,7 +74,32 @@ jobs:
           sudo rm -rf /usr/local/share/powershell
           sudo rm -rf /opt/hostedtoolcache/CodeQL
 
+      - name: Check GameCI editor image
+        id: image
+        env:
+          UNITY_VERSION: ${{ matrix.unity_version }}
+          EXPERIMENTAL: ${{ matrix.experimental }}
+        run: |
+          set -euo pipefail
+          image="unityci/editor:ubuntu-${UNITY_VERSION}-linux-il2cpp-3"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+          if docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$EXPERIMENTAL" = "true" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$image is not published yet. Experimental Unity canary is recorded as unavailable, not failed."
+            exit 0
+          fi
+
+          echo "::error::$image is unavailable for a blocking compatibility lane."
+          exit 1
+
       - name: Cache Unity Library
+        if: steps.image.outputs.available == 'true'
         uses: actions/cache@v4
         with:
           path: TestProjects/MyUnityMCPVerification/Library
@@ -83,6 +108,7 @@ jobs:
             MyUnityMCP-ApiCompatibility-${{ matrix.unity_version }}-
 
       - name: Run compatibility EditMode tests
+        if: steps.image.outputs.available == 'true'
         id: tests
         continue-on-error: true
         uses: game-ci/unity-test-runner@v4
@@ -98,7 +124,7 @@ jobs:
           customParameters: -testFilter UnityApiCompatibilityTests
 
       - name: Verify compile and compatibility contracts
-        if: always()
+        if: always() && steps.image.outputs.available == 'true'
         env:
           ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
           TEST_OUTCOME: ${{ steps.tests.outcome }}
@@ -148,8 +174,24 @@ jobs:
               raise SystemExit(1)
           PY
 
+      - name: Record unavailable experimental canary
+        if: steps.image.outputs.available == 'false'
+        env:
+          UNITY_VERSION: ${{ matrix.unity_version }}
+          PATCH_BUCKET: ${{ matrix.bucket }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          {
+            echo "## Unity API compatibility canary"
+            echo
+            echo "- Unity: $UNITY_VERSION"
+            echo "- Bucket: $PATCH_BUCKET"
+            echo "- Status: UNVERIFIED_IMAGE_NOT_PUBLISHED"
+            echo "- Expected image: $IMAGE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload compatibility evidence
-        if: always()
+        if: always() && steps.image.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: MyUnityMCP-ApiCompatibility-${{ matrix.unity_version }}
