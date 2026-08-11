@@ -31,26 +31,81 @@ jobs:
         run: python3 Development/GraphEngineering/scripts/verify_promotion_gate.py
 
   unity-editor:
-    name: Unity ${{ matrix.unityVersion }} candidate contracts
+    name: Unity ${{ matrix.unityVersion }} / ${{ matrix.bucket }} candidate contracts
     needs: static
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        unityVersion:
-          - 6000.0.75f1
-          - 6000.4.12f1
-          - 6000.5.5f1
+        include:
+          - unityVersion: 6000.0.75f1
+            bucket: BASE
+            experimental: false
+          - unityVersion: 6000.4.12f1
+            bucket: UNITY_6000_4
+            experimental: false
+          - unityVersion: 6000.5.5f1
+            bucket: UNITY_6000_5
+            experimental: false
+          - unityVersion: 6000.7.0a3
+            bucket: UNITY_6000_7
+            experimental: true
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
           fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require Unity license secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            exit 0
+          fi
+          if [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ] && [ -n "$UNITY_SERIAL" ]; then
+            exit 0
+          fi
+          echo "::error::Unity license secrets are incomplete."
+          exit 1
+
       - name: Free disk space
         run: |
+          set -euo pipefail
           docker system prune --all --force || true
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /opt/hostedtoolcache/CodeQL
+
+      - name: Check GameCI editor image
+        id: image
+        env:
+          UNITY_VERSION: ${{ matrix.unityVersion }}
+          EXPERIMENTAL: ${{ matrix.experimental }}
+        run: |
+          set -euo pipefail
+          image="unityci/editor:ubuntu-${UNITY_VERSION}-linux-il2cpp-3"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          if docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$EXPERIMENTAL" = "true" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$image is not published. Experimental Unity evidence remains unavailable/not_verified."
+            exit 0
+          fi
+          echo "::error::$image is unavailable for required compatibility lane."
+          exit 1
+
       - name: Run EditMode contracts
+        id: tests
+        if: steps.image.outputs.available == 'true'
+        continue-on-error: true
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -61,33 +116,56 @@ jobs:
           projectPath: TestProjects/MyUnityMCPVerification
           unityVersion: ${{ matrix.unityVersion }}
           testMode: editmode
-      - name: Upload Unity evidence
-        if: always()
+
+      - name: Verify Editor contract result
+        if: always() && steps.image.outputs.available == 'true'
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          UNITY_VERSION: ${{ matrix.unityVersion }}
+          PATCH_BUCKET: ${{ matrix.bucket }}
+          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
+        run: |
+          set -euo pipefail
+          if [ "$TEST_OUTCOME" != "success" ]; then
+            echo "::error::Unity $UNITY_VERSION ($PATCH_BUCKET) test runner outcome was $TEST_OUTCOME."
+            editmode_log=$(find "$ARTIFACTS_PATH" -name 'editmode.log' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2- || true)
+            if [ -n "$editmode_log" ]; then
+              grep -n -E 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$editmode_log" | tail -n 160 || true
+            fi
+            exit 1
+          fi
+
+      - name: Record unavailable experimental Editor image
+        if: steps.image.outputs.available == 'false'
+        env:
+          UNITY_VERSION: ${{ matrix.unityVersion }}
+          PATCH_BUCKET: ${{ matrix.bucket }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          mkdir -p evidence
+          cat > "evidence/unity-${UNITY_VERSION}.json" <<JSON
+          {
+            "unity_version": "${UNITY_VERSION}",
+            "patch_bucket": "${PATCH_BUCKET}",
+            "automation": "UNAVAILABLE_IMAGE",
+            "image": "${IMAGE}",
+            "status": "not_verified"
+          }
+          JSON
+
+      - name: Upload Unity test evidence
+        if: always() && steps.image.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: graph-modernization-${{ matrix.unityVersion }}
-          path: artifacts
+          path: ${{ steps.tests.outputs.artifactsPath }}
           if-no-files-found: warn
           retention-days: 30
 
-  unity-6000-7-boundary:
-    name: Unity 6000.7 evidence boundary
-    needs: static
-    runs-on: ubuntu-latest
-    steps:
-      - name: Record unavailable automated image state
-        run: |
-          mkdir -p evidence
-          cat > evidence/unity-6000.7.json <<'JSON'
-          {
-            "unity_version": "6000.7",
-            "automation": "UNAVAILABLE_IMAGE",
-            "status": "not_verified",
-            "required_evidence": "manual_editor_or_confirmed_automation"
-          }
-          JSON
-      - uses: actions/upload-artifact@v4
+      - name: Upload unavailable evidence
+        if: steps.image.outputs.available == 'false'
+        uses: actions/upload-artifact@v4
         with:
-          name: graph-modernization-unity-6000.7-boundary
-          path: evidence/unity-6000.7.json
+          name: graph-modernization-${{ matrix.unityVersion }}-unavailable
+          path: evidence/unity-${{ matrix.unityVersion }}.json
           retention-days: 30
