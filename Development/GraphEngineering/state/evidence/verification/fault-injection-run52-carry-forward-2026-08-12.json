@@ -1,0 +1,30 @@
+{
+  "node": "fault_injection",
+  "status": "integration_verified",
+  "source_revision": "0b32b4e6d37569c7dfa4b45a34dc51987dacffb2",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDevelopmentFaultInjectionTests.cs",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Build",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Profiler",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Creators/UnityLiveCreatorMcp.cs",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Shared"
+  ],
+  "recorded_at": "2026-08-12T00:22:00+09:00",
+  "automation": {
+    "workflow": "Graph Engineering Modernization",
+    "run_id": 31486228877,
+    "run_number": 52,
+    "result": "success",
+    "coverage": [
+      "revision race rejection",
+      "plan clear/reload invalidation",
+      "unsupported build cancellation",
+      "profiler environment mismatch rejection",
+      "LiveCreator missing recovery cue rejection"
+    ]
+  },
+  "carry_forward_reason": "The fault-injection test and all source paths exercised by this test remain unchanged since the successful Run #52 revision.",
+  "limitations": [
+    "This is scoped carry-forward evidence; it does not cover the later Addressables optional-backend delta."
+  ]
+}
