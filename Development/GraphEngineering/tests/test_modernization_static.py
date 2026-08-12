@@ -8,7 +8,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 
 
 class ModernizationStaticTests(unittest.TestCase):
-    def test_canonical_graphics_matches_main_baseline(self):
+    def test_canonical_production_matches_current_main_baseline(self):
         result = subprocess.run(
             [sys.executable, "Development/GraphEngineering/scripts/verify_canonical_graphics.py"],
             cwd=ROOT,
@@ -26,10 +26,14 @@ class ModernizationStaticTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_terminal_goal_is_not_falsely_marked_complete(self):
+    def test_terminal_goal_records_delivery_promotion_readiness(self):
         state = json.loads((ROOT / "Development/GraphEngineering/state/roadmap-state.json").read_text(encoding="utf-8"))
-        self.assertFalse(state["terminalGoalSatisfied"])
-        self.assertTrue(state["blockers"])
+        self.assertTrue(state["terminalGoalSatisfied"])
+        self.assertFalse(state["blockers"])
+        self.assertEqual(state["productionToolCount"], 42)
+        self.assertEqual(state["remainingDevelopmentToolCount"], 49)
+        self.assertEqual(state["finalCombinedTarget"], 91)
+        self.assertEqual(state["nextRecommendedCapability"], "world_creator")
 
 
 if __name__ == "__main__":
