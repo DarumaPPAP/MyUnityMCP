@@ -578,13 +578,29 @@ namespace UnityAgentMcp
 				bool delegatedSuccess = IsDelegatedSuccess(delegated);
 				if (!delegatedSuccess)
 				{
-					string delegatedError = delegated["error"]?["code"]?.Value<string>();
-					string delegatedMessage = delegated["error"]?["message"]?.Value<string>();
+					JToken errorToken = delegated.Type == JTokenType.Object ? delegated["error"] : null;
+					string delegatedErrorCode = delegated.Type == JTokenType.Object
+						? delegated.Value<string>("errorCode")
+						: null;
+					string delegatedMessage = delegated.Type == JTokenType.Object
+						? delegated.Value<string>("message")
+						: null;
+
+					if (errorToken is JObject errorObject)
+					{
+						delegatedErrorCode = delegatedErrorCode ?? errorObject.Value<string>("code");
+						delegatedMessage = delegatedMessage ?? errorObject.Value<string>("message");
+					}
+					else if (errorToken?.Type == JTokenType.String)
+					{
+						delegatedMessage = delegatedMessage ?? errorToken.Value<string>();
+					}
+
 					return new JObject
 					{
 						["success"] = false,
-						["errorCode"] = delegated.Value<string>("errorCode") ?? delegatedError ?? "AGENT-DELEGATE-FAILED",
-						["message"] = delegated.Value<string>("message") ?? delegatedMessage ?? delegated.Value<string>("summary") ?? "Delegated tool reported failure.",
+						["errorCode"] = delegatedErrorCode ?? "AGENT-DELEGATE-FAILED",
+						["message"] = delegatedMessage ?? delegated.Value<string>("summary") ?? "Delegated tool reported failure.",
 						["delegatedResult"] = delegated
 					};
 				}
