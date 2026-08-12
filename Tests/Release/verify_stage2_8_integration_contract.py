@@ -16,11 +16,10 @@ MANIFEST_PATH = ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "MCP_MANIFES
 EDITOR_ROOT = ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "Editor"
 
 EXPECTED_PRODUCTION_TOOLS = 45
-EXPECTED_CANDIDATE_TOOLS = 40
-EXPECTED_COMBINED_TOOLS = 85
+EXPECTED_CANDIDATE_TOOLS = 34
+EXPECTED_COMBINED_TOOLS = 79
 EXPECTED_CANDIDATES = {
     "unity_profiler_mcp": 8,
-    "unity_build_mcp": 6,
     "unity_addressables_mcp": 6,
     "unity_ui_mcp": 5,
     "unity_animation_mcp": 5,
@@ -44,6 +43,8 @@ def main() -> int:
         errors += fail("Catalog integration_contracts path is not canonical.")
 
     modules = catalog.get("modules", {})
+    if "unity_build_mcp" in modules:
+        errors += fail("Build domain must not be present in the current integration candidate.")
     for module_id, expected_tools in EXPECTED_CANDIDATES.items():
         module = modules.get(module_id)
         if not isinstance(module, dict):
@@ -58,7 +59,7 @@ def main() -> int:
 
     contract_modules = contract.get("modules", {})
     if set(contract_modules) != set(EXPECTED_CANDIDATES):
-        errors += fail("Integration contract module set does not match Stage 2-8 candidate set.")
+        errors += fail("Integration contract module set does not match the 79-tool candidate set.")
     for module_id, expected_tools in EXPECTED_CANDIDATES.items():
         module = contract_modules.get(module_id, {})
         if module.get("status") != "integration_candidate":
@@ -69,22 +70,25 @@ def main() -> int:
     if contract.get("production_verified_tools") != EXPECTED_PRODUCTION_TOOLS:
         errors += fail("Integration contract must preserve the 45-tool Production baseline.")
     if contract.get("integration_candidate_tools") != EXPECTED_CANDIDATE_TOOLS:
-        errors += fail("Integration contract candidate total must be 40.")
+        errors += fail("Integration contract candidate total must be 34.")
     if contract.get("combined_target_tools") != EXPECTED_COMBINED_TOOLS:
-        errors += fail("Integration contract combined target must be 85.")
+        errors += fail("Integration contract combined target must be 79.")
 
     bridge = manifest.get("bridge", {})
     verification = manifest.get("verification", {})
     if bridge.get("discovered_tool_count") != EXPECTED_COMBINED_TOOLS:
-        errors += fail("Manifest bridge.discovered_tool_count must target 85.")
+        errors += fail("Manifest bridge.discovered_tool_count must target 79.")
     if verification.get("tool_discovery_count") != EXPECTED_COMBINED_TOOLS:
-        errors += fail("Manifest verification.tool_discovery_count must target 85.")
+        errors += fail("Manifest verification.tool_discovery_count must target 79.")
     if verification.get("production_verified_tool_count") != EXPECTED_PRODUCTION_TOOLS:
         errors += fail("Manifest must preserve production_verified_tool_count=45.")
     if verification.get("integration_candidate_tool_count") != EXPECTED_CANDIDATE_TOOLS:
-        errors += fail("Manifest must declare integration_candidate_tool_count=40.")
-    if verification.get("stage2_8_validation_status") != "not_started":
-        errors += fail("Implementation branch must not claim Stage 2-8 validation before the Validation Wave.")
+        errors += fail("Manifest must declare integration_candidate_tool_count=34.")
+    if verification.get("stage2_8_validation_status") not in {
+        "reset_after_build_domain_removal",
+        "not_started",
+    }:
+        errors += fail("Current candidate must not claim completed Stage 2-8 validation.")
 
     source = "\n".join(
         path.read_text(encoding="utf-8")
@@ -93,26 +97,29 @@ def main() -> int:
     tool_count = len(re.findall(r"\[McpForUnityTool\s*\(", source))
     disabled_count = len(re.findall(r"AutoRegister\s*=\s*false", source))
     if tool_count != EXPECTED_COMBINED_TOOLS:
-        errors += fail(f"Source declares {tool_count} MCP tools, expected 85.")
+        errors += fail(f"Source declares {tool_count} MCP tools, expected 79.")
     if disabled_count != tool_count:
         errors += fail(f"AutoRegister=false count {disabled_count} does not match tool count {tool_count}.")
+    if re.search(r"\[McpForUnityTool\s*\(\s*\"build\.", source):
+        errors += fail("Build MCP tool declaration remains in current Editor runtime source.")
 
     forbidden_runtime_paths = [
+        EDITOR_ROOT / "Development" / "Build" / "UnityBuildMcp.cs",
         EDITOR_ROOT / "Development" / "Creators" / "UnityMovieCreatorMcp.cs",
         EDITOR_ROOT / "Development" / "Creators" / "UnityLiveCreatorMcp.cs",
     ]
     for path in forbidden_runtime_paths:
         if path.exists():
-            errors += fail(f"Out-of-wave Creator runtime is present: {path.relative_to(ROOT)}")
+            errors += fail(f"Out-of-wave runtime is present: {path.relative_to(ROOT)}")
 
     if errors:
-        print(f"Stage 2-8 integration contract: {errors} error(s). Validation status remains NOT STARTED.")
+        print(f"Stage 2-8 integration contract: {errors} error(s). Runtime validation remains incomplete.")
         return 1
 
     print(
         "Stage 2-8 implementation contract is structurally consistent: "
         f"production={EXPECTED_PRODUCTION_TOOLS}, candidate={EXPECTED_CANDIDATE_TOOLS}, "
-        f"combined={EXPECTED_COMBINED_TOOLS}. Runtime validation has NOT been executed."
+        f"combined={EXPECTED_COMBINED_TOOLS}. Runtime validation has NOT been executed for this candidate."
     )
     return 0
 
