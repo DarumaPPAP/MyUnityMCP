@@ -31,7 +31,7 @@
       "domainId": "unity_addressables_mcp",
       "status": "integration_candidate",
       "toolGroups": ["addressables"],
-      "tools": ["addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.prepare_content_build", "addressables.build_content", "addressables.get_support_matrix"],
+      "tools": ["addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.get_support_matrix"],
       "directUnityMutationAllowed": false
     },
     {
