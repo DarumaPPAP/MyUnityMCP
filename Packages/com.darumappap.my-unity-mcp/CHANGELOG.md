@@ -2,7 +2,7 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
-## [Unreleased]
+## [1.1.0] - Unreleased
 
 ### Added
 
@@ -12,16 +12,18 @@
 
 ### Changed
 
-- Current mainのTool Surfaceを32 Graphics + 10 Agent = 42 Toolへ拡張
+- Current SourceのTool Surfaceを32 Graphics + 10 Agent = 42 Toolへ拡張
 - Fresh Project Tool DiscoveryとEditor Contract Gateを昇格済みAgentへ対応
+- Source Versionを`1.1.0`へ移行し、GitHub Release Publicationとは分離
+- `VERSION`変更による暗黙Releaseを廃止し、明示Publish操作だけでReleaseする構成へ変更
 
 ### Verification
 
 - Graph Engineering Run #52でAgent SourceのUnity 6000.0 / 6000.4 / 6000.5 Contractを検証
 - Unity 6000.7.0a2 Manual CanaryでAgentを含むCombined Tool Discoveryを確認
-- Delivery固有42 Tool CIはGitHub Actions RunnerがStep開始前に失敗しているため再検証待ち
+- exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
 
-`VERSION`／TagはこのSource Promotionでは変更しません。
+`1.1.0`はCurrent Source Versionです。この変更自体ではTag／GitHub Releaseを作成しません。
 
 ## [1.0.0] - 2026-08-11
 
@@ -58,7 +60,7 @@
 
 ### Release history note
 
-`v1.0.1`および`v1.0.2-test.*`は正式1.0.0を固める過程の検証Buildです。本ReleaseをCanonical v1.0.0とします。
+`v1.0.1`および`v1.0.2-test.*`は1.0系列のRepository / Compatibility検証履歴として保持します。公開済みTagはimmutableです。
 
 ## [0.8.0] - 2026-08-05
 

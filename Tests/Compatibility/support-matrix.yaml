@@ -1,6 +1,6 @@
 schema_version: "1.1"
-package_version: "1.0.0"
-source_channel: main_post_v1_release_candidate
+package_version: "1.1.0"
+source_channel: main_v1_1_release_candidate
 
 verification_contract:
   discovered_mcp_tools: 42
@@ -124,4 +124,4 @@ not_verified:
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
   - every_project_specific_apv_baking_set
-  - delivery_unity_agent_exact_42_tool_ci_after_runner_recovery
+  - exact_42_tool_production_ci_after_runner_recovery
