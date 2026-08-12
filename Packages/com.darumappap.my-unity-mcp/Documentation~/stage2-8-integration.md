@@ -1,6 +1,6 @@
 # Stage 2-8 Integration Wave
 
-`delivery/stage2-8-integration`は、Production 45 Tool baselineの上に6 Domain / 34 Toolを追加し、**79 Toolを同一候補Commitでまとめて検証するためのIntegration Branch**です。
+`delivery/stage2-8-integration`は、Production 45 Tool baselineの上に6 Domain / 32 Toolを追加し、**77 Toolを同一候補Commitでまとめて検証するためのIntegration Branch**です。
 
 この文書はImplementation Contractであり、Validation Evidenceではありません。
 
@@ -10,8 +10,8 @@
   - Graphics: 32
   - UnityAgentMCP: 10
   - WorldCreator: 3
-- Integration Candidate: +34 Tool
-- Combined Validation Target: 79 Tool
+- Integration Candidate: +32 Tool
+- Combined Validation Target: 77 Tool
 - Validation完了前の`main`へのMerge: 禁止
 - Validation完了前の`editor_operational`昇格: 禁止
 
@@ -30,16 +30,23 @@ Editor ProfilerRecorderを使ったCaptureとSummaryを提供します。Editor�
 
 ## Stage 3 — Build (Retired / 0)
 
-Build Domainは今回のMCP Candidateから撤去しました。`build.*` Tool、Agent routing、Build専用Contract/Testは現行79 Tool Surfaceに含めません。
+Build Domainは今回のMCP Candidateから撤去しました。`build.*` Tool、Agent routing、Build専用Contract/Testは現行77 Tool Surfaceに含めません。
 
-## Stage 4 — Addressables (+6)
+## Stage 4 — Addressables (+4)
 
 - `addressables.inspect`
 - `addressables.prepare_entry`
 - `addressables.apply_entry`
+- `addressables.get_support_matrix`
+
+Addressables MCPは、**設定のInspectionと既存Entryの管理**に責務を限定します。
+
+次のContent Build Toolは現行Candidateから除外しています。
+
 - `addressables.prepare_content_build`
 - `addressables.build_content`
-- `addressables.get_support_matrix`
+
+Content Buildは通常のUnity／CI Build Pipeline側へ委ねます。MCPからContent Buildを開始することは現行仕様では行いません。
 
 `com.unity.addressables`はOptional Dependencyです。Packageが無い場合はFrontendが`UNSUPPORTED`を返し、Packageがある場合だけ`versionDefines`でTyped BackendをCompileします。Settings / Groupの自動作成、自動Saveは禁止です。
 
@@ -89,13 +96,15 @@ Core PlayablesのPlayableDirectorを対象に、Initial Time / Update Mode / Wra
 
 - PrepareはRead-only
 - MutationはCurrent Revision一致必須
-- Mutation / Content Buildは対象に応じてApproval必須
+- Mutationは対象に応じてApproval必須
 - Planは一度だけConsume可能
 - Expired Plan / Stale Revision / Token mismatchを拒否
 - 自動Save禁止
 - 自動Full Bake禁止
 - Generic SerializedProperty Mutation禁止
 - Silent Fallback禁止
+- Player Build実行禁止
+- Addressables Content Build実行禁止
 
 ## UnityAgent Integration
 
@@ -103,18 +112,18 @@ Candidate DomainはAgent Catalog上`integration_candidate`として登録しま�
 
 Integration BranchではValidationのため、UnityAgentMCPが`integration_candidate`へRouteできます。DelegateはMCP Tool Attributeから構築するRegistryを使用し、Catalogに宣言されたToolだけがWorkflow Validationを通過します。
 
-Agent自身はUnity APIを直接Mutationしません。Domain側のRevision / Plan / Approval境界も省略しません。Build DomainはAgent Catalogから除外されています。
+Agent自身はUnity APIを直接Mutationしません。Domain側のRevision / Plan / Approval境界も省略しません。Build DomainとAddressables Content Build ToolはAgent Catalogから除外されています。
 
 ## Validation Wave
 
-Build撤去により候補Surfaceが変わったため、旧85 Tool Validation結果をそのまま79 Tool Candidateの完了Evidenceには流用しません。現行候補では次から再確認します。
+Build DomainとAddressables Content Buildの撤去により候補Surfaceが変わったため、旧85 / 79 Tool Validation結果をそのまま77 Tool Candidateの完了Evidenceには流用しません。現行候補では次から再確認します。
 
 1. Package Resolve / Unity Compile
-2. Exact 79 Tool Discovery
+2. Exact 77 Tool Discovery
 3. 6 Candidate DomainのRead-only path
 4. Approval / Stale Revision / One-time Plan
 5. Mutation Scope / Recovery
-6. Addressables external side-effect boundary
+6. Addressables Entry管理境界
 7. Agent → 各Candidate Domain Routing
 8. Timeout / Cancel / Domain Reload / Failure Propagation
 9. Cross-domain Workflow
