@@ -38,7 +38,8 @@ namespace UnityDomainMcp
 		public string status;
 		public string summary;
 		public object data;
-		public JObject error;
+		public string error;
+		public string errorCode;
 		public long revision;
 		public bool success;
 	}
@@ -242,11 +243,8 @@ namespace UnityDomainMcp
 		public static UnityDomainMcpResult Error(string tool, E_DOMAIN_TOOL_STATUS status, string message)
 		{
 			UnityDomainMcpResult result = Result(tool, status, message, null);
-			result.error = new JObject
-			{
-				["code"] = $"{tool}:{status}",
-				["message"] = message
-			};
+			result.errorCode = $"{tool}:{status}";
+			result.error = message ?? string.Empty;
 			return result;
 		}
 
