@@ -43,29 +43,7 @@ namespace UnityAddressablesMcp
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityAddressablesMcpRuntime.ApplyEntry(value.planId, value.currentRevision, value.approvalToken));
 	}
 
-	[McpForUnityTool("addressables.prepare_content_build", Description = "Active Profile／Builderを検証し、承認待ちAddressables Content Build Planを作成します。", AutoRegister = false, Group = "addressables")]
-	public static class AddressablesPrepareContentBuildTool
-	{
-		public sealed class Parameters
-		{
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
-		}
-		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityAddressablesMcpRuntime.PrepareContentBuild(value.expectedRevision));
-	}
-
-	[McpForUnityTool("addressables.build_content", Description = "承認済みPlanでAddressableAssetSettings.BuildPlayerContentを実行します。", AutoRegister = false, Group = "addressables")]
-	public static class AddressablesBuildContentTool
-	{
-		public sealed class Parameters
-		{
-			[ToolParameter("addressables.prepare_content_buildが返したPlan ID。", Required = true)] public string planId { get; set; }
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? currentRevision { get; set; }
-			[ToolParameter("Approval Token。", Required = true)] public string approvalToken { get; set; }
-		}
-		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityAddressablesMcpRuntime.BuildContent(value.planId, value.currentRevision, value.approvalToken));
-	}
-
-	[McpForUnityTool("addressables.get_support_matrix", Description = "Package導入状態とAddressablesMCPの実装・未検証範囲を取得します。", AutoRegister = false, Group = "addressables")]
+	[McpForUnityTool("addressables.get_support_matrix", Description = "Package導入状態とAddressablesMCPの実装・非対象範囲を取得します。", AutoRegister = false, Group = "addressables")]
 	public static class AddressablesGetSupportMatrixTool
 	{
 		public sealed class Parameters { }
@@ -77,8 +55,6 @@ namespace UnityAddressablesMcp
 		UnityDomainMcpResult Inspect(bool packageInstalled, string packageVersion);
 		UnityDomainMcpResult PrepareEntry(string assetPath, string groupName, string address, string[] labels, long? expectedRevision);
 		UnityDomainMcpResult ApplyEntry(string planId, long? currentRevision, string approvalToken);
-		UnityDomainMcpResult PrepareContentBuild(long? expectedRevision);
-		UnityDomainMcpResult BuildContent(string planId, long? currentRevision, string approvalToken);
 	}
 
 	public sealed class UnityAddressablesMcpApprovedPlan
@@ -162,22 +138,6 @@ namespace UnityAddressablesMcp
 				: backend.ApplyEntry(planId, currentRevision, approvalToken);
 		}
 
-		public static UnityDomainMcpResult PrepareContentBuild(long? expectedRevision)
-		{
-			IUnityAddressablesMcpBackend backend = GetBackend();
-			return backend == null
-				? Unsupported("addressables.prepare_content_build", GetPackage())
-				: backend.PrepareContentBuild(expectedRevision);
-		}
-
-		public static UnityDomainMcpResult BuildContent(string planId, long? currentRevision, string approvalToken)
-		{
-			IUnityAddressablesMcpBackend backend = GetBackend();
-			return backend == null
-				? Unsupported("addressables.build_content", GetPackage())
-				: backend.BuildContent(planId, currentRevision, approvalToken);
-		}
-
 		public static UnityDomainMcpResult GetSupportMatrix()
 		{
 			PackageInfo package = GetPackage();
@@ -190,10 +150,12 @@ namespace UnityAddressablesMcp
 				["packageInstalled"] = package != null,
 				["packageVersion"] = package?.version,
 				["backendCompiled"] = backendCompiled,
-				["implemented"] = new JArray("settings inspection", "entry preview", "approval-gated entry mutation", "content build preview", "approval-gated content build"),
+				["implemented"] = new JArray("settings inspection", "entry preview", "approval-gated entry mutation"),
 				["automaticSettingsCreation"] = false,
 				["automaticSave"] = false,
-				["unverified"] = new JArray("remote content update", "platform-specific content build", "Addressables 2.x compatibility matrix")
+				["contentBuild"] = "excluded_from_current_mcp_surface",
+				["excluded"] = new JArray("content build execution", "remote content update", "platform-specific content build"),
+				["unverified"] = new JArray("Addressables 2.x compatibility matrix")
 			});
 		}
 
