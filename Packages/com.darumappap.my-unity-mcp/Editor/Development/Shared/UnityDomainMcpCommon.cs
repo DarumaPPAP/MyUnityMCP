@@ -38,8 +38,8 @@ namespace UnityDomainMcp
 		public string status;
 		public string summary;
 		public object data;
-		public string error;
 		public string errorCode;
+		public string errorMessage;
 		public long revision;
 		public bool success;
 	}
@@ -264,7 +264,7 @@ namespace UnityDomainMcp
 		{
 			UnityDomainMcpResult result = Result(tool, status, message, null);
 			result.errorCode = $"{tool}:{status}";
-			result.error = message ?? string.Empty;
+			result.errorMessage = message ?? string.Empty;
 			return result;
 		}
 
