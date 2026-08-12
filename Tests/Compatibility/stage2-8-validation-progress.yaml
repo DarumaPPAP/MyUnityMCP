@@ -1,23 +1,35 @@
-schema_version: "1.1"
-validation_wave: stage2_8_79_tool
-status: reset_required_after_build_domain_removal
+schema_version: "1.2"
+validation_wave: stage2_8_77_tool
+status: reset_required_after_addressables_build_removal
 production_ready: false
 production_promotion: prohibited
 production_baseline_tools: 45
-current_candidate_tools: 34
-current_combined_target_tools: 79
+current_candidate_tools: 32
+current_combined_target_tools: 77
+
 build_domain:
   current_candidate_status: retired_removed
   current_tool_count: 0
   reason: user_decision_low_value_for_current_mcp
   previous_validation_is_historical_only: true
 
+addressables_content_build:
+  current_candidate_status: excluded_removed
+  removed_tool_count: 2
+  removed_tools:
+    - addressables.prepare_content_build
+    - addressables.build_content
+  reason: low_priority_for_editor_facing_mcp_and_better_owned_by_unity_or_ci_build_pipeline
+  current_addressables_tool_count: 4
+  validation_required_for_content_build: false
+  previous_85_surface_observations_are_historical_only: true
+
 validation_environment:
   unity: 6000.7.0a2
   package_commit_identity: unverified_from_editor_public_information
 
 historical_85_tool_results_before_build_removal:
-  applicability: historical_only_not_full_79_tool_evidence
+  applicability: historical_only_not_full_77_tool_evidence
   package_compile:
     status: pass
     package_resolve: true
@@ -106,7 +118,7 @@ historical_build_transport_validation:
   disposition:
     runtime_removed_from_current_candidate: true
     build_specific_transport_test_removed: true
-    no_build_retest_required_for_79_tool_wave: true
+    no_build_retest_required_for_77_tool_wave: true
 
 safety_findings_retained_for_current_candidate:
   response_schema:
@@ -123,23 +135,31 @@ safety_findings_retained_for_current_candidate:
     current_status: fixed_and_manual_pass_on_previous_surface_retest_current_candidate_as_needed
     canonical_domain_error_metadata_location: data
 
-current_79_tool_validation:
+current_77_tool_validation:
   status: not_complete
-  previous_85_tool_compile_and_discovery_do_not_replace_current_surface_checks: true
+  previous_85_and_79_tool_compile_and_discovery_do_not_replace_current_surface_checks: true
   restart_from:
     - package_compile
-    - exact_79_tool_discovery
-    - agent_inspect_capabilities_without_build_domain
+    - exact_77_tool_discovery
+    - agent_inspect_capabilities_without_build_or_addressables_content_build
   expected_composition:
     graphics: 32
     agent: 10
     world_creator: 3
     profiler: 8
-    addressables: 6
+    addressables: 4
     ui: 5
     animation: 5
     audio: 5
     cinematic: 5
+  addressables_expected_tools:
+    - addressables.inspect
+    - addressables.prepare_entry
+    - addressables.apply_entry
+    - addressables.get_support_matrix
+  addressables_forbidden_current_tools:
+    - addressables.prepare_content_build
+    - addressables.build_content
   pending:
     - readonly_domain_smoke
     - stale_revision_contract_recheck
@@ -148,7 +168,7 @@ current_79_tool_validation:
     - plan_reuse
     - profiler_capture
     - ui_animation_audio_cinematic_mutation_e2e
-    - addressables_external_side_effect_boundary
+    - addressables_entry_boundary
     - agent_candidate_execution
     - agent_delegated_failure_propagation
     - cross_domain_workflow
@@ -156,6 +176,8 @@ current_79_tool_validation:
 
 verdict:
   retired_85_tool_surface: historical_incomplete
+  retired_79_tool_surface: superseded_by_addressables_build_removal
   build_domain: removed_not_blocking_current_candidate
-  full_79_tool_validation: not_started_after_surface_reset
+  addressables_content_build: removed_not_blocking_current_candidate
+  full_77_tool_validation: not_started_after_surface_reset
   production_ready: false
