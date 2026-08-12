@@ -50,6 +50,19 @@ namespace MyUnityMcp.EditorTests
 			};
 		}
 
+		private static UnityAgentMcpStepInput ProfilerInspectStep(string stepId = "profiler")
+		{
+			return new UnityAgentMcpStepInput
+			{
+				stepId = stepId,
+				domainId = "unity_profiler_mcp",
+				toolName = "profiler.inspect_environment",
+				toolGroup = "profiler",
+				dependsOn = Array.Empty<string>(),
+				parameters = new JObject()
+			};
+		}
+
 		[Test]
 		public void InspectCapabilities_LoadsCatalogAndKeepsDirectMutationDisabled()
 		{
@@ -58,12 +71,13 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(result.Value<bool>("success"), Is.True, result.ToString());
 			Assert.That(result.Value<bool>("directUnityMutation"), Is.False);
 			Assert.That(result.Value<bool>("cooperativeExecution"), Is.True);
+			Assert.That(result.Value<bool>("integrationCandidateExecutionEnabled"), Is.True);
 			Assert.That(result.Value<int>("defaultExecutionTimeoutSeconds"), Is.GreaterThan(0));
 			Assert.That(result["domains"]?.Any(), Is.True);
 		}
 
 		[Test]
-		public void ValidateWorkflow_RejectsDesignOnlyDomain()
+		public void ValidateWorkflow_AcceptsIntegrationCandidateDomain()
 		{
 			JObject result = UnityAgentMcpRuntime.Instance.ValidateWorkflow(new[]
 			{
@@ -72,12 +86,12 @@ namespace MyUnityMcp.EditorTests
 					stepId = "ui",
 					domainId = "unity_ui_mcp",
 					toolName = "ui.inspect",
-					toolGroup = "inspect"
+					toolGroup = "ui"
 				}
 			});
 
-			Assert.That(result.Value<bool>("success"), Is.False);
-			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-DOMAIN-NOT-OPERATIONAL"));
+			Assert.That(result.Value<bool>("success"), Is.True, result.ToString());
+			Assert.That(result.Value<bool>("valid"), Is.True);
 		}
 
 		[Test]
@@ -123,10 +137,27 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
+		public void IntegrationCandidate_DelegatesProfilerInspection()
+		{
+			long revision = Session.Revision;
+			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {ProfilerInspectStep()});
+			JObject started = UnityAgentMcpRuntime.Instance.StartExecution(
+				compiled.Value<string>("graphId"),
+				revision,
+				null);
+
+			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+			JObject completed = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
+
+			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
+			Assert.That(completed.Value<string>("status"), Is.EqualTo("SUCCEEDED"), completed.ToString());
+			Assert.That(completed.Value<bool>("executionSucceeded"), Is.True);
+		}
+
+		[Test]
 		public void CompileGraph_RejectsRevisionThatIsNotCurrentEditorRevision()
 		{
 			long revision = Session.Revision;
-
 			JObject result = UnityAgentMcpRuntime.Instance.CompileGraph(revision + 1, new[] {GraphicsInspectStep()});
 
 			Assert.That(result.Value<bool>("success"), Is.False);
@@ -138,7 +169,6 @@ namespace MyUnityMcp.EditorTests
 		{
 			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
-
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
 				revision + 1,
@@ -153,7 +183,6 @@ namespace MyUnityMcp.EditorTests
 			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			Session.NotifyMutationApplied();
-
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
 				compiled.Value<string>("graphId"),
 				revision,
@@ -169,7 +198,6 @@ namespace MyUnityMcp.EditorTests
 			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			Session.NotifyMutationApplied();
-
 			JObject result = UnityAgentMcpRuntime.Instance.PreviewExecution(compiled.Value<string>("graphId"));
 
 			Assert.That(result.Value<bool>("success"), Is.False);
@@ -177,7 +205,7 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
-		public void MutationGroup_RequiresApprovalAndStillUsesRegisteredDelegateOnly()
+		public void MutationGroup_RequiresAgentApprovalThenDelegatesToDomainSafety()
 		{
 			long revision = Session.Revision;
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsMutationStep()});
@@ -197,8 +225,8 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(missing.Value<string>("errorCode"), Is.EqualTo("AGENT-APPROVAL-MISSING-OR-EXPIRED"));
 			Assert.That(approval.Value<bool>("success"), Is.True);
-			Assert.That(delegated.Value<string>("status"), Is.EqualTo("FAILED"));
-			Assert.That(delegated.Value<string>("errorCode"), Is.EqualTo("AGENT-DELEGATE-NOT-REGISTERED"));
+			Assert.That(delegated.Value<string>("status"), Is.EqualTo("FAILED"), delegated.ToString());
+			Assert.That(delegated.Value<string>("errorCode"), Is.Not.EqualTo("AGENT-DELEGATE-NOT-REGISTERED"));
 		}
 
 		[Test]
@@ -214,7 +242,6 @@ namespace MyUnityMcp.EditorTests
 				new[] {"mutate"},
 				"APPROVE_AGENT_EXECUTION");
 			now = now.AddMinutes(11);
-
 			JObject result = UnityAgentMcpRuntime.Instance.StartExecution(
 				graphId,
 				revision,
@@ -245,7 +272,7 @@ namespace MyUnityMcp.EditorTests
 			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
 			JObject result = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
 
-			Assert.That(result.Value<string>("status"), Is.EqualTo("PARTIAL"));
+			Assert.That(result.Value<string>("status"), Is.EqualTo("PARTIAL"), result.ToString());
 			Assert.That(result.Value<bool>("executionSucceeded"), Is.False);
 			Assert.That(result["stepResults"]?.Count(), Is.EqualTo(2));
 		}
@@ -263,7 +290,6 @@ namespace MyUnityMcp.EditorTests
 				compiled.Value<string>("graphId"),
 				revision,
 				null);
-
 			JObject cancelled = UnityAgentMcpRuntime.Instance.CancelExecution(started.Value<string>("executionId"));
 			JObject status = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
 
@@ -287,7 +313,6 @@ namespace MyUnityMcp.EditorTests
 				null,
 				1);
 			now = now.AddSeconds(2);
-
 			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
 			JObject status = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
 
@@ -320,7 +345,6 @@ namespace MyUnityMcp.EditorTests
 			JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
 			JObject started = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
 			UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
-
 			JObject history = UnityAgentMcpRuntime.Instance.GetExecutionHistory(100);
 
 			Assert.That(UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId")).Value<string>("status"), Is.EqualTo("SUCCEEDED"));
