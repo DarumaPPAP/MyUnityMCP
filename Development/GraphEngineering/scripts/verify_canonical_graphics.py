@@ -17,6 +17,7 @@ CANONICAL_PATHS = [
     "Packages/com.darumappap.my-unity-mcp/Editor/Capture",
     "Packages/com.darumappap.my-unity-mcp/Editor/Execution",
     "Packages/com.darumappap.my-unity-mcp/Editor/Tools",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent",
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Bake",
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Capture",
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Compatibility",
@@ -26,7 +27,9 @@ CANONICAL_PATHS = [
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Mutation",
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Planning",
     "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Save",
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityAgentMcpRuntimeTests.cs",
     "Specs/UnityGraphicsMCP",
+    "Specs/UnityAgentMCP",
     "Specs/Compatibility",
     "Tests/Compatibility",
     "Tests/Release",
@@ -34,6 +37,7 @@ CANONICAL_PATHS = [
     "Catalog/mcp-catalog.yaml",
     "Catalog/capability-catalog.yaml",
     "Catalog/capability-contracts.yaml",
+    "Catalog/unity-agent-capability-contracts.yaml",
     "Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml",
 ]
 
@@ -45,6 +49,7 @@ def main():
     changed = subprocess.check_output(command, cwd=ROOT, text=True).splitlines()
     result = {
         "baseline_sha": baseline_sha,
+        "production_tool_count": baseline.get("production_tool_count"),
         "canonical_paths": len(CANONICAL_PATHS),
         "changed": changed,
         "status": "pass" if not changed else "failed",
