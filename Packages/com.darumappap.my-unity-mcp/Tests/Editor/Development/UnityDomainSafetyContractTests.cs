@@ -7,7 +7,6 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityAnimationMcp;
 using UnityAudioMcp;
-using UnityBuildMcp;
 using UnityCinematicMcp;
 using UnityDomainMcp;
 using UnityEditor;
@@ -42,7 +41,7 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
-		public void AllMcpTools_AreExactly85AndRemainDefaultDisabled()
+		public void AllMcpTools_AreExactly79AndRemainDefaultDisabled()
 		{
 			string[] sources = Directory.GetFiles(
 				"Packages/com.darumappap.my-unity-mcp/Editor",
@@ -52,7 +51,7 @@ namespace MyUnityMcp.EditorTests
 			int toolCount = Count(combined, "[McpForUnityTool(");
 			int disabledCount = Count(combined, "AutoRegister = false");
 
-			Assert.That(toolCount, Is.EqualTo(85));
+			Assert.That(toolCount, Is.EqualTo(79));
 			Assert.That(disabledCount, Is.EqualTo(toolCount));
 		}
 
@@ -130,15 +129,6 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(consumed, Is.False);
 			Assert.That(failure.status, Is.EqualTo(E_DOMAIN_TOOL_STATUS.APPROVAL_EXPIRED.ToString()));
-		}
-
-		[Test]
-		public void BuildOutput_RejectsAbsoluteAndEscapingPaths()
-		{
-			Assert.That(UnityBuildMcpRuntime.TryNormalizeOutput("C:/Build/Game.exe", out _, out _), Is.False);
-			Assert.That(UnityBuildMcpRuntime.TryNormalizeOutput("Builds/MyUnityMCP/../escape/Game.exe", out _, out _), Is.False);
-			Assert.That(UnityBuildMcpRuntime.TryNormalizeOutput("Builds/MyUnityMCP/Windows/Game.exe", out string normalized, out _), Is.True);
-			Assert.That(normalized, Is.EqualTo("Builds/MyUnityMCP/Windows/Game.exe"));
 		}
 
 		[Test]
