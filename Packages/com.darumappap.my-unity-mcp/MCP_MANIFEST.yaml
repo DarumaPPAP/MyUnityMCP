@@ -5,7 +5,7 @@ implementation_status: stage2_8_implementation_complete_validation_pending
 release_baseline: v1.0.0
 production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
 production_verified_tool_count: 45
-integration_target_tool_count: 85
+integration_target_tool_count: 79
 
 operational_domain:
   id: unity_graphics_mcp
@@ -34,10 +34,6 @@ integration_candidate_domains:
     status: integration_candidate
     tools: 8
     mutation_scope: capture_control_only
-  - id: unity_build_mcp
-    status: integration_candidate
-    tools: 6
-    approval_required_for_build: true
   - id: unity_addressables_mcp
     status: integration_candidate
     tools: 6
@@ -64,7 +60,7 @@ bridge:
   declared_api_version: "10.1.2"
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
-  discovered_tool_count: 85
+  discovered_tool_count: 79
   tools_enabled_by_default: false
   explicit_activation_required: true
 
@@ -88,15 +84,6 @@ integration_tool_groups:
       - profiler.cancel_capture
       - profiler.summarize_capture
       - profiler.compare_baseline
-  build:
-    mutation: external_build_output
-    tools:
-      - build.inspect_environment
-      - build.prepare_player
-      - build.start_player
-      - build.get_history
-      - build.cancel_player
-      - build.get_support_matrix
   addressables:
     mutation: asset_and_content_build
     tools:
@@ -160,16 +147,15 @@ verification:
   world_creator_evidence: ../../Tests/Compatibility/world-creator-production-promotion-verification.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
   unity_editor_compile: required
-  tool_discovery_count: 85
+  tool_discovery_count: 79
   production_verified_tool_count: 45
-  integration_candidate_tool_count: 40
-  stage2_8_validation_status: not_started
+  integration_candidate_tool_count: 34
+  stage2_8_validation_status: reset_after_build_domain_removal
   fresh_project_sample_workflow: required
   combined_domain_e2e: required_after_implementation_complete
 
 not_production_operational_until_validation:
   - unity_profiler_mcp
-  - unity_build_mcp
   - unity_addressables_mcp
   - unity_ui_mcp
   - unity_animation_mcp
