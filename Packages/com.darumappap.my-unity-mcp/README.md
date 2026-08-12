@@ -5,9 +5,10 @@ Unity EditorのGraphics制作をMCP Clientから安全にInspection、Planning�
 - Unity `6000.0`以上
 - Editor only
 - Production main: 45 Tool（32 Graphics + 10 Agent + 3 WorldCreator）、すべて`AutoRegister = false`
-- `delivery/stage2-8-integration`: 85 Tool Integration Candidate（Production 45 + Candidate 40）
-- Candidate 40: Profiler 8 + Build 6 + Addressables 6 + UI 5 + Animation 5 + Audio 5 + Cinematic 5
-- Stage 2〜8 CandidateはImplementation Complete / Validation Pendingで、まだProduction Operationalではありません
+- `delivery/stage2-8-integration`: 79 Tool Integration Candidate（Production 45 + Candidate 34）
+- Candidate 34: Profiler 8 + Addressables 6 + UI 5 + Animation 5 + Audio 5 + Cinematic 5
+- Build Domainは今回のIntegration Candidateから撤去済み
+- Stage 2〜8 CandidateはImplementation Complete / Validation Resetで、まだProduction Operationalではありません
 - Stable `v1.0.0` baseline: 32 Graphics Tool
 - UnityAgentMCPはControl PlaneでありUnity APIを直接Mutationしません
 - WorldCreatorもUnity APIを直接Mutationせず、Agent経由でGraphics Read-only Preflightへ委譲します
