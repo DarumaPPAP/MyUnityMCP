@@ -70,22 +70,39 @@ manual_results:
     addressables_content_build: false
     direct_unity_api: false
 
-blocking_issue_observed:
-  phase: safety_stale_revision
-  tool: ui.prepare_rect_transform
-  intended_result: STALE_REVISION
-  observed_result: MCP_RESPONSE_SCHEMA_ERROR
-  cause:
-    field: MCPResponse.error
-    expected_schema: string
-    candidate_returned: object
-  mutation: false
-  approval: false
-  apply: false
-  validation_stopped_safely: true
+safety_findings:
+  response_schema:
+    original_observed_result: MCP_RESPONSE_SCHEMA_ERROR
+    original_cause: MCPResponse.error returned object instead of string
+    fix_status: implemented
+    manual_retest:
+      pydantic_schema_error: false
+      error_field_is_string: true
+  stale_revision_precedence:
+    tool: ui.prepare_rect_transform
+    test_input:
+      expected_revision: 0
+      editor_revision: 1
+      target_exists: false
+    intended_result: STALE_REVISION
+    observed_result: NOT_FOUND
+    observed_error: 対象RectTransformが見つかりません。
+    mutation: false
+    approval: false
+    apply: false
+    editor_revision_changed: false
+    validation_stopped_safely: true
+    cause: domain target resolution occurred before shared expectedRevision validation
 
 blocking_fix:
   status: implemented_awaiting_manual_retest
+  current_candidate_fix:
+    expected_revision_gate_location: UnityDomainMcpCommon.Execute
+    behavior: expectedRevision is validated before delegated domain runtime target/input validation
+    tool_identity: resolved from declaring MCP tool attribute
+    applies_to: all MCP tool requests carrying expectedRevision
+    stale_error_status: STALE_REVISION
+    stale_error_code_shape: <tool>:STALE_REVISION
   shared_domain_response:
     error_field: string
     error_code_field: string
@@ -94,12 +111,20 @@ blocking_fix:
     legacy_object_error_supported: true
     string_error_supported: true
     domain_error_code_preserved: true
-  regression_test:
-    path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
-    execution_status: not_run
+  regression_tests:
+    response_contract:
+      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
+      execution_status: not_run
+    revision_precedence:
+      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainRevisionPrecedenceTests.cs
+      execution_status: not_run
+      assertions:
+        - stale revision wins over missing target
+        - current revision preserves missing target response
+        - editor revision remains unchanged
 
 pending_validation:
-  - stale_revision_retest
+  - stale_revision_precedence_retest
   - missing_approval_apply
   - wrong_approval_token
   - plan_reuse
@@ -107,11 +132,13 @@ pending_validation:
   - ui_animation_audio_cinematic_mutation_e2e
   - build_approval_boundary
   - agent_candidate_execution
+  - agent_delegated_failure_propagation
   - cross_domain_workflow
   - timeout_cancel_expired_approval
 
 verdict:
   phase_a_to_d: pass_manual
-  safety: blocked_fix_awaiting_retest
+  safety_response_schema: pass_manual
+  safety_revision_precedence: blocked_fix_awaiting_retest
   full_85_tool_validation: not_complete
   production_ready: false
