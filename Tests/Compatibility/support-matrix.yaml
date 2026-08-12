@@ -2,6 +2,14 @@ schema_version: "1.1"
 package_version: "1.1.0"
 source_channel: main_v1_1_release_candidate
 
+current_stage:
+  id: 0
+  name: production_baseline_repair_and_verification
+  status: integration_verified_manual
+  evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
+  production_commit: 5369f990b96b34413a0e19226a6e76b340bf8bbf
+  next_delivery_capability: world_creator
+
 verification_contract:
   discovered_mcp_tools: 42
   production_graphics_tools: 32
@@ -61,6 +69,19 @@ unity:
         compatibility_buckets: passed
       automated_canary: gameci_image_unavailable
     package_versions_required_for_package_api_decisions: true
+
+stage_0_manual_e2e:
+  status: integration_verified_manual
+  unity_version: "6000.7.0a2"
+  production_tool_discovery_42: passed
+  graphics_readonly_e2e: passed
+  agent_to_graphics_orchestration_e2e: passed
+  explicit_approval_boundary: passed
+  light_mutation: passed
+  normal_light_undo: passed
+  force_undo_used: false
+  safety_bypass_used: false
+  automated_ci: not_verified_runner_failed_before_steps
 
 unity_agent:
   source_evidence:
