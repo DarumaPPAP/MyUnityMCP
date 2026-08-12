@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
@@ -96,22 +97,26 @@ namespace UnityAgentMcp
 		{
 			"mutate",
 			"save",
-			"bake",
-			"build",
-			"content_build"
+			"bake"
 		};
 
-		private static readonly Dictionary<string, Func<JObject, object>> GRAPHICS_DELEGATES =
-			new Dictionary<string, Func<JObject, object>>(StringComparer.Ordinal)
-			{
-				{"graphics.inspect_project", InspectProjectTool.HandleCommand},
-				{"graphics.inspect_scene", InspectSceneTool.HandleCommand},
-				{"graphics.validate_scene", ValidateSceneTool.HandleCommand},
-				{"graphics.get_execution_history", GetExecutionHistoryTool.HandleCommand},
-				{"graphics.get_error_catalog", GetErrorCatalogTool.HandleCommand},
-				{"graphics.get_support_matrix", GetSupportMatrixTool.HandleCommand}
-			};
+		private static readonly HashSet<string> APPROVAL_TOOLS = new HashSet<string>(StringComparer.Ordinal)
+		{
+			"graphics.apply_plan",
+			"graphics.undo_last_transaction",
+			"graphics.apply_environment_plan",
+			"graphics.undo_last_environment_transaction",
+			"graphics.apply_save_plan",
+			"graphics.bake_dependencies",
+			"graphics.start_apv_bake",
+			"addressables.apply_entry",
+			"ui.apply_rect_transform",
+			"animation.apply_parameter",
+			"audio.apply_source",
+			"cinematic.apply_director"
+		};
 
+		private static readonly Dictionary<string, Func<JObject, object>> DOMAIN_DELEGATES = BuildDomainDelegates();
 		private static readonly UnityAgentMcpRuntime _instance = new UnityAgentMcpRuntime();
 
 		private readonly Dictionary<string, UnityAgentMcpCompiledGraph> _graphs =
@@ -163,7 +168,8 @@ namespace UnityAgentMcp
 				["directUnityMutation"] = false,
 				["defaultExecutionTimeoutSeconds"] = DEFAULT_EXECUTION_TIMEOUT_SECONDS,
 				["maxExecutionTimeoutSeconds"] = MAX_EXECUTION_TIMEOUT_SECONDS,
-				["cooperativeExecution"] = true
+				["cooperativeExecution"] = true,
+				["integrationCandidateExecutionEnabled"] = true
 			});
 		}
 
@@ -201,7 +207,7 @@ namespace UnityAgentMcp
 				createdAtUtc = UtcNow,
 				steps = normalized,
 				requiredApprovalGroups = new HashSet<string>(
-					normalized.Where(value => APPROVAL_GROUPS.Contains(value.toolGroup))
+					normalized.Where(RequiresApproval)
 						.Select(value => value.toolGroup),
 					StringComparer.Ordinal)
 			};
@@ -237,7 +243,7 @@ namespace UnityAgentMcp
 					value.domainId,
 					value.toolName,
 					value.toolGroup,
-					mutation = APPROVAL_GROUPS.Contains(value.toolGroup)
+					mutation = RequiresApproval(value)
 				})),
 				["directUnityMutation"] = false
 			});
@@ -462,7 +468,7 @@ namespace UnityAgentMcp
 			}
 
 			long revisionAfter = Session.Revision;
-			if (APPROVAL_GROUPS.Contains(step.toolGroup))
+			if (RequiresApproval(step))
 			{
 				execution.expectedRevision = revisionAfter;
 			}
@@ -513,7 +519,7 @@ namespace UnityAgentMcp
 					error = Error("AGENT-DOMAIN-NOT-FOUND", $"DomainがCatalogにありません: {step.domainId}");
 					return false;
 				}
-				if (!string.Equals(domain.status, "editor_operational", StringComparison.Ordinal))
+				if (!IsExecutableDomainStatus(domain.status))
 				{
 					error = Error("AGENT-DOMAIN-NOT-OPERATIONAL", $"Domainは実行可能ではありません: {step.domainId}");
 					return false;
@@ -558,11 +564,7 @@ namespace UnityAgentMcp
 
 		private JObject DelegateStep(UnityAgentMcpStepInput step)
 		{
-			if (!string.Equals(step.domainId, "unity_graphics_mcp", StringComparison.Ordinal))
-			{
-				return Error("AGENT-DOMAIN-DELEGATE-MISSING", $"Delegateがありません: {step.domainId}");
-			}
-			if (!GRAPHICS_DELEGATES.TryGetValue(step.toolName, out Func<JObject, object> handler))
+			if (!DOMAIN_DELEGATES.TryGetValue(step.toolName, out Func<JObject, object> handler))
 			{
 				return Error("AGENT-DELEGATE-NOT-REGISTERED", $"Agent delegate対象外です: {step.toolName}");
 			}
@@ -571,17 +573,32 @@ namespace UnityAgentMcp
 			{
 				object result = handler(step.parameters ?? new JObject());
 				JToken delegated = result == null ? JValue.CreateNull() : JToken.FromObject(result);
-				bool delegatedSuccess = delegated.Type == JTokenType.Object
-					? delegated.Value<bool?>("success") ??
-					  !string.Equals(delegated.Value<string>("status"), "ERROR", StringComparison.OrdinalIgnoreCase)
-					: result != null;
+				bool delegatedSuccess = IsDelegatedSuccess(delegated);
 				if (!delegatedSuccess)
 				{
+					JToken errorToken = delegated.Type == JTokenType.Object ? delegated["error"] : null;
+					string delegatedErrorCode = delegated.Type == JTokenType.Object
+						? delegated.Value<string>("errorCode")
+						: null;
+					string delegatedMessage = delegated.Type == JTokenType.Object
+						? delegated.Value<string>("message")
+						: null;
+
+					if (errorToken is JObject errorObject)
+					{
+						delegatedErrorCode = delegatedErrorCode ?? errorObject.Value<string>("code");
+						delegatedMessage = delegatedMessage ?? errorObject.Value<string>("message");
+					}
+					else if (errorToken?.Type == JTokenType.String)
+					{
+						delegatedMessage = delegatedMessage ?? errorToken.Value<string>();
+					}
+
 					return new JObject
 					{
 						["success"] = false,
-						["errorCode"] = delegated.Value<string>("errorCode") ?? "AGENT-DELEGATE-FAILED",
-						["message"] = delegated.Value<string>("message") ?? "Delegated tool reported failure.",
+						["errorCode"] = delegatedErrorCode ?? "AGENT-DELEGATE-FAILED",
+						["message"] = delegatedMessage ?? delegated.Value<string>("summary") ?? "Delegated tool reported failure.",
 						["delegatedResult"] = delegated
 					};
 				}
@@ -593,10 +610,94 @@ namespace UnityAgentMcp
 					["delegatedResult"] = delegated
 				};
 			}
+			catch (TargetInvocationException exception)
+			{
+				return Error("AGENT-DELEGATE-FAILED", exception.InnerException?.Message ?? exception.Message);
+			}
 			catch (Exception exception)
 			{
 				return Error("AGENT-DELEGATE-FAILED", exception.Message);
 			}
+		}
+
+		private static Dictionary<string, Func<JObject, object>> BuildDomainDelegates()
+		{
+			Dictionary<string, Func<JObject, object>> handlers =
+				new Dictionary<string, Func<JObject, object>>(StringComparer.Ordinal);
+			System.Reflection.Assembly assembly = typeof(InspectProjectTool).Assembly;
+			foreach (Type type in assembly.GetTypes())
+			{
+				CustomAttributeData attribute = type.GetCustomAttributesData().FirstOrDefault(value =>
+					string.Equals(
+						value.AttributeType.FullName,
+						"MCPForUnity.Editor.Tools.McpForUnityToolAttribute",
+						StringComparison.Ordinal));
+				if (attribute == null || attribute.ConstructorArguments.Count == 0)
+				{
+					continue;
+				}
+				string toolName = attribute.ConstructorArguments[0].Value as string;
+				if (string.IsNullOrWhiteSpace(toolName))
+				{
+					continue;
+				}
+				MethodInfo handleCommand = type.GetMethod(
+					"HandleCommand",
+					BindingFlags.Public | BindingFlags.Static,
+					null,
+					new[] {typeof(JObject)},
+					null);
+				if (handleCommand == null)
+				{
+					continue;
+				}
+				if (handlers.ContainsKey(toolName))
+				{
+					throw new InvalidOperationException($"Duplicate MCP Tool delegate: {toolName}");
+				}
+				MethodInfo method = handleCommand;
+				handlers.Add(toolName, value => method.Invoke(null, new object[] {value}));
+			}
+			return handlers;
+		}
+
+		private static bool IsDelegatedSuccess(JToken delegated)
+		{
+			if (delegated == null || delegated.Type != JTokenType.Object)
+			{
+				return delegated != null && delegated.Type != JTokenType.Null;
+			}
+
+			bool? domainSuccess = delegated.Value<bool?>("success");
+			if (domainSuccess.HasValue)
+			{
+				return domainSuccess.Value;
+			}
+
+			bool? graphicsSuccess = delegated.Value<bool?>("IsSuccessful") ??
+				delegated.Value<bool?>("isSuccessful");
+			if (graphicsSuccess.HasValue)
+			{
+				return graphicsSuccess.Value;
+			}
+
+			string status = delegated.Value<string>("status");
+			return string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(status, "SUCCEEDED", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(status, "PARTIAL", StringComparison.OrdinalIgnoreCase);
+		}
+
+		private static bool IsExecutableDomainStatus(string status)
+		{
+			return string.Equals(status, "editor_operational", StringComparison.Ordinal) ||
+				string.Equals(status, "integration_candidate", StringComparison.Ordinal);
+		}
+
+		private static bool RequiresApproval(UnityAgentMcpStepInput step)
+		{
+			return step != null &&
+				(APPROVAL_GROUPS.Contains(step.toolGroup ?? string.Empty) ||
+				 APPROVAL_TOOLS.Contains(step.toolName ?? string.Empty));
 		}
 
 		private static bool HasCycle(List<UnityAgentMcpStepInput> steps)

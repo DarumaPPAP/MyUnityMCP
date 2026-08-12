@@ -2,129 +2,114 @@
 
 MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEditor拡張Packageです。Project／SceneのInspection、構造化Planning、明示承認付きMutation／Save／Bake、Capture Evidence、Visual Evaluation、Refine、長時間実行の履歴・Timeout・Cancellationに加え、複数Toolを安全に組み立てるUnityAgentMCP Control Planeと、Visual GoalをRead-only Preflightへ変換するWorldCreatorを提供します。
 
-## v1.0 scope
+## Production baseline
+
+Current `main`は **45 Tool = 32 Graphics + 10 Agent + 3 WorldCreator** のProduction Surfaceです。WorldCreatorまで実Unity Editorで`integration_verified_manual`として確定しています。
 
 - Unity Editor専用
 - Unity `6000.0`以上
-- CI検証環境: Unity `6000.0.75f1`
-- Compatibility CI: Unity `6000.4.12f1` / `6000.5.5f1`
-- Manual Compatibility: Unity `6000.7.0a2`
-- MCP Tool: 32 Graphics Tools
-- Toolはすべて既定で非公開（`AutoRegister = false`）
-- Mutation、Save、Bakeはそれぞれ別の承認境界
-- Player／実機上でのTool実行は非対応
+- Stable `v1.0.0`: 32 Graphics Tool
+- Current Production Source: 45 Tool
+- Toolはすべて`AutoRegister = false`
+- UnityAgentMCPはControl PlaneでありUnity APIを直接Mutationしません
+- WorldCreatorはRead-only PreflightとHuman Review Handoffを担当します
 
-`v1.0.0` Tagは上記32 Graphics Toolのimmutable release baselineです。
+## Stage 2-8 Integration Wave
 
-## Current main scope
+`delivery/stage2-8-integration`では、Production 45 Toolを変更せずに6 Candidate Domain / 32 Toolを追加し、**77 Toolを同一Candidateとしてまとめて検証する**構成です。
 
-`main`の次期製品Sourceでは、**32 Graphics + 10 Agent + 3 WorldCreator = 45 Tool**をProduction Tool Surfaceとして扱います。Version／Tagの更新とPublicationは別Release操作で行うため、`v1.0.0`の内容は変更しません。
+Build Domainは今回のCandidateから撤去し、AddressablesもContent Buildを除外してEntry管理中心へ縮小しています。
 
-UnityAgentMCPはControl Planeです。WorkflowのValidation、Dependency Graph Compile、Preview、Approval Orchestration、協調Execution、Cancellation／Timeout／Historyを担当し、Unity APIを直接Mutationしません。現在Productionで実行委譲できるDomainは`unity_graphics_mcp`のみです。
+| Stage | Capability | Candidate Tools | Combined Target |
+|---|---|---:|---:|
+| 2 | Profiler | +8 | 53 |
+| 3 | Build | 0 / Retired | 53 |
+| 4 | Addressables | +4 | 57 |
+| 5 | UI | +5 | 62 |
+| 6 | Animation | +5 | 67 |
+| 7 | Audio | +5 | 72 |
+| 8 | Cinematic | +5 | 77 |
 
-WorldCreatorはCreator Layerです。Visual Goalと制約から`graphics.inspect_project` → `graphics.inspect_scene` → `graphics.validate_scene`のRead-only Preflight GraphをUnityAgentMCP上に構築し、結果を`HUMAN_REVIEW_REQUIRED`のReview Handoffへ変換します。WorldCreator自身はUnity APIを直接Mutationしません。
+Addressablesで現行Candidateに含めるのは`inspect` / `prepare_entry` / `apply_entry` / `get_support_matrix`のみです。`prepare_content_build`と`build_content`は現行MCP Surfaceから除外しています。
+
+現行CandidateのStatusは **`local_cg_runtime_verified_ci_unavailable`** です。`integration_candidate`はIntegration BranchのEditorでValidation実行できますが、Productionの`editor_operational`昇格Statusではありません。Local CG / Unity `6000.7.0a2`で77 Tool Runtime Validationは完了し、Automated CIは`not_verified`のまま保持しています。Human Promotion Gate前に`delivery/stage2-8-integration`または`main`へMergeしません。
+
+詳細は[Stage 2-8 Integration Wave](Packages/com.darumappap.my-unity-mcp/Documentation~/stage2-8-integration.md)と[Implementation Status](Development/GraphEngineering/stage2-8-implementation-status.yaml)を参照してください。
 
 ## Repository Layout
 
 ```text
 MyUnityMCP/
 ├─ Packages/        # 実行可能なUPM Package
-├─ Catalog/         # 実行可能MCPのCatalog / Capability Contract
-├─ Specs/           # 現行製品の開発・契約仕様
-├─ Tests/           # Release / Compatibility / Routing検証
+├─ Catalog/         # Production / Integration Capability Contract
+├─ Specs/           # Production仕様
+├─ Tests/           # Release / Compatibility / Editor Contract
+├─ Development/     # Graph Engineering / Integration Wave status
 ├─ TestProjects/    # Unity Editor検証Project
 ├─ SampleProjects/  # Standalone Sample Project
 ├─ Templates/       # MCP Client / CI / Acceptance Profile配布物
-├─ Design/          # 未実装Control Plane / Domain / Creatorの設計専用資産
-└─ .github/         # GitHub Actions等のRepository automation
+├─ Design/          # 未実装Capabilityの設計資産
+└─ .github/         # Repository automation
 ```
-
-Package内Graphics実装は`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`へ責務別に整理しています。UnityAgentMCPは`Editor/Development/Agent`、WorldCreatorは`Editor/Development/Creators`に配置し、既存Domain実装へ処理を委譲します。
-
-## Quick Start
-
-1. Unity Package ManagerからMCP for Unity Bridgeを導入します。
-2. このRepositoryのPackageをGit URL、`.tgz`、またはEmbedded Packageとして導入します。
-3. Unityで `Window > MCP for Unity` を開き、検出されたMCP Clientを設定します。
-4. Client側では必要なToolだけを許可します。
-5. 直接確認は `graphics.inspect_project` → `graphics.inspect_scene`、複数StepのWorkflowは `agent.inspect_capabilities` → `agent.validate_workflow`、World制作のPreflightは `world.compile_workflow` から開始します。
-
-詳細は[Quick Start](Packages/com.darumappap.my-unity-mcp/Documentation~/quick-start.md)と[Installation](Packages/com.darumappap.my-unity-mcp/Documentation~/installation.md)を参照してください。
 
 ## Safety model
 
 ```text
 Direct Domain:
-Inspect → Snapshot → Prepare Plan → Human/Client Approval → Apply
-       → Prepare Save → Save
-       → Prepare Bake → Bake
-       → Capture → Evaluate → Human Review → Refine
+Inspect → Prepare → Exact Diff → Approval when required → Apply
 
 Agent Control Plane:
 Inspect Capabilities → Validate Workflow → Compile Graph → Preview
-                    → Explicit Approval when required → Delegate to Domain MCP
+                    → Explicit Approval when required → Delegate
                     → Status / Cancel / History
 
 WorldCreator:
-Visual Goal → Compile Read-only Preflight → Agent Execution
-            → Project / Scene / Validation Evidence → Human Review Handoff
+Visual Goal → Read-only Preflight → Human Review Handoff
 ```
 
-- Read-only ToolはScene、Asset、Undo Groupを変更しません。
-- ApplyはPlan ID、Expected Revision、Approval Token、Baselineを再検証します。
-- SaveとBakeはMutationへ暗黙統合しません。
-- UnityAgentMCPはUnity APIを直接Mutationせず、Operational Domainだけへ委譲します。
-- WorldCreatorもUnity APIを直接Mutationせず、Preflight後のMutation／Save／Bakeは既存Domainの承認境界へ委譲します。
-- 自動Save、自動Full Bake、任意SerializedProperty書換え、Silent Fallbackは禁止です。
-- Visual EvaluationのPASSはHuman Acceptanceを代替しません。
-- WorldCreatorのReview HandoffはHuman Review必須で、自動Visual Acceptanceを行いません。
-- Domain Reload、Compile、Play Mode移行、Scene構成変更、Client切断、Unity再起動はExecution Historyへ構造化して残します。
+Stage 2〜8のShared Domain ContractではExpected Revision、期限付きOne-time Plan、Approval Token、Mutation Scopeを共通化しています。自動Save、自動Full Bake、Generic SerializedProperty Mutation、Silent Fallbackは禁止です。AddressablesはOptional Dependencyで、Package未導入時に自動導入・Settings生成へFallbackしません。Player BuildとAddressables Content Buildは現行Candidateから実行しません。
+
+## Quick Start
+
+1. Unity Package ManagerからMCP for Unity Bridgeを導入します。
+2. MyUnityMCPをGit URL、`.tgz`、またはEmbedded Packageとして導入します。
+3. Unityで `Window > MCP for Unity` を開きます。
+4. MCP Client側では必要なToolだけを許可します。
+5. Production Read-only確認は`graphics.inspect_project`から開始します。
+
+Integration Waveの77 Tool CandidateはProduction用途ではなく、Validation用Branchとして使用してください。
 
 ## Documentation
 
+- [Installation](Packages/com.darumappap.my-unity-mcp/Documentation~/installation.md)
+- [Quick Start](Packages/com.darumappap.my-unity-mcp/Documentation~/quick-start.md)
 - [Tool Reference](Packages/com.darumappap.my-unity-mcp/Documentation~/tool-reference.md)
-- [Status / Error Codes](Packages/com.darumappap.my-unity-mcp/Documentation~/status-and-error-codes.md)
+- [Stage 2-8 Integration Wave](Packages/com.darumappap.my-unity-mcp/Documentation~/stage2-8-integration.md)
 - [Safety Model](Packages/com.darumappap.my-unity-mcp/Documentation~/safety-model.md)
-- [Bake Constraints](Packages/com.darumappap.my-unity-mcp/Documentation~/bake-constraints.md)
-- [Pipeline Support](Packages/com.darumappap.my-unity-mcp/Documentation~/pipeline-support.md)
-- [MCP Client Configuration](Packages/com.darumappap.my-unity-mcp/Documentation~/mcp-client-configuration.md)
-- [Sample Workflow](Packages/com.darumappap.my-unity-mcp/Documentation~/sample-workflow.md)
 - [Troubleshooting](Packages/com.darumappap.my-unity-mcp/Documentation~/troubleshooting.md)
-- [Upgrade Guide](Packages/com.darumappap.my-unity-mcp/Documentation~/upgrade-guide.md)
 - [Known Issues](Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md)
-- [Support Matrix](Specs/UnityGraphicsMCP/support-matrix.md)
-- [WorldCreator Spec](Specs/UnityWorldCreatorMCP/spec.md)
+
+## Verification state
+
+Production 45 Tool Evidenceは既存のStage 0 / WorldCreator Evidenceを正本として維持します。旧85 / 79 Tool結果を流用せず、現行77 ToolをLocal CGで再検証しました。
+
+- Unity `6000.7.0a2`: Compile Error 0、77/77 Tool Discovery、重複0
+- Candidate 6 Domain: Read-only / Safety / Scoped Mutation / Agent Routingを検証
+- Addressables: Package未導入時の明示`UNSUPPORTED`境界をPASSとして許容。Positive Backend Matrixは`not_verified`
+- Agent: 5 Candidate Delegate成功 + Addressables失敗を`PARTIAL` / `executionSucceeded=false`で伝播
+- Local resilience callbackとProduction 45 Regression: PASS
+- Package Editor Test Runner、Fresh-project Sample Workflow、Automated CI、External Transport Disconnect/Reconnect: `not_verified`
+
+この結果はCandidateのProduction昇格を意味しません。Human Promotion Gateはpendingです。Target Device PASSも主張しません。
 
 ## Distribution
 
 - Stable baseline Tag: `v1.0.0`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
-- Package Sample: `Samples~/Getting Started`
 - Standalone Sample Project: `SampleProjects/MyUnityMCPGettingStarted`
 - MCP Client Templates: `Templates/McpClients`
-- Acceptance Profile Example: `Templates/AcceptanceProfiles`
-- CI Template: `Templates/CI`
 
-`VERSION`変更はRelease Workflowを起動するため、CapabilityのSource PromotionとVersion／Tag Publicationは分離して扱います。
-
-## Verification
-
-Current main向けGateは次を検証します。
-
-- Package Resolve／Editor Compile
-- Manifestと一致するProduction Tool Discovery（WorldCreator昇格後は45）
-- 125以上のEditor Contract Testに加え、昇格Capability固有Contract
-- WorldCreator Read-only PreflightとHuman Review Handoff Contract
-- 新規Sample ProjectでのPackage CompileとTool Discovery
-- Getting Started Sample Workflow
-- Version／Manifest／Changelog／Support Matrix整合
-- 必須文書／配布物／Known Issuesの存在
-
-`v1.0.0`のimmutable release evidenceは`Tests/Compatibility/release-verification.yaml`、Stage 0 Production baselineは`Tests/Compatibility/stage-0-production-baseline-verification.yaml`、current mainの対応範囲は`Tests/Compatibility/support-matrix.yaml`を参照します。
-
-## Design-only assets
-
-`Design/`は将来設計専用です。実装済みCapabilityとして数えません。`v1.0.0` Tagで実行可能なのは32 Graphics Tool、current mainではUnityAgentMCP 10 ToolとWorldCreator 3 Toolを加えた45 ToolをProduction Surfaceとして扱います。Profiler、Build、Addressables、UI、Animation、Audio、Cinematic、MovieCreator、LiveCreatorは個別Deliveryが完了するまでProduction Operationalとして扱いません。
+Version／Tag PublicationはCapability Source Promotionとは分離しています。公開済みTagはimmutableです。
 
 ## License
 

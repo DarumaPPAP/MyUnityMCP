@@ -1,6 +1,7 @@
-schema_version: "2.2"
+schema_version: "2.3"
 release_version: "1.1.0"
 capability_contracts: Catalog/capability-contracts.yaml
+integration_contracts: Catalog/stage2-8-integration-contracts.yaml
 
 modules:
   unity_graphics_mcp:
@@ -20,16 +21,6 @@ modules:
       - evaluate
       - review_and_refine
       - execution
-    use_when:
-      - Unity graphics project and scene inspection
-      - approval gated graphics mutation and save
-      - explicit dependency or APV bake
-      - capture evidence and visual evaluation
-      - long running execution tracking
-    do_not_use_when:
-      - gameplay logic only
-      - player build orchestration only
-      - shader source repair only
 
   unity_agent_mcp:
     kind: control_plane
@@ -40,14 +31,6 @@ modules:
     default_tool_group: agent
     available_tool_groups:
       - agent
-    use_when:
-      - multiple MCP steps require dependency validation and deterministic ordering
-      - a workflow requires preview, approval orchestration, cancellation, timeout, or execution history
-      - execution must delegate to an operational Domain MCP without direct control-plane mutation
-    do_not_use_when:
-      - a single direct read-only Domain tool is sufficient
-      - the requested Domain is not operational in the current production catalog
-      - the workflow would require bypassing explicit approval or revision checks
     direct_unity_mutation_allowed: false
 
   world_creator:
@@ -59,22 +42,75 @@ modules:
     default_tool_group: creator
     available_tool_groups:
       - creator
-    use_when:
-      - a visual world goal requires a safe project and scene preflight before production planning
-      - project, scene, and graphics validation should be orchestrated as one read-only creator workflow
-      - production intent must be handed to a human reviewer before any downstream mutation, save, or bake
-    do_not_use_when:
-      - a single direct read-only Graphics tool is sufficient
-      - direct automatic Unity mutation is requested without the existing Domain approval boundary
-      - unattended visual acceptance is requested
     direct_unity_mutation_allowed: false
     orchestration_control_plane: unity_agent_mcp
     operational_delegate_domains:
       - unity_graphics_mcp
+
+  unity_profiler_mcp:
+    kind: domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: profiler
+    available_tool_groups: [profiler]
+    tools: 8
+
+  unity_addressables_mcp:
+    kind: optional_domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: addressables
+    available_tool_groups: [addressables]
+    tools: 4
+    required_package: com.unity.addressables
+    content_build: excluded_from_current_mcp_surface
+
+  unity_ui_mcp:
+    kind: domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: ui
+    available_tool_groups: [ui]
+    tools: 5
+
+  unity_animation_mcp:
+    kind: domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: animation
+    available_tool_groups: [animation]
+    tools: 5
+
+  unity_audio_mcp:
+    kind: domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: audio
+    available_tool_groups: [audio]
+    tools: 5
+
+  unity_cinematic_mcp:
+    kind: domain
+    status: integration_candidate
+    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    default_tool_group: cinematic
+    available_tool_groups: [cinematic]
+    tools: 5
 
 selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
   explicit_tool_activation_required: true
   capability_contract_required_for_operational_module: true
+  integration_contract_required_for_candidate_module: true
   load_only_selected_capability_contract: true
+
+promotion_policy:
+  production_verified_tool_count: 45
+  integration_target_tool_count: 77
+  stage2_8_validation_status: local_cg_runtime_verified_ci_unavailable
+  local_cg_runtime_validation: passed
+  automated_ci: unavailable_not_verified
+  human_promotion_gate: pending
+  integration_candidate_is_not_production_operational: true
+  intermediate_main_merge: prohibited

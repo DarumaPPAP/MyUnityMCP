@@ -14,14 +14,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
 
 			[ToolParameter("Scene Path、Dependency Kind、必要ならReflection Probe Object IDを指定します。", Required = true)]
 			public BakeTargetInput[] targets { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -44,9 +44,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Bake Plan ID。", Required = true)]
 			public string planId { get; set; }
 
@@ -58,6 +55,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("EXPLICIT_DEPENDENCIESのみ。", Required = true)]
 			public string bakeMode { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

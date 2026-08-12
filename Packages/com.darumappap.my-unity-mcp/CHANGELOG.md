@@ -22,6 +22,8 @@
 - WorldCreatorはGraph Engineering候補全体をMergeせず、3 ToolだけをCapability-scoped Deliveryとして移植
 - Source Versionを`1.1.0`へ移行し、GitHub Release Publicationとは分離
 - `VERSION`変更による暗黙Releaseを廃止し、明示Publish操作だけでReleaseする構成へ変更
+- Stage 2〜8 CandidateをExact 77 Toolへ確定し、Build DomainとAddressables Content BuildをRuntime Surfaceから撤去
+- Local Runtime ValidationとProduction Promotionを分離し、Candidate 6 Domainは`integration_candidate`を維持
 
 ### Verification
 
@@ -29,7 +31,10 @@
 - Unity 6000.7.0a2 Manual CanaryでAgentを含むCombined Tool Discoveryを確認
 - Stage 0の42 Tool Production baselineは実Editor E2Eで`integration_verified_manual`
 - exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
-- WorldCreator 45 Tool Deliveryは専用Contract追加済みで、実Editor E2EはDelivery Gateとして別途確定する
+- WorldCreatorを含むProduction 45 Toolは実Editor Evidenceで`integration_verified_manual`
+- Stage 2〜8 Exact 77 CandidateはLocal CG / Unity `6000.7.0a2`でRuntime ValidationとProduction 45 RegressionをPASS
+- Addressables Package未導入時の明示`UNSUPPORTED`境界はPASS。Package Editor Test Runner、Fresh-project Sample Workflow、Positive Backend Matrix、Automated CI、External Transport Disconnect/Reconnectは`not_verified`
+- Candidate Production PromotionはHuman Gate pending
 
 `1.1.0`はCurrent Source Versionです。この変更自体ではTag／GitHub Releaseを作成しません。
 

@@ -2,7 +2,7 @@
 
 ## ToolがClientに表示されない
 
-仕様です。全Toolは既定非公開です。Bridge／ClientのAllowlistへ必要なTool名を追加してください。まずBridge Registryが32 Toolを検出しているか確認します。
+仕様です。全Toolは既定非公開です。Bridge／ClientのAllowlistへ必要なTool名を追加してください。Bridge Registryの期待値はProduction mainで45 Tool、Stage 2〜8 Integration Candidateで77 Toolです。利用中のSource Surfaceと一致しているか確認します。
 
 ## `SESSION_EXPIRED`／`STALE_SNAPSHOT`
 

@@ -1,0 +1,294 @@
+schema_version: "1.4"
+validation_wave: stage2_8_77_tool
+status: local_cg_runtime_verified_ci_unavailable
+production_ready: false
+production_promotion: prohibited
+human_promotion_gate: pending
+production_baseline_tools: 45
+current_candidate_tools: 32
+current_combined_target_tools: 77
+
+build_domain:
+  current_candidate_status: retired_removed
+  current_tool_count: 0
+  reason: user_decision_low_value_for_current_mcp
+  previous_validation_is_historical_only: true
+
+addressables_content_build:
+  current_candidate_status: excluded_removed
+  removed_tool_count: 2
+  removed_tools:
+    - addressables.prepare_content_build
+    - addressables.build_content
+  reason: low_priority_for_editor_facing_mcp_and_better_owned_by_unity_or_ci_build_pipeline
+  current_addressables_tool_count: 4
+  validation_required_for_content_build: false
+  previous_85_surface_observations_are_historical_only: true
+
+validation_environment:
+  unity: 6000.7.0a2
+  project: D:/Unity_project/CG
+  package_source: transient_local_worktree_binding
+  package_branch: graph/myunitymcp-final-completion
+  target_device_claim: false
+
+evidence_authority:
+  repository: DarumaPPAP/Unity-Graph-Engineering
+  branch: feature/myunitymcp-final-completion
+  run_id: myunitymcp-final-completion-20260813-001
+
+automated_ci:
+  evaluated_commit: e15ffe5add3b87c50cd488b11f344f2ec2ccafc1
+  status: not_verified
+  interpretation: infrastructure_terminated_before_runner_steps_not_code_failure
+  all_observed_jobs_steps_null: true
+  logs_available: false
+  workflow_runs:
+    unity_api_compatibility_contract:
+      run_id: 31622690527
+      conclusion: failure
+      jobs: 1
+      runner_steps_started: false
+    unity_api_compatibility_editor_matrix:
+      run_id: 31622690486
+      conclusion: failure
+      jobs: 3
+      runner_steps_started: false
+      matrix:
+        - Unity 6000.4.12f1 / UNITY_6000_4
+        - Unity 6000.5.5f1 / UNITY_6000_5
+        - Unity 6000.7.0a3 / UNITY_6000_7_CANARY
+    release_gate:
+      run_id: 31622690487
+      conclusion: failure
+      jobs: 2
+      runner_steps_started: false
+    unity_editor_verification:
+      run_id: 31622690507
+      conclusion: failure
+      jobs: 1
+      runner_steps_started: false
+  may_not_claim:
+    - ci_pass
+    - ci_code_failure
+    - unity_compile_result_from_ci
+
+historical_85_tool_results_before_build_removal:
+  applicability: historical_only_not_full_77_tool_evidence
+  package_compile:
+    status: pass
+    package_resolve: true
+    compiling: false
+    console_log_entries: 0
+    compile_errors: 0
+    missing_assembly_or_type_errors: 0
+    meta_or_asmdef_errors: 0
+  domain_tool_discovery:
+    status: pass_for_retired_85_surface
+    duplicate_tool_names: 0
+    total: 85
+    composition:
+      graphics: 32
+      agent: 10
+      world_creator: 3
+      profiler: 8
+      build: 6
+      addressables: 6
+      ui: 5
+      animation: 5
+      audio: 5
+      cinematic: 5
+    raw_custom_catalog_tool_count: 120
+  agent_capability:
+    status: pass_for_retired_85_surface
+    graphics_status: editor_operational
+    stage2_8_status: integration_candidate
+    direct_unity_mutation: false
+    integration_candidate_execution_enabled: true
+  domain_smoke:
+    status: pass_with_expected_optional_unsupported_for_retired_85_surface
+    graphics_inspect_project: SUCCESS
+    profiler_inspect_environment: SUCCESS
+    build_inspect_environment: SUCCESS
+    addressables_inspect: UNSUPPORTED_PACKAGE_NOT_INSTALLED
+    ui_inspect: SUCCESS
+    animation_inspect: SUCCESS
+    audio_inspect: SUCCESS
+    cinematic_inspect: SUCCESS
+  stale_revision_contract:
+    status: pass
+    tool: ui.prepare_rect_transform
+    editor_revision_before: 1
+    expected_revision: 0
+    success: false
+    response_status: STALE_REVISION
+    error_code: ui.prepare_rect_transform:STALE_REVISION
+    top_level_error: null
+    editor_revision_after: 1
+    mutation: false
+    approval: false
+    apply: false
+    scene_or_asset_change: false
+  build_approval_expiration_contract:
+    status: historical_pass_retired_domain
+    tool: build.start_player
+    response_status: APPROVAL_EXPIRED
+    error_code: build.start_player:APPROVAL_EXPIRED
+    build_started: false
+    history_empty: true
+    editor_revision_changed: false
+
+historical_build_transport_validation:
+  candidate_before_retirement: 0e85845dc3eb3b74ae948ad08614b2848cc2bcbe
+  final_observation:
+    compile_errors: 0
+    editor_ready: true
+    editor_revision: 1
+    fresh_plan_and_token_only: true
+    start_player_execution_count: 1
+    command_result:
+      success: true
+      build_state: QUEUED
+      plan_consumed: true
+      build_started: false
+      command_result_returned_before_build: true
+      poll_tool: build.get_history
+    command_result_before_build_contract: pass
+    reconnect_after_build:
+      custom_tool_count: 0
+      history_retrieval: not_observed
+      same_plan_reexecution_rejection: not_observed
+      build_artifact_generated: false
+    overall_build_validation: incomplete
+  disposition:
+    runtime_removed_from_current_candidate: true
+    build_specific_transport_test_removed: true
+    no_build_retest_required_for_77_tool_wave: true
+
+safety_findings_retained_for_current_candidate:
+  response_schema:
+    original_observed_result: MCP_RESPONSE_SCHEMA_ERROR
+    root_cause: MCPResponse.error received an object instead of the bridge string contract
+    current_status: passed_local_cg
+  stale_revision_precedence:
+    original_observed_result: NOT_FOUND_before_STALE_REVISION
+    root_cause: domain target resolution occurred before shared expectedRevision validation
+    current_status: passed_local_cg
+  mcp_response_field_preservation:
+    original_observed_result: success_false_with_status_metadata_stripped
+    root_cause: MCP Server preserves only success/message/error/data/hint at the Client boundary
+    current_status: passed_local_cg
+    canonical_domain_error_metadata_location: data
+
+current_77_tool_validation:
+  status: local_cg_runtime_verified_ci_unavailable
+  previous_85_and_79_tool_compile_and_discovery_do_not_replace_current_surface_checks: true
+  expected_composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+    profiler: 8
+    addressables: 4
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  observed_composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+    profiler: 8
+    addressables: 4
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  compile:
+    status: passed
+    compile_errors: 0
+  runtime_discovery:
+    status: passed
+    total_my_unity_mcp_tools: 77
+    duplicate_tool_names: 0
+    source_only_tools: 0
+    runtime_only_tools: 0
+  addressables_expected_tools:
+    - addressables.inspect
+    - addressables.prepare_entry
+    - addressables.apply_entry
+    - addressables.get_support_matrix
+  addressables_forbidden_current_tools:
+    - addressables.prepare_content_build
+    - addressables.build_content
+  passed_local_cg:
+    - package_compile_current_77_surface
+    - exact_77_tool_discovery
+    - agent_capability_catalog_current_surface
+    - readonly_domain_smoke
+    - stale_revision_contract_recheck
+    - missing_approval_apply
+    - wrong_approval_token
+    - plan_reuse
+    - profiler_capture
+    - ui_animation_audio_cinematic_mutation_e2e
+    - addressables_entry_boundary
+    - agent_candidate_execution
+    - agent_delegated_failure_propagation
+    - cross_domain_workflow
+    - timeout_cancel_reload
+    - production_45_regression
+  addressables_boundary:
+    status: passed_allowed_unsupported
+    package_installed: false
+    observed_result: UNSUPPORTED
+    settings_or_group_auto_created: false
+    content_build_invoked: false
+    positive_backend_matrix: not_verified
+  agent_candidate_routing:
+    status: passed
+    successful_candidate_delegates: 5
+    addressables_delegate_status: UNSUPPORTED
+    terminal_status: PARTIAL
+    execution_succeeded: false
+    false_success: false
+  resilience:
+    local_cancel_timeout_and_domain_reload_callbacks: passed
+    local_project_reregistration_after_reload: passed
+    external_transport_disconnect_reconnect: not_verified
+  evidence_ids:
+    - compile-and-discover-77-001
+    - agent-capability-catalog-001
+    - readonly-domain-smoke-001
+    - shared-safety-contract-001
+    - profiler-e2e-002
+    - addressables-entry-boundary-001
+    - ui-e2e-001
+    - animation-e2e-001
+    - audio-e2e-001
+    - cinematic-e2e-001
+    - agent-delegation-e2e-001
+    - resilience-regression-001
+    - cross-domain-workflow-001
+    - production-45-regression-001
+  remaining_not_verified:
+    - package_editor_test_runner
+    - fresh_project_sample_workflow
+    - automated_ci
+    - addressables_positive_backend_matrix
+    - external_transport_disconnect_reconnect
+
+verdict:
+  retired_85_tool_surface: historical_incomplete
+  retired_79_tool_surface: superseded_by_addressables_build_removal
+  build_domain: removed_not_blocking_current_candidate
+  addressables_content_build: removed_not_blocking_current_candidate
+  automated_ci: unavailable_not_verified
+  package_editor_test_runner: unavailable_not_verified
+  fresh_project_sample_workflow: not_verified
+  addressables_positive_backend_matrix: not_verified_allowed_by_package_absent_contract
+  external_transport_disconnect_reconnect: not_verified
+  production_45_regression: passed_local_cg
+  full_77_tool_validation: local_cg_runtime_verified_ci_unavailable
+  production_ready: false
+  production_promotion: prohibited
+  human_promotion_gate: pending

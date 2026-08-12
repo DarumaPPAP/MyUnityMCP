@@ -2,6 +2,7 @@
 
 - `stage-0-production-baseline-verification.yaml`: v1.1.0 / 42 Tool Production baselineのStage 0手動統合Evidence
 - `world-creator-production-promotion-verification.yaml`: 45 Tool WorldCreator Production Promotionの実Unity Editor手動E2E Evidence
+- `stage2-8-validation-progress.yaml`: 77 Tool CandidateのLocal CG Runtime Validationと残存`not_verified` Gate
 - `release-verification.yaml`: 公開Release Gateの履歴Evidence
 - `support-matrix.yaml`: 現行Support ContractとStage状態
 - `integration-hardening-verification.yaml`: v0.8 Hardening Evidence

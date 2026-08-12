@@ -28,7 +28,15 @@ namespace MyUnityMcpGettingStarted
 			"agent.preview_execution", "agent.submit_approval", "agent.start_execution",
 			"agent.get_execution_status", "agent.cancel_execution", "agent.get_execution_history",
 			"agent.get_error_catalog",
-			"world.compile_workflow", "world.start_preflight", "world.create_review_handoff"
+			"world.compile_workflow", "world.start_preflight", "world.create_review_handoff",
+			"profiler.inspect_environment", "profiler.inspect_counters", "profiler.prepare_capture",
+			"profiler.start_capture", "profiler.get_capture_status", "profiler.cancel_capture",
+			"profiler.summarize_capture", "profiler.compare_baseline",
+			"addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.get_support_matrix",
+			"ui.inspect", "ui.validate", "ui.prepare_rect_transform", "ui.apply_rect_transform", "ui.get_support_matrix",
+			"animation.inspect", "animation.validate", "animation.prepare_parameter", "animation.apply_parameter", "animation.get_support_matrix",
+			"audio.inspect", "audio.validate", "audio.prepare_source", "audio.apply_source", "audio.get_support_matrix",
+			"cinematic.inspect", "cinematic.validate", "cinematic.prepare_director", "cinematic.apply_director", "cinematic.get_support_matrix"
 		};
 
 		[Test]
@@ -53,6 +61,7 @@ namespace MyUnityMcpGettingStarted
 				.OrderBy(toolName => toolName, StringComparer.Ordinal)
 				.ToArray();
 			Assert.That(discoveredToolNames, Is.EquivalentTo(TOOL_NAMES));
+			Assert.That(discoveredToolNames.Length, Is.EqualTo(77));
 
 			ToolResult project =
 				Inspection.InspectProject("sample-project");

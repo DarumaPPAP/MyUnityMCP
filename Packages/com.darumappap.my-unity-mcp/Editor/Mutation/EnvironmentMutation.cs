@@ -1159,10 +1159,10 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 			[ToolParameter("Direction Plan ID。", Required = true)] public string directionPlanId { get; set; }
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Environment Operation。", Required = true)] public EnvironmentOperationInput[] operations { get; set; }
+			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -1176,10 +1176,10 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 			[ToolParameter("Environment Plan ID。", Required = true)] public string planId { get; set; }
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Approval Token。", Required = true)] public string approvalToken { get; set; }
+			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 			[ToolParameter("Environment MutationではNONEのみ。", Required = false)] public string saveMode { get; set; }
 		}
 
@@ -1194,9 +1194,9 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 			[ToolParameter("Transaction ID。", Required = true)] public string transactionId { get; set; }
 			[ToolParameter("Editor Revision。", Required = true)] public long? expectedRevision { get; set; }
+			[ToolParameter("Request ID。", Required = false)] public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

@@ -1,6 +1,8 @@
 schema_version: "1.0"
 module: world_creator
-status: delivery_candidate_manual_verification_pending
+status: editor_operational
+verification_status: integration_verified_manual
+verification_evidence: Tests/Compatibility/world-creator-production-promotion-verification.yaml
 
 principles:
   progressive_disclosure: true
