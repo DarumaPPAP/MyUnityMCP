@@ -1,4 +1,4 @@
-schema_version: "1.0"
+schema_version: "1.1"
 states:
   allowed:
     - design_only
@@ -16,7 +16,7 @@ promotion_states:
     - promoted
 
 capabilities:
-  unity_agent_mcp: { state: release_candidate, promotion: ready }
+  unity_agent_mcp: { state: operational, promotion: promoted }
   unity_profiler_mcp: { state: release_candidate, promotion: ready }
   unity_build_mcp: { state: release_candidate, promotion: ready }
   unity_addressables_mcp: { state: release_candidate, promotion: ready }
@@ -27,6 +27,11 @@ capabilities:
   world_creator: { state: release_candidate, promotion: ready }
   movie_creator: { state: release_candidate, promotion: ready }
   live_creator: { state: release_candidate, promotion: ready }
+
+accounting:
+  production_tools: 42
+  remaining_development_tools: 49
+  final_combined_target: 91
 
 promotion_rule:
   wholesale_graph_to_main: prohibited
