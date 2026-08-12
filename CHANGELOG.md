@@ -2,7 +2,7 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
-## [Unreleased]
+## [1.1.0] - Unreleased
 
 ### Added
 
@@ -16,16 +16,18 @@
 - Release ContractのTool CountをManifest基準へ変更し、将来のCapability昇格で固定値を書き換えない構成へ変更
 - Editor VerificationでGraphics限定Filterを外し、昇格済みCapabilityのContract Testを含める
 - UnityAgentMCPをDesign Only RegistryからOperational Catalogへ昇格
+- Source versionを次期Minor `1.1.0`へ移行し、GitHub Release Publicationとは分離
+- `VERSION`変更による暗黙Releaseを廃止し、`workflow_dispatch`または明示Publish承認だけでReleaseする構成へ変更
 
 ### Verification
 
 - Agent SourceはGraph Engineering Run #52でUnity `6000.0.75f1` / `6000.4.12f1` / `6000.5.5f1`のEditMode ContractをPASS
 - Unity `6000.7.0a2`のGraph Engineering Manual CanaryでPackage Compile／Recognition／Agentを含む91 Tool Discoveryを確認
-- Current Delivery PRのGitHub ActionsはRunner Step開始前失敗が発生しているため、Runner復旧後の42 Tool Production CIを未検証としてSupport Matrixに保持
+- Current exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
 
 ### Release note
 
-`VERSION`／TagはこのSource Promotionでは変更しません。Version更新とGitHub Release Publicationは人間の明示承認を必要とする別操作です。
+`1.1.0`はCurrent Source Versionです。この変更自体ではTag／GitHub Releaseを作成しません。Publicationは別の明示承認操作です。
 
 ## [1.0.0] - 2026-08-11
 
@@ -66,7 +68,7 @@
 
 ### Release history note
 
-`v1.0.1`および`v1.0.2-test.*`は正式1.0.0を固める過程のRepository / Compatibility検証Buildです。本ReleaseをCanonical v1.0.0とします。
+`v1.0.1`および`v1.0.2-test.*`は1.0系列のRepository / Compatibility検証履歴として保持します。公開済みTagはimmutableです。
 
 ## [0.8.0] - 2026-08-05
 
