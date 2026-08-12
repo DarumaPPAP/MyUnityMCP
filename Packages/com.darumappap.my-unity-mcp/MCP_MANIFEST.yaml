@@ -1,9 +1,11 @@
-schema_version: "2.1"
+schema_version: "2.2"
 package_id: com.darumappap.my-unity-mcp
 version: "1.1.0"
-implementation_status: main_release_candidate
+implementation_status: stage2_8_implementation_complete_validation_pending
 release_baseline: v1.0.0
-verified_level: unity_editor_ci_plus_manual_6000_7
+production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
+production_verified_tool_count: 45
+integration_target_tool_count: 85
 
 operational_domain:
   id: unity_graphics_mcp
@@ -18,8 +20,6 @@ operational_control_plane:
   runtime_catalog: Editor/Development/Agent/UnityAgentMcpCatalog.json
   capability_contract: ../../Catalog/unity-agent-capability-contracts.yaml
   direct_unity_mutation_allowed: false
-  operational_delegate_domains:
-    - unity_graphics_mcp
 
 operational_creator:
   id: world_creator
@@ -28,134 +28,154 @@ operational_creator:
   capability_contract: ../../Catalog/world-creator-capability-contract.yaml
   direct_unity_mutation_allowed: false
   orchestration_control_plane: unity_agent_mcp
-  operational_delegate_domains:
-    - unity_graphics_mcp
+
+integration_candidate_domains:
+  - id: unity_profiler_mcp
+    status: integration_candidate
+    tools: 8
+    mutation_scope: capture_control_only
+  - id: unity_build_mcp
+    status: integration_candidate
+    tools: 6
+    approval_required_for_build: true
+  - id: unity_addressables_mcp
+    status: integration_candidate
+    tools: 6
+    optional_package: com.unity.addressables
+  - id: unity_ui_mcp
+    status: integration_candidate
+    tools: 5
+    approval_required_for_mutation: true
+  - id: unity_animation_mcp
+    status: integration_candidate
+    tools: 5
+    approval_required_for_mutation: true
+  - id: unity_audio_mcp
+    status: integration_candidate
+    tools: 5
+    approval_required_for_mutation: true
+  - id: unity_cinematic_mcp
+    status: integration_candidate
+    tools: 5
+    approval_required_for_mutation: true
 
 bridge:
   package: com.coplaydev.unity-mcp
   declared_api_version: "10.1.2"
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
-  discovered_tool_count: 45
+  discovered_tool_count: 85
   tools_enabled_by_default: false
   explicit_activation_required: true
-  external_mcp_client_connection_verified: true
 
-tool_groups:
-  inspect:
-    mutation: false
-    tools:
-      - graphics.inspect_project
-      - graphics.inspect_scene
-      - graphics.validate_scene
-  plan:
-    mutation: false
-    tools:
-      - graphics.compile_direction
-      - graphics.preview_plan
-      - graphics.prepare_light_plan
-      - graphics.prepare_environment_plan
-      - graphics.prepare_save_plan
-      - graphics.prepare_bake_plan
-      - graphics.prepare_apv_bake_plan
-      - graphics.prepare_acceptance_profile
-  mutate:
-    mutation: true
-    approval_required: true
-    tools:
-      - graphics.apply_plan
-      - graphics.undo_last_transaction
-      - graphics.apply_environment_plan
-      - graphics.undo_last_environment_transaction
-  save:
-    mutation: persistent_scene_write
-    approval_required: true
-    tools:
-      - graphics.apply_save_plan
-  bake:
-    mutation: persistent_asset_write
-    approval_required: true
-    tools:
-      - graphics.bake_dependencies
-      - graphics.start_apv_bake
-      - graphics.get_apv_bake_status
-      - graphics.cancel_apv_bake
-  capture:
-    mutation: temporary_editor_state_and_library_write
-    tools:
-      - graphics.capture_evaluation
-      - graphics.capture_evidence
-  evaluate_and_refine:
-    mutation: false
-    tools:
-      - graphics.refine_direction
-      - graphics.submit_visual_review
-      - graphics.refine_from_visual_review
-      - graphics.evaluate_capture
-      - graphics.refine_from_evaluation
-  execution:
-    mutation: execution_control
-    tools:
-      - graphics.get_execution_status
-      - graphics.cancel_execution
-      - graphics.get_execution_history
-      - graphics.get_error_catalog
-      - graphics.get_support_matrix
+production_tool_groups:
+  graphics:
+    tools: 32
   agent:
-    mutation: control_plane_only
-    direct_unity_mutation: false
-    tools:
-      - agent.inspect_capabilities
-      - agent.validate_workflow
-      - agent.compile_graph
-      - agent.preview_execution
-      - agent.submit_approval
-      - agent.start_execution
-      - agent.get_execution_status
-      - agent.cancel_execution
-      - agent.get_execution_history
-      - agent.get_error_catalog
+    tools: 10
   world_creator:
-    mutation: orchestration_only
-    direct_unity_mutation: false
+    tools: 3
+
+integration_tool_groups:
+  profiler:
+    mutation: false
     tools:
-      - world.compile_workflow
-      - world.start_preflight
-      - world.create_review_handoff
+      - profiler.inspect_environment
+      - profiler.inspect_counters
+      - profiler.prepare_capture
+      - profiler.start_capture
+      - profiler.get_capture_status
+      - profiler.cancel_capture
+      - profiler.summarize_capture
+      - profiler.compare_baseline
+  build:
+    mutation: external_build_output
+    tools:
+      - build.inspect_environment
+      - build.prepare_player
+      - build.start_player
+      - build.get_history
+      - build.cancel_player
+      - build.get_support_matrix
+  addressables:
+    mutation: asset_and_content_build
+    tools:
+      - addressables.inspect
+      - addressables.prepare_entry
+      - addressables.apply_entry
+      - addressables.prepare_content_build
+      - addressables.build_content
+      - addressables.get_support_matrix
+  ui:
+    mutation: scene_rect_transform
+    tools:
+      - ui.inspect
+      - ui.validate
+      - ui.prepare_rect_transform
+      - ui.apply_rect_transform
+      - ui.get_support_matrix
+  animation:
+    mutation: animator_controller_parameter
+    tools:
+      - animation.inspect
+      - animation.validate
+      - animation.prepare_parameter
+      - animation.apply_parameter
+      - animation.get_support_matrix
+  audio:
+    mutation: scene_audio_source
+    tools:
+      - audio.inspect
+      - audio.validate
+      - audio.prepare_source
+      - audio.apply_source
+      - audio.get_support_matrix
+  cinematic:
+    mutation: scene_playable_director
+    tools:
+      - cinematic.inspect
+      - cinematic.validate
+      - cinematic.prepare_director
+      - cinematic.apply_director
+      - cinematic.get_support_matrix
 
 safety:
   read_only_prepare: true
-  exact_preview_required: true
   expected_revision_required_for_mutation: true
   approval_token_required_for_mutation: true
+  one_time_plan_required: true
   automatic_save: prohibited
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
   silent_fallback: prohibited
   automatic_visual_acceptance: prohibited
-  human_review_required_for_visual_acceptance: true
   automatic_execution_resume_after_restart: prohibited
   control_plane_direct_mutation: prohibited
   creator_direct_mutation: prohibited
+  integration_candidate_is_not_production_verified: true
 
 verification:
   release_baseline_evidence: ../../Tests/Compatibility/release-verification.yaml
   stage_0_evidence: ../../Tests/Compatibility/stage-0-production-baseline-verification.yaml
+  world_creator_evidence: ../../Tests/Compatibility/world-creator-production-promotion-verification.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
-  historical_evidence_index: ../../Tests/Compatibility/README.md
   unity_editor_compile: required
-  tool_discovery_count: 45
-  minimum_editmode_contracts: 125
-  promoted_capability_contract: UnityWorldCreatorContractTests
+  tool_discovery_count: 85
+  production_verified_tool_count: 45
+  integration_candidate_tool_count: 40
+  stage2_8_validation_status: not_started
   fresh_project_sample_workflow: required
+  combined_domain_e2e: required_after_implementation_complete
 
-not_operational_current_main:
-  - live_creator_runtime
-  - movie_creator_runtime
-  - unity_cinematic_mcp
-  - unity_ui_mcp
-  - unity_addressables_mcp
-  - unity_animation_mcp
-  - unity_audio_mcp
+not_production_operational_until_validation:
   - unity_profiler_mcp
   - unity_build_mcp
+  - unity_addressables_mcp
+  - unity_ui_mcp
+  - unity_animation_mcp
+  - unity_audio_mcp
+  - unity_cinematic_mcp
+
+not_implemented_in_stage2_8:
+  - movie_creator_runtime
+  - live_creator_runtime
