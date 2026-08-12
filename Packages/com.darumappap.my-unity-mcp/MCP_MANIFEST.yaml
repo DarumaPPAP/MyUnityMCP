@@ -25,6 +25,7 @@ operational_creator:
   id: world_creator
   status: editor_operational
   specification: ../../Specs/UnityWorldCreatorMCP/spec.md
+  capability_contract: ../../Catalog/world-creator-capability-contract.yaml
   direct_unity_mutation_allowed: false
   orchestration_control_plane: unity_agent_mcp
   operational_delegate_domains:
