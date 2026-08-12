@@ -28,13 +28,6 @@
       "directUnityMutationAllowed": false
     },
     {
-      "domainId": "unity_build_mcp",
-      "status": "integration_candidate",
-      "toolGroups": ["build"],
-      "tools": ["build.inspect_environment", "build.prepare_player", "build.start_player", "build.get_history", "build.cancel_player", "build.get_support_matrix"],
-      "directUnityMutationAllowed": false
-    },
-    {
       "domainId": "unity_addressables_mcp",
       "status": "integration_candidate",
       "toolGroups": ["addressables"],
