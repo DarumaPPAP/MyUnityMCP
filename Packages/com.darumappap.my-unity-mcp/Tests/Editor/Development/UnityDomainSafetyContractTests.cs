@@ -41,7 +41,7 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
-		public void AllMcpTools_AreExactly79AndRemainDefaultDisabled()
+		public void AllMcpTools_AreExactly77AndRemainDefaultDisabled()
 		{
 			string[] sources = Directory.GetFiles(
 				"Packages/com.darumappap.my-unity-mcp/Editor",
@@ -51,8 +51,10 @@ namespace MyUnityMcp.EditorTests
 			int toolCount = Count(combined, "[McpForUnityTool(");
 			int disabledCount = Count(combined, "AutoRegister = false");
 
-			Assert.That(toolCount, Is.EqualTo(79));
+			Assert.That(toolCount, Is.EqualTo(77));
 			Assert.That(disabledCount, Is.EqualTo(toolCount));
+			Assert.That(combined.Contains("[McpForUnityTool(\"addressables.prepare_content_build\""), Is.False);
+			Assert.That(combined.Contains("[McpForUnityTool(\"addressables.build_content\""), Is.False);
 		}
 
 		[Test]
