@@ -1,13 +1,23 @@
-schema_version: "1.0"
-validation_wave: stage2_8_85_tool
-status: in_progress
+schema_version: "1.1"
+validation_wave: stage2_8_79_tool
+status: reset_required_after_build_domain_removal
 production_ready: false
 production_promotion: prohibited
+production_baseline_tools: 45
+current_candidate_tools: 34
+current_combined_target_tools: 79
+build_domain:
+  current_candidate_status: retired_removed
+  current_tool_count: 0
+  reason: user_decision_low_value_for_current_mcp
+  previous_validation_is_historical_only: true
+
 validation_environment:
   unity: 6000.7.0a2
   package_commit_identity: unverified_from_editor_public_information
 
-manual_results:
+historical_85_tool_results_before_build_removal:
+  applicability: historical_only_not_full_79_tool_evidence
   package_compile:
     status: pass
     package_resolve: true
@@ -17,7 +27,7 @@ manual_results:
     missing_assembly_or_type_errors: 0
     meta_or_asmdef_errors: 0
   domain_tool_discovery:
-    status: pass
+    status: pass_for_retired_85_surface
     duplicate_tool_names: 0
     total: 85
     composition:
@@ -32,15 +42,14 @@ manual_results:
       audio: 5
       cinematic: 5
     raw_custom_catalog_tool_count: 120
-    note: raw catalog includes generic Unity tools outside the domain-scoped MyUnityMCP surface
   agent_capability:
-    status: pass
+    status: pass_for_retired_85_surface
     graphics_status: editor_operational
     stage2_8_status: integration_candidate
     direct_unity_mutation: false
     integration_candidate_execution_enabled: true
   domain_smoke:
-    status: pass_with_expected_optional_unsupported
+    status: pass_with_expected_optional_unsupported_for_retired_85_surface
     graphics_inspect_project: SUCCESS
     profiler_inspect_environment: SUCCESS
     build_inspect_environment: SUCCESS
@@ -63,126 +72,90 @@ manual_results:
     approval: false
     apply: false
     scene_or_asset_change: false
-  approval_expiration_contract:
-    status: pass
+  build_approval_expiration_contract:
+    status: historical_pass_retired_domain
     tool: build.start_player
     response_status: APPROVAL_EXPIRED
     error_code: build.start_player:APPROVAL_EXPIRED
     build_started: false
     history_empty: true
     editor_revision_changed: false
-  addressables_state:
-    package_installed: false
-    backend_compiled: false
-    settings_auto_created: false
-    groups_created: false
-    package_auto_installed: false
-    content_build_started: false
-  unity_state_before_build_transport_failure:
-    save: false
-    bake: false
-    addressables_content_build: false
-    direct_unity_api: false
 
-safety_findings:
-  response_schema:
-    original_observed_result: MCP_RESPONSE_SCHEMA_ERROR
-    root_cause: MCPResponse.error received an object instead of the bridge string contract
-    current_status: fixed_and_manual_pass
-  stale_revision_precedence:
-    original_observed_result: NOT_FOUND_before_STALE_REVISION
-    root_cause: domain target resolution occurred before shared expectedRevision validation
-    current_status: fixed_and_manual_pass
-  mcp_response_field_preservation:
-    original_observed_result: success_false_with_status_metadata_stripped
-    root_cause: MCP Server preserves only success/message/error/data/hint at the Client boundary
-    current_status: fixed_and_manual_pass
-    canonical_domain_error_metadata_location: data
-  build_command_transport:
-    status: blocked_fix_implemented_awaiting_manual_retest
-    observed_candidate: e12fec637ca9b84f58c2abbdc07e71e133d697f4
-    observed_plan_id: unity_build_mcp:plan:330a56acd3d046339f1f7d3dedda5415
-    observed_error: Unity plugin session disconnected while awaiting command_result
-    observed_session_id: bee7c3c5-b7b8-48e9-bdc9-29bd049a0ccb
-    build_started: unknown
-    build_final_status: unknown
-    history_available_after_failure: false
-    editor_revision_after_failure: unknown
-    scene_asset_state_after_failure: unknown
-    validation_stopped_safely: true
-    implementation_root_cause:
-      status: strong_static_inference_requires_editor_retest
-      detail: build.start_player called synchronous BuildPipeline.BuildPlayer inside the MCP command handler, so the Editor main thread could remain blocked while the transport waited for command_result and heartbeat activity
-
-blocking_fix:
-  status: implemented_awaiting_manual_retest
-  build_transport_fix:
-    implementation_commit: df8587b10340c49fc52c0b26394117ccfac293ad
-    behavior:
-      - approved plan is consumed synchronously
-      - build.start_player creates a QUEUED build record
-      - build.start_player returns PARTIAL before BuildPipeline.BuildPlayer starts
-      - actual BuildPipeline.BuildPlayer starts from EditorApplication.update after the MCP command response handoff window
-      - build.get_history exposes activeBuild, completed history, queuedBuild, and isBuildingPlayer
-      - no background thread calls Unity APIs
-      - running BuildPipeline.BuildPlayer remains non-cancellable through public API
-    build_start_delay_seconds: 1.0
-    expected_initial_response:
-      status: PARTIAL
+historical_build_transport_validation:
+  candidate_before_retirement: 0e85845dc3eb3b74ae948ad08614b2848cc2bcbe
+  final_observation:
+    compile_errors: 0
+    editor_ready: true
+    editor_revision: 1
+    fresh_plan_and_token_only: true
+    start_player_execution_count: 1
+    command_result:
+      success: true
       build_state: QUEUED
       plan_consumed: true
       build_started: false
       command_result_returned_before_build: true
-    transport_expectation:
-      note: Unity may still become temporarily unavailable while synchronous BuildPipeline.BuildPlayer owns the Editor main thread; the required contract is that build.start_player command_result is delivered before that blocking call begins and final evidence is retrieved after the plugin becomes Ready again
-  regression_tests:
-    build_transport_contract:
-      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityBuildMcpTransportContractTests.cs
-      execution_status: not_run
-      assertions:
-        - approved plan is consumed
-        - result is PARTIAL and successful
-        - BuildPipeline is not active inside the MCP command handler
-        - build state is QUEUED
-        - commandResultReturnedBeforeBuild is true
-        - buildStarted is false
-    response_contract:
-      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
-      execution_status: not_run
-    revision_precedence:
-      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainRevisionPrecedenceTests.cs
-      execution_status: not_run
+      poll_tool: build.get_history
+    command_result_before_build_contract: pass
+    reconnect_after_build:
+      custom_tool_count: 0
+      history_retrieval: not_observed
+      same_plan_reexecution_rejection: not_observed
+      build_artifact_generated: false
+    overall_build_validation: incomplete
+  disposition:
+    runtime_removed_from_current_candidate: true
+    build_specific_transport_test_removed: true
+    no_build_retest_required_for_79_tool_wave: true
 
-static_review:
-  post_fix_compare_base: e12fec637ca9b84f58c2abbdc07e71e133d697f4
-  changed_runtime_domains:
-    - Build
-  added_tests:
-    - UnityBuildMcpTransportContractTests.cs
-  tool_count_change: 0
-  production_main_modified: false
-  editor_compile_after_fix: not_run
+safety_findings_retained_for_current_candidate:
+  response_schema:
+    original_observed_result: MCP_RESPONSE_SCHEMA_ERROR
+    root_cause: MCPResponse.error received an object instead of the bridge string contract
+    current_status: fixed_and_manual_pass_on_previous_surface_retest_current_candidate_as_needed
+  stale_revision_precedence:
+    original_observed_result: NOT_FOUND_before_STALE_REVISION
+    root_cause: domain target resolution occurred before shared expectedRevision validation
+    current_status: fixed_and_manual_pass_on_previous_surface_retest_current_candidate_as_needed
+  mcp_response_field_preservation:
+    original_observed_result: success_false_with_status_metadata_stripped
+    root_cause: MCP Server preserves only success/message/error/data/hint at the Client boundary
+    current_status: fixed_and_manual_pass_on_previous_surface_retest_current_candidate_as_needed
+    canonical_domain_error_metadata_location: data
 
-pending_validation:
-  - compile_and_85_tool_sanity_after_build_transport_fix
-  - build_queue_command_result_handoff_retest
-  - actual_player_build_terminal_result
-  - build_history_after_plugin_ready
-  - plan_reuse
-  - missing_approval_apply
-  - wrong_approval_token
-  - profiler_capture
-  - ui_animation_audio_cinematic_mutation_e2e
-  - agent_candidate_execution
-  - agent_delegated_failure_propagation
-  - cross_domain_workflow
-  - timeout_cancel
+current_79_tool_validation:
+  status: not_complete
+  previous_85_tool_compile_and_discovery_do_not_replace_current_surface_checks: true
+  restart_from:
+    - package_compile
+    - exact_79_tool_discovery
+    - agent_inspect_capabilities_without_build_domain
+  expected_composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+    profiler: 8
+    addressables: 6
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  pending:
+    - readonly_domain_smoke
+    - stale_revision_contract_recheck
+    - missing_approval_apply
+    - wrong_approval_token
+    - plan_reuse
+    - profiler_capture
+    - ui_animation_audio_cinematic_mutation_e2e
+    - addressables_external_side_effect_boundary
+    - agent_candidate_execution
+    - agent_delegated_failure_propagation
+    - cross_domain_workflow
+    - timeout_cancel_reload
 
 verdict:
-  phase_a_to_d: pass_manual
-  stale_revision_contract: pass_manual
-  approval_expiration_contract: pass_manual
-  build_approval_boundary: pass_manual
-  build_transport: fix_implemented_retest_required
-  full_85_tool_validation: not_complete
+  retired_85_tool_surface: historical_incomplete
+  build_domain: removed_not_blocking_current_candidate
+  full_79_tool_validation: not_started_after_surface_reset
   production_ready: false
