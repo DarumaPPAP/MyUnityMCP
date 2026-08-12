@@ -2,7 +2,7 @@
 
 全Toolは`AutoRegister = false`です。`requestId`は追跡用で、多くのToolでは省略可能です。Mutation系ID、Revision、Tokenは直前Responseをそのまま使用します。
 
-Current mainのProduction Tool Surfaceは **42 Tool = 32 Graphics + 10 Agent** です。`v1.0.0` Tagは32 Graphics Toolのimmutable baselineです。
+Current mainのProduction Tool Surfaceは **45 Tool = 32 Graphics + 10 Agent + 3 WorldCreator** です。`v1.0.0` Tagは32 Graphics Toolのimmutable baselineです。
 
 ## Graphics Domain
 
@@ -60,6 +60,18 @@ UnityAgentMCPはUnity APIを直接Mutationしません。Workflowを検証／Com
 
 AgentのMutationを伴うWorkflowでは、`compile_graph` → `preview_execution` → `submit_approval` → `start_execution`の境界を省略できません。非Operational Domainは`agent.validate_workflow`で拒否されます。
 
+## WorldCreator
+
+WorldCreatorはVisual GoalをRead-only Graphics Preflightへ変換するCreator Layerです。Unity APIを直接Mutationせず、UnityAgentMCPを経由して既存Graphics Toolへ委譲します。
+
+| Group | Tool | Purpose | Side effect |
+|---|---|---|---|
+| Creator | `world.compile_workflow` | Visual Goal、Scene Scope、Mood、Platform、禁止変更、Acceptance条件からRevision固定Preflight GraphをCompile | なし |
+| Creator | `world.start_preflight` | Compile済みWorld GraphをAgent Executionとして開始 | Read-only Domain実行 |
+| Creator | `world.create_review_handoff` | Preflight結果をHuman Review必須のHandoffへ変換 | なし |
+
+Canonical Preflightは`graphics.inspect_project` → `graphics.inspect_scene` → `graphics.validate_scene`です。`world.create_review_handoff`は`HUMAN_REVIEW_REQUIRED`を返し、`automaticVisualAcceptance`は`false`です。Mutation／Save／BakeはWorldCreatorから直接実行せず、後続Graphics Domainの既存Approval Boundaryへ渡します。
+
 ## Common response
 
 Graphics Domain Responseでは主に次を使用します。
@@ -71,6 +83,6 @@ Graphics Domain Responseでは主に次を使用します。
 - `error`: Code、Category、Retryability、Retry Action、Remediation
 - `execution`: Execution ID、Trace ID、Duration、Progress
 
-Agent Responseでは`success`、`errorCode`、`message`、Graph／Execution ID、Step Resultを返します。
+Agent／WorldCreator Responseでは`success`、`errorCode`、`message`、Graph／Execution ID、Step Result、Review Handoffを返します。
 
 Parameterの正確なSchemaはBridgeが公開するMCP Tool Schemaを正本とします。

@@ -27,7 +27,8 @@ namespace MyUnityMcpGettingStarted
 			"agent.inspect_capabilities", "agent.validate_workflow", "agent.compile_graph",
 			"agent.preview_execution", "agent.submit_approval", "agent.start_execution",
 			"agent.get_execution_status", "agent.cancel_execution", "agent.get_execution_history",
-			"agent.get_error_catalog"
+			"agent.get_error_catalog",
+			"world.compile_workflow", "world.start_preflight", "world.create_review_handoff"
 		};
 
 		[Test]

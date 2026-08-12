@@ -28,6 +28,8 @@ required = [
     'Packages/com.darumappap.my-unity-mcp/Documentation~/sample-workflow.md',
     'Packages/com.darumappap.my-unity-mcp/Documentation~/upgrade-guide.md',
     'Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md',
+    'Specs/UnityWorldCreatorMCP/spec.md',
+    'Catalog/world-creator-capability-contract.yaml',
     'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json',
     'SampleProjects/MyUnityMCPGettingStarted/Assets/Scenes/MyUnityMcpGettingStarted.unity',
     'Templates/McpClients/generic-http.json.example',

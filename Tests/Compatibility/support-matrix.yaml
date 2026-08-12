@@ -3,25 +3,33 @@ package_version: "1.1.0"
 source_channel: main_v1_1_release_candidate
 
 current_stage:
-  id: 0
-  name: production_baseline_repair_and_verification
+  id: 1
+  name: world_creator_delivery
   status: integration_verified_manual
-  evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
-  production_commit: 5369f990b96b34413a0e19226a6e76b340bf8bbf
-  next_delivery_capability: world_creator
+  stage_0_status: integration_verified_manual
+  stage_0_evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
+  evidence: Tests/Compatibility/world-creator-production-promotion-verification.yaml
+  delivery_base_commit: 5a4f221dbc3b29392e47a98477f3782002a94a69
+  tested_candidate_commit: 26dfdb84d76fb73309ab197f093328d619cc24ea
+  capability: world_creator
+  production_tool_count: 45
+  next_recommended_capability: profiler
 
 verification_contract:
-  discovered_mcp_tools: 42
+  discovered_mcp_tools: 45
   production_graphics_tools: 32
   production_agent_tools: 10
+  production_world_creator_tools: 3
   minimum_editmode_contracts: 125
   fresh_project_sample_required: true
   canonical_end_to_end_required: true
   major_fault_injection_scene_safety_required: true
+  world_creator_contract_required: true
 
 operational_modules:
   unity_graphics_mcp: editor_operational
   unity_agent_mcp: editor_operational
+  world_creator: editor_operational
 
 execution_surface:
   unity_editor: supported
@@ -82,6 +90,42 @@ stage_0_manual_e2e:
   force_undo_used: false
   safety_bypass_used: false
   automated_ci: not_verified_runner_failed_before_steps
+
+world_creator:
+  status: integration_verified_manual
+  evidence: Tests/Compatibility/world-creator-production-promotion-verification.yaml
+  tested_candidate_commit: 26dfdb84d76fb73309ab197f093328d619cc24ea
+  tools:
+    - world.compile_workflow
+    - world.start_preflight
+    - world.create_review_handoff
+  tool_discovery_45: passed
+  compile_workflow: passed
+  preflight_execution: passed
+  preflight_steps_succeeded: 3
+  preflight_steps_total: 3
+  review_handoff: passed
+  stale_revision_rejection: passed
+  premature_handoff_rejection_manual: not_observed_due_to_timing
+  scene_dirty_before: true
+  scene_dirty_after: true
+  mutation_observed: false
+  save_performed: false
+  bake_performed: false
+  direct_unity_api_used: false
+  force_used: false
+  safety_bypass_used: false
+  direct_unity_mutation: prohibited
+  orchestration_control_plane: unity_agent_mcp
+  operational_delegate_domains:
+    - unity_graphics_mcp
+  preflight_steps:
+    - graphics.inspect_project
+    - graphics.inspect_scene
+    - graphics.validate_scene
+  expected_revision: required_for_compile_and_execution
+  human_review_required: true
+  automatic_visual_acceptance: prohibited
 
 unity_agent:
   source_evidence:
@@ -145,4 +189,5 @@ not_verified:
   - every_external_mcp_client_disconnect_callback
   - image_artifact_generation_in_null_graphics_batchmode
   - every_project_specific_apv_baking_set
-  - exact_42_tool_production_ci_after_runner_recovery
+  - exact_45_tool_production_ci_after_runner_recovery
+  - world_creator_premature_handoff_rejection_manual_timing_case

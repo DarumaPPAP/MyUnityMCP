@@ -165,3 +165,27 @@ cases:
       - reinterpret_unavailable_as_success
       - claim_target_device_success_from_editor_only_evidence
     reason: "Capability-independent validationでは未利用環境をpassedへ昇格しない。"
+
+  - id: MYMCP-ROUTE-012
+    prompt: "このSceneを森の遺跡っぽいWorldにしたい。まず現状を壊さずに調べて、制作前レビューまで作って。"
+    expected_primary_kind: creator
+    expected_primary: world_creator
+    expected_required_domains:
+      - unity_graphics_mcp
+    expected_initial_tools:
+      - world.compile_workflow
+      - world.start_preflight
+      - world.create_review_handoff
+    delegated_preflight_tools:
+      - graphics.inspect_project
+      - graphics.inspect_scene
+      - graphics.validate_scene
+    requires:
+      - current_revision
+      - visual_goal
+      - human_review_handoff
+    must_not:
+      - direct_unity_mutation
+      - automatic_save
+      - automatic_bake
+      - automatic_visual_acceptance

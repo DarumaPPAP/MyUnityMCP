@@ -21,12 +21,22 @@ operational_control_plane:
   operational_delegate_domains:
     - unity_graphics_mcp
 
+operational_creator:
+  id: world_creator
+  status: editor_operational
+  specification: ../../Specs/UnityWorldCreatorMCP/spec.md
+  capability_contract: ../../Catalog/world-creator-capability-contract.yaml
+  direct_unity_mutation_allowed: false
+  orchestration_control_plane: unity_agent_mcp
+  operational_delegate_domains:
+    - unity_graphics_mcp
+
 bridge:
   package: com.coplaydev.unity-mcp
   declared_api_version: "10.1.2"
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
-  discovered_tool_count: 42
+  discovered_tool_count: 45
   tools_enabled_by_default: false
   explicit_activation_required: true
   external_mcp_client_connection_verified: true
@@ -105,6 +115,13 @@ tool_groups:
       - agent.cancel_execution
       - agent.get_execution_history
       - agent.get_error_catalog
+  world_creator:
+    mutation: orchestration_only
+    direct_unity_mutation: false
+    tools:
+      - world.compile_workflow
+      - world.start_preflight
+      - world.create_review_handoff
 
 safety:
   read_only_prepare: true
@@ -119,14 +136,17 @@ safety:
   human_review_required_for_visual_acceptance: true
   automatic_execution_resume_after_restart: prohibited
   control_plane_direct_mutation: prohibited
+  creator_direct_mutation: prohibited
 
 verification:
   release_baseline_evidence: ../../Tests/Compatibility/release-verification.yaml
+  stage_0_evidence: ../../Tests/Compatibility/stage-0-production-baseline-verification.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
   historical_evidence_index: ../../Tests/Compatibility/README.md
   unity_editor_compile: required
-  tool_discovery_count: 42
+  tool_discovery_count: 45
   minimum_editmode_contracts: 125
+  promoted_capability_contract: UnityWorldCreatorContractTests
   fresh_project_sample_workflow: required
 
 not_operational_current_main:
