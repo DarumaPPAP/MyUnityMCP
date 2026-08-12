@@ -55,14 +55,6 @@ modules:
     available_tool_groups: [profiler]
     tools: 8
 
-  unity_build_mcp:
-    kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
-    default_tool_group: build
-    available_tool_groups: [build]
-    tools: 6
-
   unity_addressables_mcp:
     kind: optional_domain
     status: integration_candidate
@@ -114,7 +106,7 @@ selection:
 
 promotion_policy:
   production_verified_tool_count: 45
-  integration_target_tool_count: 85
-  stage2_8_validation_status: not_started
+  integration_target_tool_count: 79
+  stage2_8_validation_status: reset_after_build_domain_removal
   integration_candidate_is_not_editor_operational: true
   intermediate_main_merge: prohibited
