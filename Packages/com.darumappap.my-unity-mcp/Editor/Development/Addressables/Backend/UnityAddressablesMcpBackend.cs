@@ -5,8 +5,6 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityDomainMcp;
 using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Build;
 using UnityEditor.AddressableAssets.Settings;
 
 namespace UnityAddressablesMcp
@@ -42,7 +40,8 @@ namespace UnityAddressablesMcp
 				["activeProfileName"] = settings == null ? null : settings.profileSettings.GetProfileName(settings.activeProfileId),
 				["activeBuilder"] = settings?.ActivePlayerDataBuilder == null ? null : settings.ActivePlayerDataBuilder.Name,
 				["groups"] = groups,
-				["settingsAutoCreated"] = false
+				["settingsAutoCreated"] = false,
+				["contentBuildAvailableThroughMcp"] = false
 			});
 		}
 
@@ -116,54 +115,6 @@ namespace UnityAddressablesMcp
 				["labels"] = new JArray(entry.labels),
 				["savePerformed"] = false,
 				["contentBuildPerformed"] = false
-			});
-		}
-
-		public UnityDomainMcpResult PrepareContentBuild(long? expectedRevision)
-		{
-			AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-			if (settings == null)
-			{
-				return UnityAddressablesMcpBridge.Error("addressables.prepare_content_build", E_DOMAIN_TOOL_STATUS.UNSUPPORTED, "Addressables Settingsが存在しません。");
-			}
-			if (settings.ActivePlayerDataBuilder == null)
-			{
-				return UnityAddressablesMcpBridge.Error("addressables.prepare_content_build", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "Active Player Data Builderが設定されていません。");
-			}
-			return UnityAddressablesMcpBridge.Prepare("addressables.prepare_content_build", DOMAIN_ID, "build_player_content", expectedRevision, true, new JObject
-			{
-				["activeProfileId"] = settings.activeProfileId,
-				["activeProfileName"] = settings.profileSettings.GetProfileName(settings.activeProfileId),
-				["activeBuilder"] = settings.ActivePlayerDataBuilder.Name,
-				["groupCount"] = settings.groups.Count(value => value != null),
-				["settingsAssetPath"] = AssetDatabase.GetAssetPath(settings)
-			});
-		}
-
-		public UnityDomainMcpResult BuildContent(string planId, long? currentRevision, string approvalToken)
-		{
-			if (!UnityAddressablesMcpBridge.TryConsume("addressables.build_content", DOMAIN_ID, planId, currentRevision, approvalToken, out UnityAddressablesMcpApprovedPlan plan, out UnityDomainMcpResult failure))
-			{
-				return failure;
-			}
-			AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
-			if (settings == null || settings.ActivePlayerDataBuilder == null)
-			{
-				return UnityAddressablesMcpBridge.Error("addressables.build_content", E_DOMAIN_TOOL_STATUS.UNSUPPORTED, "Addressables SettingsまたはBuilderが利用できません。");
-			}
-			if (!string.Equals(settings.activeProfileId, plan.Payload.Value<string>("activeProfileId"), StringComparison.Ordinal) ||
-				!string.Equals(settings.ActivePlayerDataBuilder.Name, plan.Payload.Value<string>("activeBuilder"), StringComparison.Ordinal))
-			{
-				return UnityAddressablesMcpBridge.Error("addressables.build_content", E_DOMAIN_TOOL_STATUS.STALE_REVISION, "Preview後にProfileまたはBuilderが変更されました。");
-			}
-			AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
-			bool success = string.IsNullOrEmpty(result.Error);
-			return UnityAddressablesMcpBridge.Result("addressables.build_content", success ? E_DOMAIN_TOOL_STATUS.SUCCESS : E_DOMAIN_TOOL_STATUS.FAILED, success ? "Addressables Content Buildが成功しました。" : "Addressables Content Buildが失敗しました。", new JObject
-			{
-				["success"] = success,
-				["error"] = result.Error,
-				["profile"] = settings.profileSettings.GetProfileName(settings.activeProfileId),
-				["builder"] = settings.ActivePlayerDataBuilder.Name
 			});
 		}
 	}
