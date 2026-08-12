@@ -94,7 +94,7 @@
   "creators": [
     {
       "creatorId": "world_creator",
-      "status": "implementation_in_progress_unverified",
+      "status": "editor_operational",
       "tools": ["world.compile_workflow", "world.start_preflight", "world.create_review_handoff"],
       "directUnityMutationAllowed": false
     },
