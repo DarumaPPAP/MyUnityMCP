@@ -147,6 +147,41 @@ def validate_agent_contract(module: dict, contract: dict) -> int:
     return errors
 
 
+def validate_world_creator_contract(module: dict, contract: dict) -> int:
+    errors = 0
+    creator = contract.get("capabilities", {}).get("creator", {})
+    if module.get("direct_unity_mutation_allowed") is not False:
+        error("world_creator.direct_unity_mutation_allowed must be false.")
+        errors += 1
+    if module.get("orchestration_control_plane") != "unity_agent_mcp":
+        error("world_creator.orchestration_control_plane must be unity_agent_mcp.")
+        errors += 1
+    if "unity_graphics_mcp" not in module.get("operational_delegate_domains", []):
+        error("world_creator must delegate to unity_graphics_mcp.")
+        errors += 1
+    for forbidden in (
+        "directly_mutate_unity",
+        "bypass_unity_agent_validation",
+        "automatically_save",
+        "automatically_bake",
+        "automatically_accept_visual_result",
+        "reinterpret_failed_preflight_as_success",
+    ):
+        if forbidden not in creator.get("must_not", []):
+            error(f"world_creator.creator.must_not must contain {forbidden}.")
+            errors += 1
+    for evidence in (
+        "read_only_preflight_completed",
+        "three_of_three_preflight_steps_succeeded",
+        "human_review_handoff_created",
+        "no_direct_unity_mutation",
+    ):
+        if evidence not in creator.get("success_evidence", []):
+            error(f"world_creator.creator.success_evidence must contain {evidence}.")
+            errors += 1
+    return errors
+
+
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
     catalog_path = root / "Catalog" / "mcp-catalog.yaml"
@@ -182,6 +217,12 @@ def main() -> int:
         errors += validate_agent_contract(
             operational_modules["unity_agent_mcp"],
             contracts.get("unity_agent_mcp", {}),
+        )
+
+    if "world_creator" in operational_modules:
+        errors += validate_world_creator_contract(
+            operational_modules["world_creator"],
+            contracts.get("world_creator", {}),
         )
 
     group_count = sum(
