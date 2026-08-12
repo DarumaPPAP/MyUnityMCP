@@ -106,7 +106,9 @@ namespace UnityGraphicsMcp
 		public string PlanId { get; set; }
 		public int UndoGroup { get; set; }
 		public long PostRevision { get; set; }
+		public long OwnedHierarchyRevision { get; set; }
 		public bool AwaitingOwnedHierarchyChange { get; set; }
+		public double OwnedHierarchyGraceUntil { get; set; }
 		public bool Invalidated { get; set; }
 		public bool Undone { get; set; }
 		public List<int> CreatedInstanceIds { get; set; } = new List<int>();
@@ -122,6 +124,7 @@ namespace UnityGraphicsMcp
 	internal static class MutationSession
 	{
 		private const int MAX_PLAN_COUNT = 8;
+		private const double OWNED_HIERARCHY_GRACE_SECONDS = 0.5;
 		private static readonly TimeSpan PLAN_LIFETIME = TimeSpan.FromMinutes(10.0);
 		private static readonly Dictionary<string, ExecutableLightPlan> _plans =
 			new Dictionary<string, ExecutableLightPlan>();
@@ -276,6 +279,11 @@ namespace UnityGraphicsMcp
 			Clear();
 		}
 
+		public static void NotifyHierarchyChangedForTests()
+		{
+			OnHierarchyChanged();
+		}
+
 		private static void OnHierarchyChanged()
 		{
 			if (_latestTransaction == null || _latestTransaction.Undone)
@@ -283,13 +291,15 @@ namespace UnityGraphicsMcp
 				return;
 			}
 
-			if (_latestTransaction.AwaitingOwnedHierarchyChange)
+			if (_latestTransaction.AwaitingOwnedHierarchyChange &&
+				EditorApplication.timeSinceStartup <= _latestTransaction.OwnedHierarchyGraceUntil)
 			{
-				_latestTransaction.PostRevision = Session.Revision;
+				_latestTransaction.OwnedHierarchyRevision = Session.Revision;
 				_latestTransaction.AwaitingOwnedHierarchyChange = false;
 				return;
 			}
 
+			_latestTransaction.AwaitingOwnedHierarchyChange = false;
 			_latestTransaction.Invalidated = true;
 		}
 
@@ -363,6 +373,11 @@ namespace UnityGraphicsMcp
 				}
 				return builder.ToString();
 			}
+		}
+
+		public static double OwnedHierarchyGraceDeadline()
+		{
+			return EditorApplication.timeSinceStartup + OWNED_HIERARCHY_GRACE_SECONDS;
 		}
 	}
 
@@ -595,18 +610,29 @@ namespace UnityGraphicsMcp
 							null);
 					}
 
-					if (expectedRevision.Value != Session.Revision ||
-						transaction.PostRevision != Session.Revision)
+					long currentRevision = Session.Revision;
+					bool expectedMatchesTransaction =
+						expectedRevision.Value == transaction.PostRevision;
+					bool currentMatchesTransaction =
+						currentRevision == transaction.PostRevision;
+					bool currentMatchesOwnedHierarchyAdvance =
+						transaction.OwnedHierarchyRevision > transaction.PostRevision &&
+						currentRevision == transaction.OwnedHierarchyRevision;
+
+					if (!expectedMatchesTransaction ||
+						(!currentMatchesTransaction && !currentMatchesOwnedHierarchyAdvance))
 					{
 						return CreateResult(
 							"graphics.undo_last_transaction",
 							requestId,
 							E_MCP_TOOL_STATUS.STALE_SNAPSHOT,
-							"Transaction後にEditor Revisionが変更されたためUndoを拒否しました。",
+							"Transaction後に未所有のEditor Revision変更が検出されたためUndoを拒否しました。",
 							new Dictionary<string, object>
 							{
+								{ "expectedRevision", expectedRevision.Value },
 								{ "transactionRevision", transaction.PostRevision },
-								{ "currentRevision", Session.Revision }
+								{ "ownedHierarchyRevision", transaction.OwnedHierarchyRevision },
+								{ "currentRevision", currentRevision }
 							});
 					}
 
@@ -756,8 +782,11 @@ namespace UnityGraphicsMcp
 				Session.NotifyMutationApplied();
 				transaction.PostRevision = Session.Revision;
 				transaction.AwaitingOwnedHierarchyChange =
-					transaction.CreatedInstanceIds.Count > 0 &&
 					!hierarchyEventAlreadyObserved;
+				transaction.OwnedHierarchyGraceUntil =
+					transaction.AwaitingOwnedHierarchyChange
+						? MutationSession.OwnedHierarchyGraceDeadline()
+						: 0.0;
 				MutationSession.SetLatestTransaction(transaction);
 				MutationSession.ConsumePlan(plan);
 
@@ -1106,7 +1135,7 @@ namespace UnityGraphicsMcp
 					new Dictionary<string, object>
 					{
 						{ "operationId", operation.OperationId }
-					});
+					}));
 				return false;
 			}
 
