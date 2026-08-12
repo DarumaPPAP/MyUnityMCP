@@ -1,6 +1,6 @@
 # Stage 2-8 Integration Wave
 
-`delivery/stage2-8-integration`は、Production 45 Tool baselineの上にStage 2〜8の7 Domain / 40 Toolを実装し、**85 Toolを同一候補Commitでまとめて検証するためのIntegration Branch**です。
+`delivery/stage2-8-integration`は、Production 45 Tool baselineの上に6 Domain / 34 Toolを追加し、**79 Toolを同一候補Commitでまとめて検証するためのIntegration Branch**です。
 
 この文書はImplementation Contractであり、Validation Evidenceではありません。
 
@@ -10,9 +10,9 @@
   - Graphics: 32
   - UnityAgentMCP: 10
   - WorldCreator: 3
-- Integration Candidate: +40 Tool
-- Combined Validation Target: 85 Tool
-- Stage 8完了前の`main`への途中Merge: 禁止
+- Integration Candidate: +34 Tool
+- Combined Validation Target: 79 Tool
+- Validation完了前の`main`へのMerge: 禁止
 - Validation完了前の`editor_operational`昇格: 禁止
 
 ## Stage 2 — Profiler (+8)
@@ -28,16 +28,9 @@
 
 Editor ProfilerRecorderを使ったCaptureとSummaryを提供します。Editor結果をTarget Device性能として扱いません。Baseline比較はEnvironment一致が必要です。
 
-## Stage 3 — Build (+6)
+## Stage 3 — Build (Retired / 0)
 
-- `build.inspect_environment`
-- `build.prepare_player`
-- `build.start_player`
-- `build.get_history`
-- `build.cancel_player`
-- `build.get_support_matrix`
-
-Build PlanをPreviewし、実Buildは明示承認後だけ実行します。Outputは`Builds/MyUnityMCP/`配下に限定し、絶対Path・`..` Escape・自動Platform Fallbackを禁止します。
+Build Domainは今回のMCP Candidateから撤去しました。`build.*` Tool、Agent routing、Build専用Contract/Testは現行79 Tool Surfaceに含めません。
 
 ## Stage 4 — Addressables (+6)
 
@@ -92,11 +85,11 @@ Core PlayablesのPlayableDirectorを対象に、Initial Time / Update Mode / Wra
 
 ## Shared Safety Contract
 
-Stage 2〜8 Domainは`UnityDomainMcpCommon`を共有し、次を統一します。
+現行Candidate Domainは`UnityDomainMcpCommon`を共有し、次を統一します。
 
 - PrepareはRead-only
 - MutationはCurrent Revision一致必須
-- Mutation / Build / Content Buildは対象に応じてApproval必須
+- Mutation / Content Buildは対象に応じてApproval必須
 - Planは一度だけConsume可能
 - Expired Plan / Stale Revision / Token mismatchを拒否
 - 自動Save禁止
@@ -110,21 +103,21 @@ Candidate DomainはAgent Catalog上`integration_candidate`として登録しま�
 
 Integration BranchではValidationのため、UnityAgentMCPが`integration_candidate`へRouteできます。DelegateはMCP Tool Attributeから構築するRegistryを使用し、Catalogに宣言されたToolだけがWorkflow Validationを通過します。
 
-Agent自身はUnity APIを直接Mutationしません。Domain側のRevision / Plan / Approval境界も省略しません。
+Agent自身はUnity APIを直接Mutationしません。Domain側のRevision / Plan / Approval境界も省略しません。Build DomainはAgent Catalogから除外されています。
 
 ## Validation Wave
 
-Implementation完了後に、同一85 Tool candidateでまとめて次を検証します。
+Build撤去により候補Surfaceが変わったため、旧85 Tool Validation結果をそのまま79 Tool Candidateの完了Evidenceには流用しません。現行候補では次から再確認します。
 
 1. Package Resolve / Unity Compile
-2. Exact 85 Tool Discovery
-3. 7 DomainのRead-only path
+2. Exact 79 Tool Discovery
+3. 6 Candidate DomainのRead-only path
 4. Approval / Stale Revision / One-time Plan
 5. Mutation Scope / Recovery
-6. Build / Addressables external side-effect boundary
+6. Addressables external side-effect boundary
 7. Agent → 各Candidate Domain Routing
 8. Timeout / Cancel / Domain Reload / Failure Propagation
 9. Cross-domain Workflow
 10. Production 45 Tool Regression
 
-Validation開始前は、Stage 2〜8をProduction PASSとして扱いません。
+Validation完了前は、現行CandidateをProduction PASSとして扱いません。
