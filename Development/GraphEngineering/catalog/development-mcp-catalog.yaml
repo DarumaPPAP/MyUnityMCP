@@ -1,16 +1,19 @@
-schema_version: "1.0"
-production_baseline_sha: 12add57a3a8be1c7d5d01055c91ea2a60bb782e8
-candidate_tool_count: 59
-combined_discovery_target_with_graphics: 91
+schema_version: "1.1"
+production_baseline_sha: 85912aa37c3b8d69bb71a4075cea75d4e93cf7aa
+production_tool_count: 42
+candidate_tool_count: 49
+combined_discovery_target_with_production: 91
 
-modules:
+promoted_modules:
   unity_agent_mcp:
     kind: control_plane
-    status: release_candidate
-    promotion: ready
+    status: operational
+    promotion: promoted
     tools: 10
     direct_unity_mutation: false
     source: Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent
+
+modules:
   unity_profiler_mcp:
     kind: domain
     status: release_candidate
