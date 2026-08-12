@@ -1,6 +1,8 @@
-schema_version: "1.0"
-production_contracts: Catalog/capability-contracts.yaml
-production_baseline_sha: 12add57a3a8be1c7d5d01055c91ea2a60bb782e8
+schema_version: "1.1"
+production_contracts:
+  graphics: Catalog/capability-contracts.yaml
+  agent: Catalog/unity-agent-capability-contracts.yaml
+production_baseline_sha: 85912aa37c3b8d69bb71a4075cea75d4e93cf7aa
 scope: development_only
 
 shared_mutation_contract:
@@ -15,24 +17,15 @@ shared_mutation_contract:
   automatic_visual_acceptance: prohibited
   automatic_execution_resume: prohibited
 
-contracts:
+promoted_contracts:
   unity_agent_mcp:
-    kind: control_plane
+    state: operational
+    promotion: promoted
     tool_count: 10
     direct_unity_mutation: prohibited
-    responsibilities:
-      - capability_discovery
-      - workflow_validation
-      - execution_graph_compilation
-      - preview
-      - approval_orchestration
-      - domain_routing
-      - execution_state
-      - cancellation
-      - error_aggregation
-      - evidence_aggregation
-    delegates_to_domain_mcp: required
+    production_contract: Catalog/unity-agent-capability-contracts.yaml
 
+contracts:
   unity_profiler_mcp:
     kind: domain
     tool_count: 8
