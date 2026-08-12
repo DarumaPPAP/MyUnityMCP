@@ -110,7 +110,6 @@ namespace UnityAgentMcp
 			"graphics.bake_dependencies",
 			"graphics.start_apv_bake",
 			"addressables.apply_entry",
-			"addressables.build_content",
 			"ui.apply_rect_transform",
 			"animation.apply_parameter",
 			"audio.apply_source",
