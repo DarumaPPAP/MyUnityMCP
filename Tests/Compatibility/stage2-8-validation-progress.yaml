@@ -1,4 +1,4 @@
-schema_version: "1.2"
+schema_version: "1.3"
 validation_wave: stage2_8_77_tool
 status: reset_required_after_addressables_build_removal
 production_ready: false
@@ -27,6 +27,42 @@ addressables_content_build:
 validation_environment:
   unity: 6000.7.0a2
   package_commit_identity: unverified_from_editor_public_information
+
+automated_ci:
+  evaluated_commit: e15ffe5add3b87c50cd488b11f344f2ec2ccafc1
+  status: not_verified
+  interpretation: infrastructure_terminated_before_runner_steps_not_code_failure
+  all_observed_jobs_steps_null: true
+  logs_available: false
+  workflow_runs:
+    unity_api_compatibility_contract:
+      run_id: 31622690527
+      conclusion: failure
+      jobs: 1
+      runner_steps_started: false
+    unity_api_compatibility_editor_matrix:
+      run_id: 31622690486
+      conclusion: failure
+      jobs: 3
+      runner_steps_started: false
+      matrix:
+        - Unity 6000.4.12f1 / UNITY_6000_4
+        - Unity 6000.5.5f1 / UNITY_6000_5
+        - Unity 6000.7.0a3 / UNITY_6000_7_CANARY
+    release_gate:
+      run_id: 31622690487
+      conclusion: failure
+      jobs: 2
+      runner_steps_started: false
+    unity_editor_verification:
+      run_id: 31622690507
+      conclusion: failure
+      jobs: 1
+      runner_steps_started: false
+  may_not_claim:
+    - ci_pass
+    - ci_code_failure
+    - unity_compile_result_from_ci
 
 historical_85_tool_results_before_build_removal:
   applicability: historical_only_not_full_77_tool_evidence
@@ -161,6 +197,9 @@ current_77_tool_validation:
     - addressables.prepare_content_build
     - addressables.build_content
   pending:
+    - package_compile_current_77_surface
+    - exact_77_tool_discovery
+    - agent_capability_catalog_current_surface
     - readonly_domain_smoke
     - stale_revision_contract_recheck
     - missing_approval_apply
@@ -179,5 +218,6 @@ verdict:
   retired_79_tool_surface: superseded_by_addressables_build_removal
   build_domain: removed_not_blocking_current_candidate
   addressables_content_build: removed_not_blocking_current_candidate
+  automated_ci: unavailable_not_verified
   full_77_tool_validation: not_started_after_surface_reset
   production_ready: false
