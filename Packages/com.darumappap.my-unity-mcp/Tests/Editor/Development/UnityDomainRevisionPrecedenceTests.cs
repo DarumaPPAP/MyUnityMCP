@@ -32,7 +32,7 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(result.success, Is.False);
 			Assert.That(result.status, Is.EqualTo(E_DOMAIN_TOOL_STATUS.STALE_REVISION.ToString()));
 			Assert.That(result.errorCode, Is.EqualTo("ui.prepare_rect_transform:STALE_REVISION"));
-			Assert.That(result.error, Is.TypeOf<string>());
+			Assert.That(result.errorMessage, Is.Not.Empty);
 			Assert.That(Session.Revision, Is.EqualTo(revisionBefore));
 		}
 
@@ -57,6 +57,7 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(result.success, Is.False);
 			Assert.That(result.status, Is.EqualTo(E_DOMAIN_TOOL_STATUS.NOT_FOUND.ToString()));
 			Assert.That(result.errorCode, Is.EqualTo("ui.prepare_rect_transform:NOT_FOUND"));
+			Assert.That(result.errorMessage, Is.Not.Empty);
 			Assert.That(Session.Revision, Is.EqualTo(revisionBefore));
 		}
 	}
