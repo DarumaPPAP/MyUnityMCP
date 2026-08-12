@@ -1,8 +1,11 @@
 {
-  "schemaVersion": "2.0",
+  "schemaVersion": "2.1",
   "workingBranch": "feature/graph-engineering-master",
-  "productionBaselineSha": "12add57a3a8be1c7d5d01055c91ea2a60bb782e8",
-  "graphBaselineSha": "f859e22ba06f58acbb4787987d6a373254a2b127",
+  "productionBaselineSha": "85912aa37c3b8d69bb71a4075cea75d4e93cf7aa",
+  "graphBaselineSha": "75118eaabda9ab269f47b899a21aa2e286bfcf45",
+  "productionToolCount": 42,
+  "remainingDevelopmentToolCount": 49,
+  "finalCombinedTarget": 91,
   "modernizationStatus": "ready_for_delivery_promotion",
   "nodes": {
     "baseline_capture": "complete",
@@ -11,7 +14,7 @@
     "production_development_separation": "source_complete",
     "compatibility_registry_inheritance": "source_complete",
     "candidate_base_modernization": "source_complete",
-    "unity_agent_refactor": "source_complete",
+    "unity_agent_promotion": "complete",
     "profiler_refactor": "source_complete",
     "build_refactor": "source_complete",
     "addressables_refactor": "complete",
@@ -31,13 +34,15 @@
   },
   "blockers": [],
   "notes": [
-    "Run #52 remains the automated compatibility basis for unchanged Development modules: Unity 6000.0.75f1, 6000.4.12f1 and 6000.5.5f1 passed the full EditMode contract project.",
-    "Unity 6000.7.0a2 was manually verified for Git package installation, editor compilation, package recognition and 91/91 custom-tool discovery.",
-    "The Addressables optional backend delta was manually verified in both package-absent and package-present configurations; the exact Unity 6000.0.75f1 + Addressables 2.7.6 CI lane could not be refreshed because GitHub Actions jobs failed before runner steps started.",
-    "fresh_project is integration_verified using an external Unity project installed through the UPM Git URL. This is not a claim that the pristine SampleProjects workflow executed.",
-    "external_mcp_e2e is complete by explicit repository-owner acceptance. The recorded technical observation still shows instance_count=0 and no read-only tool calls; completion is an operator acceptance decision, not a protocol-level tool-call PASS.",
-    "No evidence entry rewrites unavailable or unexecuted automation as a technical PASS; operator acceptance and carry-forward evidence are recorded separately.",
-    "The repository owner approved proceeding with Graph finalization and capability-scoped delivery-promotion preparation on 2026-08-12."
+    "Current Production Source of Truth is main 85912aa with 42 operational tools: 32 Graphics + 10 UnityAgent.",
+    "UnityAgent is no longer part of the remaining Development candidate count. Remaining candidate surface is 49 tools and the final combined target remains 91.",
+    "Run #52 remains the automated compatibility basis for unchanged remaining Development modules: Unity 6000.0.75f1, 6000.4.12f1 and 6000.5.5f1 passed the full EditMode contract project.",
+    "Unity 6000.7.0a2 was manually verified for Git package installation, editor compilation, package recognition and 91/91 custom-tool discovery before Agent production promotion.",
+    "The Addressables optional backend delta was manually verified in package-absent and package-present configurations; unavailable GitHub Actions runs are not represented as technical PASS.",
+    "fresh_project remains integration_verified using an external Unity project installed through the UPM Git URL; this is not a claim that every pristine SampleProjects workflow executed.",
+    "external_mcp_e2e remains an operator-accepted completion record, not a protocol-level read-only tool-call PASS; full Production External MCP E2E is a later hardening gate.",
+    "Graph-to-main wholesale merge remains prohibited. Every remaining capability must be promoted through a delivery/<capability> branch created from latest main."
   ],
+  "nextRecommendedCapability": "world_creator",
   "terminalGoalSatisfied": true
 }
