@@ -50,6 +50,28 @@ modules:
       - the workflow would require bypassing explicit approval or revision checks
     direct_unity_mutation_allowed: false
 
+  world_creator:
+    kind: creator
+    status: editor_operational
+    manifest: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
+    specification: Specs/UnityWorldCreatorMCP/spec.md
+    capability_contract: Catalog/world-creator-capability-contract.yaml
+    default_tool_group: creator
+    available_tool_groups:
+      - creator
+    use_when:
+      - a visual world goal requires a safe project and scene preflight before production planning
+      - project, scene, and graphics validation should be orchestrated as one read-only creator workflow
+      - production intent must be handed to a human reviewer before any downstream mutation, save, or bake
+    do_not_use_when:
+      - a single direct read-only Graphics tool is sufficient
+      - direct automatic Unity mutation is requested without the existing Domain approval boundary
+      - unattended visual acceptance is requested
+    direct_unity_mutation_allowed: false
+    orchestration_control_plane: unity_agent_mcp
+    operational_delegate_domains:
+      - unity_graphics_mcp
+
 selection:
   load_all_tool_schemas: false
   load_package_source_by_default: false
