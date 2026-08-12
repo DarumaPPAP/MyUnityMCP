@@ -109,7 +109,6 @@ namespace UnityAgentMcp
 			"graphics.apply_save_plan",
 			"graphics.bake_dependencies",
 			"graphics.start_apv_bake",
-			"build.start_player",
 			"addressables.apply_entry",
 			"addressables.build_content",
 			"ui.apply_rect_transform",
