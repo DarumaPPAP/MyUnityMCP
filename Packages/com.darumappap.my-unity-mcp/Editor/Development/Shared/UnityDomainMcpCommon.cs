@@ -64,6 +64,8 @@ namespace UnityDomainMcp
 		private static readonly Dictionary<string, UnityDomainMcpPlan> _plans =
 			new Dictionary<string, UnityDomainMcpPlan>(StringComparer.Ordinal);
 
+		internal static Func<DateTime> UtcNowOverrideForTests { get; set; }
+
 		static UnityDomainMcpPlanStore()
 		{
 			AssemblyReloadEvents.beforeAssemblyReload += Clear;
@@ -71,6 +73,8 @@ namespace UnityDomainMcp
 			EditorApplication.playModeStateChanged += _ => Clear();
 			EditorApplication.quitting += Clear;
 		}
+
+		private static DateTime UtcNow => UtcNowOverrideForTests?.Invoke() ?? DateTime.UtcNow;
 
 		public static UnityDomainMcpResult Prepare(
 			string tool,
@@ -87,6 +91,7 @@ namespace UnityDomainMcp
 				_plans.Remove(oldest);
 			}
 
+			DateTime createdUtc = UtcNow;
 			string approvalToken = requiresApproval
 				? Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N")
 				: null;
@@ -96,8 +101,8 @@ namespace UnityDomainMcp
 				DomainId = domainId,
 				Operation = operation,
 				ExpectedRevision = expectedRevision,
-				CreatedUtc = DateTime.UtcNow,
-				ExpiresUtc = DateTime.UtcNow + PLAN_LIFETIME,
+				CreatedUtc = createdUtc,
+				ExpiresUtc = createdUtc + PLAN_LIFETIME,
 				RequiresApproval = requiresApproval,
 				ApprovalTokenHash = Hash(approvalToken),
 				Payload = payload ?? new JObject()
@@ -131,12 +136,20 @@ namespace UnityDomainMcp
 			out UnityDomainMcpPlan plan,
 			out UnityDomainMcpResult failure)
 		{
-			RemoveExpired();
 			plan = null;
 			failure = null;
 			if (string.IsNullOrWhiteSpace(planId) || !_plans.TryGetValue(planId, out plan))
 			{
 				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.NOT_FOUND, "Planが存在しないか期限切れです。");
+				return false;
+			}
+			if (UtcNow > plan.ExpiresUtc)
+			{
+				_plans.Remove(planId);
+				failure = UnityDomainMcpCommon.Error(
+					tool,
+					plan.RequiresApproval ? E_DOMAIN_TOOL_STATUS.APPROVAL_EXPIRED : E_DOMAIN_TOOL_STATUS.NOT_FOUND,
+					plan.RequiresApproval ? "Approval Tokenが期限切れです。" : "Planが期限切れです。");
 				return false;
 			}
 			if (!string.Equals(plan.DomainId, domainId, StringComparison.Ordinal))
@@ -154,18 +167,11 @@ namespace UnityDomainMcp
 				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.STALE_REVISION, "Preview後にEditor Revisionが変更されました。");
 				return false;
 			}
-			if (plan.RequiresApproval)
+			if (plan.RequiresApproval &&
+				(string.IsNullOrWhiteSpace(approvalToken) || !string.Equals(Hash(approvalToken), plan.ApprovalTokenHash, StringComparison.Ordinal)))
 			{
-				if (DateTime.UtcNow > plan.ExpiresUtc)
-				{
-					failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.APPROVAL_EXPIRED, "Approval Tokenが期限切れです。");
-					return false;
-				}
-				if (string.IsNullOrWhiteSpace(approvalToken) || !string.Equals(Hash(approvalToken), plan.ApprovalTokenHash, StringComparison.Ordinal))
-				{
-					failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.APPROVAL_REQUIRED, "Approval Tokenが不足しているか一致しません。");
-					return false;
-				}
+				failure = UnityDomainMcpCommon.Error(tool, E_DOMAIN_TOOL_STATUS.APPROVAL_REQUIRED, "Approval Tokenが不足しているか一致しません。");
+				return false;
 			}
 			plan.Consumed = true;
 			return true;
@@ -174,6 +180,7 @@ namespace UnityDomainMcp
 		public static void ClearForTests()
 		{
 			Clear();
+			UtcNowOverrideForTests = null;
 		}
 
 		private static string Hash(string value)
@@ -191,7 +198,7 @@ namespace UnityDomainMcp
 
 		private static void RemoveExpired()
 		{
-			DateTime now = DateTime.UtcNow;
+			DateTime now = UtcNow;
 			foreach (string key in _plans.Where(value => value.Value.ExpiresUtc <= now).Select(value => value.Key).ToArray())
 			{
 				_plans.Remove(key);
