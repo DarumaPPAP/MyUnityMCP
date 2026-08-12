@@ -1,0 +1,92 @@
+schema_version: "1.0"
+wave: stage2_8_implementation
+status: implementation_complete_validation_pending
+branch: delivery/stage2-8-integration
+production_baseline:
+  branch: main
+  commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
+  verified_tool_count: 45
+  composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+
+integration_target:
+  tool_count: 85
+  candidate_tool_count: 40
+  production_merge_before_validation: prohibited
+  graph_wholesale_merge: prohibited
+
+stage_boundaries:
+  stage_2_profiler:
+    tools: 8
+    implementation_commit: f04ea2645c7dc11374ae809da0346ef5ee1eb2de
+    includes_shared_domain_foundation: true
+    status: implemented_unverified
+  stage_3_build:
+    tools: 6
+    implementation_commit: d17a66ce26f995fa48d14773c6899f3cc608bbb3
+    status: implemented_unverified
+  stage_4_addressables:
+    tools: 6
+    implementation_commit: 28d47d0492904b63426c6dc746a1df8362e160a0
+    optional_package: com.unity.addressables
+    status: implemented_unverified
+  stage_5_ui:
+    tools: 5
+    implementation_commit: 058887fb322de6d675bd44fee71f0313ba6c24d1
+    status: implemented_unverified
+  stage_6_animation:
+    tools: 5
+    implementation_commit: 03244d7d2d5d6c131fdf4084cc334ebcb7c34377
+    status: implemented_unverified
+  stage_7_audio:
+    tools: 5
+    implementation_commit: 41fe202c2c901b4571613d12f91468996f8e5c9e
+    status: implemented_unverified
+  stage_8_cinematic:
+    tools: 5
+    implementation_commit: 34d51b6e2b8ca8dce5921770a10f78e2c5a43ba6
+    status: implemented_unverified
+
+integration_work:
+  exact_85_tool_manifest: implemented
+  exact_85_tool_discovery_contract: implemented
+  shared_revision_and_approval_plan_store: implemented
+  agent_candidate_domain_catalog: implemented
+  agent_candidate_domain_routing: implemented
+  agent_false_success_guard: implemented
+  combined_domain_safety_contract_tests: implemented_not_run
+  optional_addressables_backend_contract: implemented_not_run
+  integration_contract_catalog: implemented
+
+safety_invariants:
+  integration_candidate_is_not_production_operational: true
+  expected_revision_required_for_mutation: true
+  one_time_plan_required: true
+  approval_required_for_destructive_or_persistent_operations: true
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
+  target_device_claim_without_evidence: prohibited
+
+validation_wave:
+  status: not_started
+  no_pass_claimed: true
+  required_after_implementation:
+    - unity_package_resolve_and_compile
+    - exact_85_tool_discovery
+    - domain_contract_test_suite
+    - agent_to_each_candidate_domain_routing
+    - read_only_revision_invariance
+    - approval_and_stale_revision_boundaries
+    - mutation_scope_and_recovery
+    - build_and_addressables_external_side_effect_boundaries
+    - cancellation_timeout_reload_and_failure_propagation
+    - cross_domain_workflows
+  automated_ci_status: not_evaluated_for_validation_wave
+
+next_action:
+  name: combined_85_tool_validation_wave
+  merge_to_main_before_completion: false
