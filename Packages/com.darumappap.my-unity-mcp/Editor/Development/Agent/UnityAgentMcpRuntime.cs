@@ -575,10 +575,7 @@ namespace UnityAgentMcp
 			{
 				object result = handler(step.parameters ?? new JObject());
 				JToken delegated = result == null ? JValue.CreateNull() : JToken.FromObject(result);
-				bool delegatedSuccess = delegated.Type == JTokenType.Object
-					? delegated.Value<bool?>("success") ??
-					  !string.Equals(delegated.Value<string>("status"), "ERROR", StringComparison.OrdinalIgnoreCase)
-					: result != null;
+				bool delegatedSuccess = IsDelegatedSuccess(delegated);
 				if (!delegatedSuccess)
 				{
 					string delegatedError = delegated["error"]?["code"]?.Value<string>();
@@ -648,6 +645,32 @@ namespace UnityAgentMcp
 				handlers.Add(toolName, value => method.Invoke(null, new object[] {value}));
 			}
 			return handlers;
+		}
+
+		private static bool IsDelegatedSuccess(JToken delegated)
+		{
+			if (delegated == null || delegated.Type != JTokenType.Object)
+			{
+				return delegated != null && delegated.Type != JTokenType.Null;
+			}
+
+			bool? domainSuccess = delegated.Value<bool?>("success");
+			if (domainSuccess.HasValue)
+			{
+				return domainSuccess.Value;
+			}
+
+			bool? graphicsSuccess = delegated.Value<bool?>("IsSuccessful") ??
+				delegated.Value<bool?>("isSuccessful");
+			if (graphicsSuccess.HasValue)
+			{
+				return graphicsSuccess.Value;
+			}
+
+			string status = delegated.Value<string>("status");
+			return string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(status, "SUCCEEDED", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(status, "PARTIAL", StringComparison.OrdinalIgnoreCase);
 		}
 
 		private static bool IsExecutableDomainStatus(string status)
