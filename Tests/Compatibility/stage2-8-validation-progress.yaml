@@ -49,6 +49,28 @@ manual_results:
     animation_inspect: SUCCESS
     audio_inspect: SUCCESS
     cinematic_inspect: SUCCESS
+  stale_revision_contract:
+    status: pass
+    tool: ui.prepare_rect_transform
+    editor_revision_before: 1
+    expected_revision: 0
+    success: false
+    response_status: STALE_REVISION
+    error_code: ui.prepare_rect_transform:STALE_REVISION
+    top_level_error: null
+    editor_revision_after: 1
+    mutation: false
+    approval: false
+    apply: false
+    scene_or_asset_change: false
+  approval_expiration_contract:
+    status: pass
+    tool: build.start_player
+    response_status: APPROVAL_EXPIRED
+    error_code: build.start_player:APPROVAL_EXPIRED
+    build_started: false
+    history_empty: true
+    editor_revision_changed: false
   addressables_state:
     package_installed: false
     backend_compiled: false
@@ -56,137 +78,111 @@ manual_results:
     groups_created: false
     package_auto_installed: false
     content_build_started: false
-  build_state:
-    output_root: Builds/MyUnityMCP/
-    player_build_started: false
-  unity_state:
-    scene_dirty_before: true
-    scene_dirty_after: true
-    additional_dirty_transition_observed: false
-    asset_changes: false
+  unity_state_before_build_transport_failure:
     save: false
     bake: false
-    player_build: false
     addressables_content_build: false
     direct_unity_api: false
 
 safety_findings:
   response_schema:
     original_observed_result: MCP_RESPONSE_SCHEMA_ERROR
-    original_cause: MCPResponse.error returned object instead of string
-    first_fix_status: partial
-    manual_retest:
-      pydantic_schema_error: false
-      error_field_is_string: true
+    root_cause: MCPResponse.error received an object instead of the bridge string contract
+    current_status: fixed_and_manual_pass
   stale_revision_precedence:
-    tool: ui.prepare_rect_transform
-    first_test_input:
-      expected_revision: 0
-      editor_revision: 1
-      target_exists: false
-    intended_result: STALE_REVISION
-    observed_result_before_precedence_fix: NOT_FOUND
-    observed_error: 対象RectTransformが見つかりません。
-    mutation: false
-    approval: false
-    apply: false
-    editor_revision_changed: false
+    original_observed_result: NOT_FOUND_before_STALE_REVISION
+    root_cause: domain target resolution occurred before shared expectedRevision validation
+    current_status: fixed_and_manual_pass
+  mcp_response_field_preservation:
+    original_observed_result: success_false_with_status_metadata_stripped
+    root_cause: MCP Server preserves only success/message/error/data/hint at the Client boundary
+    current_status: fixed_and_manual_pass
+    canonical_domain_error_metadata_location: data
+  build_command_transport:
+    status: blocked_fix_implemented_awaiting_manual_retest
+    observed_candidate: e12fec637ca9b84f58c2abbdc07e71e133d697f4
+    observed_plan_id: unity_build_mcp:plan:330a56acd3d046339f1f7d3dedda5415
+    observed_error: Unity plugin session disconnected while awaiting command_result
+    observed_session_id: bee7c3c5-b7b8-48e9-bdc9-29bd049a0ccb
+    build_started: unknown
+    build_final_status: unknown
+    history_available_after_failure: false
+    editor_revision_after_failure: unknown
+    scene_asset_state_after_failure: unknown
     validation_stopped_safely: true
-    cause: domain target resolution occurred before shared expectedRevision validation
-  bridge_error_envelope:
-    second_retest_input:
-      expected_revision: 0
-      editor_revision: 1
-      target_object_id: ""
-    observed_result_after_precedence_fix:
-      success: false
-      error: expectedRevisionが現在のEditor Revisionと一致しません。
-      status_visible_to_client: false
-      error_code_visible_to_client: false
-      mutation: false
-      approval: false
-      apply: false
-      editor_revision_changed: false
-    root_cause: top-level error field causes MCP Bridge to emit an error envelope and drop normal result fields such as status and errorCode
-  mcp_response_field_strip:
-    third_retest_input:
-      expected_revision: 0
-      editor_revision: 1
-      target_object_id: ""
-    observed_result_after_error_field_removal:
-      success: false
-      message: null
-      error: null
-      data: null
-      hint: null
-      status_visible_to_client: false
-      error_code_visible_to_client: false
-      error_message_visible_to_client: false
-    root_cause: MCP Server parses custom tool results into MCPResponse(success, message, error, data, hint); extra top-level fields are discarded by the Pydantic model
+    implementation_root_cause:
+      status: strong_static_inference_requires_editor_retest
+      detail: build.start_player called synchronous BuildPipeline.BuildPlayer inside the MCP command handler, so the Editor main thread could remain blocked while the transport waited for command_result and heartbeat activity
 
 blocking_fix:
   status: implemented_awaiting_manual_retest
-  current_candidate_fix:
-    expected_revision_gate_location: UnityDomainMcpCommon.Execute
-    behavior: expectedRevision is validated before delegated domain runtime target/input validation
-    tool_identity: resolved from declaring MCP tool attribute
-    applies_to: all MCP tool requests carrying expectedRevision
-    stale_error_status_location: data.status
-    stale_error_code_location: data.errorCode
-  shared_domain_response:
-    top_level_error_field: not_used_for_domain_metadata
-    top_level_message_field: summary_human_message
-    top_level_data_field: bridge_preserved_domain_metadata
-    data_contains:
-      - schemaVersion
-      - tool
-      - status
-      - errorCode
-      - errorMessage
-      - summary
-      - revision
-      - success
-    reason: MCPResponse only preserves success/message/error/data/hint at the Client boundary
-    applies_to_all_stage2_8_domains: true
-  agent_delegated_failure_compatibility:
-    legacy_object_error_supported: true
-    string_error_supported: true
-    domain_error_code_preserved: true
-    summary_fallback_supported: true
+  build_transport_fix:
+    implementation_commit: df8587b10340c49fc52c0b26394117ccfac293ad
+    behavior:
+      - approved plan is consumed synchronously
+      - build.start_player creates a QUEUED build record
+      - build.start_player returns PARTIAL before BuildPipeline.BuildPlayer starts
+      - actual BuildPipeline.BuildPlayer starts from EditorApplication.update after the MCP command response handoff window
+      - build.get_history exposes activeBuild, completed history, queuedBuild, and isBuildingPlayer
+      - no background thread calls Unity APIs
+      - running BuildPipeline.BuildPlayer remains non-cancellable through public API
+    build_start_delay_seconds: 1.0
+    expected_initial_response:
+      status: PARTIAL
+      build_state: QUEUED
+      plan_consumed: true
+      build_started: false
+      command_result_returned_before_build: true
+    transport_expectation:
+      note: Unity may still become temporarily unavailable while synchronous BuildPipeline.BuildPlayer owns the Editor main thread; the required contract is that build.start_player command_result is delivered before that blocking call begins and final evidence is retrieved after the plugin becomes Ready again
   regression_tests:
+    build_transport_contract:
+      path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityBuildMcpTransportContractTests.cs
+      execution_status: not_run
+      assertions:
+        - approved plan is consumed
+        - result is PARTIAL and successful
+        - BuildPipeline is not active inside the MCP command handler
+        - build state is QUEUED
+        - commandResultReturnedBeforeBuild is true
+        - buildStarted is false
     response_contract:
       path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
       execution_status: not_run
-      assertions:
-        - top-level message is populated
-        - top-level error is not used for structured metadata
-        - data.status remains visible
-        - data.errorCode remains visible
-        - data.errorMessage remains visible
     revision_precedence:
       path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainRevisionPrecedenceTests.cs
       execution_status: not_run
-      assertions:
-        - stale revision wins over missing target
-        - current revision preserves missing target response
-        - editor revision remains unchanged
+
+static_review:
+  post_fix_compare_base: e12fec637ca9b84f58c2abbdc07e71e133d697f4
+  changed_runtime_domains:
+    - Build
+  added_tests:
+    - UnityBuildMcpTransportContractTests.cs
+  tool_count_change: 0
+  production_main_modified: false
+  editor_compile_after_fix: not_run
 
 pending_validation:
-  - stale_revision_mcp_response_data_retest
+  - compile_and_85_tool_sanity_after_build_transport_fix
+  - build_queue_command_result_handoff_retest
+  - actual_player_build_terminal_result
+  - build_history_after_plugin_ready
+  - plan_reuse
   - missing_approval_apply
   - wrong_approval_token
-  - plan_reuse
   - profiler_capture
   - ui_animation_audio_cinematic_mutation_e2e
-  - build_approval_boundary
   - agent_candidate_execution
   - agent_delegated_failure_propagation
   - cross_domain_workflow
-  - timeout_cancel_expired_approval
+  - timeout_cancel
 
 verdict:
   phase_a_to_d: pass_manual
-  safety_response_schema: pass_manual
-  safety_revision_precedence: fixed_but_mcp_response_data_fix_awaiting_retest
+  stale_revision_contract: pass_manual
+  approval_expiration_contract: pass_manual
+  build_approval_boundary: pass_manual
+  build_transport: fix_implemented_retest_required
   full_85_tool_validation: not_complete
   production_ready: false
