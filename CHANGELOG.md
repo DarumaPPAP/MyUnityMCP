@@ -9,13 +9,19 @@
 - UnityAgentMCP Control Planeと10個の`agent.*` Tool
 - Workflow Validation、Dependency Graph Compile、Execution Preview、Approval Orchestration、Cancellation／Timeout／History
 - `Catalog/unity-agent-capability-contracts.yaml`と`Specs/UnityAgentMCP/spec.md`
+- WorldCreatorと3個の`world.*` Tool
+- `world.compile_workflow`によるVisual Goal → Read-only Graphics Preflight Graph生成
+- `world.start_preflight`によるAgent経由Preflight実行
+- `world.create_review_handoff`によるHuman Review必須Handoff
+- `Specs/UnityWorldCreatorMCP/spec.md`とWorldCreator専用Editor Contract Test
 
 ### Changed
 
-- Current mainのProduction Tool Surfaceを32 Graphics + 10 Agent = 42 Toolへ拡張
+- Current mainのProduction Tool Surfaceを32 Graphics + 10 Agent + 3 WorldCreator = 45 Toolへ拡張するDelivery Candidateを追加
 - Release ContractのTool CountをManifest基準へ変更し、将来のCapability昇格で固定値を書き換えない構成へ変更
 - Editor VerificationでGraphics限定Filterを外し、昇格済みCapabilityのContract Testを含める
 - UnityAgentMCPをDesign Only RegistryからOperational Catalogへ昇格
+- WorldCreatorをGraph Engineering候補からCapability-scoped Deliveryへ移植し、MovieCreator／LiveCreatorを分離
 - Source versionを次期Minor `1.1.0`へ移行し、GitHub Release Publicationとは分離
 - `VERSION`変更による暗黙Releaseを廃止し、`workflow_dispatch`または明示Publish承認だけでReleaseする構成へ変更
 
@@ -23,7 +29,9 @@
 
 - Agent SourceはGraph Engineering Run #52でUnity `6000.0.75f1` / `6000.4.12f1` / `6000.5.5f1`のEditMode ContractをPASS
 - Unity `6000.7.0a2`のGraph Engineering Manual CanaryでPackage Compile／Recognition／Agentを含む91 Tool Discoveryを確認
+- Stage 0の42 Tool Production baselineはUnity `6000.7.0a2`実EditorでGraphics Read-only、Agent Orchestration、Approval、Light Mutation、Normal Undoまで`integration_verified_manual`
 - Current exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
+- WorldCreator 45 Tool Deliveryは専用Contractを追加済み。Automated CIと実Editor E2EはDelivery Gateとして別途確定する
 
 ### Release note
 
