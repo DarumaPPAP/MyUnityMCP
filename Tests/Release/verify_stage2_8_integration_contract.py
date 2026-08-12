@@ -26,6 +26,11 @@ EXPECTED_CANDIDATES = {
     "unity_audio_mcp": 5,
     "unity_cinematic_mcp": 5,
 }
+FORBIDDEN_ADDRESSABLES_CONTENT_BUILD_RUNTIME_REFERENCES = {
+    "addressables.prepare_content_build",
+    "addressables.build_content",
+    "AddressableAssetSettings.BuildPlayerContent",
+}
 
 
 def fail(message: str) -> int:
@@ -102,8 +107,12 @@ def main() -> int:
         errors += fail(f"AutoRegister=false count {disabled_count} does not match tool count {tool_count}.")
     if re.search(r"\[McpForUnityTool\s*\(\s*\"build\.", source):
         errors += fail("Build MCP tool declaration remains in current Editor runtime source.")
-    if re.search(r"\[McpForUnityTool\s*\(\s*\"addressables\.(prepare_content_build|build_content)", source):
-        errors += fail("Addressables content-build MCP tool declaration remains in current Editor runtime source.")
+    for reference in sorted(FORBIDDEN_ADDRESSABLES_CONTENT_BUILD_RUNTIME_REFERENCES):
+        if reference in source:
+            errors += fail(
+                "Addressables content-build runtime reference remains in current Editor source: "
+                f"{reference}"
+            )
 
     forbidden_runtime_paths = [
         EDITOR_ROOT / "Development" / "Build" / "UnityBuildMcp.cs",
