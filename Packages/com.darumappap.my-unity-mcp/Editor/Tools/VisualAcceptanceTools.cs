@@ -14,14 +14,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
 
 			[ToolParameter("APV Bakeの明示入力。", Required = true)]
 			public ApvBakePlanInput input { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -44,9 +44,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("APV Bake Plan ID。", Required = true)]
 			public string planId { get; set; }
 
@@ -58,6 +55,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("EXPLICIT_APV_BAKING_SET。", Required = true)]
 			public string bakeMode { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -82,11 +82,11 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("APV Bake Job ID。", Required = true)]
 			public string jobId { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -108,11 +108,11 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("APV Bake Job ID。", Required = true)]
 			public string jobId { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -134,14 +134,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
 
 			[ToolParameter("Acceptance Profile入力。", Required = true)]
 			public AcceptanceProfileInput input { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -164,9 +164,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Capture ID。", Required = true)]
 			public string captureId { get; set; }
 
@@ -178,6 +175,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Acceptance Profile ID。", Required = true)]
 			public string profileId { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("各評価項目の外部Measurement。", Required = false)]
 			public EvaluationMeasurementInput[] measurements { get; set; }
@@ -210,9 +210,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Refine元Direction Plan ID。", Required = true)]
 			public string directionPlanId { get; set; }
 
@@ -221,6 +218,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("PlanとEvaluationが前提とするEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

@@ -34,13 +34,13 @@ namespace UnityAudioMcp
 		public sealed class Parameters
 		{
 			[ToolParameter("対象AudioSourceのGlobal Object ID。", Required = true)] public string targetObjectId { get; set; }
+			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Volume。0～1。", Required = false)] public float? volume { get; set; }
 			[ToolParameter("Pitch。-3～3。", Required = false)] public float? pitch { get; set; }
 			[ToolParameter("Spatial Blend。0～1。", Required = false)] public float? spatialBlend { get; set; }
 			[ToolParameter("Loop。", Required = false)] public bool? loop { get; set; }
 			[ToolParameter("Mute。", Required = false)] public bool? mute { get; set; }
 			[ToolParameter("Play On Awake。", Required = false)] public bool? playOnAwake { get; set; }
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 		}
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityAudioMcpRuntime.PrepareSource(value.targetObjectId, value.volume, value.pitch, value.spatialBlend, value.loop, value.mute, value.playOnAwake, value.expectedRevision));
 	}

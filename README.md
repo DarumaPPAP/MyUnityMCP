@@ -32,7 +32,7 @@ Build Domainは今回のCandidateから撤去し、AddressablesもContent Build�
 
 Addressablesで現行Candidateに含めるのは`inspect` / `prepare_entry` / `apply_entry` / `get_support_matrix`のみです。`prepare_content_build`と`build_content`は現行MCP Surfaceから除外しています。
 
-現行Candidateは **Implementation Complete / Validation Reset** です。`integration_candidate`は`editor_operational`と同義ではなく、Validation完了前にProduction PASSとして扱いません。途中で`main`へMergeせず、77 Tool Validation Wave完了後にPromotion判断します。
+現行CandidateのStatusは **`local_cg_runtime_verified_ci_unavailable`** です。`integration_candidate`はIntegration BranchのEditorでValidation実行できますが、Productionの`editor_operational`昇格Statusではありません。Local CG / Unity `6000.7.0a2`で77 Tool Runtime Validationは完了し、Automated CIは`not_verified`のまま保持しています。Human Promotion Gate前に`delivery/stage2-8-integration`または`main`へMergeしません。
 
 詳細は[Stage 2-8 Integration Wave](Packages/com.darumappap.my-unity-mcp/Documentation~/stage2-8-integration.md)と[Implementation Status](Development/GraphEngineering/stage2-8-implementation-status.yaml)を参照してください。
 
@@ -91,14 +91,16 @@ Integration Waveの77 Tool CandidateはProduction用途ではなく、Validation
 
 ## Verification state
 
-Production 45 Tool Evidenceは既存のStage 0 / WorldCreator Evidenceを正本として維持します。Build DomainとAddressables Content Buildの撤去でCandidate Surfaceが変わったため、旧85 / 79 Tool途中結果はhistorical evidenceとして保持しつつ、現行77 Toolを対象にValidationを再開します。
+Production 45 Tool Evidenceは既存のStage 0 / WorldCreator Evidenceを正本として維持します。旧85 / 79 Tool結果を流用せず、現行77 ToolをLocal CGで再検証しました。
 
-Validation前に次を主張しません。
+- Unity `6000.7.0a2`: Compile Error 0、77/77 Tool Discovery、重複0
+- Candidate 6 Domain: Read-only / Safety / Scoped Mutation / Agent Routingを検証
+- Addressables: Package未導入時の明示`UNSUPPORTED`境界をPASSとして許容。Positive Backend Matrixは`not_verified`
+- Agent: 5 Candidate Delegate成功 + Addressables失敗を`PARTIAL` / `executionSucceeded=false`で伝播
+- Local resilience callbackとProduction 45 Regression: PASS
+- Package Editor Test Runner、Fresh-project Sample Workflow、Automated CI、External Transport Disconnect/Reconnect: `not_verified`
 
-- Stage 2〜8 Production PASS
-- 77/77 Tool Discovery PASS
-- Automated CI PASS
-- Target Device PASS
+この結果はCandidateのProduction昇格を意味しません。Human Promotion Gateはpendingです。Target Device PASSも主張しません。
 
 ## Distribution
 

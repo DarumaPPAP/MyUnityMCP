@@ -21,6 +21,9 @@ namespace UnityWorldCreatorMcp
 			[ToolParameter("制作Goal。", Required = true)]
 			public string visualGoal { get; set; }
 
+			[ToolParameter("現在のEditor Revision。", Required = true)]
+			public long? expectedRevision { get; set; }
+
 			[ToolParameter("対象Scene Scope。", Required = false)]
 			public string sceneScope { get; set; }
 
@@ -39,8 +42,6 @@ namespace UnityWorldCreatorMcp
 			[ToolParameter("Acceptance条件。", Required = false)]
 			public string[] acceptanceCriteria { get; set; }
 
-			[ToolParameter("現在のEditor Revision。", Required = true)]
-			public long? expectedRevision { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

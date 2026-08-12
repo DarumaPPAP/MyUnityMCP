@@ -14,11 +14,11 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("監視対象Execution ID。", Required = true)]
 			public string executionId { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -40,11 +40,11 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Cancellation対象Execution ID。", Required = true)]
 			public string executionId { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("Cancellation理由。", Required = false)]
 			public string reason { get; set; }

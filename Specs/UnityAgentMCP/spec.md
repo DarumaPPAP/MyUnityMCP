@@ -83,6 +83,8 @@ Automatic resume after reload/restart/disconnect is prohibited.
 
 Current production Agent execution delegates only to registered `unity_graphics_mcp` handlers. Domains that are present only as design/candidate metadata remain non-operational and are rejected during workflow validation.
 
+The Stage 2-8 integration branch has one explicit validation-only exception: domains declared as `integration_candidate` in the runtime catalog may be routed for bounded validation. This does not change their Production status, does not bypass the Domain revision/plan/approval contract, and does not permit any undeclared, retired, or design-only domain to execute.
+
 Promoting another Domain does not automatically make it executable through Agent. Its production catalog state, Agent runtime catalog entry, delegate registration, tests, documentation, and safety contract must be promoted together.
 
 ## Result integrity

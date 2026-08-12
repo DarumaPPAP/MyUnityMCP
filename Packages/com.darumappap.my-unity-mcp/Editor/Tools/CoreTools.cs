@@ -193,14 +193,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("graphics.compile_directionが返したPlan ID。", Required = true)]
 			public string planId { get; set; }
 
 			[ToolParameter("graphics.compile_directionが返したexpectedRevision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -223,9 +223,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("graphics.compile_directionが返したDirection Plan ID。", Required = true)]
 			public string directionPlanId { get; set; }
 
@@ -234,6 +231,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("明示的なLIGHT_CREATE / LIGHT_UPDATE操作。曖昧な自然言語からUnity側で数値を推測しません。", Required = true)]
 			public LightOperationInput[] lightOperations { get; set; }
+
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -257,9 +257,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("graphics.prepare_light_planが返したExecutable Plan ID。", Required = true)]
 			public string planId { get; set; }
 
@@ -271,6 +268,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Light MutationではNONEのみ。Scene / Assetを自動保存しません。", Required = true)]
 			public string saveMode { get; set; }
+
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -295,14 +295,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("graphics.apply_planが返したTransaction ID。", Required = true)]
 			public string transactionId { get; set; }
 
 			[ToolParameter("graphics.apply_planが返したrevision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("呼び出し元が付与するRequest ID。省略時はUnity側で生成します。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

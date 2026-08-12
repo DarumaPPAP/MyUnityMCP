@@ -14,14 +14,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Capture対象Camera ComponentのGlobalObjectId。", Required = true)]
 			public string cameraObjectId { get; set; }
 
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("Capture幅。既定1280、64～4096。", Required = false)]
 			public int? width { get; set; }
@@ -64,9 +64,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("graphics.capture_evidenceが返したCapture ID。", Required = true)]
 			public string captureId { get; set; }
 
@@ -81,6 +78,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Human Reviewer識別名。", Required = true)]
 			public string reviewer { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("人間または外部Visionが明示した観察結果。", Required = false)]
 			public string[] observations { get; set; }
@@ -118,9 +118,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Refine元のDirection Plan ID。", Required = true)]
 			public string directionPlanId { get; set; }
 
@@ -129,6 +126,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Direction PlanとReviewが前提とするEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)

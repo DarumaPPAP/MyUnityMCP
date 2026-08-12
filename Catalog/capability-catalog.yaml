@@ -42,33 +42,57 @@ capabilities:
       structured_error_catalog: implemented_editor_verified
     delegates_to:
       - unity_graphics_mcp
+    integration_validation_delegates_to:
+      - unity_profiler_mcp
+      - unity_addressables_mcp
+      - unity_ui_mcp
+      - unity_animation_mcp
+      - unity_audio_mcp
+      - unity_cinematic_mcp
     limitations:
       - no_direct_unity_mutation
       - non_operational_domains_are_rejected
+      - integration_candidate_execution_is_validation_only
       - no_automatic_execution_resume
       - no_approval_bypass
 
+  world_creator:
+    owner: world_creator
+    status: editor_operational
+    modules:
+      read_only_graphics_preflight: integration_verified_manual
+      human_review_handoff: integration_verified_manual
+    limitations:
+      - no_direct_unity_mutation
+      - no_automatic_visual_acceptance
+
   cinematic:
     owner: unity_cinematic_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
   ui:
     owner: unity_ui_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
   addressables:
     owner: unity_addressables_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
+    package_absent_result: UNSUPPORTED
+    positive_backend_matrix: not_verified
   animation:
     owner: unity_animation_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
   audio:
     owner: unity_audio_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
   profiler:
     owner: unity_profiler_mcp
-    status: design_only_not_executable
-  build:
-    owner: unity_build_mcp
-    status: design_only_not_executable
+    status: integration_candidate
+    validation_status: local_cg_runtime_verified_ci_unavailable
+    evidence_scope: unity_editor_local
 
 rules:
   explicit_tool_activation_required: true

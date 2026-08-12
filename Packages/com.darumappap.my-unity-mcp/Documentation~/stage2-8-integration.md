@@ -2,7 +2,7 @@
 
 `delivery/stage2-8-integration`は、Production 45 Tool baselineの上に6 Domain / 32 Toolを追加し、**77 Toolを同一候補Commitでまとめて検証するためのIntegration Branch**です。
 
-この文書はImplementation Contractであり、Validation Evidenceではありません。
+この文書はImplementation Contractです。Validation Evidenceの正本は`Tests/Compatibility/stage2-8-validation-progress.yaml`と、そこから参照するGraph Engineering Evidenceです。
 
 ## Baseline
 
@@ -12,8 +12,9 @@
   - WorldCreator: 3
 - Integration Candidate: +32 Tool
 - Combined Validation Target: 77 Tool
-- Validation完了前の`main`へのMerge: 禁止
-- Validation完了前の`editor_operational`昇格: 禁止
+- Current Validation Status: `local_cg_runtime_verified_ci_unavailable`
+- Human Promotion Gate前の`main`へのMerge: 禁止
+- Human Promotion Gate前の`editor_operational`昇格: 禁止
 
 ## Stage 2 — Profiler (+8)
 
@@ -116,7 +117,7 @@ Agent自身はUnity APIを直接Mutationしません。Domain側のRevision / Pl
 
 ## Validation Wave
 
-Build DomainとAddressables Content Buildの撤去により候補Surfaceが変わったため、旧85 / 79 Tool Validation結果をそのまま77 Tool Candidateの完了Evidenceには流用しません。現行候補では次から再確認します。
+Build DomainとAddressables Content Buildの撤去により候補Surfaceが変わったため、旧85 / 79 Tool Validation結果を77 Tool Candidateの完了Evidenceには流用していません。現行候補をLocal CG / Unity `6000.7.0a2`で次の順に再確認しました。
 
 1. Package Resolve / Unity Compile
 2. Exact 77 Tool Discovery
@@ -129,4 +130,6 @@ Build DomainとAddressables Content Buildの撤去により候補Surfaceが変�
 9. Cross-domain Workflow
 10. Production 45 Tool Regression
 
-Validation完了前は、現行CandidateをProduction PASSとして扱いません。
+Local CGではCompile Error 0、Exact 77 Discovery、Candidate 6 Domain、Safety、Scoped Mutation、Agent Routing、Resilience callback、Cross-domain、Production 45 RegressionまでPASSしました。Addressables Packageが無いため4 Toolは明示`UNSUPPORTED`境界を守り、Agentは5成功 + Addressables失敗を`PARTIAL` / `executionSucceeded=false`として伝播しました。
+
+Package Editor Test Runner、Fresh-project Sample Workflow、Automated CI、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnectは`not_verified`です。Local Runtime PASSをProduction PASSへ読み替えず、CandidateはValidation実行可能な`integration_candidate`のままHuman Promotion Gateを待ちます。

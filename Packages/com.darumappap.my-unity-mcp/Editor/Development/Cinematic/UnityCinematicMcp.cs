@@ -35,11 +35,11 @@ namespace UnityCinematicMcp
 		public sealed class Parameters
 		{
 			[ToolParameter("対象PlayableDirectorのGlobal Object ID。", Required = true)] public string targetObjectId { get; set; }
+			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Initial Time。", Required = false)] public double? initialTime { get; set; }
 			[ToolParameter("DSPClock／GameTime／UnscaledGameTime／Manual。", Required = false)] public string timeUpdateMode { get; set; }
 			[ToolParameter("Hold／Loop／None。", Required = false)] public string extrapolationMode { get; set; }
 			[ToolParameter("Play On Awake。", Required = false)] public bool? playOnAwake { get; set; }
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 		}
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityCinematicMcpRuntime.PrepareDirector(value.targetObjectId, value.initialTime, value.timeUpdateMode, value.extrapolationMode, value.playOnAwake, value.expectedRevision));
 	}

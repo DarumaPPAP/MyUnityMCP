@@ -24,6 +24,8 @@
 - WorldCreatorをGraph Engineering候補からCapability-scoped Deliveryへ移植し、MovieCreator／LiveCreatorを分離
 - Source versionを次期Minor `1.1.0`へ移行し、GitHub Release Publicationとは分離
 - `VERSION`変更による暗黙Releaseを廃止し、`workflow_dispatch`または明示Publish承認だけでReleaseする構成へ変更
+- Stage 2〜8 CandidateからBuild DomainとAddressables Content Buildを撤去し、Exact 77 Tool Surfaceへ確定
+- Candidate 6 Domainは`integration_candidate`を維持し、Local Runtime ValidationとProduction Promotionを分離
 
 ### Verification
 
@@ -31,7 +33,10 @@
 - Unity `6000.7.0a2`のGraph Engineering Manual CanaryでPackage Compile／Recognition／Agentを含む91 Tool Discoveryを確認
 - Stage 0の42 Tool Production baselineはUnity `6000.7.0a2`実EditorでGraphics Read-only、Agent Orchestration、Approval、Light Mutation、Normal Undoまで`integration_verified_manual`
 - Current exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
-- WorldCreator 45 Tool Deliveryは専用Contractを追加済み。Automated CIと実Editor E2EはDelivery Gateとして別途確定する
+- WorldCreatorを含むProduction 45 Toolは実Editor Evidenceで`integration_verified_manual`
+- Stage 2〜8 Exact 77 CandidateはLocal CG / Unity `6000.7.0a2`でCompile、Discovery、Candidate Domain、Safety、Agent Routing、Cross-domain、Production 45 RegressionをPASS
+- Addressables Package未導入境界は明示`UNSUPPORTED`としてPASS。Positive Backend Matrixは`not_verified`
+- Package Editor Test Runner、Fresh-project Sample Workflow、Automated CI、External Transport Disconnect/Reconnectは`not_verified`。Candidate Production PromotionはHuman Gate pending
 
 ### Release note
 
