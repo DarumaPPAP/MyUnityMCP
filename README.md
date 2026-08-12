@@ -16,19 +16,23 @@ Current `main`は **45 Tool = 32 Graphics + 10 Agent + 3 WorldCreator** のProdu
 
 ## Stage 2-8 Integration Wave
 
-`delivery/stage2-8-integration`では、Production 45 Toolを変更せずに6 Candidate Domain / 34 Toolを追加し、**79 Toolを同一Candidateとしてまとめて検証する**構成です。Build Domainは今回のCandidateから撤去しています。
+`delivery/stage2-8-integration`では、Production 45 Toolを変更せずに6 Candidate Domain / 32 Toolを追加し、**77 Toolを同一Candidateとしてまとめて検証する**構成です。
+
+Build Domainは今回のCandidateから撤去し、AddressablesもContent Buildを除外してEntry管理中心へ縮小しています。
 
 | Stage | Capability | Candidate Tools | Combined Target |
 |---|---|---:|---:|
 | 2 | Profiler | +8 | 53 |
 | 3 | Build | 0 / Retired | 53 |
-| 4 | Addressables | +6 | 59 |
-| 5 | UI | +5 | 64 |
-| 6 | Animation | +5 | 69 |
-| 7 | Audio | +5 | 74 |
-| 8 | Cinematic | +5 | 79 |
+| 4 | Addressables | +4 | 57 |
+| 5 | UI | +5 | 62 |
+| 6 | Animation | +5 | 67 |
+| 7 | Audio | +5 | 72 |
+| 8 | Cinematic | +5 | 77 |
 
-現行Candidateは **Implementation Complete / Validation Reset** です。`integration_candidate`は`editor_operational`と同義ではなく、Validation完了前にProduction PASSとして扱いません。途中で`main`へMergeせず、79 Tool Validation Wave完了後にPromotion判断します。
+Addressablesで現行Candidateに含めるのは`inspect` / `prepare_entry` / `apply_entry` / `get_support_matrix`のみです。`prepare_content_build`と`build_content`は現行MCP Surfaceから除外しています。
+
+現行Candidateは **Implementation Complete / Validation Reset** です。`integration_candidate`は`editor_operational`と同義ではなく、Validation完了前にProduction PASSとして扱いません。途中で`main`へMergeせず、77 Tool Validation Wave完了後にPromotion判断します。
 
 詳細は[Stage 2-8 Integration Wave](Packages/com.darumappap.my-unity-mcp/Documentation~/stage2-8-integration.md)と[Implementation Status](Development/GraphEngineering/stage2-8-implementation-status.yaml)を参照してください。
 
@@ -63,7 +67,7 @@ WorldCreator:
 Visual Goal → Read-only Preflight → Human Review Handoff
 ```
 
-Stage 2〜8のShared Domain ContractではExpected Revision、期限付きOne-time Plan、Approval Token、Mutation Scopeを共通化しています。自動Save、自動Full Bake、Generic SerializedProperty Mutation、Silent Fallbackは禁止です。AddressablesはOptional Dependencyで、Package未導入時に自動導入・Settings生成へFallbackしません。
+Stage 2〜8のShared Domain ContractではExpected Revision、期限付きOne-time Plan、Approval Token、Mutation Scopeを共通化しています。自動Save、自動Full Bake、Generic SerializedProperty Mutation、Silent Fallbackは禁止です。AddressablesはOptional Dependencyで、Package未導入時に自動導入・Settings生成へFallbackしません。Player BuildとAddressables Content Buildは現行Candidateから実行しません。
 
 ## Quick Start
 
@@ -73,7 +77,7 @@ Stage 2〜8のShared Domain ContractではExpected Revision、期限付きOne-ti
 4. MCP Client側では必要なToolだけを許可します。
 5. Production Read-only確認は`graphics.inspect_project`から開始します。
 
-Integration Waveの79 Tool CandidateはProduction用途ではなく、Validation用Branchとして使用してください。
+Integration Waveの77 Tool CandidateはProduction用途ではなく、Validation用Branchとして使用してください。
 
 ## Documentation
 
@@ -87,12 +91,12 @@ Integration Waveの79 Tool CandidateはProduction用途ではなく、Validation
 
 ## Verification state
 
-Production 45 Tool Evidenceは既存のStage 0 / WorldCreator Evidenceを正本として維持します。Build撤去でCandidate Surfaceが変わったため、旧85 Tool途中結果はhistorical evidenceとして保持しつつ、現行79 Toolを対象にValidationを再開します。
+Production 45 Tool Evidenceは既存のStage 0 / WorldCreator Evidenceを正本として維持します。Build DomainとAddressables Content Buildの撤去でCandidate Surfaceが変わったため、旧85 / 79 Tool途中結果はhistorical evidenceとして保持しつつ、現行77 Toolを対象にValidationを再開します。
 
 Validation前に次を主張しません。
 
 - Stage 2〜8 Production PASS
-- 79/79 Tool Discovery PASS
+- 77/77 Tool Discovery PASS
 - Automated CI PASS
 - Target Device PASS
 
