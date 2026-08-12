@@ -16,6 +16,16 @@ for fragment in required_workflow_fragments:
     if fragment not in workflow:
         raise SystemExit(f"Missing immutable release workflow fragment: {fragment}")
 
+trigger_section = workflow.split("permissions:", 1)[0]
+if "workflow_dispatch:" not in trigger_section:
+    raise SystemExit("Explicit workflow_dispatch release trigger is required.")
+if "issue_comment:" not in trigger_section:
+    raise SystemExit("Explicit approved issue_comment release trigger is required.")
+if "\n  push:" in trigger_section:
+    raise SystemExit("Release publication must not be triggered implicitly by a VERSION push.")
+if "github.event_name == 'push'" in workflow:
+    raise SystemExit("Release job must not accept push events as publication approval.")
+
 forbidden_fragments = [
     "git tag -f",
     "git push --force",
@@ -47,4 +57,4 @@ for fragment in required_policy_fragments:
     if fragment not in verification:
         raise SystemExit(f"Missing release evidence policy: {fragment}")
 
-print("Immutable release workflow policy PASS")
+print("Immutable release workflow and explicit publication trigger policy PASS")
