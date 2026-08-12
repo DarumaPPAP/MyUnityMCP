@@ -3,25 +3,30 @@ package_version: "1.1.0"
 source_channel: main_v1_1_release_candidate
 
 current_stage:
-  id: 0
-  name: production_baseline_repair_and_verification
-  status: integration_verified_manual
-  evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
-  production_commit: 5369f990b96b34413a0e19226a6e76b340bf8bbf
-  next_delivery_capability: world_creator
+  id: 1
+  name: world_creator_delivery
+  status: delivery_candidate_manual_verification_pending
+  stage_0_status: integration_verified_manual
+  stage_0_evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
+  delivery_base_commit: 5a4f221dbc3b29392e47a98477f3782002a94a69
+  capability: world_creator
+  target_tool_count: 45
 
 verification_contract:
-  discovered_mcp_tools: 42
+  discovered_mcp_tools: 45
   production_graphics_tools: 32
   production_agent_tools: 10
+  production_world_creator_tools: 3
   minimum_editmode_contracts: 125
   fresh_project_sample_required: true
   canonical_end_to_end_required: true
   major_fault_injection_scene_safety_required: true
+  world_creator_contract_required: true
 
 operational_modules:
   unity_graphics_mcp: editor_operational
   unity_agent_mcp: editor_operational
+  world_creator: delivery_candidate_pending_manual_e2e
 
 execution_surface:
   unity_editor: supported
@@ -82,6 +87,24 @@ stage_0_manual_e2e:
   force_undo_used: false
   safety_bypass_used: false
   automated_ci: not_verified_runner_failed_before_steps
+
+world_creator:
+  status: delivery_candidate_manual_verification_pending
+  tools:
+    - world.compile_workflow
+    - world.start_preflight
+    - world.create_review_handoff
+  direct_unity_mutation: prohibited
+  orchestration_control_plane: unity_agent_mcp
+  operational_delegate_domains:
+    - unity_graphics_mcp
+  preflight_steps:
+    - graphics.inspect_project
+    - graphics.inspect_scene
+    - graphics.validate_scene
+  expected_revision: required_for_compile_and_execution
+  human_review_required: true
+  automatic_visual_acceptance: prohibited
 
 unity_agent:
   source_evidence:
@@ -146,3 +169,5 @@ not_verified:
   - image_artifact_generation_in_null_graphics_batchmode
   - every_project_specific_apv_baking_set
   - exact_42_tool_production_ci_after_runner_recovery
+  - exact_45_tool_world_creator_delivery_ci_after_runner_recovery
+  - world_creator_manual_e2e_on_delivery_branch
