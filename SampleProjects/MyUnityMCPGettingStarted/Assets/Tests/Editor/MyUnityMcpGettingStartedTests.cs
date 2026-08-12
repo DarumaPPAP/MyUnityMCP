@@ -32,8 +32,6 @@ namespace MyUnityMcpGettingStarted
 			"profiler.inspect_environment", "profiler.inspect_counters", "profiler.prepare_capture",
 			"profiler.start_capture", "profiler.get_capture_status", "profiler.cancel_capture",
 			"profiler.summarize_capture", "profiler.compare_baseline",
-			"build.inspect_environment", "build.prepare_player", "build.start_player",
-			"build.get_history", "build.cancel_player", "build.get_support_matrix",
 			"addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry",
 			"addressables.prepare_content_build", "addressables.build_content", "addressables.get_support_matrix",
 			"ui.inspect", "ui.validate", "ui.prepare_rect_transform", "ui.apply_rect_transform", "ui.get_support_matrix",
@@ -64,7 +62,7 @@ namespace MyUnityMcpGettingStarted
 				.OrderBy(toolName => toolName, StringComparer.Ordinal)
 				.ToArray();
 			Assert.That(discoveredToolNames, Is.EquivalentTo(TOOL_NAMES));
-			Assert.That(discoveredToolNames.Length, Is.EqualTo(85));
+			Assert.That(discoveredToolNames.Length, Is.EqualTo(79));
 
 			ToolResult project =
 				Inspection.InspectProject("sample-project");
