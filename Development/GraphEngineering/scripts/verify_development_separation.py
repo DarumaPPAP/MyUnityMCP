@@ -14,10 +14,16 @@ PRODUCTION_FILES = [
 FORBIDDEN_PRODUCTION_MARKERS = [
     "release_plus_development",
     "development_modules:",
-    "unity_agent_mcp:",
     "unity_profiler_mcp:",
     "unity_build_mcp:",
     "unity_addressables_mcp:",
+    "unity_ui_mcp:",
+    "unity_animation_mcp:",
+    "unity_audio_mcp:",
+    "unity_cinematic_mcp:",
+    "world_creator:",
+    "movie_creator:",
+    "live_creator:",
 ]
 
 
@@ -44,6 +50,11 @@ def main():
         for marker in FORBIDDEN_PRODUCTION_MARKERS:
             if marker in text:
                 errors.append(f"production contamination: {path.relative_to(ROOT)} contains {marker}")
+
+    manifest = (PACKAGE / "MCP_MANIFEST.yaml").read_text(encoding="utf-8")
+    if "id: unity_agent_mcp" not in manifest and "unity_agent_mcp" not in manifest:
+        errors.append("promoted unity_agent_mcp missing from production manifest")
+
     if not DEV_SOURCE.exists():
         errors.append("development source root missing")
     if not DEV_TESTS.exists():
@@ -62,6 +73,7 @@ def main():
     result = {
         "status": "pass" if not errors else "failed",
         "errors": errors,
+        "promoted_production_capabilities": ["unity_agent_mcp"],
         "temporary_promotion_blockers": temporary_blockers,
         "promotion_ready": not errors and not temporary_blockers,
     }
