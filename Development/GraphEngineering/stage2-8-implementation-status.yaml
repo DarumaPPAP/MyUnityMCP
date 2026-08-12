@@ -1,7 +1,8 @@
 schema_version: "1.0"
 wave: stage2_8_implementation
-status: implementation_complete_validation_reset_after_addressables_build_removal
-branch: delivery/stage2-8-integration
+status: local_cg_runtime_verified_ci_unavailable
+validated_source_branch: graph/myunitymcp-final-completion
+target_integration_branch: delivery/stage2-8-integration
 production_baseline:
   branch: main
   commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
@@ -22,7 +23,7 @@ stage_boundaries:
     tools: 8
     implementation_commit: f04ea2645c7dc11374ae809da0346ef5ee1eb2de
     includes_shared_domain_foundation: true
-    status: implemented_validation_pending
+    status: implemented_local_cg_verified_editor_only
   stage_3_build:
     tools: 0
     historical_implementation_commit: d17a66ce26f995fa48d14773c6899f3cc608bbb3
@@ -36,39 +37,39 @@ stage_boundaries:
     removed_tools:
       - addressables.prepare_content_build
       - addressables.build_content
-    status: implemented_validation_pending_without_content_build
+    status: implemented_local_cg_package_absent_boundary_passed_positive_backend_not_verified
   stage_5_ui:
     tools: 5
     implementation_commit: 058887fb322de6d675bd44fee71f0313ba6c24d1
-    status: implemented_validation_pending
+    status: implemented_local_cg_verified
   stage_6_animation:
     tools: 5
     implementation_commit: 03244d7d2d5d6c131fdf4084cc334ebcb7c34377
-    status: implemented_validation_pending
+    status: implemented_local_cg_verified
   stage_7_audio:
     tools: 5
     implementation_commit: 41fe202c2c901b4571613d12f91468996f8e5c9e
-    status: implemented_validation_pending
+    status: implemented_local_cg_verified
   stage_8_cinematic:
     tools: 5
     implementation_commit: 34d51b6e2b8ca8dce5921770a10f78e2c5a43ba6
-    status: implemented_validation_pending
+    status: implemented_local_cg_verified
 
 integration_work:
   exact_77_tool_manifest: implemented
-  exact_77_tool_discovery_contract: implemented_not_run
+  exact_77_tool_discovery_contract: passed_local_cg
   shared_revision_and_approval_plan_store: implemented
   agent_candidate_domain_catalog: implemented_without_build_or_addressables_content_build
   agent_candidate_domain_routing: implemented_without_build_or_addressables_content_build
   agent_build_approval_entry: removed
   agent_addressables_content_build_approval_entry: removed
   agent_false_success_guard: implemented
-  combined_domain_safety_contract_tests: updated_for_77_not_run
-  optional_addressables_backend_contract: implemented_without_content_build_not_run
+  combined_domain_safety_contract_tests: not_run_live_contract_probes_passed
+  optional_addressables_backend_contract: package_absent_boundary_passed_positive_backend_not_verified
   integration_contract_catalog: implemented_without_build_or_addressables_content_build
-  release_structure_gate: updated_for_77_not_run
-  mcp_response_error_schema_fix: implemented_awaiting_manual_retest
-  agent_delegated_failure_error_compatibility: implemented_awaiting_manual_retest
+  release_structure_gate: passed_for_exact_77
+  mcp_response_error_schema_fix: passed_local_cg
+  agent_delegated_failure_error_compatibility: passed_local_cg
 
 safety_invariants:
   integration_candidate_is_not_production_operational: true
@@ -84,26 +85,35 @@ safety_invariants:
   addressables_content_build_execution_via_candidate: prohibited
 
 validation_wave:
-  status: reset_required
-  no_full_pass_claimed: true
+  status: local_cg_runtime_verified_ci_unavailable
+  local_runtime_pass_claimed: true
+  production_operational_claimed: false
   progress_evidence: Tests/Compatibility/stage2-8-validation-progress.yaml
   previous_85_and_79_tool_results_are_not_full_77_tool_evidence: true
-  mandatory_restart_from:
+  passed_local_cg:
     - package_compile
     - exact_77_tool_discovery
     - agent_capability_catalog
-  remaining:
     - readonly_domain_smoke
-    - stale_revision_retest
-    - approval_boundaries
-    - mutation_scope_and_recovery
-    - profiler_capture
-    - addressables_entry_boundary
+    - stale_revision_and_failure_envelope
+    - approval_boundaries_and_one_time_plan
+    - profiler_capture_editor_only
+    - ui_animation_audio_cinematic_mutation_scope
+    - addressables_package_absent_boundary
     - agent_to_each_candidate_domain_routing
-    - cancellation_timeout_reload_and_failure_propagation
+    - cancellation_timeout_and_domain_reload_callbacks
     - cross_domain_workflows
-  automated_ci_status: not_evaluated_for_validation_wave
+    - production_45_regression
+  remaining_not_verified:
+    - package_editor_test_runner
+    - fresh_project_sample_workflow
+    - automated_ci
+    - addressables_positive_backend_matrix
+    - external_transport_disconnect_reconnect
+  automated_ci_status: unavailable_not_verified
+  human_promotion_gate: pending
 
 next_action:
-  name: restart_combined_77_tool_validation
+  name: human_review_and_promote_to_delivery_branch
   merge_to_main_before_completion: false
+  automatic_promotion: prohibited

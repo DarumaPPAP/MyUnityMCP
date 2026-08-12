@@ -41,12 +41,12 @@ namespace UnityUiMcp
 		public sealed class Parameters
 		{
 			[ToolParameter("対象RectTransformのGlobal Object ID。", Required = true)] public string targetObjectId { get; set; }
+			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Anchored Position。", Required = false)] public UnityUiMcpVector2Input anchoredPosition { get; set; }
 			[ToolParameter("Size Delta。", Required = false)] public UnityUiMcpVector2Input sizeDelta { get; set; }
 			[ToolParameter("Anchor Min。", Required = false)] public UnityUiMcpVector2Input anchorMin { get; set; }
 			[ToolParameter("Anchor Max。", Required = false)] public UnityUiMcpVector2Input anchorMax { get; set; }
 			[ToolParameter("Pivot。", Required = false)] public UnityUiMcpVector2Input pivot { get; set; }
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 		}
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityUiMcpRuntime.PrepareRectTransform(value.targetObjectId, value.anchoredPosition, value.sizeDelta, value.anchorMin, value.anchorMax, value.pivot, value.expectedRevision));
 	}

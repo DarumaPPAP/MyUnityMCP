@@ -1,6 +1,6 @@
 schema_version: "1.0"
 scope: stage2_8_integration
-status: implementation_complete_validation_pending
+status: local_cg_runtime_verified_ci_unavailable
 production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
 production_verified_tools: 45
 integration_candidate_tools: 32
@@ -16,7 +16,7 @@ shared_plan_contract:
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
   silent_fallback: prohibited
-  candidate_is_not_production_verified: true
+  candidate_is_not_production_operational: true
 
 modules:
   unity_profiler_mcp:
@@ -105,8 +105,8 @@ modules:
       - cinemachine_shot_mutation
 
 validation_wave:
-  status: reset_after_addressables_build_removal
-  must_verify:
+  status: local_cg_runtime_verified_ci_unavailable
+  verified_in_local_cg:
     - exact_77_tool_discovery
     - package_compile
     - each_domain_readonly_path
@@ -115,7 +115,21 @@ validation_wave:
     - mutation_scope_and_undo_or_recovery
     - agent_to_candidate_domain_routing
     - cross_domain_failure_propagation
-  may_not_claim_before_validation:
+    - timeout_cancel_and_domain_reload_callbacks
+    - cross_domain_workflow
+    - production_45_regression
+  allowed_unsupported:
+    - addressables_package_absent
+  remaining_not_verified:
+    - package_editor_test_runner
+    - fresh_project_sample_workflow
+    - automated_ci
+    - addressables_positive_backend_matrix
+    - external_transport_disconnect_reconnect
+  promotion:
+    automatic: prohibited
+    human_gate: pending
+  may_not_claim:
     - production_operational
     - automated_ci_passed
     - target_device_verified

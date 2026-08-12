@@ -108,6 +108,9 @@ selection:
 promotion_policy:
   production_verified_tool_count: 45
   integration_target_tool_count: 77
-  stage2_8_validation_status: reset_after_addressables_build_removal
-  integration_candidate_is_not_editor_operational: true
+  stage2_8_validation_status: local_cg_runtime_verified_ci_unavailable
+  local_cg_runtime_validation: passed
+  automated_ci: unavailable_not_verified
+  human_promotion_gate: pending
+  integration_candidate_is_not_production_operational: true
   intermediate_main_merge: prohibited

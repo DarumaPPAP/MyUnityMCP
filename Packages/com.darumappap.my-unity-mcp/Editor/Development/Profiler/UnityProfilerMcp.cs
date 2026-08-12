@@ -66,10 +66,10 @@ namespace UnityProfilerMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Warmup Frame数。0～600。", Required = false)] public int? warmupFrames { get; set; }
 			[ToolParameter("Sample Frame数。1～3600。", Required = true)] public int? sampleFrames { get; set; }
 			[ToolParameter("CaptureするCounter。", Required = true)] public UnityProfilerMcpCounterInput[] counters { get; set; }
 			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
+			[ToolParameter("Warmup Frame数。0～600。", Required = false)] public int? warmupFrames { get; set; }
 		}
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityProfilerMcpRuntime.PrepareCapture(value.warmupFrames ?? 30, value.sampleFrames, value.counters, value.expectedRevision));
 	}

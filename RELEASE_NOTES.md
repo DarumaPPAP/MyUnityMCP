@@ -24,11 +24,17 @@ MyUnityMCP `1.1.0`は、32 Graphics ToolにUnityAgentMCP Control Plane 10 Tool�
 - UnityAgent source: Graph Engineering Run #52でUnity `6000.0.75f1` / `6000.4.12f1` / `6000.5.5f1` Contract PASS
 - Unity `6000.7.0a2` Graph Engineering Manual CanaryでAgentを含む91/91 Combined Discovery確認
 - Stage 0 exact 42 Tool Production baseline: Unity `6000.7.0a2`実EditorでGraphics Read-only、Agent Orchestration、Approval、Light Mutation、Normal Undoまで`integration_verified_manual`
+- WorldCreatorを含むProduction 45 Tool: 実Editor Tool Discovery / Read-only Preflight / Human Review Handoffを`integration_verified_manual`
+- Stage 2〜8 Exact 77 Candidate: Local CG / Unity `6000.7.0a2`でCompile Error 0、77 unique Discovery、Candidate 6 Domain、Safety、Scoped Mutation、Agent Routing、Cross-domain、Production 45 RegressionをPASS
+- Addressables Package未導入時: 4 Toolの明示`UNSUPPORTED`境界を許容PASS。Agentは5成功 + Addressables失敗を`PARTIAL` / `executionSucceeded=false`で伝播
 
 未完了Evidence:
 
 - **Current exact 42 Tool Production CI**: GitHub Actions JobがRunner Step開始前にFailureしているため`not_verified`
-- **WorldCreator 45 Tool Delivery**: Source / Manifest / Contract / DocsはDelivery Branchへ移植済み。実Editor Tool DiscoveryとWorldCreator E2EはPromotion前Gateとして未実施
+- **Package Editor Test Runner / Fresh-project Sample Workflow**: Current Candidateでは`not_verified`
+- **Stage 2〜8 Automated CI**: Runner Stepを実行できないため`not_verified`
+- **Addressables Positive Backend Matrix**: CGにPackageを導入していないため`not_verified`
+- **External Transport Disconnect/Reconnect**: Domain Reload callbackとProject再登録はPASS。Disconnect callbackと外部Transport経由のReconnectは`not_verified`
 - Full protocol-level External MCP E2E: final Production Hardeningで実施
 - Player / Target Device Tool Execution: unsupported / not_verified
 
@@ -58,13 +64,15 @@ v1.1.0 Tag + GitHub Release
 
 - Unity Editor専用
 - Minimum Unity: `6000.0`
-- Production Operational baseline: `unity_graphics_mcp`, `unity_agent_mcp`
-- Current Delivery Candidate: `world_creator`
-- Production Tools after WorldCreator promotion: 45
+- Production Operational baseline: `unity_graphics_mcp`, `unity_agent_mcp`, `world_creator`
+- Production Tools: 45
+- Stage 2〜8 Integration Candidate: Profiler / Addressables / UI / Animation / Audio / Cinematic、計32 Tool
+- Candidate Status: `local_cg_runtime_verified_ci_unavailable`
+- Candidate Production Promotion: Human Gate pending
 - Player / Target Device上でのTool実行は対象外
 - Built-in PipelineのAPV Bakeは非対応
 - URP / HDRPのAPV BakeはProject固有Baking Set / Backend条件に依存
 
 ## Next production capability
 
-`delivery/world-creator`の実Editor Gateが完了した後、次のCapability-scoped Delivery候補は`Profiler`です。Graph Engineering branchを一括Mergeせず、必ずその時点の最新`main`から個別Delivery Branchを作成します。
+Stage 2〜8 CandidateはLocal CG Runtime Validationを完了していますが、自動昇格しません。次のActionはHuman Review後に`graph/myunitymcp-final-completion`を`delivery/stage2-8-integration`へPromotionすることです。PR Ready化と`main` Mergeも別Human Gateです。

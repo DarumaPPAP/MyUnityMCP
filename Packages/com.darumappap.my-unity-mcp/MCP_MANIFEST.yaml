@@ -1,7 +1,7 @@
 schema_version: "2.2"
 package_id: com.darumappap.my-unity-mcp
 version: "1.1.0"
-implementation_status: stage2_8_implementation_complete_validation_pending
+implementation_status: local_cg_runtime_verified_ci_unavailable
 release_baseline: v1.0.0
 production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
 production_verified_tool_count: 45
@@ -62,6 +62,7 @@ bridge:
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
   discovered_tool_count: 77
+  discovery_evidence_scope: local_cg_runtime
   tools_enabled_by_default: false
   explicit_activation_required: true
 
@@ -145,15 +146,24 @@ verification:
   stage_0_evidence: ../../Tests/Compatibility/stage-0-production-baseline-verification.yaml
   world_creator_evidence: ../../Tests/Compatibility/world-creator-production-promotion-verification.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
-  unity_editor_compile: required
+  unity_editor_compile: passed_local_cg
+  unity_editor_version: 6000.7.0a2
   tool_discovery_count: 77
   production_verified_tool_count: 45
   integration_candidate_tool_count: 32
-  stage2_8_validation_status: reset_after_addressables_build_removal
-  fresh_project_sample_workflow: required
-  combined_domain_e2e: required_after_implementation_complete
+  stage2_8_validation_status: local_cg_runtime_verified_ci_unavailable
+  fresh_project_sample_workflow: not_verified
+  combined_domain_e2e: passed_local_cg
+  production_45_regression: passed_local_cg
+  addressables_package_absent_boundary: passed_allowed_unsupported
+  addressables_positive_backend_matrix: not_verified
+  external_transport_disconnect_reconnect: not_verified
+  package_editor_test_runner: unavailable_not_verified
+  automated_ci: unavailable_not_verified
+  human_promotion_gate: pending
+  production_promotion: prohibited
 
-not_production_operational_until_validation:
+not_production_operational_until_human_promotion:
   - unity_profiler_mcp
   - unity_addressables_mcp
   - unity_ui_mcp
@@ -161,7 +171,7 @@ not_production_operational_until_validation:
   - unity_audio_mcp
   - unity_cinematic_mcp
 
-not_implemented_in_stage2_8:
+excluded_from_stage2_8:
   - unity_build_mcp
   - addressables_content_build
   - movie_creator_runtime

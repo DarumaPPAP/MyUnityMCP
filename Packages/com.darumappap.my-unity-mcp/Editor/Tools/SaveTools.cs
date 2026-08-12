@@ -14,14 +14,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
 
 			[ToolParameter("Save and Evaluationでは一つの保存済みLoaded Sceneを指定します。", Required = true)]
 			public SaveTargetInput[] targets { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -44,9 +44,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Save Plan ID。", Required = true)]
 			public string planId { get; set; }
 
@@ -58,6 +55,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Save and EvaluationではEXPLICIT_SCENEのみ。", Required = true)]
 			public string saveMode { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params)
@@ -82,14 +82,14 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Capture対象Camera ComponentのGlobalObjectId。", Required = true)]
 			public string cameraObjectId { get; set; }
 
 			[ToolParameter("現在のEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("Capture幅。既定1280、64～4096。", Required = false)]
 			public int? width { get; set; }
@@ -124,9 +124,6 @@ namespace UnityGraphicsMcp
 	{
 		public sealed class Parameters
 		{
-			[ToolParameter("Request ID。", Required = false)]
-			public string requestId { get; set; }
-
 			[ToolParameter("Refine元のDirection Plan ID。", Required = true)]
 			public string directionPlanId { get; set; }
 
@@ -135,6 +132,9 @@ namespace UnityGraphicsMcp
 
 			[ToolParameter("Direction PlanとCaptureが前提とするEditor Revision。", Required = true)]
 			public long? expectedRevision { get; set; }
+
+			[ToolParameter("Request ID。", Required = false)]
+			public string requestId { get; set; }
 
 			[ToolParameter("人間または外部Visionが明示したCapture観察結果。", Required = false)]
 			public string[] humanObservations { get; set; }

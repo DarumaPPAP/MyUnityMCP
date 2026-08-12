@@ -35,10 +35,10 @@ namespace UnityAnimationMcp
 			[ToolParameter("AnimatorController Asset Path。", Required = true)] public string controllerAssetPath { get; set; }
 			[ToolParameter("Parameter名。", Required = true)] public string parameterName { get; set; }
 			[ToolParameter("Float／Int／Bool／Trigger。", Required = true)] public string parameterType { get; set; }
+			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 			[ToolParameter("Float既定値。", Required = false)] public float? defaultFloat { get; set; }
 			[ToolParameter("Int既定値。", Required = false)] public int? defaultInt { get; set; }
 			[ToolParameter("Bool既定値。", Required = false)] public bool? defaultBool { get; set; }
-			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
 		}
 
 		public static object HandleCommand(JObject @params) =>

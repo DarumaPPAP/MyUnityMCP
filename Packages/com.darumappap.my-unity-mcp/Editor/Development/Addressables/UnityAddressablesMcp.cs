@@ -25,8 +25,8 @@ namespace UnityAddressablesMcp
 			[ToolParameter("Assets配下のAsset Path。", Required = true)] public string assetPath { get; set; }
 			[ToolParameter("既存Addressables Group名。", Required = true)] public string groupName { get; set; }
 			[ToolParameter("設定するAddress。", Required = true)] public string address { get; set; }
-			[ToolParameter("設定するLabel。", Required = false)] public string[] labels { get; set; }
 			[ToolParameter("現在のEditor Revision。", Required = true)] public long? expectedRevision { get; set; }
+			[ToolParameter("設定するLabel。", Required = false)] public string[] labels { get; set; }
 		}
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityAddressablesMcpRuntime.PrepareEntry(value.assetPath, value.groupName, value.address, value.labels, value.expectedRevision));
 	}
