@@ -36,7 +36,7 @@ namespace UnityBuildMcp
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityBuildMcpRuntime.PreparePlayer(value.target, value.scenes, value.outputPath, value.development ?? false, value.detailedReport ?? true, value.expectedRevision));
 	}
 
-	[McpForUnityTool("build.start_player", Description = "承認済みBuild PlanをBuildPipeline.BuildPlayerで実行し、BuildReport Summaryを返します。", AutoRegister = false, Group = "build")]
+	[McpForUnityTool("build.start_player", Description = "承認済みBuild PlanをConsumeしてPlayer BuildをQueueし、BuildPipeline.BuildPlayer開始前に応答を返します。結果はbuild.get_historyで取得します。", AutoRegister = false, Group = "build")]
 	public static class BuildStartPlayerTool
 	{
 		public sealed class Parameters
@@ -48,14 +48,14 @@ namespace UnityBuildMcp
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, value => UnityBuildMcpRuntime.StartPlayer(value.planId, value.currentRevision, value.approvalToken));
 	}
 
-	[McpForUnityTool("build.get_history", Description = "現在のEditor Sessionで実行したBuild Summaryを取得します。秘密情報や環境変数は記録しません。", AutoRegister = false, Group = "build")]
+	[McpForUnityTool("build.get_history", Description = "現在のEditor Sessionで実行したBuild Summaryと進行中Buildを取得します。秘密情報や環境変数は記録しません。", AutoRegister = false, Group = "build")]
 	public static class BuildGetHistoryTool
 	{
 		public sealed class Parameters { }
 		public static object HandleCommand(JObject @params) => UnityDomainMcpCommon.Execute<Parameters>(@params, _ => UnityBuildMcpRuntime.GetHistory());
 	}
 
-	[McpForUnityTool("build.cancel_player", Description = "Public BuildPipelineに安全な協調Cancel APIがないため、未開始Planのみ破棄可能であることを明示します。", AutoRegister = false, Group = "build")]
+	[McpForUnityTool("build.cancel_player", Description = "Public BuildPipelineに安全な協調Cancel APIがないため、実行中Buildを強制停止しないことを明示します。", AutoRegister = false, Group = "build")]
 	public static class BuildCancelPlayerTool
 	{
 		public sealed class Parameters { }
@@ -73,7 +73,21 @@ namespace UnityBuildMcp
 	{
 		private const string DOMAIN_ID = "unity_build_mcp";
 		private const string OUTPUT_ROOT = "Builds/MyUnityMCP/";
+		private const double BUILD_START_DELAY_SECONDS = 1.0;
 		private static readonly List<JObject> _history = new List<JObject>();
+		private static PendingPlayerBuild _pendingBuild;
+		private static JObject _activeBuild;
+
+		private sealed class PendingPlayerBuild
+		{
+			public string BuildId;
+			public BuildTarget Target;
+			public BuildOptions Options;
+			public string OutputPath;
+			public string[] Scenes;
+			public DateTime QueuedUtc;
+			public double EarliestStartTime;
+		}
 
 		public static UnityDomainMcpResult InspectEnvironment()
 		{
@@ -84,6 +98,7 @@ namespace UnityBuildMcp
 				["enabledScenes"] = new JArray(EditorBuildSettings.scenes.Where(value => value.enabled).Select(value => value.path)),
 				["outputRoot"] = OUTPUT_ROOT,
 				["isBuildingPlayer"] = BuildPipeline.isBuildingPlayer,
+				["queuedBuild"] = _pendingBuild != null,
 				["automaticBuild"] = false
 			});
 		}
@@ -137,9 +152,9 @@ namespace UnityBuildMcp
 			{
 				return UnityDomainMcpCommon.Error("build.start_player", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "currentRevisionが必要です。");
 			}
-			if (BuildPipeline.isBuildingPlayer)
+			if (BuildPipeline.isBuildingPlayer || _pendingBuild != null || _activeBuild != null)
 			{
-				return UnityDomainMcpCommon.Error("build.start_player", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "別のPlayer Buildが実行中です。");
+				return UnityDomainMcpCommon.Error("build.start_player", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "別のPlayer Buildが実行中または開始待ちです。");
 			}
 			if (!UnityDomainMcpPlanStore.TryConsume("build.start_player", DOMAIN_ID, planId, currentRevision.Value, approvalToken, out UnityDomainMcpPlan plan, out UnityDomainMcpResult failure))
 			{
@@ -149,70 +164,51 @@ namespace UnityBuildMcp
 			BuildTarget target = (BuildTarget)Enum.Parse(typeof(BuildTarget), plan.Payload.Value<string>("target"));
 			BuildOptions options = (BuildOptions)Enum.Parse(typeof(BuildOptions), plan.Payload.Value<string>("options"));
 			string outputPath = plan.Payload.Value<string>("outputPath");
-			string absoluteOutput = Path.GetFullPath(outputPath);
-			string outputDirectory = Path.GetDirectoryName(absoluteOutput);
-			if (!string.IsNullOrEmpty(outputDirectory))
-			{
-				Directory.CreateDirectory(outputDirectory);
-			}
+			string buildId = $"build-{Guid.NewGuid():N}";
+			DateTime queuedUtc = DateTime.UtcNow;
 
-			DateTime startedUtc = DateTime.UtcNow;
-			BuildReport report;
-			try
+			_pendingBuild = new PendingPlayerBuild
 			{
-				report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
-				{
-					scenes = plan.Payload["scenes"].Values<string>().ToArray(),
-					locationPathName = outputPath,
-					target = target,
-					options = options
-				});
-			}
-			catch (Exception exception)
+				BuildId = buildId,
+				Target = target,
+				Options = options,
+				OutputPath = outputPath,
+				Scenes = plan.Payload["scenes"].Values<string>().ToArray(),
+				QueuedUtc = queuedUtc,
+				EarliestStartTime = EditorApplication.timeSinceStartup + BUILD_START_DELAY_SECONDS
+			};
+			_activeBuild = new JObject
 			{
-				JObject exceptionRecord = new JObject
-				{
-					["buildId"] = $"build-{Guid.NewGuid():N}",
-					["result"] = "EXCEPTION",
-					["target"] = target.ToString(),
-					["outputPath"] = outputPath,
-					["startedUtc"] = startedUtc.ToString("O"),
-					["completedUtc"] = DateTime.UtcNow.ToString("O"),
-					["exceptionType"] = exception.GetType().FullName,
-					["message"] = exception.Message,
-					["secretsCaptured"] = false
-				};
-				_history.Add(exceptionRecord);
-				return UnityDomainMcpCommon.Error("build.start_player", E_DOMAIN_TOOL_STATUS.FAILED, exception.Message);
-			}
-
-			BuildSummary summary = report.summary;
-			JObject record = new JObject
-			{
-				["buildId"] = $"build-{Guid.NewGuid():N}",
-				["result"] = summary.result.ToString(),
-				["target"] = summary.platform.ToString(),
+				["buildId"] = buildId,
+				["state"] = "QUEUED",
+				["target"] = target.ToString(),
 				["outputPath"] = outputPath,
-				["totalSize"] = summary.totalSize,
-				["totalTimeSeconds"] = summary.totalTime.TotalSeconds,
-				["totalErrors"] = summary.totalErrors,
-				["totalWarnings"] = summary.totalWarnings,
-				["startedUtc"] = startedUtc.ToString("O"),
-				["completedUtc"] = DateTime.UtcNow.ToString("O"),
+				["queuedUtc"] = queuedUtc.ToString("O"),
 				["secretsCaptured"] = false
 			};
-			_history.Add(record);
-			E_DOMAIN_TOOL_STATUS status = summary.result == BuildResult.Succeeded
-				? E_DOMAIN_TOOL_STATUS.SUCCESS
-				: E_DOMAIN_TOOL_STATUS.FAILED;
-			return UnityDomainMcpCommon.Result("build.start_player", status, $"Player Build: {summary.result}", record);
+
+			EditorApplication.update -= ProcessPendingBuild;
+			EditorApplication.update += ProcessPendingBuild;
+
+			return UnityDomainMcpCommon.Result("build.start_player", E_DOMAIN_TOOL_STATUS.PARTIAL, "Player BuildをQueueしました。BuildPipeline開始前にMCP応答を返します。", new JObject
+			{
+				["build"] = _activeBuild.DeepClone(),
+				["planConsumed"] = true,
+				["buildStarted"] = false,
+				["commandResultReturnedBeforeBuild"] = true,
+				["pollTool"] = "build.get_history",
+				["transientPluginUnavailabilityDuringBuild"] = true
+			});
 		}
 
 		public static UnityDomainMcpResult GetHistory()
 		{
 			return UnityDomainMcpCommon.Result("build.get_history", E_DOMAIN_TOOL_STATUS.SUCCESS, "Build Historyを取得しました。", new JObject
 			{
-				["items"] = new JArray(_history),
+				["activeBuild"] = _activeBuild == null ? JValue.CreateNull() : _activeBuild.DeepClone(),
+				["items"] = new JArray(_history.Select(value => value.DeepClone())),
+				["isBuildingPlayer"] = BuildPipeline.isBuildingPlayer,
+				["queuedBuild"] = _pendingBuild != null,
 				["environmentVariablesCaptured"] = false,
 				["secretsCaptured"] = false
 			});
@@ -222,9 +218,9 @@ namespace UnityBuildMcp
 		{
 			return UnityDomainMcpCommon.Result("build.get_support_matrix", E_DOMAIN_TOOL_STATUS.UNVERIFIED, "BuildMCPの実装範囲と未検証範囲です。", new JObject
 			{
-				["implemented"] = new JArray("Build Settings scene inspection", "BuildPlayerOptions preview", "approval-gated BuildPipeline.BuildPlayer", "BuildReport summary"),
+				["implemented"] = new JArray("Build Settings scene inspection", "BuildPlayerOptions preview", "approval-gated queued BuildPipeline.BuildPlayer", "BuildReport summary", "pre-build MCP command_result handoff"),
 				["verified"] = new JArray("plan validation contracts"),
-				["unverified"] = new JArray("platform-specific player builds", "Nintendo Switch", "PlayStation", "remote build farm"),
+				["unverified"] = new JArray("platform-specific player builds", "Nintendo Switch", "PlayStation", "remote build farm", "transport reconnection after long blocking build"),
 				["unsupported"] = new JArray("force cancel of running BuildPipeline.BuildPlayer")
 			});
 		}
@@ -244,6 +240,118 @@ namespace UnityBuildMcp
 				return false;
 			}
 			return true;
+		}
+
+		internal static bool HasQueuedBuildForTests => _pendingBuild != null;
+
+		internal static JObject ActiveBuildForTests => _activeBuild == null
+			? null
+			: (JObject)_activeBuild.DeepClone();
+
+		internal static void ClearQueuedBuildForTests()
+		{
+			EditorApplication.update -= ProcessPendingBuild;
+			_pendingBuild = null;
+			if (_activeBuild?.Value<string>("state") == "QUEUED")
+			{
+				_activeBuild = null;
+			}
+		}
+
+		private static void ProcessPendingBuild()
+		{
+			if (_pendingBuild == null)
+			{
+				EditorApplication.update -= ProcessPendingBuild;
+				return;
+			}
+			if (EditorApplication.timeSinceStartup < _pendingBuild.EarliestStartTime)
+			{
+				return;
+			}
+
+			PendingPlayerBuild pending = _pendingBuild;
+			_pendingBuild = null;
+			EditorApplication.update -= ProcessPendingBuild;
+			ExecutePendingBuild(pending);
+		}
+
+		private static void ExecutePendingBuild(PendingPlayerBuild pending)
+		{
+			DateTime startedUtc = DateTime.UtcNow;
+			_activeBuild = new JObject
+			{
+				["buildId"] = pending.BuildId,
+				["state"] = "RUNNING",
+				["target"] = pending.Target.ToString(),
+				["outputPath"] = pending.OutputPath,
+				["queuedUtc"] = pending.QueuedUtc.ToString("O"),
+				["startedUtc"] = startedUtc.ToString("O"),
+				["secretsCaptured"] = false
+			};
+
+			string absoluteOutput = Path.GetFullPath(pending.OutputPath);
+			string outputDirectory = Path.GetDirectoryName(absoluteOutput);
+			if (!string.IsNullOrEmpty(outputDirectory))
+			{
+				Directory.CreateDirectory(outputDirectory);
+			}
+
+			BuildReport report;
+			try
+			{
+				report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+				{
+					scenes = pending.Scenes,
+					locationPathName = pending.OutputPath,
+					target = pending.Target,
+					options = pending.Options
+				});
+			}
+			catch (Exception exception)
+			{
+				JObject exceptionRecord = new JObject
+				{
+					["buildId"] = pending.BuildId,
+					["state"] = "COMPLETED",
+					["result"] = "EXCEPTION",
+					["target"] = pending.Target.ToString(),
+					["outputPath"] = pending.OutputPath,
+					["queuedUtc"] = pending.QueuedUtc.ToString("O"),
+					["startedUtc"] = startedUtc.ToString("O"),
+					["completedUtc"] = DateTime.UtcNow.ToString("O"),
+					["exceptionType"] = exception.GetType().FullName,
+					["message"] = exception.Message,
+					["secretsCaptured"] = false
+				};
+				RecordCompletedBuild(exceptionRecord);
+				return;
+			}
+
+			BuildSummary summary = report.summary;
+			JObject record = new JObject
+			{
+				["buildId"] = pending.BuildId,
+				["state"] = "COMPLETED",
+				["result"] = summary.result.ToString(),
+				["target"] = summary.platform.ToString(),
+				["outputPath"] = pending.OutputPath,
+				["totalSize"] = summary.totalSize,
+				["totalTimeSeconds"] = summary.totalTime.TotalSeconds,
+				["totalErrors"] = summary.totalErrors,
+				["totalWarnings"] = summary.totalWarnings,
+				["queuedUtc"] = pending.QueuedUtc.ToString("O"),
+				["startedUtc"] = startedUtc.ToString("O"),
+				["completedUtc"] = DateTime.UtcNow.ToString("O"),
+				["secretsCaptured"] = false
+			};
+			RecordCompletedBuild(record);
+		}
+
+		private static void RecordCompletedBuild(JObject record)
+		{
+			_history.Add(record);
+			_activeBuild = null;
 		}
 	}
 }
