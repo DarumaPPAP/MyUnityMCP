@@ -52,14 +52,16 @@ stage_boundaries:
 
 integration_work:
   exact_79_tool_manifest: implemented
-  exact_79_tool_discovery_contract: update_required
+  exact_79_tool_discovery_contract: implemented_not_run
   shared_revision_and_approval_plan_store: implemented
   agent_candidate_domain_catalog: implemented_without_build
   agent_candidate_domain_routing: implemented_without_build
+  agent_build_approval_entry: removed
   agent_false_success_guard: implemented
-  combined_domain_safety_contract_tests: update_required
+  combined_domain_safety_contract_tests: updated_for_79_not_run
   optional_addressables_backend_contract: implemented_not_run
   integration_contract_catalog: implemented_without_build
+  release_structure_gate: updated_for_79_not_run
   mcp_response_error_schema_fix: implemented_awaiting_manual_retest
   agent_delegated_failure_error_compatibility: implemented_awaiting_manual_retest
 
