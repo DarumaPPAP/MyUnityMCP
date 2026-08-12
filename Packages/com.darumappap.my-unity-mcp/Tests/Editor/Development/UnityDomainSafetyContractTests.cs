@@ -37,6 +37,7 @@ namespace MyUnityMcp.EditorTests
 		[TearDown]
 		public void TearDown()
 		{
+			UnityDomainMcpPlanStore.ClearForTests();
 			CleanupDomainScene();
 		}
 
@@ -100,6 +101,35 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(accepted, Is.True);
 			Assert.That(reused, Is.False);
 			Assert.That(reuseFailure.status, Is.EqualTo(E_DOMAIN_TOOL_STATUS.INVALID_REQUEST.ToString()));
+		}
+
+		[Test]
+		public void SharedPlan_ReportsApprovalExpiredInsteadOfFalseNotFound()
+		{
+			DateTime now = DateTime.UtcNow;
+			UnityDomainMcpPlanStore.UtcNowOverrideForTests = () => now;
+			long revision = Session.Revision;
+			UnityDomainMcpResult prepared = UnityDomainMcpPlanStore.Prepare(
+				"test.prepare",
+				"test_domain",
+				"test_operation",
+				revision,
+				true,
+				new JObject());
+			JObject data = (JObject)prepared.data;
+			now = now.AddMinutes(11.0);
+
+			bool consumed = UnityDomainMcpPlanStore.TryConsume(
+				"test.apply",
+				"test_domain",
+				data.Value<string>("planId"),
+				revision,
+				data.Value<string>("approvalToken"),
+				out _,
+				out UnityDomainMcpResult failure);
+
+			Assert.That(consumed, Is.False);
+			Assert.That(failure.status, Is.EqualTo(E_DOMAIN_TOOL_STATUS.APPROVAL_EXPIRED.ToString()));
 		}
 
 		[Test]
