@@ -37,6 +37,7 @@ namespace UnityDomainMcp
 		public string tool;
 		public string status;
 		public string summary;
+		public string message;
 		public object data;
 		public string errorCode;
 		public string errorMessage;
@@ -254,6 +255,7 @@ namespace UnityDomainMcp
 				tool = tool,
 				status = status.ToString(),
 				summary = summary,
+				message = summary,
 				data = data,
 				revision = Session.Revision,
 				success = status == E_DOMAIN_TOOL_STATUS.SUCCESS || status == E_DOMAIN_TOOL_STATUS.PARTIAL
@@ -262,7 +264,7 @@ namespace UnityDomainMcp
 
 		public static UnityDomainMcpResult Error(string tool, E_DOMAIN_TOOL_STATUS status, string message)
 		{
-			UnityDomainMcpResult result = Result(tool, status, message, null);
+			UnityDomainMcpResult result = Result(tool, status, message, ErrorData(tool, status, message));
 			result.errorCode = $"{tool}:{status}";
 			result.errorMessage = message ?? string.Empty;
 			return result;
@@ -310,6 +312,21 @@ namespace UnityDomainMcp
 				EditorUtility.SetDirty(target);
 			}
 			Session.NotifyMutationApplied();
+		}
+
+		private static JObject ErrorData(string tool, E_DOMAIN_TOOL_STATUS status, string message)
+		{
+			return new JObject
+			{
+				["schemaVersion"] = "1.0",
+				["tool"] = tool,
+				["status"] = status.ToString(),
+				["errorCode"] = $"{tool}:{status}",
+				["errorMessage"] = message ?? string.Empty,
+				["summary"] = message ?? string.Empty,
+				["revision"] = Session.Revision,
+				["success"] = false
+			};
 		}
 
 		private static string ResolveToolName(Type parametersType)
