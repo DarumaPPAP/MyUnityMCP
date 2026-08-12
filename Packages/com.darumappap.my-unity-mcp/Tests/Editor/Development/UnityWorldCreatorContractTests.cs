@@ -27,15 +27,7 @@ namespace MyUnityMcp.EditorTests
 		public void WorldCreator_CompilesAndExecutesReadOnlyPreflight()
 		{
 			long revision = Session.Revision;
-			JObject compiled = UnityWorldCreatorRuntime.CompileWorkflow(
-				"現在Sceneの構成とGraphics設定を確認する",
-				null,
-				"environment",
-				"neutral",
-				new[] { "Editor" },
-				new[] { "No mutation" },
-				new[] { "Validation completed" },
-				revision);
+			JObject compiled = CompileWorkflow(revision);
 
 			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
 			Assert.That(compiled.Value<string>("creator"), Is.EqualTo("world_creator"));
@@ -59,8 +51,32 @@ namespace MyUnityMcp.EditorTests
 				started.Value<string>("executionId"),
 				"現在Sceneの構成とGraphics設定を確認する",
 				new[] { "Validation completed" });
+			Assert.That(handoff.Value<bool>("success"), Is.True, handoff.ToString());
 			Assert.That(handoff.Value<string>("handoffStatus"), Is.EqualTo("HUMAN_REVIEW_REQUIRED"));
 			Assert.That(handoff.Value<bool>("automaticVisualAcceptance"), Is.False);
+		}
+
+		[Test]
+		public void WorldCreator_RejectsReviewHandoffBeforePreflightCompletes()
+		{
+			long revision = Session.Revision;
+			JObject compiled = CompileWorkflow(revision);
+			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
+
+			JObject started = UnityWorldCreatorRuntime.StartPreflight(
+				compiled.Value<string>("graphId"),
+				revision);
+			Assert.That(started.Value<string>("status"), Is.EqualTo("RUNNING"), started.ToString());
+
+			JObject handoff = UnityWorldCreatorRuntime.CreateReviewHandoff(
+				started.Value<string>("executionId"),
+				"現在Sceneの構成とGraphics設定を確認する",
+				new[] { "Validation completed" });
+
+			Assert.That(handoff.Value<bool>("success"), Is.False, handoff.ToString());
+			Assert.That(
+				handoff.Value<string>("errorCode"),
+				Is.EqualTo("WORLD-PREFLIGHT-INCOMPLETE"));
 		}
 
 		[Test]
@@ -93,6 +109,19 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(source, Does.Not.Contain("AssetDatabase.CreateAsset"));
 			Assert.That(source, Does.Not.Contain("EditorSceneManager.SaveScene"));
 			Assert.That(source, Does.Not.Contain("BuildPipeline.BuildPlayer"));
+		}
+
+		private static JObject CompileWorkflow(long revision)
+		{
+			return UnityWorldCreatorRuntime.CompileWorkflow(
+				"現在Sceneの構成とGraphics設定を確認する",
+				null,
+				"environment",
+				"neutral",
+				new[] { "Editor" },
+				new[] { "No mutation" },
+				new[] { "Validation completed" },
+				revision);
 		}
 	}
 }
