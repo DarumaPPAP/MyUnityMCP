@@ -1,0 +1,48 @@
+schema_version: "1.0"
+creator: world_creator
+status: delivery_candidate_manual_verification_pending
+
+tools:
+  - world.compile_workflow
+  - world.start_preflight
+  - world.create_review_handoff
+
+principles:
+  direct_unity_mutation: prohibited
+  operational_delegate_only: true
+  expected_revision_required: true
+  human_review_required: true
+  automatic_visual_acceptance: prohibited
+  silent_fallback: prohibited
+
+preflight:
+  control_plane: unity_agent_mcp
+  delegate_domain: unity_graphics_mcp
+  steps:
+    - graphics.inspect_project
+    - graphics.inspect_scene
+    - graphics.validate_scene
+  mutation: false
+
+handoff:
+  required_status: HUMAN_REVIEW_REQUIRED
+  next_stage_is_automatic_execution: false
+  downstream_mutation_requires_existing_domain_approval: true
+  downstream_save_requires_existing_domain_approval: true
+  downstream_bake_requires_existing_domain_approval: true
+
+success_evidence:
+  - current_revision_accepted
+  - graph_compiled
+  - read_only_preflight_completed
+  - three_of_three_preflight_steps_succeeded
+  - human_review_handoff_created
+  - no_direct_unity_mutation
+
+must_not:
+  - bypass_unity_agent_validation
+  - directly_mutate_scene_or_assets
+  - automatically_save
+  - automatically_bake
+  - automatically_accept_visual_result
+  - reinterpret_failed_preflight_as_success
