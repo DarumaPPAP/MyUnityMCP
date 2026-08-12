@@ -1,19 +1,46 @@
 schema_version: "1.0"
-creator: world_creator
+module: world_creator
 status: delivery_candidate_manual_verification_pending
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  creator:
+    mode: orchestration
+    use_when:
+      - a visual world goal requires a safe read-only project and scene preflight before production planning
+      - project, scene, and graphics validation should be collected through one creator workflow
+      - the next production action must be handed to a human reviewer instead of automatically mutating Unity
+    requires:
+      - visual_goal
+      - current_editor_revision
+      - operational_unity_agent_mcp
+      - operational_unity_graphics_mcp
+    must_not:
+      - directly_mutate_unity
+      - bypass_unity_agent_validation
+      - automatically_save
+      - automatically_bake
+      - automatically_accept_visual_result
+      - reinterpret_failed_preflight_as_success
+    success_evidence:
+      - current_revision_accepted
+      - graph_compiled
+      - read_only_preflight_completed
+      - three_of_three_preflight_steps_succeeded
+      - human_review_handoff_created
+      - no_direct_unity_mutation
 
 tools:
   - world.compile_workflow
   - world.start_preflight
   - world.create_review_handoff
-
-principles:
-  direct_unity_mutation: prohibited
-  operational_delegate_only: true
-  expected_revision_required: true
-  human_review_required: true
-  automatic_visual_acceptance: prohibited
-  silent_fallback: prohibited
 
 preflight:
   control_plane: unity_agent_mcp
@@ -30,19 +57,3 @@ handoff:
   downstream_mutation_requires_existing_domain_approval: true
   downstream_save_requires_existing_domain_approval: true
   downstream_bake_requires_existing_domain_approval: true
-
-success_evidence:
-  - current_revision_accepted
-  - graph_compiled
-  - read_only_preflight_completed
-  - three_of_three_preflight_steps_succeeded
-  - human_review_handoff_created
-  - no_direct_unity_mutation
-
-must_not:
-  - bypass_unity_agent_validation
-  - directly_mutate_scene_or_assets
-  - automatically_save
-  - automatically_bake
-  - automatically_accept_visual_result
-  - reinterpret_failed_preflight_as_success
