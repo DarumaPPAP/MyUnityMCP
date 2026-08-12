@@ -3,8 +3,8 @@ scope: stage2_8_integration
 status: implementation_complete_validation_pending
 production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
 production_verified_tools: 45
-integration_candidate_tools: 40
-combined_target_tools: 85
+integration_candidate_tools: 34
+combined_target_tools: 79
 
 shared_plan_contract:
   prepare_is_read_only: true
@@ -34,16 +34,6 @@ modules:
       - profiler.cancel_capture
       - profiler.summarize_capture
       - profiler.compare_baseline
-
-  unity_build_mcp:
-    status: integration_candidate
-    tools: 6
-    build_execution_requires_approval: true
-    output_root: Builds/MyUnityMCP
-    absolute_or_escaping_output_path: prohibited
-    automatic_platform_fallback: prohibited
-    environment_variable_capture: prohibited
-    secret_capture: prohibited
 
   unity_addressables_mcp:
     status: integration_candidate
@@ -110,9 +100,9 @@ modules:
       - cinemachine_shot_mutation
 
 validation_wave:
-  status: not_started
+  status: reset_after_build_domain_removal
   must_verify:
-    - exact_85_tool_discovery
+    - exact_79_tool_discovery
     - package_compile
     - each_domain_readonly_path
     - each_domain_safety_boundary
