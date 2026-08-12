@@ -610,7 +610,7 @@ namespace UnityAgentMcp
 		{
 			Dictionary<string, Func<JObject, object>> handlers =
 				new Dictionary<string, Func<JObject, object>>(StringComparer.Ordinal);
-			Assembly assembly = typeof(InspectProjectTool).Assembly;
+			System.Reflection.Assembly assembly = typeof(InspectProjectTool).Assembly;
 			foreach (Type type in assembly.GetTypes())
 			{
 				CustomAttributeData attribute = type.GetCustomAttributesData().FirstOrDefault(value =>
