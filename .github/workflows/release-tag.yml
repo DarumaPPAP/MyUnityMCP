@@ -115,7 +115,7 @@ jobs:
                 --verify-tag
             else
               gh release create "$TAG" artifacts/* \
-                --title "MyUnityMCP $TAG" artifacts/* \
+                --title "MyUnityMCP $TAG" \
                 --notes-file RELEASE_NOTES.md \
                 --verify-tag
             fi
