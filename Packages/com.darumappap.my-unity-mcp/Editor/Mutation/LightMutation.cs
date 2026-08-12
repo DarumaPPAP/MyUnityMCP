@@ -108,7 +108,6 @@ namespace UnityGraphicsMcp
 		public long PostRevision { get; set; }
 		public long OwnedHierarchyRevision { get; set; }
 		public bool AwaitingOwnedHierarchyChange { get; set; }
-		public double OwnedHierarchyGraceUntil { get; set; }
 		public bool Invalidated { get; set; }
 		public bool Undone { get; set; }
 		public List<int> CreatedInstanceIds { get; set; } = new List<int>();
@@ -124,7 +123,6 @@ namespace UnityGraphicsMcp
 	internal static class MutationSession
 	{
 		private const int MAX_PLAN_COUNT = 8;
-		private const double OWNED_HIERARCHY_GRACE_SECONDS = 0.5;
 		private static readonly TimeSpan PLAN_LIFETIME = TimeSpan.FromMinutes(10.0);
 		private static readonly Dictionary<string, ExecutableLightPlan> _plans =
 			new Dictionary<string, ExecutableLightPlan>();
@@ -292,7 +290,7 @@ namespace UnityGraphicsMcp
 			}
 
 			if (_latestTransaction.AwaitingOwnedHierarchyChange &&
-				EditorApplication.timeSinceStartup <= _latestTransaction.OwnedHierarchyGraceUntil)
+				Undo.GetCurrentGroup() == _latestTransaction.UndoGroup)
 			{
 				_latestTransaction.OwnedHierarchyRevision = Session.Revision;
 				_latestTransaction.AwaitingOwnedHierarchyChange = false;
@@ -373,11 +371,6 @@ namespace UnityGraphicsMcp
 				}
 				return builder.ToString();
 			}
-		}
-
-		public static double OwnedHierarchyGraceDeadline()
-		{
-			return EditorApplication.timeSinceStartup + OWNED_HIERARCHY_GRACE_SECONDS;
 		}
 	}
 
@@ -783,10 +776,6 @@ namespace UnityGraphicsMcp
 				transaction.PostRevision = Session.Revision;
 				transaction.AwaitingOwnedHierarchyChange =
 					!hierarchyEventAlreadyObserved;
-				transaction.OwnedHierarchyGraceUntil =
-					transaction.AwaitingOwnedHierarchyChange
-						? MutationSession.OwnedHierarchyGraceDeadline()
-						: 0.0;
 				MutationSession.SetLatestTransaction(transaction);
 				MutationSession.ConsumePlan(plan);
 
@@ -1135,7 +1124,7 @@ namespace UnityGraphicsMcp
 					new Dictionary<string, object>
 					{
 						{ "operationId", operation.OperationId }
-					}));
+					});
 				return false;
 			}
 
