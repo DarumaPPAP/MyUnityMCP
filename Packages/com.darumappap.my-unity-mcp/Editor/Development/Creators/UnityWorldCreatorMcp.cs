@@ -277,6 +277,17 @@ namespace UnityWorldCreatorMcp
 				return status;
 			}
 
+			if (!string.Equals(
+				status.Value<string>("status"),
+				E_AGENT_EXECUTION_STATUS.SUCCEEDED.ToString(),
+				StringComparison.Ordinal) ||
+				!(status.Value<bool?>("executionSucceeded") ?? false))
+			{
+				return Error(
+					"WORLD-PREFLIGHT-INCOMPLETE",
+					"World PreflightがSUCCEEDEDで完了するまでReview Handoffは作成できません。");
+			}
+
 			return new JObject
 			{
 				["success"] = true,
