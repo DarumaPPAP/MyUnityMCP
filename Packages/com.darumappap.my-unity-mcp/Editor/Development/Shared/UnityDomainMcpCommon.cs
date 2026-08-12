@@ -218,6 +218,26 @@ namespace UnityDomainMcp
 		{
 			try
 			{
+				JToken expectedRevisionToken = @params?["expectedRevision"];
+				if (expectedRevisionToken != null)
+				{
+					string tool = ResolveToolName(typeof(T));
+					if (expectedRevisionToken.Type == JTokenType.Null)
+					{
+						return Error(tool, E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。");
+					}
+
+					long? expectedRevision = expectedRevisionToken.Value<long?>();
+					if (!expectedRevision.HasValue)
+					{
+						return Error(tool, E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "expectedRevisionを指定してください。");
+					}
+					if (expectedRevision.Value != Session.Revision)
+					{
+						return Error(tool, E_DOMAIN_TOOL_STATUS.STALE_REVISION, "expectedRevisionが現在のEditor Revisionと一致しません。");
+					}
+				}
+
 				T parameters = @params == null || !@params.HasValues ? new T() : @params.ToObject<T>();
 				return operation(parameters ?? new T());
 			}
@@ -290,6 +310,27 @@ namespace UnityDomainMcp
 				EditorUtility.SetDirty(target);
 			}
 			Session.NotifyMutationApplied();
+		}
+
+		private static string ResolveToolName(Type parametersType)
+		{
+			Type toolType = parametersType?.DeclaringType;
+			if (toolType == null)
+			{
+				return "domain.request";
+			}
+
+			var attribute = toolType.GetCustomAttributesData().FirstOrDefault(value =>
+				string.Equals(
+					value.AttributeType.FullName,
+					"MCPForUnity.Editor.Tools.McpForUnityToolAttribute",
+					StringComparison.Ordinal));
+			if (attribute == null || attribute.ConstructorArguments.Count == 0)
+			{
+				return "domain.request";
+			}
+
+			return attribute.ConstructorArguments[0].Value as string ?? "domain.request";
 		}
 	}
 }
