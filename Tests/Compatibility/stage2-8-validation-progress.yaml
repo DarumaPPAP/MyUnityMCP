@@ -1,0 +1,117 @@
+schema_version: "1.0"
+validation_wave: stage2_8_85_tool
+status: in_progress
+production_ready: false
+production_promotion: prohibited
+validation_environment:
+  unity: 6000.7.0a2
+  package_commit_identity: unverified_from_editor_public_information
+
+manual_results:
+  package_compile:
+    status: pass
+    package_resolve: true
+    compiling: false
+    console_log_entries: 0
+    compile_errors: 0
+    missing_assembly_or_type_errors: 0
+    meta_or_asmdef_errors: 0
+  domain_tool_discovery:
+    status: pass
+    duplicate_tool_names: 0
+    total: 85
+    composition:
+      graphics: 32
+      agent: 10
+      world_creator: 3
+      profiler: 8
+      build: 6
+      addressables: 6
+      ui: 5
+      animation: 5
+      audio: 5
+      cinematic: 5
+    raw_custom_catalog_tool_count: 120
+    note: raw catalog includes generic Unity tools outside the domain-scoped MyUnityMCP surface
+  agent_capability:
+    status: pass
+    graphics_status: editor_operational
+    stage2_8_status: integration_candidate
+    direct_unity_mutation: false
+    integration_candidate_execution_enabled: true
+  domain_smoke:
+    status: pass_with_expected_optional_unsupported
+    graphics_inspect_project: SUCCESS
+    profiler_inspect_environment: SUCCESS
+    build_inspect_environment: SUCCESS
+    addressables_inspect: UNSUPPORTED_PACKAGE_NOT_INSTALLED
+    ui_inspect: SUCCESS
+    animation_inspect: SUCCESS
+    audio_inspect: SUCCESS
+    cinematic_inspect: SUCCESS
+  addressables_state:
+    package_installed: false
+    backend_compiled: false
+    settings_auto_created: false
+    groups_created: false
+    package_auto_installed: false
+    content_build_started: false
+  build_state:
+    output_root: Builds/MyUnityMCP/
+    player_build_started: false
+  unity_state:
+    scene_dirty_before: true
+    scene_dirty_after: true
+    additional_dirty_transition_observed: false
+    asset_changes: false
+    save: false
+    bake: false
+    player_build: false
+    addressables_content_build: false
+    direct_unity_api: false
+
+blocking_issue_observed:
+  phase: safety_stale_revision
+  tool: ui.prepare_rect_transform
+  intended_result: STALE_REVISION
+  observed_result: MCP_RESPONSE_SCHEMA_ERROR
+  cause:
+    field: MCPResponse.error
+    expected_schema: string
+    candidate_returned: object
+  mutation: false
+  approval: false
+  apply: false
+  validation_stopped_safely: true
+
+blocking_fix:
+  status: implemented_awaiting_manual_retest
+  shared_domain_response:
+    error_field: string
+    error_code_field: string
+    applies_to_all_stage2_8_domains: true
+  agent_delegated_failure_compatibility:
+    legacy_object_error_supported: true
+    string_error_supported: true
+    domain_error_code_preserved: true
+  regression_test:
+    path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
+    execution_status: not_run
+
+pending_validation:
+  - stale_revision_retest
+  - missing_approval_apply
+  - wrong_approval_token
+  - plan_reuse
+  - profiler_capture
+  - ui_animation_audio_cinematic_mutation_e2e
+  - build_approval_boundary
+  - agent_candidate_execution
+  - cross_domain_workflow
+  - timeout_cancel_expired_approval
+
+verdict:
+  phase_a_to_d: pass_manual
+  safety: blocked_fix_awaiting_retest
+  full_85_tool_validation: not_complete
+  production_ready: false
