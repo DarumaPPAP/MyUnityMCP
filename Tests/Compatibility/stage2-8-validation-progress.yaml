@@ -108,6 +108,21 @@ safety_findings:
       apply: false
       editor_revision_changed: false
     root_cause: top-level error field causes MCP Bridge to emit an error envelope and drop normal result fields such as status and errorCode
+  mcp_response_field_strip:
+    third_retest_input:
+      expected_revision: 0
+      editor_revision: 1
+      target_object_id: ""
+    observed_result_after_error_field_removal:
+      success: false
+      message: null
+      error: null
+      data: null
+      hint: null
+      status_visible_to_client: false
+      error_code_visible_to_client: false
+      error_message_visible_to_client: false
+    root_cause: MCP Server parses custom tool results into MCPResponse(success, message, error, data, hint); extra top-level fields are discarded by the Pydantic model
 
 blocking_fix:
   status: implemented_awaiting_manual_retest
@@ -116,14 +131,22 @@ blocking_fix:
     behavior: expectedRevision is validated before delegated domain runtime target/input validation
     tool_identity: resolved from declaring MCP tool attribute
     applies_to: all MCP tool requests carrying expectedRevision
-    stale_error_status: STALE_REVISION
-    stale_error_code_shape: <tool>:STALE_REVISION
+    stale_error_status_location: data.status
+    stale_error_code_location: data.errorCode
   shared_domain_response:
-    top_level_error_field: removed_for_bridge_safe_domain_failures
-    error_message_field: errorMessage
-    error_code_field: errorCode
-    status_field: status
-    reason: top-level error is reserved by the MCP Bridge error envelope
+    top_level_error_field: not_used_for_domain_metadata
+    top_level_message_field: summary_human_message
+    top_level_data_field: bridge_preserved_domain_metadata
+    data_contains:
+      - schemaVersion
+      - tool
+      - status
+      - errorCode
+      - errorMessage
+      - summary
+      - revision
+      - success
+    reason: MCPResponse only preserves success/message/error/data/hint at the Client boundary
     applies_to_all_stage2_8_domains: true
   agent_delegated_failure_compatibility:
     legacy_object_error_supported: true
@@ -135,10 +158,11 @@ blocking_fix:
       path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainMcpResponseContractTests.cs
       execution_status: not_run
       assertions:
-        - no top-level error field
-        - status remains visible
-        - errorCode remains visible
-        - errorMessage remains visible
+        - top-level message is populated
+        - top-level error is not used for structured metadata
+        - data.status remains visible
+        - data.errorCode remains visible
+        - data.errorMessage remains visible
     revision_precedence:
       path: Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityDomainRevisionPrecedenceTests.cs
       execution_status: not_run
@@ -148,7 +172,7 @@ blocking_fix:
         - editor revision remains unchanged
 
 pending_validation:
-  - stale_revision_bridge_safe_retest
+  - stale_revision_mcp_response_data_retest
   - missing_approval_apply
   - wrong_approval_token
   - plan_reuse
@@ -163,6 +187,6 @@ pending_validation:
 verdict:
   phase_a_to_d: pass_manual
   safety_response_schema: pass_manual
-  safety_revision_precedence: fixed_but_bridge_envelope_fix_awaiting_retest
+  safety_revision_precedence: fixed_but_mcp_response_data_fix_awaiting_retest
   full_85_tool_validation: not_complete
   production_ready: false
