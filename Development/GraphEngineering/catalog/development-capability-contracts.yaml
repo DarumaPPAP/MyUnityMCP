@@ -2,7 +2,7 @@ schema_version: "1.1"
 production_contracts:
   graphics: Catalog/capability-contracts.yaml
   agent: Catalog/unity-agent-capability-contracts.yaml
-production_baseline_sha: 85912aa37c3b8d69bb71a4075cea75d4e93cf7aa
+production_baseline_sha: 0e0d8ec687e5b4932615fb5d24d00c4e146ab955
 scope: development_only
 
 shared_mutation_contract:
