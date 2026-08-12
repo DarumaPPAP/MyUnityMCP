@@ -2,7 +2,7 @@ schema_version: "1.1"
 source_branch: feature/graph-engineering-master
 source_sha: 75118eaabda9ab269f47b899a21aa2e286bfcf45
 production_baseline_branch: main
-production_baseline_sha: 85912aa37c3b8d69bb71a4075cea75d4e93cf7aa
+production_baseline_sha: 0e0d8ec687e5b4932615fb5d24d00c4e146ab955
 working_branch: refactor/graph-engineering-production-baseline-42
 
 classification:

@@ -4,7 +4,8 @@
 
 ## Source of truth
 
-- Production baseline: `main` at `85912aa37c3b8d69bb71a4075cea75d4e93cf7aa`
+- Production baseline: `main` at `0e0d8ec687e5b4932615fb5d24d00c4e146ab955`
+- Current Source Version: `1.1.0` (unpublished source candidate)
 - Production surface: **42 tools = 32 Graphics + 10 UnityAgent**
 - Previous Graph integration baseline: `feature/graph-engineering-master` at `75118eaabda9ab269f47b899a21aa2e286bfcf45`
 - Integration branch: `feature/graph-engineering-master`
@@ -65,6 +66,7 @@ Evidence keeps technical results and operator acceptance separate.
 - Operator acceptance may close a project gate when explicitly approved, while the underlying technical limitation remains recorded.
 - Scoped historical evidence may carry forward only when its validated paths are unchanged.
 - Production UnityAgent promotion does not convert the old 91-tool Graph discovery evidence into fresh 42-tool Production CI evidence.
+- Source Version `1.1.0` does not imply GitHub Release publication. Publication requires a separate explicit human-triggered workflow.
 
 The Graph integration evidence currently includes:
 

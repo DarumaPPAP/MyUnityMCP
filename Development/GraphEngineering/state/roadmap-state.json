@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.1",
   "workingBranch": "feature/graph-engineering-master",
-  "productionBaselineSha": "85912aa37c3b8d69bb71a4075cea75d4e93cf7aa",
+  "productionBaselineSha": "0e0d8ec687e5b4932615fb5d24d00c4e146ab955",
   "graphBaselineSha": "75118eaabda9ab269f47b899a21aa2e286bfcf45",
   "productionToolCount": 42,
   "remainingDevelopmentToolCount": 49,
@@ -34,8 +34,9 @@
   },
   "blockers": [],
   "notes": [
-    "Current Production Source of Truth is main 85912aa with 42 operational tools: 32 Graphics + 10 UnityAgent.",
+    "Current Production Source of Truth is main 0e0d8ec with Source Version 1.1.0 and 42 operational tools: 32 Graphics + 10 UnityAgent.",
     "UnityAgent is no longer part of the remaining Development candidate count. Remaining candidate surface is 49 tools and the final combined target remains 91.",
+    "Release Publication is explicitly separated from VERSION changes; Source Version 1.1.0 is not itself a published Release.",
     "Run #52 remains the automated compatibility basis for unchanged remaining Development modules: Unity 6000.0.75f1, 6000.4.12f1 and 6000.5.5f1 passed the full EditMode contract project.",
     "Unity 6000.7.0a2 was manually verified for Git package installation, editor compilation, package recognition and 91/91 custom-tool discovery before Agent production promotion.",
     "The Addressables optional backend delta was manually verified in package-absent and package-present configurations; unavailable GitHub Actions runs are not represented as technical PASS.",
