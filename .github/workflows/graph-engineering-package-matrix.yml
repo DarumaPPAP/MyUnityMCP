@@ -1,0 +1,134 @@
+name: Graph Engineering Package Matrix
+
+on:
+  pull_request:
+    branches:
+      - feature/graph-engineering-master
+    paths:
+      - Packages/com.darumappap.my-unity-mcp/**
+      - TestProjects/MyUnityMCPVerification/**
+      - .github/workflows/graph-engineering-package-matrix.yml
+  workflow_dispatch:
+    inputs:
+      addressablesVersion:
+        description: Exact com.unity.addressables version to verify. Empty uses the Unity 6000.0 released baseline.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: graph-package-matrix-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Unity 6000.0 package documentation lists Addressables 2.7.6 as the released version.
+  ADDRESSABLES_RELEASED_6000_0: "2.7.6"
+
+jobs:
+  addressables-absent:
+    name: Addressables absent compile and contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Assert Addressables is absent
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('TestProjects/MyUnityMCPVerification/Packages/manifest.json').read_text())
+          assert 'com.unity.addressables' not in manifest['dependencies']
+          PY
+      - name: Run EditMode contracts without Addressables
+        id: absent-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+      - name: Upload package-absent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-modernization-addressables-absent
+          path: ${{ steps.absent-tests.outputs.artifactsPath }}
+          if-no-files-found: warn
+          retention-days: 30
+
+  addressables-present:
+    name: Addressables present compile and contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Resolve explicit Addressables version
+        id: package-version
+        env:
+          DISPATCH_VERSION: ${{ inputs.addressablesVersion }}
+          RELEASED_VERSION: ${{ env.ADDRESSABLES_RELEASED_6000_0 }}
+        run: |
+          set -euo pipefail
+          version="$DISPATCH_VERSION"
+          if [ -z "$version" ]; then
+            version="$RELEASED_VERSION"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Using com.unity.addressables@$version"
+      - name: Add resolved Addressables version
+        env:
+          ADDRESSABLES_VERSION: ${{ steps.package-version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('TestProjects/MyUnityMCPVerification/Packages/manifest.json')
+          manifest = json.loads(path.read_text())
+          manifest['dependencies']['com.unity.addressables'] = os.environ['ADDRESSABLES_VERSION']
+          path.write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+      - name: Run EditMode contracts with Addressables
+        id: present-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: TestProjects/MyUnityMCPVerification
+          unityVersion: 6000.0.75f1
+          testMode: editmode
+      - name: Record package-present metadata
+        if: always()
+        env:
+          ADDRESSABLES_VERSION: ${{ steps.package-version.outputs.version }}
+          TEST_OUTCOME: ${{ steps.present-tests.outcome }}
+        run: |
+          mkdir -p evidence
+          cat > evidence/addressables-present.json <<JSON
+          {
+            "package": "com.unity.addressables",
+            "version": "${ADDRESSABLES_VERSION}",
+            "unity_version": "6000.0.75f1",
+            "test_outcome": "${TEST_OUTCOME}"
+          }
+          JSON
+      - name: Upload package-present evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-modernization-addressables-present
+          path: |
+            ${{ steps.present-tests.outputs.artifactsPath }}
+            evidence/addressables-present.json
+          if-no-files-found: warn
+          retention-days: 30

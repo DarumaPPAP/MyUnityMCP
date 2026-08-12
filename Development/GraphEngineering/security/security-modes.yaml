@@ -1,0 +1,33 @@
+schema_version: "1.0"
+default_mode: RESTRICTED
+modes:
+  PERSONAL:
+    machine_details: allowed
+    project_paths: allowed
+    screenshots: allowed
+  TEAM:
+    machine_details: redacted
+    project_paths: redacted
+    object_names: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+  RESTRICTED:
+    machine_details: redacted
+    project_paths: redacted
+    object_names: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+  CI:
+    deterministic_minimal_output: true
+    machine_details: redacted
+    project_paths: redacted
+    object_names: redacted
+    screenshots: prohibited
+    operational_information: prohibited
+always_forbidden_collection:
+  - credentials
+  - authentication_tokens
+  - unity_project_id
+  - organization_information
+  - customer_names
+  - internal_issue_numbers

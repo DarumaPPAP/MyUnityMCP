@@ -1,0 +1,70 @@
+schema_version: "1.0"
+source_revision_policy: scoped_evidence_or_explicit_operator_acceptance
+
+unity_editor:
+  "6000.0":
+    target: 6000.0.75f1
+    expected_scope: [base_compile, canonical_graphics_regression, candidate_core_contracts]
+    status: integration_verified
+    evidence: run_52_scoped_carry_forward
+  "6000.4":
+    target: 6000.4.12f1
+    expected_scope: [entity_id, scene_handle, editor_api]
+    status: integration_verified
+    evidence: run_52_scoped_carry_forward
+  "6000.5":
+    target: 6000.5.5f1
+    expected_scope: [removed_apis, importer, ecs_boundaries]
+    status: integration_verified
+    evidence: run_52_scoped_carry_forward
+  "6000.7":
+    automation_target: 6000.7.0a3
+    manual_target: 6000.7.0a2
+    maintenance_bucket: UNITY_6000_7
+    includes_rollup: UNITY_6000_6
+    expected_scope: [unity_6000_6_rollup, identity, build, ui, rendergraph, input, ar, netcode]
+    automation: unavailable
+    manual: manual_verified
+    manual_scope: [git_package_install, editor_compile, package_recognition, tool_discovery_91_of_91]
+    status: manual_verified
+
+packages:
+  addressables:
+    required_by: unity_addressables_mcp
+    absent: manual_verified
+    present: manual_verified
+    exact_ci_lane_unity_6000_0_addressables_2_7_6: unavailable_runner
+  urp: { absent: not_verified, present: not_verified }
+  hdrp: { absent: not_verified, present: not_verified }
+  entities: { absent: not_verified, present: not_verified }
+  input_system: { absent: not_verified, present: not_verified }
+  netcode: { absent: not_verified, present: not_verified }
+  openxr: { absent: not_verified, present: not_verified }
+  xr_management: { absent: not_verified, present: not_verified }
+  ar_packages: { absent: not_verified, present: not_verified }
+
+external_installation:
+  upm_git_url:
+    unity: 6000.7.0a2
+    editor_compile: pass
+    package_recognition: pass
+    custom_tool_discovery: 91_of_91
+    verdict: integration_verified
+
+external_mcp:
+  transport_http: pass
+  unity_ui_session_active: pass
+  codex_instance_discovery: instance_count_0
+  readonly_tool_calls: not_executed
+  verdict: operator_accepted
+  note: completion is not a protocol-level tool-call PASS
+
+historical_evidence:
+  graph_6000_0_75f1:
+    source_revision: d92345cd5a2ba341aa4cb7cdf69f6026901d5eee
+    result: 168_of_168_passed
+    current_head_verdict: historical_only
+  modernization_run_52:
+    source_revision: 0b32b4e6d37569c7dfa4b45a34dc51987dacffb2
+    result: success
+    current_head_verdict: scoped_carry_forward_for_unchanged_paths

@@ -1,0 +1,30 @@
+{
+  "node": "multi_version_editor_matrix",
+  "status": "manual_verified",
+  "source_revision": "d1ff2a9782e54c46136c4ca48e34d493e4af4837",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development",
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development"
+  ],
+  "recorded_at": "2026-08-12T00:22:00+09:00",
+  "basis": {
+    "run_52": {
+      "source_revision": "0b32b4e6d37569c7dfa4b45a34dc51987dacffb2",
+      "unity_6000_0_75f1": "pass",
+      "unity_6000_4_12f1": "pass",
+      "unity_6000_5_5f1": "pass"
+    },
+    "manual_unity_6000_7_0a2": {
+      "package_installation": "pass",
+      "editor_compile": "pass",
+      "package_recognition": "pass",
+      "tool_discovery": "91/91"
+    },
+    "final_source_delta": "After Run #52, Development source changes are isolated to the Addressables optional backend. Non-Addressables Development modules remain unchanged from the successful Run #52 source."
+  },
+  "acceptance": "Human operator accepted the combined automated + manual compatibility evidence for final Graph integration.",
+  "limitations": [
+    "Unity 6000.7.0a3 GameCI image was unavailable; Unity 6000.7.0a2 is the manual canary.",
+    "This is composite operator acceptance, not a claim that the final source revision was rerun in every automated Unity lane."
+  ]
+}

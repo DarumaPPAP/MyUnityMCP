@@ -1,0 +1,47 @@
+schema_version: "1.0"
+source_branch: feature/graph-engineering-master
+source_sha: f859e22ba06f58acbb4787987d6a373254a2b127
+
+items:
+  - id: old_phase_roadmap_harness
+    action: REPLACE_WITH_MAIN
+    replacement: Development/GraphEngineering/state/roadmap-state.json
+    reason: old Phase-oriented product state is incompatible with the modernized product naming rule
+  - id: evidence_state_reducer
+    action: REFACTOR
+    result: Development/GraphEngineering/scripts/state_reducer.py
+  - id: canonical_graphics_guard
+    action: REFACTOR
+    result: Development/GraphEngineering/scripts/verify_canonical_graphics.py
+  - id: development_separation_guard
+    action: REFACTOR
+    result: Development/GraphEngineering/scripts/verify_development_separation.py
+  - id: candidate_inventory_guard
+    action: REFACTOR
+    result: Development/GraphEngineering/scripts/verify_candidate_inventory.py
+  - id: candidate_compatibility_audit
+    action: REFACTOR
+    result: Development/GraphEngineering/scripts/verify_candidate_compatibility.py
+  - id: external_mcp_client_harness
+    action: KEEP
+    result: Tests/ExternalClient/run_mcp_http_e2e.py
+  - id: external_mcp_client_static_contracts
+    action: KEEP
+    result: Development/GraphEngineering/tests/test_external_mcp_e2e.py
+  - id: graph_viewer
+    action: REVIEW
+    reason: old viewer consumes the retired Phase-oriented graph/state model and must not be restored unchanged
+  - id: release_integrity_guard
+    action: REPLACE_WITH_MAIN
+    reason: release integrity is Production policy and current main is canonical
+  - id: delivery_guard
+    action: REVIEW
+    reason: delivery remains capability-scoped but old Phase/product identifiers must not be reintroduced
+  - id: source_archive_zip_b64
+    action: DELETE
+    reason: Git history and candidate inventory replace the embedded archive; do not retain repository bloat
+
+verification:
+  static_workflow: .github/workflows/graph-engineering-modernization.yml
+  package_matrix_workflow: .github/workflows/graph-engineering-package-matrix.yml
+  terminal_completion_requires_external_e2e: true

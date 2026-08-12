@@ -1,0 +1,9 @@
+{
+  "historical_graph_discovery_count": 91,
+  "canonical_production_graphics_tools": 32,
+  "development_non_graphics_candidate_tools": 59,
+  "modernized_graph_expected_total_discovery_count": 91,
+  "equation": "32 + 59 = 91",
+  "count_changed": false,
+  "semantic_change": "Production Graphics and Development candidates are now physically and logically separated; 91 remains the total Graph Engineering discovery target."
+}

@@ -1,0 +1,23 @@
+{
+  "node": "fresh_project",
+  "status": "integration_verified",
+  "source_revision": "d1ff2a9782e54c46136c4ca48e34d493e4af4837",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp"
+  ],
+  "recorded_at": "2026-08-12T00:22:00+09:00",
+  "manual_external_project": {
+    "installation_method": "Unity Package Manager Git URL",
+    "unity_version": "6000.7.0a2",
+    "package_version": "1.0.0",
+    "package_recognition": "pass",
+    "editor_compile": "pass",
+    "custom_tool_discovery": "91/91",
+    "mcp_for_unity_session_ui": "Session Active (CG)"
+  },
+  "acceptance": "The external Unity project installation is accepted as the final integration installation gate for this Graph cycle.",
+  "limitations": [
+    "The repository SampleProjects/MyUnityMCPGettingStarted pristine-template GitHub Actions workflow did not execute because its job failed before runner steps started.",
+    "Accordingly this is integration_verified from an external project install, not a claim that the automated pristine sample-project workflow passed."
+  ]
+}

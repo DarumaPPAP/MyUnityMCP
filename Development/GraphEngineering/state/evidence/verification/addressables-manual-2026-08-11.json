@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "2.0",
+  "node": "addressables_refactor",
+  "status": "manual_verified",
+  "source_revision": "c0c278f21be5cf2100cb10e45f4a7677c69d3d3f",
+  "reported_at_jst": "2026-08-11T23:31:00+09:00",
+  "reported_by": "human_operator",
+  "verification_scope": "Manual verification requested from PR #29 after the optional Addressables backend split.",
+  "checks": {
+    "package_absent": [
+      "Unity project compiled successfully",
+      "custom MCP tool discovery remained 91/91"
+    ],
+    "package_present": [
+      "Addressables-enabled project loaded successfully",
+      "addressables.inspect reported packageInstalled=true",
+      "addressables.inspect reported backendCompiled=true"
+    ]
+  },
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Addressables/UnityAddressablesMcp.cs",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Addressables/Backend/MyUnityMcp.Addressables.Editor.asmdef",
+    "Packages/com.darumappap.my-unity-mcp/Editor/Development/Addressables/Backend/UnityAddressablesMcpBackend.cs",
+    "Packages/com.darumappap.my-unity-mcp/Tests/Editor/Development/UnityAddressablesPackageContractTests.cs"
+  ],
+  "limitations": [
+    "This is human manual evidence, not the formal GitHub Actions package matrix.",
+    "Unity version was not independently recorded in the chat confirmation, so this evidence does not satisfy the multi-version Editor matrix node.",
+    "External MCP Client E2E and Fresh Project verification are outside this evidence scope."
+  ]
+}

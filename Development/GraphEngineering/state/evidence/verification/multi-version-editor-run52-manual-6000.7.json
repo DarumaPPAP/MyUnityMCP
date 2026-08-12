@@ -1,0 +1,53 @@
+{
+  "node": "multi_version_editor_matrix",
+  "status": "pass",
+  "source_revision": "0b32b4e6d37569c7dfa4b45a34dc51987dacffb2",
+  "validated_paths": [
+    "Packages/com.darumappap.my-unity-mcp",
+    "TestProjects/MyUnityMCPVerification"
+  ],
+  "recorded_at": "2026-08-11T21:24:00+09:00",
+  "automation": {
+    "workflow": "Graph Engineering Modernization",
+    "run_id": 31486228877,
+    "run_number": 52,
+    "result": "success",
+    "lanes": [
+      {
+        "unity_version": "6000.0.75f1",
+        "bucket": "BASE",
+        "editmode_contracts": "pass"
+      },
+      {
+        "unity_version": "6000.4.12f1",
+        "bucket": "UNITY_6000_4",
+        "editmode_contracts": "pass"
+      },
+      {
+        "unity_version": "6000.5.5f1",
+        "bucket": "UNITY_6000_5",
+        "editmode_contracts": "pass"
+      },
+      {
+        "unity_version": "6000.7.0a3",
+        "bucket": "UNITY_6000_7",
+        "editmode_contracts": "not_verified",
+        "reason": "GameCI editor image unavailable"
+      }
+    ]
+  },
+  "manual_canary": {
+    "unity_version": "6000.7.0a2",
+    "bucket": "UNITY_6000_7",
+    "package_installation": "pass",
+    "editor_compile": "pass",
+    "package_recognition": "pass",
+    "tool_discovery": "91/91",
+    "runtime_tool_invocation": "not_verified",
+    "evidence_reference": "https://github.com/DarumaPPAP/MyUnityMCP/pull/28#issuecomment-5253087047"
+  },
+  "limitations": [
+    "Unity 6000.7.0a3 remains automation-not-verified because its GameCI image is unavailable.",
+    "The manual Unity 6000.7 evidence covers installation, compile, package recognition, and 91/91 tool discovery; it does not claim External MCP E2E or Fresh Project completion."
+  ]
+}
