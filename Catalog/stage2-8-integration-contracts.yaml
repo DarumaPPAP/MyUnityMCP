@@ -3,8 +3,8 @@ scope: stage2_8_integration
 status: implementation_complete_validation_pending
 production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
 production_verified_tools: 45
-integration_candidate_tools: 34
-combined_target_tools: 79
+integration_candidate_tools: 32
+combined_target_tools: 77
 
 shared_plan_contract:
   prepare_is_read_only: true
@@ -38,14 +38,19 @@ modules:
   unity_addressables_mcp:
     status: integration_candidate
     kind: optional_domain
-    tools: 6
+    tools: 4
     required_package: com.unity.addressables
     package_absent_result: UNSUPPORTED
     backend_compile_isolation: version_define
     automatic_settings_creation: prohibited
     automatic_group_creation: prohibited
     automatic_save: prohibited
-    content_build_requires_approval: true
+    content_build: excluded_from_current_mcp_surface
+    tools_surface:
+      - addressables.inspect
+      - addressables.prepare_entry
+      - addressables.apply_entry
+      - addressables.get_support_matrix
 
   unity_ui_mcp:
     status: integration_candidate
@@ -100,9 +105,9 @@ modules:
       - cinemachine_shot_mutation
 
 validation_wave:
-  status: reset_after_build_domain_removal
+  status: reset_after_addressables_build_removal
   must_verify:
-    - exact_79_tool_discovery
+    - exact_77_tool_discovery
     - package_compile
     - each_domain_readonly_path
     - each_domain_safety_boundary
