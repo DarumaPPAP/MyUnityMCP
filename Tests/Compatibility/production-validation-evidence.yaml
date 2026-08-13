@@ -1,82 +1,57 @@
-schema_version: "1.5"
-validation_wave: exact_77_tool
-status: promoted_editor_operational
+schema_version: "1.6"
+record: production_validation_evidence
+status: editor_operational
+recorded_at: "2026-08-13"
 production_ready: true
-production_promotion: completed
-human_promotion_gate: satisfied_by_explicit_release_request
+release_version: "1.1.0"
 production_tools: 77
-previous_production_baseline_tools: 45
-promoted_tools: 32
+previous_verified_baseline_tools: 45
+expanded_domain_tools: 32
 
-surface:
-  composition:
-    graphics: 32
-    agent: 10
-    world_creator: 3
-    profiler: 8
-    addressables: 4
-    ui: 5
-    animation: 5
-    audio: 5
-    cinematic: 5
-  excluded:
-    - unity_build_mcp
-    - addressables_content_build
-    - movie_creator_runtime
-    - live_creator_runtime
+composition:
+  graphics: 32
+  agent: 10
+  world_creator: 3
+  profiler: 8
+  addressables: 4
+  ui: 5
+  animation: 5
+  audio: 5
+  cinematic: 5
 
 validation_environment:
+  authority: direct_unity_editor_validation
   unity: 6000.7.0a2
-  environment: local_cg
+  evidence: Tests/Compatibility/production-editor-acceptance.yaml
   target_device_claim: false
-  evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
 
 direct_editor_validation:
-  status: passed
-  compile:
-    status: passed
-    compile_errors: 0
+  compile_errors: 0
   runtime_discovery:
-    status: passed
     total_my_unity_mcp_tools: 77
     duplicate_tool_names: 0
     source_only_tools: 0
     runtime_only_tools: 0
   passed:
-    - candidate_domain_readonly_smoke
+    - extended_domain_readonly_smoke
     - stale_revision_rejection
     - approval_boundary_rejection
     - one_time_plan_reuse_rejection
     - profiler_capture
     - ui_animation_audio_cinematic_scoped_mutation_e2e
     - addressables_package_absent_boundary
-    - agent_domain_routing
+    - agent_operational_routing
     - delegated_failure_propagation
+    - cancellation_timeout_domain_reload_callbacks
     - cross_domain_workflow
-    - timeout_cancel_domain_reload_callbacks
     - previous_production_45_regression
 
-addressables:
-  status: editor_operational_optional_backend
-  package_installed_in_validation_environment: false
-  package_absent_result: UNSUPPORTED
-  package_absent_boundary: passed
-  settings_or_group_auto_created: false
-  content_build_invoked: false
-  positive_backend_matrix: not_verified_non_blocking
-
-resilience:
-  local_cancel_timeout_and_domain_reload_callbacks: passed
-  local_project_reregistration_after_reload: passed
-  external_transport_disconnect_reconnect: not_verified_non_blocking
-
 automated_ci:
+  role: supplemental
   status: unavailable_not_verified
-  reason: github_actions_terminated_before_runner_steps
-  observed_steps: null
-  ci_pass_claimed: false
-  code_failure_claimed: false
-  required_for_promotion: false
+  executed_code_failure: false
+  observed_behavior: steps_null_before_runner_execution
+  required_for_product_acceptance: false
 
 not_verified_non_blocking:
   - package_editor_test_runner
@@ -84,12 +59,17 @@ not_verified_non_blocking:
   - automated_ci
   - addressables_positive_backend_matrix
   - external_transport_disconnect_reconnect
+  - target_device_validation
 
 verdict:
-  exact_77_tool_validation: passed_direct_editor
-  production_77_regression_basis: previous_45_regression_plus_promoted_domain_e2e
+  production_surface_validation: passed_direct_editor
+  production_77_tool_surface: accepted
   production_ready: true
-  production_promotion: completed
   automated_ci: unavailable_not_verified
   target_device_validation: not_verified_not_required_for_editor_only_release
-  human_promotion_gate: satisfied_by_explicit_release_request
+
+excluded_from_current_surface:
+  - unity_build_mcp
+  - addressables_content_build
+  - movie_creator_runtime
+  - live_creator_runtime
