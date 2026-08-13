@@ -1,119 +1,87 @@
-schema_version: "1.0"
-wave: stage2_8_implementation
-status: local_cg_runtime_verified_ci_unavailable
-validated_source_branch: graph/myunitymcp-final-completion
-target_integration_branch: delivery/stage2-8-integration
-production_baseline:
-  branch: main
-  commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
-  verified_tool_count: 45
+schema_version: "1.1"
+wave: exact_77_tool_promotion
+status: promoted_editor_operational
+historical_source_branch: graph/myunitymcp-final-completion
+historical_integration_branch: delivery/stage2-8-integration
+
+production_surface:
+  release_version: 1.1.0
+  verified_tool_count: 77
+  previous_baseline_tool_count: 45
+  promoted_tool_count: 32
   composition:
     graphics: 32
     agent: 10
     world_creator: 3
+    profiler: 8
+    addressables: 4
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  excluded:
+    - unity_build_mcp
+    - addressables_content_build
+    - movie_creator_runtime
+    - live_creator_runtime
 
-integration_target:
-  tool_count: 77
-  candidate_tool_count: 32
-  production_merge_before_validation: prohibited
-  graph_wholesale_merge: prohibited
-
-stage_boundaries:
-  stage_2_profiler:
-    tools: 8
-    implementation_commit: f04ea2645c7dc11374ae809da0346ef5ee1eb2de
-    includes_shared_domain_foundation: true
-    status: implemented_local_cg_verified_editor_only
-  stage_3_build:
-    tools: 0
-    historical_implementation_commit: d17a66ce26f995fa48d14773c6899f3cc608bbb3
-    status: retired_removed_from_current_candidate
-    reason: user_decision_low_value_for_current_mcp
-  stage_4_addressables:
-    tools: 4
-    historical_implementation_commit: 28d47d0492904b63426c6dc746a1df8362e160a0
-    optional_package: com.unity.addressables
-    content_build_tools_removed: 2
-    removed_tools:
-      - addressables.prepare_content_build
-      - addressables.build_content
-    status: implemented_local_cg_package_absent_boundary_passed_positive_backend_not_verified
-  stage_5_ui:
-    tools: 5
-    implementation_commit: 058887fb322de6d675bd44fee71f0313ba6c24d1
-    status: implemented_local_cg_verified
-  stage_6_animation:
-    tools: 5
-    implementation_commit: 03244d7d2d5d6c131fdf4084cc334ebcb7c34377
-    status: implemented_local_cg_verified
-  stage_7_audio:
-    tools: 5
-    implementation_commit: 41fe202c2c901b4571613d12f91468996f8e5c9e
-    status: implemented_local_cg_verified
-  stage_8_cinematic:
-    tools: 5
-    implementation_commit: 34d51b6e2b8ca8dce5921770a10f78e2c5a43ba6
-    status: implemented_local_cg_verified
-
-integration_work:
-  exact_77_tool_manifest: implemented
-  exact_77_tool_discovery_contract: passed_local_cg
-  shared_revision_and_approval_plan_store: implemented
-  agent_candidate_domain_catalog: implemented_without_build_or_addressables_content_build
-  agent_candidate_domain_routing: implemented_without_build_or_addressables_content_build
-  agent_build_approval_entry: removed
-  agent_addressables_content_build_approval_entry: removed
-  agent_false_success_guard: implemented
-  combined_domain_safety_contract_tests: not_run_live_contract_probes_passed
-  optional_addressables_backend_contract: package_absent_boundary_passed_positive_backend_not_verified
-  integration_contract_catalog: implemented_without_build_or_addressables_content_build
-  release_structure_gate: passed_for_exact_77
-  mcp_response_error_schema_fix: passed_local_cg
-  agent_delegated_failure_error_compatibility: passed_local_cg
+implementation:
+  exact_77_tool_manifest: completed
+  exact_77_tool_discovery_contract: passed_direct_editor
+  extended_domain_capability_contracts: completed
+  shared_revision_and_approval_plan_store: completed
+  agent_operational_domain_catalog: completed
+  agent_operational_domain_routing: completed
+  agent_false_success_guard: passed_direct_editor
+  optional_addressables_boundary: package_absent_unsupported_passed
+  addressables_positive_backend_matrix: not_verified_non_blocking
+  release_structure_gate: implemented
+  release_publication_static_contract_gate: implemented
 
 safety_invariants:
-  integration_candidate_is_not_production_operational: true
   expected_revision_required_for_mutation: true
   one_time_plan_required: true
-  approval_required_for_destructive_or_persistent_operations: true
+  approval_required_for_mutation: true
   automatic_save: prohibited
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
   silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
   target_device_claim_without_evidence: prohibited
-  player_build_execution_via_candidate: prohibited
-  addressables_content_build_execution_via_candidate: prohibited
+  player_build_execution: excluded
+  addressables_content_build_execution: excluded
 
-validation_wave:
-  status: local_cg_runtime_verified_ci_unavailable
-  local_runtime_pass_claimed: true
-  production_operational_claimed: false
-  progress_evidence: Tests/Compatibility/stage2-8-validation-progress.yaml
-  previous_85_and_79_tool_results_are_not_full_77_tool_evidence: true
-  passed_local_cg:
-    - package_compile
-    - exact_77_tool_discovery
-    - agent_capability_catalog
+validation:
+  authority: direct_unity_editor_validation
+  unity: 6000.7.0a2
+  evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  compile_errors: 0
+  exact_tool_discovery: 77
+  duplicate_tool_names: 0
+  passed:
     - readonly_domain_smoke
-    - stale_revision_and_failure_envelope
-    - approval_boundaries_and_one_time_plan
-    - profiler_capture_editor_only
-    - ui_animation_audio_cinematic_mutation_scope
+    - stale_revision_rejection
+    - approval_boundary_rejection
+    - one_time_plan_reuse_rejection
+    - profiler_capture
+    - ui_animation_audio_cinematic_scoped_mutation_e2e
     - addressables_package_absent_boundary
-    - agent_to_each_candidate_domain_routing
-    - cancellation_timeout_and_domain_reload_callbacks
-    - cross_domain_workflows
-    - production_45_regression
-  remaining_not_verified:
+    - agent_operational_routing
+    - delegated_failure_propagation
+    - cancellation_timeout_domain_reload_callbacks
+    - cross_domain_workflow
+    - previous_production_45_regression
+  supplemental_ci: unavailable_not_verified
+  not_verified_non_blocking:
     - package_editor_test_runner
     - fresh_project_sample_workflow
-    - automated_ci
     - addressables_positive_backend_matrix
     - external_transport_disconnect_reconnect
-  automated_ci_status: unavailable_not_verified
-  human_promotion_gate: pending
+    - target_device_validation
 
-next_action:
-  name: human_review_and_promote_to_delivery_branch
-  merge_to_main_before_completion: false
-  automatic_promotion: prohibited
+promotion:
+  production_operational: true
+  human_promotion_gate: satisfied_by_explicit_release_request
+  human_release_gate: satisfied_by_explicit_release_request
+  release_candidate_branch: release/v1.1.0-graph-engineering
+  next_action: static_contract_pr_merge_and_publish_v1_1_0
