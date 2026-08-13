@@ -87,7 +87,7 @@ namespace UnityAgentMcp
 	[InitializeOnLoad]
 	public sealed class UnityAgentMcpRuntime
 	{
-		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpCatalog.json";
+		private const string CATALOG_PATH = "Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json";
 		private const string HISTORY_PATH = "Library/MyUnityMCP/AgentExecution/history.jsonl";
 		private const int APPROVAL_TTL_MINUTES = 10;
 		private const int DEFAULT_EXECUTION_TIMEOUT_SECONDS = 60;
