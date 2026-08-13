@@ -1,26 +1,14 @@
-schema_version: "1.0"
-record: stage2_8_main_merge_acceptance
-recorded_at: "2026-08-13T08:43:45+09:00"
-status: main_merge_accepted_manual_unity_editor_ci_unavailable
-
+schema_version: "1.1"
+record: production_editor_acceptance
+recorded_at: "2026-08-13"
+status: accepted_direct_unity_editor_ci_unavailable
 repository: DarumaPPAP/MyUnityMCP
-
-promotion_path:
-  child_pr:
-    number: 40
-    source: graph/myunitymcp-final-completion
-    target: delivery/stage2-8-integration
-    merge_sha: 2512c87f1bfd2846d3a149bd1907cfe8a159fcad
-  main_pr:
-    number: 39
-    source: delivery/stage2-8-integration
-    target: main
-    merge_sha: d81d9cc8f324691bd6ca9ad6985dc6b0699cbd9a
+release_version: "1.1.0"
 
 surface:
   total_tools: 77
-  production_baseline_tools: 45
-  stage2_8_tools: 32
+  previous_verified_baseline_tools: 45
+  expanded_domain_tools: 32
   composition:
     graphics: 32
     agent: 10
@@ -37,41 +25,47 @@ surface:
     - movie_creator_runtime
     - live_creator_runtime
 
-manual_validation:
+direct_editor_validation:
   accepted_by_repository_owner: true
+  authority: direct_unity_editor_validation
   unity: 6000.7.0a2
   environment: local_cg
   compile_errors: 0
   exact_tool_discovery: 77
   duplicate_tool_names: 0
+  source_only_tools: 0
+  runtime_only_tools: 0
   accepted_evidence:
-    - candidate_domain_readonly_smoke
+    - extended_domain_readonly_smoke
     - stale_revision_rejection
-    - approval_boundary_rejection
+    - missing_or_wrong_approval_rejection
     - one_time_plan_reuse_rejection
     - profiler_capture
     - ui_animation_audio_cinematic_scoped_mutation_e2e
-    - addressables_package_absent_boundary
-    - agent_candidate_routing
-    - delegated_failure_propagation
+    - addressables_package_absent_boundary_returns_unsupported
+    - agent_operational_routing
+    - delegated_failure_propagation_without_false_success
     - cross_domain_workflow
     - timeout_cancel_domain_reload_callbacks
-    - production_45_regression
+    - previous_production_45_regression
 
 automated_ci:
-  status: not_verified
-  reason: github_actions_terminated_before_runner_steps
-  observed_steps: null
-  ci_pass_claimed: false
-  code_failure_claimed: false
+  role: supplemental
+  status: unavailable_not_verified
+  executed_code_failure: false
+  observed_behavior: steps_null_before_runner_execution
+  blocks_product_acceptance: false
+
+not_verified_non_blocking:
+  - package_editor_test_runner
+  - fresh_project_sample_workflow
+  - automated_ci
+  - addressables_positive_backend_matrix
+  - external_transport_disconnect_reconnect
+  - target_device_validation
 
 acceptance:
-  pr_40_merge_authorized: true
-  pr_39_main_merge_authorized: true
-  source_merge_to_main_completed: true
-  ci_unavailability_explicitly_accepted_for_this_merge: true
-
-semantics:
-  main_merge_does_not_rewrite_ci_not_verified_to_pass: true
-  main_merge_does_not_claim_target_device_validation: true
-  remaining_not_verified_evidence_is_preserved: true
+  production_surface_accepted: true
+  product_source_integrated_to_main: true
+  ci_unavailability_explicitly_accepted_for_product_acceptance: true
+  direct_editor_validation_is_not_target_device_validation: true
