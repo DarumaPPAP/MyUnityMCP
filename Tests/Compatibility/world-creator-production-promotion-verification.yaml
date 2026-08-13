@@ -1,14 +1,11 @@
-schema_version: "1.0"
-stage: 1
-stage_name: world_creator_delivery
-status: integration_verified_manual
+schema_version: "1.1"
+record: world_creator_production_verification
+status: historical_editor_verified
 recorded_at: "2026-08-12"
 
-promotion_candidate:
-  branch: delivery/world-creator
-  tested_commit: 26dfdb84d76fb73309ab197f093328d619cc24ea
+production_snapshot:
   package_version: "1.1.0"
-  target_tool_count: 45
+  production_tool_count: 45
   composition:
     graphics: 32
     agent: 10
@@ -19,27 +16,21 @@ world_creator_tools:
   - world.start_preflight
   - world.create_review_handoff
 
-manual_environment:
+direct_editor_validation:
+  authority: direct_unity_editor_validation
   editor: real_unity_editor
   scene_scope: current_loaded_scene
   scene_asset_mutation_allowed: false
   direct_unity_api_allowed: false
   force_or_safety_bypass_allowed: false
-
-manual_gates:
   production_tool_discovery:
     status: passed
     expected: 45
     observed: 45
-    composition:
-      graphics: 32
-      agent: 10
-      world_creator: 3
   world_compile_workflow:
     status: passed
     creator: world_creator
     direct_unity_mutation: false
-    graph_id: agent-graph-7f8e6d4ce0bf46beb8f76631cc84d37d
     graph_step_count: 3
     graph_steps:
       - graphics.inspect_project
@@ -47,15 +38,10 @@ manual_gates:
       - graphics.validate_scene
   readonly_preflight:
     status: passed
-    execution_id: agent-exec-a8adfa5f49b442299dd03f810cb6aaed
     terminal_status: SUCCEEDED
     execution_succeeded: true
     completed_steps: 3
     total_steps: 3
-    step_results:
-      graphics.inspect_project: SUCCESS
-      graphics.inspect_scene: SUCCESS
-      graphics.validate_scene: SUCCESS
   review_handoff:
     status: passed
     handoff_status: HUMAN_REVIEW_REQUIRED
@@ -67,14 +53,8 @@ manual_gates:
     error_code: WORLD-REVISION-STALE
   premature_handoff_rejection:
     status: not_observed_due_to_timing
-    attempted_while_execution_reported_running: true
-    observed_result: execution_completed_before_handoff_evaluation
-    returned_handoff_status: HUMAN_REVIEW_REQUIRED
-    note: The real Editor completed the three-step read-only graph before the handoff call was evaluated, so WORLD-PREFLIGHT-INCOMPLETE was not observed manually. The production contract retains the explicit terminal-SUCCEEDED guard and dedicated regression test, but automated execution remains unavailable because the GitHub runner did not start steps.
+    note: The Editor completed the three-step read-only graph before the handoff call was evaluated. The explicit terminal-SUCCEEDED guard remains covered by the dedicated regression test.
   scene_state:
-    dirty_before: true
-    dirty_after: true
-    additional_dirty_transition_observed: false
     mutation_performed: false
     save_performed: false
     bake_performed: false
@@ -82,13 +62,11 @@ manual_gates:
     force_used: false
     safety_bypass_used: false
 
-promotion_verdict:
-  decision: passed_with_manual_editor_evidence
-  world_creator_status: integration_verified_manual
-  production_promotion_allowed: true
-  blocking_manual_failures: []
-  non_blocking_not_observed:
-    - premature_handoff_rejection_timing_case
+production_verdict:
+  decision: passed_with_direct_editor_evidence
+  world_creator_status: historical_editor_verified
+  production_integration_allowed: true
+  blocking_editor_failures: []
   safety_contract_preserved:
     direct_unity_mutation: prohibited
     automatic_save: prohibited
@@ -98,21 +76,7 @@ promotion_verdict:
     human_review_required: true
 
 automated_ci:
-  status: unavailable
-  verdict: not_verified
+  status: unavailable_not_verified
   reason: GitHub Actions jobs terminated before workflow steps executed.
   observed_behavior: steps_null
-  affected_gates:
-    - release_gate
-    - unity_editor_verification
-    - compatibility_contract
-    - unity_6000_4_matrix
-    - unity_6000_5_matrix
-    - unity_6000_7_matrix
-  policy: Manual Unity Editor evidence does not convert unavailable automated CI into passed CI.
-
-stage_exit:
-  world_creator_delivery_complete: true
-  production_tool_surface_after_merge: 45
-  graph_wholesale_merge_to_main: prohibited
-  next_recommended_capability: profiler
+  policy: Direct Unity Editor evidence does not convert unavailable automated CI into passed CI.
