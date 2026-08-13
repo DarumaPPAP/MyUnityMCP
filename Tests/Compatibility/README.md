@@ -11,7 +11,7 @@
 ## Historical Evidence
 
 - `production-baseline-verification.yaml`: 42 Tool時点のDirect Editor統合Evidence
-- `world-creator-production-promotion-verification.yaml`: 45 Tool時点のWorldCreator Production Evidence
+- `world-creator-production-verification.yaml`: 45 Tool時点のWorldCreator Production Evidence
 - `integration-hardening-verification.yaml`: v0.8 Hardening Evidence
 - `apv-visual-acceptance-verification.yaml`: APV / Visual Acceptance実装時Evidence
 - `capture-evidence-verification.yaml`: Capture実装時Evidence
