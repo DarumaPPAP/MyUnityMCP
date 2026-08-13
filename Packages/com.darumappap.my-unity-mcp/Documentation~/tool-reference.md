@@ -2,9 +2,9 @@
 
 全Toolは`AutoRegister = false`です。`requestId`は追跡用で、多くのToolでは省略可能です。Mutation系ID、Revision、Tokenは直前Responseをそのまま使用します。
 
-Current mainのProduction Tool Surfaceは **45 Tool = 32 Graphics + 10 Agent + 3 WorldCreator** です。`v1.0.0` Tagは32 Graphics Toolのimmutable baselineです。
+v1.1.0 Production Surfaceは **77 Tool** です。
 
-## Graphics Domain
+## Graphics Domain — 32
 
 | Group | Tool | Purpose | Side effect |
 |---|---|---|---|
@@ -23,15 +23,15 @@ Current mainのProduction Tool Surfaceは **45 Tool = 32 Graphics + 10 Agent + 3
 | Save | `graphics.apply_save_plan` | 承認済みSceneだけを保存 | Scene File書込 |
 | Bake | `graphics.prepare_bake_plan` | Dirty DependencyとBackendを固定 | なし |
 | Bake | `graphics.bake_dependencies` | 承認済みDependencyだけを同期Bake | Asset／Lighting出力 |
-| Capture | `graphics.capture_evaluation` | 互換Color Captureを作成 | Library出力 |
-| Refine | `graphics.refine_direction` | Human ReviewからDirectionを更新 | なし |
-| Capture | `graphics.capture_evidence` | COLOR／DEPTH／OBJECT_ID Bundleを作成 | Library出力 |
-| Review | `graphics.submit_visual_review` | Evidence DigestへHuman Decisionを固定 | Session記録 |
-| Refine | `graphics.refine_from_visual_review` | Rejected Reviewを次Planへ変換 | なし |
 | APV | `graphics.prepare_apv_bake_plan` | Baking Set／Scenario／Scene／Outputを固定 | なし |
 | APV | `graphics.start_apv_bake` | 承認済みAPV Jobを開始 | Asset出力 |
 | APV | `graphics.get_apv_bake_status` | APV Job状態とOutput差分を取得 | なし |
 | APV | `graphics.cancel_apv_bake` | APV JobへCancellation要求 | Job制御 |
+| Capture | `graphics.capture_evaluation` | 互換Color Captureを作成 | Library出力 |
+| Capture | `graphics.capture_evidence` | COLOR／DEPTH／OBJECT_ID Bundleを作成 | Library出力 |
+| Refine | `graphics.refine_direction` | Human ReviewからDirectionを更新 | なし |
+| Review | `graphics.submit_visual_review` | Evidence DigestへHuman Decisionを固定 | Session記録 |
+| Refine | `graphics.refine_from_visual_review` | Rejected Reviewを次Planへ変換 | なし |
 | Evaluation | `graphics.prepare_acceptance_profile` | 評価項目とBudgetを固定 | なし |
 | Evaluation | `graphics.evaluate_capture` | 外部MeasurementでEvidenceを評価 | Session記録 |
 | Refine | `graphics.refine_from_evaluation` | 失敗Evaluationを次Planへ変換 | なし |
@@ -41,48 +41,113 @@ Current mainのProduction Tool Surfaceは **45 Tool = 32 Graphics + 10 Agent + 3
 | Execution | `graphics.get_error_catalog` | Error CodeとRetry手順を取得 | なし |
 | Execution | `graphics.get_support_matrix` | 実行中PackageのSupport Contractを取得 | なし |
 
-## UnityAgent Control Plane
+## UnityAgent Control Plane — 10
 
-UnityAgentMCPはUnity APIを直接Mutationしません。Workflowを検証／Compileして、Operational Domain MCPへStep単位で委譲します。Current mainでOperationalなDelegate Domainは`unity_graphics_mcp`です。
+UnityAgentMCPはUnity APIを直接Mutationしません。Operational Domain MCPへStep単位で委譲します。
 
-| Group | Tool | Purpose | Side effect |
-|---|---|---|---|
-| Agent | `agent.inspect_capabilities` | Domain、Tool Group、実行可否をRead-only取得 | なし |
-| Agent | `agent.validate_workflow` | Step、依存関係、Domain／Tool宣言をRead-only検証 | なし |
-| Agent | `agent.compile_graph` | WorkflowをRevision固定のExecution GraphへCompile | なし |
-| Agent | `agent.preview_execution` | Step、Mutation Group、必要ApprovalをPreview | なし |
-| Agent | `agent.submit_approval` | 必要Groupを明示承認し期限付きTokenを発行 | Session内承認状態 |
-| Agent | `agent.start_execution` | Revision／Approvalを再検証して協調Executionを開始 | Domainへ委譲 |
-| Agent | `agent.get_execution_status` | Agent Execution状態とStep Resultを取得 | なし |
-| Agent | `agent.cancel_execution` | Running Executionを安全なStep境界でCancel | 実行制御 |
-| Agent | `agent.get_execution_history` | 永続Agent Execution Historyを取得 | なし |
-| Agent | `agent.get_error_catalog` | Agent Error CodeとRetryabilityを取得 | なし |
+- `agent.inspect_capabilities`
+- `agent.validate_workflow`
+- `agent.compile_graph`
+- `agent.preview_execution`
+- `agent.submit_approval`
+- `agent.start_execution`
+- `agent.get_execution_status`
+- `agent.cancel_execution`
+- `agent.get_execution_history`
+- `agent.get_error_catalog`
 
-AgentのMutationを伴うWorkflowでは、`compile_graph` → `preview_execution` → `submit_approval` → `start_execution`の境界を省略できません。非Operational Domainは`agent.validate_workflow`で拒否されます。
+Mutationを伴うWorkflowでは`compile_graph` → `preview_execution` → `submit_approval` → `start_execution`を省略できません。
 
-## WorldCreator
+## WorldCreator — 3
 
-WorldCreatorはVisual GoalをRead-only Graphics Preflightへ変換するCreator Layerです。Unity APIを直接Mutationせず、UnityAgentMCPを経由して既存Graphics Toolへ委譲します。
+- `world.compile_workflow`
+- `world.start_preflight`
+- `world.create_review_handoff`
 
-| Group | Tool | Purpose | Side effect |
-|---|---|---|---|
-| Creator | `world.compile_workflow` | Visual Goal、Scene Scope、Mood、Platform、禁止変更、Acceptance条件からRevision固定Preflight GraphをCompile | なし |
-| Creator | `world.start_preflight` | Compile済みWorld GraphをAgent Executionとして開始 | Read-only Domain実行 |
-| Creator | `world.create_review_handoff` | Preflight結果をHuman Review必須のHandoffへ変換 | なし |
+Canonical Preflightは`graphics.inspect_project` → `graphics.inspect_scene` → `graphics.validate_scene`です。WorldCreatorはDirect Unity Mutationを行いません。
 
-Canonical Preflightは`graphics.inspect_project` → `graphics.inspect_scene` → `graphics.validate_scene`です。`world.create_review_handoff`は`HUMAN_REVIEW_REQUIRED`を返し、`automaticVisualAcceptance`は`false`です。Mutation／Save／BakeはWorldCreatorから直接実行せず、後続Graphics Domainの既存Approval Boundaryへ渡します。
+## Profiler Domain — 8
 
-## Common response
+- `profiler.inspect_environment`
+- `profiler.inspect_counters`
+- `profiler.prepare_capture`
+- `profiler.start_capture`
+- `profiler.get_capture_status`
+- `profiler.cancel_capture`
+- `profiler.summarize_capture`
+- `profiler.compare_baseline`
 
-Graphics Domain Responseでは主に次を使用します。
+Profiler ResultはEditor Environment IdentityをEvidenceとして保持します。Target Device性能として扱うには別のDevice Evidenceが必要です。
 
-- `status`: Tool結果
-- `sessionId`／`revision`: Editor状態の同一性
+## Addressables Domain — 4
+
+- `addressables.inspect`
+- `addressables.prepare_entry`
+- `addressables.apply_entry`
+- `addressables.get_support_matrix`
+
+AddressablesはOptional Packageです。Package未導入時は`UNSUPPORTED`を返し、自動Package導入、Settings/Group生成、Content BuildへFallbackしません。
+
+## UI Domain — 5
+
+- `ui.inspect`
+- `ui.validate`
+- `ui.prepare_rect_transform`
+- `ui.apply_rect_transform`
+- `ui.get_support_matrix`
+
+Mutation ScopeはRectTransformに限定され、Expected Revision、One-time Plan、Approval Tokenが必要です。
+
+## Animation Domain — 5
+
+- `animation.inspect`
+- `animation.validate`
+- `animation.prepare_parameter`
+- `animation.apply_parameter`
+- `animation.get_support_matrix`
+
+Mutation ScopeはAnimatorController Parameterに限定します。State Machine / Transition / Curve / Clip Event書換えは対象外です。
+
+## Audio Domain — 5
+
+- `audio.inspect`
+- `audio.validate`
+- `audio.prepare_source`
+- `audio.apply_source`
+- `audio.get_support_matrix`
+
+Mutation Scopeは対応AudioSource Propertyに限定します。AudioClip ReplacementやAudioMixer Asset生成は対象外です。
+
+## Cinematic Domain — 5
+
+- `cinematic.inspect`
+- `cinematic.validate`
+- `cinematic.prepare_director`
+- `cinematic.apply_director`
+- `cinematic.get_support_matrix`
+
+Mutation Scopeは対応PlayableDirector Settingsに限定します。PlayableAsset Replacement、Timeline Track/Clip生成、Generic Binding、Cinemachine Shot Mutationは対象外です。
+
+## Common Safety
+
+Mutation系Domainは以下を共通境界とします。
+
+- PrepareはRead-only
+- Expected Revision必須
+- One-time Plan必須
+- Approval Token必須
+- Exact Scope外Mutation禁止
+- Automatic Save禁止
+- Silent Fallback禁止
+
+## Common Response
+
+主に以下を返します。
+
+- `status` / `success`: Tool結果
+- `sessionId` / `revision`: Editor状態の同一性
 - `data`: Tool固有結果
-- `issues`: Domain Finding
-- `error`: Code、Category、Retryability、Retry Action、Remediation
-- `execution`: Execution ID、Trace ID、Duration、Progress
-
-Agent／WorldCreator Responseでは`success`、`errorCode`、`message`、Graph／Execution ID、Step Result、Review Handoffを返します。
+- `error` / `errorCode`: Error Code、Retryability、Remediation
+- `execution`: Execution ID、Trace ID、Progress、Terminal State
 
 Parameterの正確なSchemaはBridgeが公開するMCP Tool Schemaを正本とします。
