@@ -1,10 +1,11 @@
-schema_version: "1.2"
+schema_version: "1.3"
 package_version: "1.1.0"
 source_channel: v1_1_release_candidate
 
 release_surface:
-  status: promotion_ready
+  status: release_ready
   production_tool_count: 77
+  contract: Catalog/production-surface-contract.yaml
   composition:
     graphics: 32
     agent: 10
@@ -24,7 +25,8 @@ release_surface:
 verification_contract:
   primary_authority: direct_unity_editor_validation
   supplemental_authority: automated_ci
-  direct_editor_evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  direct_editor_evidence: Tests/Compatibility/production-editor-acceptance.yaml
+  production_validation_evidence: Tests/Compatibility/production-validation-evidence.yaml
   discovered_mcp_tools: 77
   duplicate_tool_names: 0
   fresh_project_sample_required_for_v1_1_0: false
@@ -190,9 +192,9 @@ execution_services:
 
 release_gates:
   direct_editor_validation: passed
+  production_surface_contract: validated_at_publication
   static_contract: pending_pr_validation
   automated_ci: unavailable_not_verified_non_blocking
-  human_promotion_gate: satisfied_by_explicit_release_request
   human_release_gate: satisfied_by_explicit_release_request
 
 not_verified:
