@@ -2,22 +2,31 @@
 
 ## Status
 
-- Product state: `Editor Operational` on current main delivery candidate
+- Product state: `Editor Operational`
 - Kind: Control Plane
 - Direct Unity mutation: prohibited
-- Current operational delegate domain: `unity_graphics_mcp`
 - Tool count: 10
 - Player runtime execution: unsupported
 
-`v1.0.0` Tag is the immutable pre-Agent release baseline. This specification describes the capability being promoted to current `main`; Version／Tag Publication is a separate release operation.
+v1.1.0では以下のOperational Domainへ委譲できます。
+
+- `unity_graphics_mcp`
+- `unity_profiler_mcp`
+- `unity_addressables_mcp`
+- `unity_ui_mcp`
+- `unity_animation_mcp`
+- `unity_audio_mcp`
+- `unity_cinematic_mcp`
+
+WorldCreatorはCreator LayerとしてAgent Control Planeを利用します。
 
 ## Responsibility
 
-UnityAgentMCP owns workflow-level coordination only. It validates requested steps, compiles a dependency graph, previews execution scope, enforces approval/revision boundaries, delegates each executable step to an operational Domain MCP, and records execution status/history.
+UnityAgentMCPはWorkflow-level Coordinationだけを担当します。Requested Stepを検証し、Dependency GraphをCompileし、Execution ScopeをPreviewし、Approval / Revision Boundaryを適用して、各Executable StepをOperational Domain MCPへ委譲します。
 
-UnityAgentMCP does **not** own Unity object mutation logic and must not call arbitrary Unity mutation APIs as a substitute for a Domain MCP.
+UnityAgentMCPはUnity Object Mutation Logicを所有せず、Domain MCPの代わりに任意Unity APIを書き換えません。
 
-## Tool surface
+## Tool Surface
 
 - `agent.inspect_capabilities`
 - `agent.validate_workflow`
@@ -30,9 +39,9 @@ UnityAgentMCP does **not** own Unity object mutation logic and must not call arb
 - `agent.get_execution_history`
 - `agent.get_error_catalog`
 
-All tools use `AutoRegister = false` and require explicit client/bridge activation.
+全Tool `AutoRegister = false`です。
 
-## Workflow contract
+## Workflow Contract
 
 ```text
 inspect capabilities
@@ -45,67 +54,60 @@ inspect capabilities
 → status / cancel / history
 ```
 
-A workflow step declares:
+Workflow Stepは`stepId`、`domainId`、`toolName`、`toolGroup`、`dependsOn`、Tool Parametersを宣言します。
 
-- stable `stepId`
-- `domainId`
-- exact MCP `toolName`
-- `toolGroup`
-- dependencies (`dependsOn`)
-- tool parameters
+ValidationはDuplicate / Missing Step ID、Missing Dependency、Cycle、Undeclared Tool / Group、Non-operational Domain、Direct Control Plane Mutationを拒否します。
 
-Validation rejects duplicate/missing Step IDs, missing dependencies, dependency cycles, undeclared tools/groups, non-operational domains, and any Domain catalog entry that would permit direct Control Plane mutation.
+## Revision and Approval Safety
 
-## Revision and approval safety
+- Graph Compileは`Session.Revision`へ固定
+- Preview / StartはEditor Revision変更後の古いGraphを拒否
+- Mutation-capable Groupは明示Approval必須
+- Approval Tokenは期限付きかつCompiled Graph / Group Scope限定
+- Read-only Delegateが予期せずRevisionを変更した場合はExecutionを中断
+- Successful Mutation後はExpected Revisionを更新して次Stepへ進む
 
-- Graph compile is bound to `Session.Revision`.
-- Preview/start reject a graph after Editor Revision changes.
-- Mutation-capable groups require explicit approval before execution.
-- Approval tokens are time-limited and scoped to the compiled graph/groups.
-- A delegated read-only step that unexpectedly changes Editor Revision interrupts execution.
-- A successful approved mutation updates the expected revision before the next step.
+## Cooperative Execution
 
-## Cooperative execution
+- Timeout: 1–3600 seconds、default 60
+- Safe Step BoundaryでCancellation
+- Client Disconnect interruption
+- Structured Terminal State
+- Persistent Execution History
+- Reload / Restart / Disconnect後のAutomatic Resumeは禁止
 
-Execution advances at safe step boundaries rather than recursively running an unbounded workflow.
+## Delegation Boundary
 
-Supported controls:
+Agentは`Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpCatalog.json`で`editor_operational`と宣言され、Repository Catalog / Capability Contractと整合するDomainだけを実行します。
 
-- timeout (1–3600 seconds, default 60)
-- cancellation before the next delegated step
-- client-disconnect interruption
-- structured terminal state
-- persistent execution history
+v1.1.0ではGraphics、Profiler、Addressables、UI、Animation、Audio、CinematicがOperational Delegateです。各Domain固有のRevision / Plan / Approval / Scope ContractはAgent経由でも省略できません。
 
-Automatic resume after reload/restart/disconnect is prohibited.
+Addressables Packageが存在しない場合はDomainの明示`UNSUPPORTED`をそのまま伝播し、Package導入やSettings/Group生成へSilent Fallbackしません。
 
-## Delegation boundary
+新しいDomainを追加する場合、Production Catalog、Agent Runtime Catalog、Capability Contract、Tests、Documentation、Safety Evidenceを同一Deliveryで更新します。
 
-Current production Agent execution delegates only to registered `unity_graphics_mcp` handlers. Domains that are present only as design/candidate metadata remain non-operational and are rejected during workflow validation.
+## Result Integrity
 
-The Stage 2-8 integration branch has one explicit validation-only exception: domains declared as `integration_candidate` in the runtime catalog may be routed for bounded validation. This does not change their Production status, does not bypass the Domain revision/plan/approval contract, and does not permit any undeclared, retired, or design-only domain to execute.
-
-Promoting another Domain does not automatically make it executable through Agent. Its production catalog state, Agent runtime catalog entry, delegate registration, tests, documentation, and safety contract must be promoted together.
-
-## Result integrity
-
-A delegated failure must not be represented as success.
+Delegated FailureをSuccessとして表現しません。
 
 - first-step failure → `FAILED`
 - failure after earlier successful steps → `PARTIAL`
-- revision/timeout/disconnect interruption → `INTERRUPTED`
+- revision / timeout / disconnect interruption → `INTERRUPTED`
 - cancellation → `CANCELLED`
 - all steps completed successfully → `SUCCEEDED`
 
-Structured errors expose an error code and retryability contract. `unavailable` or non-operational states are never converted to PASS.
+`unavailable` / `UNSUPPORTED` / failureはPASSへ変換しません。
 
 ## Evidence
 
-Capability verification is based on:
+v1.1.0 Operational RoutingはUnity `6000.7.0a2` Direct Editor Evidenceを正本とします。
 
-- Graph Engineering Run #52 automated EditMode contracts for unchanged Agent source on Unity 6000.0.75f1 / 6000.4.12f1 / 6000.5.5f1;
-- Unity 6000.7.0a2 manual Git-package compile/recognition and combined tool-discovery canary;
-- `UnityAgentMcpRuntimeTests` shipped with the capability;
-- production delivery diff review from latest main.
+- Exact 77 Tool Discovery
+- Duplicate 0
+- Agent Domain Routing PASS
+- Addressables `UNSUPPORTED` delegated failure propagation PASS
+- Cross-domain Workflow PASS
+- Timeout / Cancel / Domain Reload callbacks PASS
+- Previous Production 45 Regression PASS
 
-Current Actions infrastructure may fail before runner steps start. Such runner-side failures remain explicitly distinct from Unity/contract test failures.
+GitHub ActionsがRunner Step開始前に利用不能だった場合は`not_verified`として保持し、Direct Editor Evidenceを否定するCode Failureとして扱いません。
