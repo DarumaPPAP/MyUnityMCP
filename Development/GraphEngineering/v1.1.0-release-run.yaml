@@ -1,0 +1,70 @@
+schema_version: "1.0"
+id: myunitymcp-v1.1.0-release
+status: release_candidate_implementation
+
+execution_control_plane:
+  repository: DarumaPPAP/Unity-Graph-Engineering
+  main_commit: 7c87604fa0145fcf2ca57dfc102eb75f0f8e80c8
+  workflow: workflows/unity-editor-first-verification.yaml
+  policy: policies/unity-editor-first-verification.yaml
+  execution_profile: personal_full_control
+
+product:
+  repository: DarumaPPAP/MyUnityMCP
+  source_branch: main
+  source_commit: 07a42df65d09aaf823a35e40827f88fc426376e4
+  work_branch: release/v1.1.0-graph-engineering
+  release_version: 1.1.0
+  release_tag: v1.1.0
+
+reused_primary_editor_evidence:
+  file: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  unity: 6000.7.0a2
+  compile_errors: 0
+  exact_tool_discovery: 77
+  duplicate_tool_names: 0
+  domain_smoke: passed
+  safety_contract: passed
+  scoped_mutation_e2e: passed
+  agent_routing: passed
+  cross_domain_workflow: passed
+  previous_production_45_regression: passed
+
+release_graph:
+  - node: resolve_authority
+    status: passed
+  - node: static_contract_design
+    status: passed
+  - node: direct_editor_evidence_reuse
+    status: passed_no_runtime_source_change
+  - node: promote_capability_contracts
+    status: implemented
+  - node: promote_agent_runtime_catalog
+    status: implemented
+  - node: normalize_manifest_support_docs
+    status: implemented
+  - node: strengthen_release_workflow
+    status: implemented
+  - node: pull_request_static_contract
+    status: pending
+  - node: merge_to_main
+    status: pending
+  - node: publish_v1.1.0
+    status: pending
+  - node: verify_release_identity
+    status: pending
+
+supplemental_ci:
+  role: non_blocking
+  current_status: unavailable_not_verified
+  executed_code_failure: false
+
+not_verified_non_blocking:
+  - package_editor_test_runner
+  - fresh_project_sample_workflow
+  - addressables_positive_backend_matrix
+  - external_transport_disconnect_reconnect
+  - target_device_validation
+
+human_gate:
+  promotion_and_release: satisfied_by_user_request
