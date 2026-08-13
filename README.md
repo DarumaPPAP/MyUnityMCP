@@ -30,7 +30,7 @@ Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator r
 
 ## Verification
 
-v1.1.0 PromotionはDirect Unity Editor ValidationをPrimary Gateとして扱います。
+v1.1.0はDirect Unity Editor ValidationをPrimary Gateとして扱います。
 
 Unity `6000.7.0a2`の実Editor Evidenceで以下を確認済みです。
 
@@ -79,22 +79,23 @@ Visual Goal → Read-only Preflight → Human Review Handoff
 ```text
 MyUnityMCP/
 ├─ Packages/        # 実行可能なUPM Package
-├─ Catalog/         # Operational Capability Contract
+├─ Catalog/         # Operational Capability / Production Surface Contract
 ├─ Specs/           # 現行製品仕様
 ├─ Tests/           # Release / Compatibility / Editor Evidence
-├─ Development/     # Graph Engineering履歴
 ├─ SampleProjects/  # Standalone Sample Project
 ├─ Templates/       # MCP Client / CI / Acceptance Profile配布物
 ├─ Design/          # 未実装Capabilityの設計資産
 └─ .github/         # Repository automation
 ```
 
+Graph EngineeringのGoal / Workflow / Run Recordなどの開発制御資産は、この製品RepositoryのProduction `main`には含めません。
+
 ## Documentation
 
 - [Installation](Packages/com.darumappap.my-unity-mcp/Documentation~/installation.md)
 - [Quick Start](Packages/com.darumappap.my-unity-mcp/Documentation~/quick-start.md)
 - [Tool Reference](Packages/com.darumappap.my-unity-mcp/Documentation~/tool-reference.md)
-- [77 Tool Promotion Record](Packages/com.darumappap.my-unity-mcp/Documentation~/stage2-8-integration.md)
+- [Production Surface](Packages/com.darumappap.my-unity-mcp/Documentation~/production-surface.md)
 - [Safety Model](Packages/com.darumappap.my-unity-mcp/Documentation~/safety-model.md)
 - [Troubleshooting](Packages/com.darumappap.my-unity-mcp/Documentation~/troubleshooting.md)
 - [Known Issues](Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md)
