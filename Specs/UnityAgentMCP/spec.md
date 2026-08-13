@@ -78,7 +78,7 @@ ValidationはDuplicate / Missing Step ID、Missing Dependency、Cycle、Undeclar
 
 ## Delegation Boundary
 
-Agentは`Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpCatalog.json`で`editor_operational`と宣言され、Repository Catalog / Capability Contractと整合するDomainだけを実行します。
+Agentは`Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json`で`editor_operational`と宣言され、Repository Catalog / Capability Contractと整合するDomainだけを実行します。
 
 v1.1.0ではGraphics、Profiler、Addressables、UI、Animation、Audio、CinematicがOperational Delegateです。各Domain固有のRevision / Plan / Approval / Scope ContractはAgent経由でも省略できません。
 
