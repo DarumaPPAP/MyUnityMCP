@@ -1,6 +1,6 @@
-schema_version: "1.0"
+schema_version: "1.1"
 id: myunitymcp-v1.1.0-release
-status: release_candidate_implementation
+status: release_ready_for_main
 
 execution_control_plane:
   repository: DarumaPPAP/Unity-Graph-Engineering
@@ -14,6 +14,7 @@ product:
   source_branch: main
   source_commit: 07a42df65d09aaf823a35e40827f88fc426376e4
   work_branch: release/v1.1.0-graph-engineering
+  release_pr: 43
   release_version: 1.1.0
   release_tag: v1.1.0
 
@@ -30,23 +31,58 @@ reused_primary_editor_evidence:
   cross_domain_workflow: passed
   previous_production_45_regression: passed
 
+static_contract_review:
+  capability_contract_structure: passed_by_repository_review
+  release_contract_alignment: passed_by_repository_review
+  immutable_release_ordering: passed_by_repository_review
+  source_tool_surface_changed: false
+  agent_runtime_status_change:
+    from: integration_candidate
+    to: editor_operational
+    executable_code_path_equivalent: true
+    evidence: UnityAgentMcpRuntime.IsExecutableDomainStatus accepts both statuses
+
+supplemental_ci:
+  role: non_blocking
+  current_status: unavailable_not_verified
+  executed_code_failure: false
+  observed_pr_runs:
+    release_gate:
+      run_id: 31669445435
+      jobs: 2
+      all_steps_null: true
+    unity_api_compatibility_editor_matrix:
+      run_id: 31669445421
+      jobs: 3
+      all_steps_null: true
+    unity_api_compatibility_contract:
+      run_id: 31669445439
+      jobs: 1
+      all_steps_null: true
+    unity_editor_verification:
+      run_id: 31669445433
+      jobs: 1
+      all_steps_null: true
+  interpretation: infrastructure_unavailable_before_runner_steps
+
 release_graph:
   - node: resolve_authority
     status: passed
-  - node: static_contract_design
-    status: passed
+  - node: static_contract_check
+    status: passed_repository_review_ci_not_verified
   - node: direct_editor_evidence_reuse
-    status: passed_no_runtime_source_change
+    status: passed_no_csharp_tool_surface_change
   - node: promote_capability_contracts
-    status: implemented
+    status: completed
   - node: promote_agent_runtime_catalog
-    status: implemented
+    status: completed
   - node: normalize_manifest_support_docs
-    status: implemented
+    status: completed
   - node: strengthen_release_workflow
-    status: implemented
-  - node: pull_request_static_contract
-    status: pending
+    status: completed
+  - node: pull_request
+    status: ready
+    pr: 43
   - node: merge_to_main
     status: pending
   - node: publish_v1.1.0
@@ -54,14 +90,10 @@ release_graph:
   - node: verify_release_identity
     status: pending
 
-supplemental_ci:
-  role: non_blocking
-  current_status: unavailable_not_verified
-  executed_code_failure: false
-
 not_verified_non_blocking:
   - package_editor_test_runner
   - fresh_project_sample_workflow
+  - automated_ci
   - addressables_positive_backend_matrix
   - external_transport_disconnect_reconnect
   - target_device_validation
