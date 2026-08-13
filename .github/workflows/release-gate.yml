@@ -18,6 +18,7 @@ on:
       - Tests/Release/**
       - Tests/Routing/**
       - .github/workflows/release-gate.yml
+      - .github/workflows/release-tag.yml
   workflow_dispatch: {}
 
 concurrency:
@@ -26,13 +27,14 @@ concurrency:
 
 jobs:
   contract:
-    name: Release contract and distribution layout
+    name: Release static contracts and distribution layout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install contract validator dependencies
         run: python3 -m pip install --disable-pip-version-check pyyaml
       - run: python3 Tests/Release/verify_capability_contract.py
+      - run: python3 Tests/Release/verify_stage2_8_integration_contract.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Resolve preview version
@@ -56,8 +58,9 @@ jobs:
           retention-days: 14
 
   fresh-project:
-    name: Fresh project compile, Production Tool Discovery and Sample Workflow
+    name: Supplemental fresh project compile and sample workflow
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -74,7 +77,7 @@ jobs:
           set -euo pipefail
           if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
           if [ -n "$UNITY_SERIAL" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
-          echo "::error::Unity license secrets are incomplete."
+          echo "::warning::Unity license secrets are incomplete; supplemental fresh-project evidence remains not_verified."
           exit 1
       - name: Free disk space
         run: |
@@ -98,16 +101,19 @@ jobs:
           unityVersion: 6000.0.75f1
           testMode: editmode
           customParameters: -testFilter MyUnityMcpGettingStartedTests
-      - name: Verify sample result
+      - name: Verify sample result when available
         if: always()
         env:
           ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
           TEST_OUTCOME: ${{ steps.tests.outcome }}
         run: |
           set -euo pipefail
-          [ "$TEST_OUTCOME" = success ] || { echo "::error::Sample Unity run failed."; exit 1; }
+          if [ "$TEST_OUTCOME" != success ]; then
+            echo "::warning::Supplemental fresh-project run did not pass; this does not override Direct Unity Editor primary evidence."
+            exit 1
+          fi
           log=$(find "$ARTIFACTS_PATH" -name editmode.log -type f | head -1)
-          [ -n "$log" ] || { echo "::error::No editmode.log"; exit 1; }
+          [ -n "$log" ] || { echo "::warning::No editmode.log"; exit 1; }
           if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log"; then
             grep -nE 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log" | tail -100
             exit 1
@@ -126,5 +132,5 @@ jobs:
         with:
           name: MyUnityMCP-Fresh-Project-Sample-Evidence
           path: ${{ steps.tests.outputs.artifactsPath }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90

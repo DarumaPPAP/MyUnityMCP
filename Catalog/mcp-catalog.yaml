@@ -1,7 +1,7 @@
-schema_version: "2.3"
+schema_version: "2.4"
 release_version: "1.1.0"
 capability_contracts: Catalog/capability-contracts.yaml
-integration_contracts: Catalog/stage2-8-integration-contracts.yaml
+promotion_evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
 
 modules:
   unity_graphics_mcp:
@@ -49,52 +49,59 @@ modules:
 
   unity_profiler_mcp:
     kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/profiler-capability-contract.yaml
     default_tool_group: profiler
-    available_tool_groups: [profiler]
+    available_tool_groups:
+      - profiler
     tools: 8
 
   unity_addressables_mcp:
     kind: optional_domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/addressables-capability-contract.yaml
     default_tool_group: addressables
-    available_tool_groups: [addressables]
+    available_tool_groups:
+      - addressables
     tools: 4
     required_package: com.unity.addressables
+    package_absent_result: UNSUPPORTED
     content_build: excluded_from_current_mcp_surface
 
   unity_ui_mcp:
     kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/ui-capability-contract.yaml
     default_tool_group: ui
-    available_tool_groups: [ui]
+    available_tool_groups:
+      - ui
     tools: 5
 
   unity_animation_mcp:
     kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/animation-capability-contract.yaml
     default_tool_group: animation
-    available_tool_groups: [animation]
+    available_tool_groups:
+      - animation
     tools: 5
 
   unity_audio_mcp:
     kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/audio-capability-contract.yaml
     default_tool_group: audio
-    available_tool_groups: [audio]
+    available_tool_groups:
+      - audio
     tools: 5
 
   unity_cinematic_mcp:
     kind: domain
-    status: integration_candidate
-    integration_contract: Catalog/stage2-8-integration-contracts.yaml
+    status: editor_operational
+    capability_contract: Catalog/cinematic-capability-contract.yaml
     default_tool_group: cinematic
-    available_tool_groups: [cinematic]
+    available_tool_groups:
+      - cinematic
     tools: 5
 
 selection:
@@ -102,15 +109,16 @@ selection:
   load_package_source_by_default: false
   explicit_tool_activation_required: true
   capability_contract_required_for_operational_module: true
-  integration_contract_required_for_candidate_module: true
   load_only_selected_capability_contract: true
 
 promotion_policy:
-  production_verified_tool_count: 45
-  integration_target_tool_count: 77
-  stage2_8_validation_status: local_cg_runtime_verified_ci_unavailable
-  local_cg_runtime_validation: passed
+  production_verified_tool_count: 77
+  previous_production_baseline_tool_count: 45
+  exact_tool_surface: 77
+  direct_editor_validation: passed
+  direct_editor_evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
   automated_ci: unavailable_not_verified
-  human_promotion_gate: pending
-  integration_candidate_is_not_production_operational: true
-  intermediate_main_merge: prohibited
+  automated_ci_required_for_promotion: false
+  human_promotion_gate: satisfied_by_explicit_release_request
+  production_promotion: completed
+  target_device_validation: not_verified_not_required_for_editor_only_release

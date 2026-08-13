@@ -1,0 +1,35 @@
+schema_version: "1.0"
+module: unity_ui_mcp
+status: editor_operational
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  ui:
+    mode: editor_domain
+    use_when:
+      - inspect or validate RectTransform state in the current Unity scene
+      - prepare or apply an explicitly approved RectTransform mutation
+    requires:
+      - explicit_tool_activation
+      - exact_rect_transform_target
+      - expected_revision_for_mutation
+      - prepared_one_time_plan_for_mutation
+      - approval_token_for_mutation
+    must_not:
+      - mutate_unrelated_components
+      - use_generic_serialized_property_mutation
+      - automatically_save
+      - mutate_outside_rect_transform_scope
+      - reinterpret_missing_target_as_success
+    success_evidence:
+      - target_identity
+      - validation_result
+      - exact_before_after_rect_transform_values_when_mutating
+      - revision_and_plan_consumption_result_when_mutating

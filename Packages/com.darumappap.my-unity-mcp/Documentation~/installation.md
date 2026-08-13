@@ -9,25 +9,21 @@
 
 ## 1. Install MCP for Unity
 
-Unity Package Managerの`Add package from git URL`から、検証済みBridge Commitを追加します。
-
-```text
-https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#9f84072c38906e3ca903f14f6a8edc1a1c9012c3
-```
+Unity Package Managerの`Add package from git URL`から、MCP for Unity Bridgeを追加します。MyUnityMCP `package.json`はBridge API `10.1.2`を依存Versionとして宣言します。
 
 ## 2. Install MyUnityMCP
 
 ### Git tag
 
 ```text
-https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.0.0
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.1.0
 ```
 
 Private Repositoryの場合は、Unityを起動するOS UserのGit資格情報が必要です。
 
 ### Release `.tgz`
 
-Release Assetの`com.darumappap.my-unity-mcp-1.0.0.tgz`を取得し、Package ManagerからローカルTarballを追加します。
+Release Assetの`com.darumappap.my-unity-mcp-1.1.0.tgz`を取得し、Package ManagerからローカルTarballを追加します。
 
 ### Embedded package
 
@@ -37,11 +33,17 @@ Repository内の`Packages/com.darumappap.my-unity-mcp`を導入先Projectの`Pac
 
 - ConsoleにCompile Errorがない
 - `Window > MCP for Unity`が開く
-- Production mainではBridge Registryが45 Tool、Stage 2〜8 Integration Candidateでは77 Toolを検出する
-- Toolが既定では外部公開されていない
+- Bridge RegistryがMyUnityMCP **77 Tool**を検出する
+- Duplicate Toolがない
+- Toolが既定では外部公開されていない（`AutoRegister = false`）
 - `graphics.inspect_project`が成功する
+- `agent.inspect_capabilities`でOperational Domainを確認できる
 - Unity 6.7系では`apiCompatibility`に`BASE / UNITY_6000_4 / UNITY_6000_5 / UNITY_6000_7`が出る
+
+## Optional Addressables
+
+`com.unity.addressables`が未導入の場合、Addressables Domainは自動導入せず`UNSUPPORTED`を返します。Settings / Group自動生成やContent BuildへのFallbackは行いません。
 
 ## Dependency note
 
-`package.json`はBridge API `10.1.2`を宣言します。Unity `6000.7.0a2`のManual VerificationではMCP for Unity `10.1.3-beta.3`でもPackage Import、Compile、Production 45 Toolを含むExact 77 Candidate Discovery、`graphics.inspect_project`成功を確認しています。Bridgeを独自Versionへ変更した場合は対象SurfaceのTool DiscoveryとHandler Invocationを再検証してください。
+Unity `6000.7.0a2` Direct Editor VerificationではPackage Compile、Exact 77 Tool Discovery、`graphics.inspect_project`、Agent Routing、Safety / Scoped Mutation E2Eを確認しています。Bridgeを独自Versionへ変更した場合は77 Tool DiscoveryとHandler Invocationを再確認してください。

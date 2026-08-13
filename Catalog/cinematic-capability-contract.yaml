@@ -1,0 +1,36 @@
+schema_version: "1.0"
+module: unity_cinematic_mcp
+status: editor_operational
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  cinematic:
+    mode: editor_domain
+    use_when:
+      - inspect or validate PlayableDirector state in the current Unity scene
+      - prepare or apply an explicitly approved PlayableDirector settings mutation
+    requires:
+      - explicit_tool_activation
+      - exact_playable_director_target
+      - expected_revision_for_mutation
+      - prepared_one_time_plan_for_mutation
+      - approval_token_for_mutation
+    must_not:
+      - replace_playable_asset
+      - create_timeline_tracks
+      - create_timeline_clips
+      - mutate_generic_bindings
+      - mutate_cinemachine_shots
+      - automatically_save
+    success_evidence:
+      - playable_director_identity
+      - validation_result
+      - exact_before_after_supported_settings_when_mutating
+      - revision_and_plan_consumption_result_when_mutating

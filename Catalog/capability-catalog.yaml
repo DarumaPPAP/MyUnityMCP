@@ -1,4 +1,4 @@
-schema_version: "2.1"
+schema_version: "2.2"
 release_version: "1.1.0"
 
 capabilities:
@@ -42,7 +42,6 @@ capabilities:
       structured_error_catalog: implemented_editor_verified
     delegates_to:
       - unity_graphics_mcp
-    integration_validation_delegates_to:
       - unity_profiler_mcp
       - unity_addressables_mcp
       - unity_ui_mcp
@@ -51,10 +50,9 @@ capabilities:
       - unity_cinematic_mcp
     limitations:
       - no_direct_unity_mutation
-      - non_operational_domains_are_rejected
-      - integration_candidate_execution_is_validation_only
       - no_automatic_execution_resume
       - no_approval_bypass
+      - delegated_failure_must_propagate
 
   world_creator:
     owner: world_creator
@@ -66,33 +64,48 @@ capabilities:
       - no_direct_unity_mutation
       - no_automatic_visual_acceptance
 
-  cinematic:
-    owner: unity_cinematic_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
-  ui:
-    owner: unity_ui_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
-  addressables:
-    owner: unity_addressables_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
-    package_absent_result: UNSUPPORTED
-    positive_backend_matrix: not_verified
-  animation:
-    owner: unity_animation_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
-  audio:
-    owner: unity_audio_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
   profiler:
     owner: unity_profiler_mcp
-    status: integration_candidate
-    validation_status: local_cg_runtime_verified_ci_unavailable
+    status: editor_operational
+    validation_status: direct_editor_verified
     evidence_scope: unity_editor_local
+    limitations:
+      - target_device_performance_requires_separate_evidence
+
+  addressables:
+    owner: unity_addressables_mcp
+    status: editor_operational
+    validation_status: direct_editor_verified_with_optional_backend_boundary
+    package_absent_result: UNSUPPORTED
+    positive_backend_matrix: not_verified
+    limitations:
+      - no_automatic_package_install
+      - no_automatic_settings_or_group_creation
+      - no_content_build
+
+  ui:
+    owner: unity_ui_mcp
+    status: editor_operational
+    validation_status: direct_editor_verified
+    mutation_scope: rect_transform
+
+  animation:
+    owner: unity_animation_mcp
+    status: editor_operational
+    validation_status: direct_editor_verified
+    mutation_scope: animator_controller_parameter
+
+  audio:
+    owner: unity_audio_mcp
+    status: editor_operational
+    validation_status: direct_editor_verified
+    mutation_scope: audio_source_supported_properties
+
+  cinematic:
+    owner: unity_cinematic_mcp
+    status: editor_operational
+    validation_status: direct_editor_verified
+    mutation_scope: playable_director_supported_settings
 
 rules:
   explicit_tool_activation_required: true
@@ -100,3 +113,5 @@ rules:
   generic_serialized_property_mutation_is_prohibited: true
   silent_fallback_is_prohibited: true
   control_plane_direct_mutation_is_prohibited: true
+  unavailable_is_not_passed: true
+  editor_validation_is_not_target_device_validation: true
