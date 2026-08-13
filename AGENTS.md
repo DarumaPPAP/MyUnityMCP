@@ -20,11 +20,14 @@ Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各Domain
 - MCP contract: `Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml`
 - Tool implementation: `Packages/com.darumappap.my-unity-mcp/Editor`
 - MCP catalog: `Catalog/mcp-catalog.yaml`
+- Production surface contract: `Catalog/production-surface-contract.yaml`
 - Graphics capability contract: `Catalog/capability-contracts.yaml`
 - UnityAgent capability contract: `Catalog/unity-agent-capability-contracts.yaml`
 - UnityAgent operational spec: `Specs/UnityAgentMCP/spec.md`
 - Support: `Tests/Compatibility/support-matrix.yaml`
 - Direct Editor verification policy: `Tests/Compatibility/editor-first-verification-policy.yaml`
+- Current production Editor evidence: `Tests/Compatibility/production-editor-acceptance.yaml`
+- Current production validation evidence: `Tests/Compatibility/production-validation-evidence.yaml`
 - Stable release evidence: `Tests/Compatibility/release-verification.yaml`
 - Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
 
@@ -158,6 +161,10 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 ## Repository layout rules
 
 - `Catalog/`にDesign Only moduleを混在させない。
+- ルート`Development/`はProduct Repositoryの`main`へ作成しない。開発Control PlaneのGoal、Workflow、Run Record、作業Branch情報は対応する開発Repository側で管理する。
+- Graph Engineeringの実行記録・作業履歴をMyUnityMCPのRelease差分へ含めない。MyUnityMCPには昇格後のProduction Contract / Evidenceだけを残す。
+- Operational Domain / Control Plane / CreatorのPackage実装は`Packages/com.darumappap.my-unity-mcp/Editor/Operational/`へ配置する。
+- Operational Editor Contract Testは`Packages/com.darumappap.my-unity-mcp/Tests/Editor/Operational/`へ配置する。
 - ルート`Workflows/`は作成しない。GitHub Actionsは`.github/workflows/`、Creator設計は`Design/Creators/`を使用する。
 - `Specs/`は現行の実行可能製品仕様を優先し、将来構想は`Design/`へ隔離する。
 - Package内のEditor実装はAssembly境界を維持したまま責務別サブフォルダへ整理可能とし、Release検証は再帰的にToolを検出する。
