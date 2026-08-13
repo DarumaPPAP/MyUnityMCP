@@ -1,21 +1,21 @@
-schema_version: "1.1"
-scope: historical_integration_to_v1_1_promotion
-status: promoted_editor_operational
-previous_production_tools: 45
-promoted_tools: 32
-production_tools_after_promotion: 77
-promotion_evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+schema_version: "1.0"
+scope: production_editor_surface
+status: editor_operational
+release_version: "1.1.0"
+production_tool_count: 77
+previous_verified_baseline_tool_count: 45
+expanded_domain_tool_count: 32
+production_evidence: Tests/Compatibility/production-editor-acceptance.yaml
 
 shared_plan_contract:
-  prepare_is_read_only: true
   expected_revision_required: true
-  approval_token_required_when_mutating: true
   one_time_plan_required: true
-  plan_expires: true
+  approval_required_for_mutation: true
   automatic_save: prohibited
   automatic_full_bake: prohibited
   generic_serialized_property_mutation: prohibited
   silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
 
 modules:
   unity_profiler_mcp:
@@ -23,77 +23,69 @@ modules:
     tools: 8
     capability_contract: Catalog/profiler-capability-contract.yaml
     mutation_scope: capture_control_only
-    target_device_claim_without_evidence: prohibited
-    same_environment_baseline_required: true
-
   unity_addressables_mcp:
     status: editor_operational
-    kind: optional_domain
     tools: 4
     capability_contract: Catalog/addressables-capability-contract.yaml
-    required_package: com.unity.addressables
+    optional_package: com.unity.addressables
     package_absent_result: UNSUPPORTED
-    automatic_settings_creation: prohibited
-    automatic_group_creation: prohibited
-    automatic_save: prohibited
-    content_build: excluded_from_current_mcp_surface
-
+    content_build: excluded
   unity_ui_mcp:
     status: editor_operational
     tools: 5
     capability_contract: Catalog/ui-capability-contract.yaml
-    mutation_scope: rect_transform
-    mutation_requires_approval: true
-    automatic_save: prohibited
-
+    mutation_scope: rect_transform_only
   unity_animation_mcp:
     status: editor_operational
     tools: 5
     capability_contract: Catalog/animation-capability-contract.yaml
-    mutation_scope: animator_controller_parameter
-    mutation_requires_approval: true
-
+    mutation_scope: animator_controller_parameter_only
   unity_audio_mcp:
     status: editor_operational
     tools: 5
     capability_contract: Catalog/audio-capability-contract.yaml
-    mutation_scope: audio_source_supported_properties
-    mutation_requires_approval: true
-
+    mutation_scope: audio_source_supported_properties_only
   unity_cinematic_mcp:
     status: editor_operational
     tools: 5
     capability_contract: Catalog/cinematic-capability-contract.yaml
-    mutation_scope: playable_director_supported_settings
-    mutation_requires_approval: true
+    mutation_scope: playable_director_supported_settings_only
 
-validation_wave:
+verification:
+  authority: direct_unity_editor_validation
   direct_editor_status: passed
   unity_version: 6000.7.0a2
+  exact_tool_discovery: 77
+  duplicate_tool_names: 0
   verified:
-    - exact_77_tool_discovery
-    - package_compile
-    - each_domain_readonly_path
-    - each_domain_safety_boundary
-    - approval_and_stale_revision_rejection
-    - mutation_scope_and_undo_or_recovery
-    - agent_to_domain_routing
-    - cross_domain_failure_propagation
-    - timeout_cancel_and_domain_reload_callbacks
+    - extended_domain_readonly_smoke
+    - stale_revision_rejection
+    - approval_boundary_rejection
+    - one_time_plan_reuse_rejection
+    - profiler_capture
+    - ui_animation_audio_cinematic_scoped_mutation_e2e
+    - addressables_package_absent_boundary
+    - agent_operational_routing
+    - delegated_failure_propagation
+    - cancellation_timeout_domain_reload_callbacks
     - cross_domain_workflow
     - previous_production_45_regression
-  allowed_optional_backend_boundary:
-    - addressables_package_absent_returns_unsupported
   not_verified_non_blocking:
     - package_editor_test_runner
     - fresh_project_sample_workflow
     - automated_ci
     - addressables_positive_backend_matrix
     - external_transport_disconnect_reconnect
+    - target_device_validation
 
-promotion:
-  status: completed
-  human_gate: satisfied_by_explicit_release_request
+release_contract:
   production_operational_tools: 77
   automated_ci_required: false
-  target_device_required: false
+  target_device_required_for_editor_only_release: false
+  human_gate: satisfied_by_explicit_release_request
+
+excluded_from_current_surface:
+  - unity_build_mcp
+  - addressables_content_build
+  - movie_creator_runtime
+  - live_creator_runtime
