@@ -34,7 +34,7 @@ jobs:
       - name: Install contract validator dependencies
         run: python3 -m pip install --disable-pip-version-check pyyaml
       - run: python3 Tests/Release/verify_capability_contract.py
-      - run: python3 Tests/Release/verify_stage2_8_integration_contract.py
+      - run: python3 Tests/Release/verify_production_surface_contract.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Resolve preview version
