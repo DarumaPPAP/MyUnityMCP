@@ -369,7 +369,7 @@ namespace MyUnityMcp.EditorTests
 		public void AgentTools_AreDefaultDisabled()
 		{
 			string source = File.ReadAllText(
-				"Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpTools.cs");
+				"Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpTools.cs");
 
 			Assert.That(source.Split(new[] {"[McpForUnityTool("}, StringSplitOptions.None).Length - 1, Is.EqualTo(10));
 			Assert.That(source.Split(new[] {"AutoRegister = false"}, StringSplitOptions.None).Length - 1, Is.EqualTo(10));
@@ -379,7 +379,7 @@ namespace MyUnityMcp.EditorTests
 		public void ControlPlaneSource_DoesNotCallDirectMutationApis()
 		{
 			string source = File.ReadAllText(
-				"Packages/com.darumappap.my-unity-mcp/Editor/Development/Agent/UnityAgentMcpRuntime.cs");
+				"Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpRuntime.cs");
 
 			Assert.That(source, Does.Not.Contain("Undo.RecordObject"));
 			Assert.That(source, Does.Not.Contain("EditorUtility.SetDirty"));

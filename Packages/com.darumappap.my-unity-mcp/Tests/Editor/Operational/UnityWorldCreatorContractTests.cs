@@ -100,7 +100,7 @@ namespace MyUnityMcp.EditorTests
 		public void WorldCreator_RequiresHumanReviewAndDoesNotCallUnityMutationApisDirectly()
 		{
 			string source = File.ReadAllText(
-				"Packages/com.darumappap.my-unity-mcp/Editor/Development/Creators/UnityWorldCreatorMcp.cs");
+				"Packages/com.darumappap.my-unity-mcp/Editor/Operational/WorldCreator/UnityWorldCreatorMcp.cs");
 
 			Assert.That(source, Does.Contain("HUMAN_REVIEW_REQUIRED"));
 			Assert.That(source, Does.Contain("automaticVisualAcceptance"));
