@@ -32,21 +32,32 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Resolve immutable release source
+      - name: Install release validator dependencies
+        run: python3 -m pip install --disable-pip-version-check pyyaml
+
+      - name: Resolve and verify immutable release source
         id: identity
         shell: bash
         run: |
           set -euo pipefail
           version=$(cat VERSION)
           tag="v${version}"
+
+          # Static release contracts must pass before a new immutable tag is created.
+          python3 Tests/Release/verify_capability_contract.py
+          python3 Tests/Release/verify_stage2_8_integration_contract.py
           python3 Tests/Release/verify_release_contract.py --mode pr
-          git fetch origin --tags --force
 
           release_kind="stable"
           if [[ "$version" == *-* ]]; then
             release_kind="prerelease"
           fi
 
+          if [ "$release_kind" = "stable" ]; then
+            python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
+          fi
+
+          git fetch origin --tags --force
           release_mode="create"
           source_commit=$(git rev-parse HEAD)
 
@@ -62,11 +73,16 @@ jobs:
           fi
 
           git checkout --detach "$source_commit"
-          if [ "$release_kind" = "stable" ]; then
-            python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
-          else
-            echo "::notice::Prerelease detected ($version). Stable release evidence gate is intentionally skipped; manual verification may still be pending."
-            python3 Tests/Release/verify_release_contract.py --mode pr
+
+          # Existing tags are revalidated from their immutable source, never from current main.
+          if [ "$release_mode" = "verify_existing" ]; then
+            python3 Tests/Release/verify_capability_contract.py
+            python3 Tests/Release/verify_stage2_8_integration_contract.py
+            if [ "$release_kind" = "stable" ]; then
+              python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
+            else
+              python3 Tests/Release/verify_release_contract.py --mode pr
+            fi
           fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
