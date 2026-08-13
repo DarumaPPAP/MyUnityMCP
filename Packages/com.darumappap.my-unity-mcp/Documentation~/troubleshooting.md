@@ -2,11 +2,15 @@
 
 ## ToolがClientに表示されない
 
-仕様です。全Toolは既定非公開です。Bridge／ClientのAllowlistへ必要なTool名を追加してください。Bridge Registryの期待値はProduction mainで45 Tool、Stage 2〜8 Integration Candidateで77 Toolです。利用中のSource Surfaceと一致しているか確認します。
+仕様です。全Toolは既定非公開です。Bridge／ClientのAllowlistへ必要なTool名を追加してください。v1.1.0のMyUnityMCP Surfaceは**77 Tool**です。`agent.inspect_capabilities`とBridge Discoveryで利用中Sourceと一致しているか確認します。
+
+## Addressables Toolが`UNSUPPORTED`
+
+`com.unity.addressables`が導入されていない環境では正式な境界です。MyUnityMCPはPackage、AddressableAssetSettings、Groupを自動生成しません。Addressables Entry操作が必要なProjectではPackageをProject側で明示導入してから再確認してください。
 
 ## `SESSION_EXPIRED`／`STALE_SNAPSHOT`
 
-古いSnapshot、Plan、Tokenを再利用しています。`inspect_project`と`inspect_scene`からやり直し、Prepare Toolが返した最新IDを使用します。
+古いSnapshot、Plan、Tokenを再利用しています。対象DomainのInspectからやり直し、Prepare Toolが返した最新IDを使用します。
 
 ## Approval Token mismatch
 
@@ -14,7 +18,11 @@ Tokenを手入力・保存・再生成しないでください。Prepare Respons
 
 ## CompileまたはDomain Reload後に失敗する
 
-一時IDは無効です。Compile完了後、Execution Historyを確認してInspectから再開します。
+一時IDは無効です。Compile完了後、Execution Historyを確認してInspectから再開します。Automatic Resumeは禁止です。
+
+## Agent Workflowが`PARTIAL`になる
+
+先行Step成功後に後続Delegateが失敗または`UNSUPPORTED`になった場合の正常なResult Integrityです。失敗を`SUCCEEDED`へ変換しません。各Step Resultの`errorCode` / `status`を確認してください。
 
 ## Captureが`UNVERIFIED`
 
@@ -30,4 +38,4 @@ Output Root、Baking Set、Lighting Scenario、Backend Logを確認し、古いP
 
 ## 詳細調査
 
-`graphics.get_execution_history`、`graphics.get_execution_status`、`graphics.get_error_catalog`を使用し、`Library/MyUnityMCP/Execution`のJSONL Traceを確認します。
+`graphics.get_execution_history`、`graphics.get_execution_status`、`graphics.get_error_catalog`、`agent.get_execution_history`、`agent.get_error_catalog`を使用し、必要に応じて`Library/MyUnityMCP/Execution`のJSONL Traceを確認します。
