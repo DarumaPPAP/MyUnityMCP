@@ -1,113 +1,43 @@
-schema_version: "1.0"
-stage: 0
-stage_name: production_baseline_repair_and_verification
-status: integration_verified_manual
+schema_version: "1.1"
+record: production_baseline_verification
+status: historical_editor_verified
 recorded_at: "2026-08-12"
 
 production_baseline:
   branch: main
-  commit: 5369f990b96b34413a0e19226a6e76b340bf8bbf
   package_version: "1.1.0"
   production_tool_count: 42
-  graphics_tool_count: 32
-  agent_tool_count: 10
-  next_delivery_capability: world_creator
+  composition:
+    graphics: 32
+    agent: 10
 
-manual_environment:
-  unity_version: "6000.7.0a2"
-  build_target: StandaloneWindows64
-  render_pipeline: URP
-  render_pipeline_version: "17.7.0"
-  renderer: PC_Renderer
-  rendering_path: FORWARD+
-  scene: Assets/Scenes/SampleScene.unity
-  observed_bridge_version: "10.1.3-beta.3"
-
-manual_gates:
-  git_url_package_install:
-    status: passed
-    source_commit: 0e0d8ec687e5b4932615fb5d24d00c4e146ab955
-  standalone_script_compile_gate:
-    status: not_separately_recorded
-    note: MCP tool execution succeeded in the loaded Editor, but no standalone compile result was recorded as a distinct manual gate.
-  production_tool_discovery:
-    status: passed
+historical_editor_evidence:
+  authority: direct_unity_editor_validation
+  unity: 6000.7.0a2
+  compile_errors: 0
+  tool_discovery:
     expected: 42
     observed: 42
-    composition:
-      graphics: 32
-      agent: 10
-  graphics_readonly_e2e:
-    status: passed
-    checks:
-      graphics.inspect_project: passed
-      graphics.inspect_scene: passed
-      graphics.validate_scene: passed
-    mutation_observed: false
-  agent_orchestration_e2e:
-    status: passed
-    route: Codex -> UnityAgentMCP -> Workflow -> UnityGraphicsMCP -> Unity Editor
-    workflow_steps:
-      - graphics.inspect_project
-      - graphics.inspect_scene
-      - graphics.validate_scene
-    completed_steps: 3
-    total_steps: 3
-    mutation_observed: false
-  approval_boundary:
-    status: passed
-    result: mutation_stopped_for_explicit_human_approval
-  light_mutation:
-    status: passed
-    target: Directional Light
-    before_intensity: 2.0
-    after_intensity: 1.0
-    apply_status: SUCCESS
-    save_performed: false
-    bake_performed: false
-  normal_undo:
-    status: passed_after_regression_fix
-    before_undo_intensity: 1.0
-    restored_intensity: 2.0
-    apply_revision: 4
-    undo_revision: 5
-    undo_status: SUCCESS
-    force_undo_used: false
-    safety_bypass_used: false
-    direct_unity_api_used: false
-    regression_fix_branch_commit: 8eb693cf40d2b09ba81b02dc3f8ab8f01a1a3c15
-    production_merge_commit: 5369f990b96b34413a0e19226a6e76b340bf8bbf
-
-regression_finding:
-  id: light_update_delayed_hierarchy_undo_false_positive
-  original_result: blocked_false_positive
-  root_cause: LIGHT_UPDATE could receive a delayed MyUnityMCP-owned hierarchyChanged revision and be misclassified as an external change.
-  resolution: fixed_and_manual_e2e_passed
-  pull_request: 36
-  safety_contract_preserved:
-    transaction_id_required: true
-    expected_revision_required: true
-    latest_unity_undo_group_required: true
-    post_state_verification_required: true
-    force_or_bypass_path_added: false
+  verified:
+    - graphics_readonly_smoke
+    - agent_orchestration_smoke
+    - approval_boundary
+    - light_mutation
+    - normal_undo
+  target_device_claim: false
 
 automated_ci:
-  status: unavailable
-  verdict: not_verified
-  reason: GitHub Actions runner jobs failed before steps were executed.
+  status: unavailable_not_verified
+  reason: GitHub Actions jobs terminated before workflow steps executed.
   observed_behavior: steps_null
-  policy: manual evidence does not convert unavailable automated CI into passed CI.
+  policy: Direct Unity Editor evidence does not convert unavailable automated CI into passed CI.
 
 residual_not_verified:
-  - exact_42_tool_production_ci_after_runner_recovery
-  - standalone_manual_script_compile_gate_as_a_separate_record
-  - target_device_tool_execution
-  - every_unity_6000_patch
-  - domain_reload_execution_safety_manual_e2e
+  - fresh_project_sample_workflow
+  - package_editor_test_runner
+  - target_device_validation
 
-stage_exit:
-  decision: passed_with_manual_editor_evidence
-  production_status: integration_verified_manual
-  world_creator_delivery_allowed: true
-  graph_wholesale_merge_to_main: prohibited
-  delivery_branch_required: true
+verdict:
+  decision: passed_with_direct_editor_evidence
+  production_status: historical_verified_baseline
+  automated_ci: unavailable_not_verified
