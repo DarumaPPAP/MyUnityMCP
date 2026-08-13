@@ -1,23 +1,31 @@
 # MyUnityMCP
 
-Unity EditorのGraphics制作をMCP Clientから安全にInspection、Planning、Mutation、Save、Bake、Capture、Evaluate、Refineし、UnityAgentMCPから複数Tool Workflowを安全にOrchestrationし、WorldCreatorからVisual GoalのRead-only PreflightとHuman Review Handoffを作成するPackageです。
+Unity EditorをMCP Clientから安全にInspection、Planning、Mutation、Save、Bake、Capture、Evaluate、Refineし、UnityAgentMCPから複数Domain WorkflowをOrchestrationするEditor-only Packageです。
+
+## v1.1.0
 
 - Unity `6000.0`以上
 - Editor only
-- Production main: 45 Tool（32 Graphics + 10 Agent + 3 WorldCreator）、すべて`AutoRegister = false`
-- `delivery/stage2-8-integration`: 77 Tool Integration Candidate（Production 45 + Candidate 32）
-- Candidate 32: Profiler 8 + Addressables 4 + UI 5 + Animation 5 + Audio 5 + Cinematic 5
-- Build Domainは今回のIntegration Candidateから撤去済み
-- Addressables Content Buildは現行Candidateから除外し、AddressablesはInspection / Entry管理中心
-- Stage 2〜8 Candidateは`local_cg_runtime_verified_ci_unavailable`です。Integration BranchのEditorでValidation実行できますが、Productionの`editor_operational`昇格Statusではありません。Local CG Runtime ValidationはPASS、Automated CIは`not_verified`です
-- Stable `v1.0.0` baseline: 32 Graphics Tool
+- **77 Tool Editor Operational Surface**
+  - Graphics 32
+  - Agent 10
+  - WorldCreator 3
+  - Profiler 8
+  - Addressables 4
+  - UI 5
+  - Animation 5
+  - Audio 5
+  - Cinematic 5
+- 全Tool `AutoRegister = false`
 - UnityAgentMCPはControl PlaneでありUnity APIを直接Mutationしません
-- WorldCreatorもUnity APIを直接Mutationせず、Agent経由でGraphics Read-only Preflightへ委譲します
-- AddressablesはOptional Packageで、未導入時は`UNSUPPORTED`を返します
-- Package Editor Test Runner、Fresh-project Sample Workflow、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnectは`not_verified`です
-- Production昇格にはHuman Promotion Gateが必要です
-- MCP for Unity Bridgeが必要
+- WorldCreatorもUnity APIを直接Mutationせず、Agent経由でRead-only Graphics Preflightへ委譲します
+- AddressablesはOptional Packageで、未導入時は自動導入せず`UNSUPPORTED`を返します
+- Addressables Content Build、Build Domain、MovieCreator runtime、LiveCreator runtimeはv1.1.0 Surfaceから除外しています
 
-Version／Tag Publicationは`VERSION`変更を伴う別Release操作です。Integration Candidateの実装はimmutableな`v1.0.0` TagやProduction 45 Tool Evidenceを変更しません。
+## Verification
 
-導入は[Installation](Documentation~/installation.md)、Production Tool一覧は[Tool Reference](Documentation~/tool-reference.md)、Stage 2〜8 Integration Candidateは[Stage 2-8 Integration Wave](Documentation~/stage2-8-integration.md)を参照してください。
+Direct Unity Editor ValidationがPrimary Gateです。Unity `6000.7.0a2`でCompile Error 0、77/77 Discovery、重複0、Domain Smoke、Safety、Scoped Mutation、Agent Routing、Cross-domain Workflow、Production Regressionを確認済みです。
+
+Automated CIはSupplementalです。Runner未開始など利用不能な実行は`not_verified`として保持します。Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
+
+導入は[Installation](Documentation~/installation.md)、全Tool一覧は[Tool Reference](Documentation~/tool-reference.md)、77 Tool昇格Evidenceは[77 Tool Promotion Record](Documentation~/stage2-8-integration.md)を参照してください。
