@@ -28,4 +28,4 @@ Direct Unity Editor ValidationがPrimary Gateです。Unity `6000.7.0a2`でCompi
 
 Automated CIはSupplementalです。Runner未開始など利用不能な実行は`not_verified`として保持します。Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
 
-導入は[Installation](Documentation~/installation.md)、全Tool一覧は[Tool Reference](Documentation~/tool-reference.md)、77 Tool昇格Evidenceは[77 Tool Promotion Record](Documentation~/stage2-8-integration.md)を参照してください。
+導入は[Installation](Documentation~/installation.md)、全Tool一覧は[Tool Reference](Documentation~/tool-reference.md)、現在の77 Tool構成とEvidenceは[Production Surface](Documentation~/production-surface.md)を参照してください。
