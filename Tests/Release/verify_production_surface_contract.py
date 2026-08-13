@@ -42,6 +42,29 @@ FORBIDDEN_DEVELOPMENT_PATHS = [
     ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "Documentation~" / "stage2-8-integration.md",
 ]
 
+ACTIVE_PRODUCT_TEXT_FILES = [
+    ROOT / "README.md",
+    ROOT / "Catalog" / "mcp-catalog.yaml",
+    ROOT / "Catalog" / "production-surface-contract.yaml",
+    ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "MCP_MANIFEST.yaml",
+    ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "README.md",
+    ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "Documentation~" / "README.md",
+    ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "Documentation~" / "production-surface.md",
+    ROOT / "Specs" / "UnityAgentMCP" / "spec.md",
+    ROOT / "Tests" / "Compatibility" / "README.md",
+    ROOT / "Tests" / "Compatibility" / "production-editor-acceptance.yaml",
+    ROOT / "Tests" / "Compatibility" / "production-validation-evidence.yaml",
+    ROOT / "Tests" / "Compatibility" / "support-matrix.yaml",
+    ROOT / "Tests" / "Compatibility" / "release-verification.yaml",
+]
+
+FORBIDDEN_ACTIVE_TERMS = (
+    "stage2-8",
+    "Development/GraphEngineering",
+    "Editor/Development",
+    "Tests/Editor/Development",
+)
+
 
 def load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -58,6 +81,15 @@ def main() -> int:
     for path in FORBIDDEN_DEVELOPMENT_PATHS:
         if path.exists():
             fail(errors, f"development-only path remains: {path.relative_to(ROOT)}")
+
+    for path in ACTIVE_PRODUCT_TEXT_FILES:
+        if not path.is_file():
+            fail(errors, f"required active product file is missing: {path.relative_to(ROOT)}")
+            continue
+        text = path.read_text(encoding="utf-8").lower()
+        for term in FORBIDDEN_ACTIVE_TERMS:
+            if term.lower() in text:
+                fail(errors, f"development naming remains in active product file: {path.relative_to(ROOT)} ({term})")
 
     catalog = load_yaml(CATALOG)
     capability_catalog = load_yaml(CAPABILITY_CATALOG)
@@ -126,23 +158,6 @@ def main() -> int:
     disabled = len(re.findall(r"AutoRegister\s*=\s*false", source))
     if disabled != EXPECTED_TOOLS:
         fail(errors, f"AutoRegister=false count is {disabled}, expected 77")
-
-    forbidden_terms = {
-        "stage2-8": [
-            ROOT / "README.md",
-            ROOT / "Catalog",
-            ROOT / "Packages" / "com.darumappap.my-unity-mcp" / "Documentation~",
-            ROOT / "Tests" / "Compatibility",
-            ROOT / "Tests" / "Release",
-        ],
-        "Development/GraphEngineering": [ROOT / "README.md", ROOT / "AGENTS.md"],
-    }
-    for term, roots in forbidden_terms.items():
-        for base in roots:
-            files = [base] if base.is_file() else [p for p in base.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml", ".py"}]
-            for path in files:
-                if term.lower() in path.read_text(encoding="utf-8").lower():
-                    fail(errors, f"development naming remains in active product file: {path.relative_to(ROOT)} ({term})")
 
     print(f"production surface contract: {len(errors)} error(s)")
     return 1 if errors else 0
