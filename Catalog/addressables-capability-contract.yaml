@@ -1,0 +1,36 @@
+schema_version: "1.0"
+module: unity_addressables_mcp
+status: editor_operational
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  addressables:
+    mode: optional_editor_domain
+    use_when:
+      - inspect Addressables package support and current entry state
+      - prepare or apply an explicitly approved Addressables entry mutation
+    requires:
+      - explicit_tool_activation
+      - package_presence_or_explicit_unsupported_result
+      - expected_revision_for_mutation
+      - prepared_one_time_plan_for_mutation
+      - approval_token_for_mutation
+    must_not:
+      - automatically_install_addressables_package
+      - automatically_create_addressables_settings
+      - automatically_create_addressables_groups
+      - invoke_addressables_content_build
+      - automatically_save
+      - mutate_outside_the_prepared_entry_scope
+    success_evidence:
+      - package_support_status
+      - inspected_entry_state_or_explicit_unsupported_result
+      - exact_entry_diff_when_mutating
+      - revision_and_plan_consumption_result_when_mutating
