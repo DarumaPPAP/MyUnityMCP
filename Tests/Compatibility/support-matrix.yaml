@@ -1,44 +1,56 @@
-schema_version: "1.1"
+schema_version: "1.2"
 package_version: "1.1.0"
-source_channel: main_v1_1_release_candidate
+source_channel: v1_1_release_candidate
 
-current_stage:
-  id: 1
-  name: world_creator_delivery
-  status: integration_verified_manual
-  stage_0_status: integration_verified_manual
-  stage_0_evidence: Tests/Compatibility/stage-0-production-baseline-verification.yaml
-  evidence: Tests/Compatibility/world-creator-production-promotion-verification.yaml
-  delivery_base_commit: 5a4f221dbc3b29392e47a98477f3782002a94a69
-  tested_candidate_commit: 26dfdb84d76fb73309ab197f093328d619cc24ea
-  capability: world_creator
-  production_tool_count: 45
-  next_recommended_capability: profiler
+release_surface:
+  status: promotion_ready
+  production_tool_count: 77
+  composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+    profiler: 8
+    addressables: 4
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  excluded:
+    - unity_build_mcp
+    - addressables_content_build
+    - movie_creator_runtime
+    - live_creator_runtime
 
 verification_contract:
-  discovered_mcp_tools: 45
-  production_graphics_tools: 32
-  production_agent_tools: 10
-  production_world_creator_tools: 3
-  minimum_editmode_contracts: 125
-  fresh_project_sample_required: true
-  canonical_end_to_end_required: true
-  major_fault_injection_scene_safety_required: true
-  world_creator_contract_required: true
+  primary_authority: direct_unity_editor_validation
+  supplemental_authority: automated_ci
+  direct_editor_evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  discovered_mcp_tools: 77
+  duplicate_tool_names: 0
+  fresh_project_sample_required_for_v1_1_0: false
+  fresh_project_sample_status: not_verified_non_blocking
+  target_device_required_for_editor_only_release: false
+  automated_ci_required_for_release: false
 
 operational_modules:
   unity_graphics_mcp: editor_operational
   unity_agent_mcp: editor_operational
   world_creator: editor_operational
+  unity_profiler_mcp: editor_operational
+  unity_addressables_mcp: editor_operational_optional_backend
+  unity_ui_mcp: editor_operational
+  unity_animation_mcp: editor_operational
+  unity_audio_mcp: editor_operational
+  unity_cinematic_mcp: editor_operational
 
 execution_surface:
   unity_editor: supported
   player_runtime: unsupported
-  target_device: not_verified
+  target_device: not_verified_not_required
 
 unity:
   minimum_version: "6000.0"
-  ci_verified_version: "6000.0.75f1"
+  direct_editor_verified_version: "6000.7.0a2"
   all_6000_patches_verified: false
   api_compatibility:
     source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs
@@ -51,96 +63,92 @@ unity:
     base_policy: modernize_when_replacement_is_available_without_waiting_for_deprecation
     unity_6000_4:
       rule_status: confirmed
-      editor_ci: passed
+      historical_editor_ci: passed
       verified_version: "6000.4.12f1"
       evidence_artifact_id: 9090981750
     unity_6000_5:
       rule_status: confirmed
-      editor_ci: passed
+      historical_editor_ci: passed
       verified_version: "6000.5.5f1"
       evidence_artifact_id: 9090985384
     unity_6000_6:
       patch_bucket: UNITY_6000_7
       rule_status: planned_or_confirmed_per_rule
-      editor_ci: not_verified
+      editor_validation: not_verified
     unity_6000_7:
       rule_status: planned_or_confirmed_per_rule
-      editor_ci: manual_passed
+      direct_editor_validation: passed
       verified_version: "6000.7.0a2"
-      manual_evidence:
-        package_install: passed
-        script_compile: passed
-        v1_graphics_tool_discovery_32: passed
-        graph_engineering_combined_tool_discovery_91: passed
-        unity_agent_included_in_combined_discovery: true
-        graphics_inspect_project: passed
-        compatibility_buckets: passed
-      automated_canary: gameci_image_unavailable
+      evidence:
+        package_compile: passed
+        compile_errors: 0
+        exact_tool_discovery_77: passed
+        duplicate_tool_names: 0
+        readonly_domain_smoke: passed
+        safety_contract: passed
+        scoped_mutation_e2e: passed
+        agent_routing_and_failure_propagation: passed
+        cross_domain_workflow: passed
+        previous_production_45_regression: passed
+      automated_canary: unavailable_not_verified
     package_versions_required_for_package_api_decisions: true
 
-stage_0_manual_e2e:
-  status: integration_verified_manual
-  unity_version: "6000.7.0a2"
-  production_tool_discovery_42: passed
-  graphics_readonly_e2e: passed
-  agent_to_graphics_orchestration_e2e: passed
-  explicit_approval_boundary: passed
-  light_mutation: passed
-  normal_light_undo: passed
-  force_undo_used: false
-  safety_bypass_used: false
-  automated_ci: not_verified_runner_failed_before_steps
+domain_evidence:
+  graphics:
+    status: editor_operational
+    baseline: previously_production_verified
+  agent:
+    status: editor_operational
+    direct_unity_mutation: prohibited
+    operational_delegate_domains:
+      - unity_graphics_mcp
+      - unity_profiler_mcp
+      - unity_addressables_mcp
+      - unity_ui_mcp
+      - unity_animation_mcp
+      - unity_audio_mcp
+      - unity_cinematic_mcp
+    delegated_failure_propagation: passed
+    false_success: prohibited
+  world_creator:
+    status: editor_operational
+    direct_unity_mutation: prohibited
+    human_review_required: true
+  profiler:
+    status: editor_operational
+    capture_e2e: passed
+    target_device_performance_claim: not_verified_not_claimed
+  addressables:
+    status: editor_operational_optional_backend
+    package_absent_boundary: passed_allowed_unsupported
+    positive_backend_matrix: not_verified_non_blocking
+    settings_or_group_auto_creation: prohibited
+    content_build: excluded
+  ui:
+    status: editor_operational
+    scoped_mutation_e2e: passed
+  animation:
+    status: editor_operational
+    scoped_mutation_e2e: passed
+  audio:
+    status: editor_operational
+    scoped_mutation_e2e: passed
+  cinematic:
+    status: editor_operational
+    scoped_mutation_e2e: passed
 
-world_creator:
-  status: integration_verified_manual
-  evidence: Tests/Compatibility/world-creator-production-promotion-verification.yaml
-  tested_candidate_commit: 26dfdb84d76fb73309ab197f093328d619cc24ea
-  tools:
-    - world.compile_workflow
-    - world.start_preflight
-    - world.create_review_handoff
-  tool_discovery_45: passed
-  compile_workflow: passed
-  preflight_execution: passed
-  preflight_steps_succeeded: 3
-  preflight_steps_total: 3
-  review_handoff: passed
+safety:
+  expected_revision: required_for_mutation
+  approval_token: required_for_mutation
+  one_time_plan: required
   stale_revision_rejection: passed
-  premature_handoff_rejection_manual: not_observed_due_to_timing
-  scene_dirty_before: true
-  scene_dirty_after: true
-  mutation_observed: false
-  save_performed: false
-  bake_performed: false
-  direct_unity_api_used: false
-  force_used: false
-  safety_bypass_used: false
-  direct_unity_mutation: prohibited
-  orchestration_control_plane: unity_agent_mcp
-  operational_delegate_domains:
-    - unity_graphics_mcp
-  preflight_steps:
-    - graphics.inspect_project
-    - graphics.inspect_scene
-    - graphics.validate_scene
-  expected_revision: required_for_compile_and_execution
-  human_review_required: true
+  missing_or_wrong_approval_rejection: passed
+  plan_reuse_rejection: passed
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
   automatic_visual_acceptance: prohibited
-
-unity_agent:
-  source_evidence:
-    graph_modernization_run_52: passed
-    unchanged_agent_source_carry_forward: accepted
-    unity_6000_7_combined_discovery: passed
-  direct_unity_mutation: prohibited
-  operational_delegate_domains:
-    - unity_graphics_mcp
-  non_operational_domain_execution: rejected
-  approval_groups: explicit
-  expected_revision: required_for_compile_and_execution
-  execution_timeout: cooperative_1_to_3600_seconds_default_60
-  cancellation: cooperative_step_boundary
-  automatic_resume_after_reload_or_disconnect: prohibited
 
 pipelines:
   built_in:
@@ -180,14 +188,21 @@ execution_services:
   ci_evidence_retention: 90_days
   automatic_resume_after_restart: prohibited
 
+release_gates:
+  direct_editor_validation: passed
+  static_contract: pending_pr_validation
+  automated_ci: unavailable_not_verified_non_blocking
+  human_promotion_gate: satisfied_by_explicit_release_request
+  human_release_gate: satisfied_by_explicit_release_request
+
 not_verified:
   - player_runtime_tool_execution
   - target_device_tool_execution
   - every_unity_6000_patch
-  - unity_6000_6_editor_compile_for_new_compatibility_registry
+  - unity_6000_6_editor_compile_for_current_registry
   - every_render_pipeline_package_version
-  - every_external_mcp_client_disconnect_callback
-  - image_artifact_generation_in_null_graphics_batchmode
-  - every_project_specific_apv_baking_set
-  - exact_45_tool_production_ci_after_runner_recovery
-  - world_creator_premature_handoff_rejection_manual_timing_case
+  - addressables_positive_backend_matrix
+  - external_transport_disconnect_reconnect
+  - fresh_project_sample_workflow_for_v1_1_0
+  - package_editor_test_runner_for_v1_1_0
+  - automated_ci_for_v1_1_0
