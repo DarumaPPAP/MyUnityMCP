@@ -1,78 +1,94 @@
-# MyUnityMCP v1.1.0 Release Candidate Notes
+# MyUnityMCP v1.1.0
 
-MyUnityMCP `1.1.0`は、32 Graphics ToolにUnityAgentMCP Control Plane 10 ToolとWorldCreator 3 Toolを追加する**次期Source Version**です。現時点ではGitHub Releaseとして未公開であり、この文書はRelease Candidateの状態を記録します。
+MyUnityMCP `1.1.0`は、Unity Editor向けProduction Surfaceを**77 Tool**へ拡張するMinor Releaseです。
 
 ## Highlights
 
-- Production Tool Surface target: **45 = 32 Graphics + 10 Agent + 3 WorldCreator**
-- UnityAgentMCP Control PlaneをOperational Capabilityへ昇格
-- `Inspect Capabilities → Validate Workflow → Compile Graph → Preview → Approval → Domain Delegate → Status / Cancel / History`を提供
-- WorldCreatorは`Visual Goal → Read-only Graphics Preflight → Human Review Handoff`を提供
-- WorldCreator canonical preflightは`graphics.inspect_project` → `graphics.inspect_scene` → `graphics.validate_scene`
-- UnityAgent／WorldCreatorはUnity APIを直接Mutationせず、現在は`unity_graphics_mcp`へ処理を委譲
-- Graphics側のApproval / Revision / Save / Bake / Capture / Human Review境界は維持
-- Tool CountはManifestからRelease Contractへ導出し、Capability追加時の固定値依存を除去
-- Release PublicationをSource Version変更から分離し、`workflow_dispatch`または明示Publish承認だけで起動
+- **77 Tool Editor Operational Surface**
+  - Graphics 32
+  - Agent 10
+  - WorldCreator 3
+  - Profiler 8
+  - Addressables 4
+  - UI 5
+  - Animation 5
+  - Audio 5
+  - Cinematic 5
+- UnityAgentMCP Control Planeが全Operational Domainへ安全にRouting
+- Profiler Capture / Baseline Comparison
+- Addressables Entry Inspection / Prepare / Apply（Optional Package）
+- RectTransform中心のUI Inspection / Scoped Mutation
+- AnimatorController Parameter中心のAnimation Inspection / Scoped Mutation
+- AudioSource中心のAudio Inspection / Scoped Mutation
+- PlayableDirector中心のCinematic Inspection / Scoped Mutation
+- Direct Unity Editor ValidationをPrimary Promotion / Release Evidenceへ変更
 
-## Verification status
+## Safety
 
-検証済みEvidence:
+v1.1.0でも以下の境界を維持します。
 
-- Graphics Production baseline: Unity `6000.0.75f1` / 32 Tool / Editor Contracts
-- Compatibility: Unity `6000.4.12f1` / `6000.5.5f1`
-- Unity `6000.7.0a2`: Manual Package Import / Compile / Graphics Tool Discovery / Compatibility確認
-- UnityAgent source: Graph Engineering Run #52でUnity `6000.0.75f1` / `6000.4.12f1` / `6000.5.5f1` Contract PASS
-- Unity `6000.7.0a2` Graph Engineering Manual CanaryでAgentを含む91/91 Combined Discovery確認
-- Stage 0 exact 42 Tool Production baseline: Unity `6000.7.0a2`実EditorでGraphics Read-only、Agent Orchestration、Approval、Light Mutation、Normal Undoまで`integration_verified_manual`
-- WorldCreatorを含むProduction 45 Tool: 実Editor Tool Discovery / Read-only Preflight / Human Review Handoffを`integration_verified_manual`
-- Stage 2〜8 Exact 77 Candidate: Local CG / Unity `6000.7.0a2`でCompile Error 0、77 unique Discovery、Candidate 6 Domain、Safety、Scoped Mutation、Agent Routing、Cross-domain、Production 45 RegressionをPASS
-- Addressables Package未導入時: 4 Toolの明示`UNSUPPORTED`境界を許容PASS。Agentは5成功 + Addressables失敗を`PARTIAL` / `executionSucceeded=false`で伝播
+- PrepareはRead-only
+- MutationはExpected Revision + One-time Plan + Approval Token
+- Automatic Save禁止
+- Automatic Full Bake禁止
+- Generic SerializedProperty Mutation禁止
+- Silent Fallback禁止
+- Automatic Visual Acceptance禁止
+- UnityAgent / WorldCreatorによるDirect Unity Mutation禁止
+- Addressables Package未導入時の自動Package導入・Settings/Group生成禁止
+- Addressables Content Buildはv1.1.0 Surface外
 
-未完了Evidence:
+## Direct Unity Editor Verification
 
-- **Current exact 42 Tool Production CI**: GitHub Actions JobがRunner Step開始前にFailureしているため`not_verified`
-- **Package Editor Test Runner / Fresh-project Sample Workflow**: Current Candidateでは`not_verified`
-- **Stage 2〜8 Automated CI**: Runner Stepを実行できないため`not_verified`
-- **Addressables Positive Backend Matrix**: CGにPackageを導入していないため`not_verified`
-- **External Transport Disconnect/Reconnect**: Domain Reload callbackとProject再登録はPASS。Disconnect callbackと外部Transport経由のReconnectは`not_verified`
-- Full protocol-level External MCP E2E: final Production Hardeningで実施
-- Player / Target Device Tool Execution: unsupported / not_verified
+Unity `6000.7.0a2`で以下を実観測済みです。
 
-Runner未実行をTechnical PASSへ読み替えません。
+- Compile Error 0
+- Exact 77/77 Tool Discovery
+- Duplicate Tool 0
+- Read-only Domain Smoke PASS
+- Stale Revision rejection PASS
+- Missing / Wrong Approval rejection PASS
+- One-time Plan reuse rejection PASS
+- Profiler Capture PASS
+- UI / Animation / Audio / Cinematic Scoped Mutation E2E PASS
+- Addressables Package未導入時の`UNSUPPORTED`境界 PASS
+- Agent Routing PASS
+- Delegated Failure Propagation PASS（false successなし）
+- Cross-domain Workflow PASS
+- Timeout / Cancel / Domain Reload callbacks PASS
+- Previous Production 45 Regression PASS
 
-## Release control
+## Supplemental / Not Verified
 
-`VERSION` / Package / ManifestはSource Versionとして`1.1.0`へ揃えますが、**この変更だけではTagまたはGitHub Releaseを作成しません**。
+GitHub ActionsはSupplemental Evidenceです。Runner Step開始前に利用不能だった実行は`not_verified`として保持し、PASSにもCode Failureにも読み替えません。
 
-Release Publicationは別の明示操作で行います。
+v1.1.0で未検証の範囲:
 
-```text
-Source Version 1.1.0
-        ↓
-Release Candidate verification
-        ↓
-Explicit human publication approval
-        ↓
-workflow_dispatch / approved publish command
-        ↓
-v1.1.0 Tag + GitHub Release
-```
+- Automated CI
+- Package Editor Test Runner
+- Fresh-project Sample Workflow
+- Addressables Positive Backend Matrix
+- External MCP Transport Disconnect/Reconnect
+- Player / Target Device Tool Execution
+- 全Unity 6000.x Patch / 全Render Pipeline Package Versionの組み合わせ
 
-公開済みTagはimmutableです。既存Tagの移動・削除・Force更新は行いません。
+これらはEditor-only v1.1.0 ReleaseのBlocking Gateにはしません。Addressables Packageが存在しない環境は明示`UNSUPPORTED`が正式な境界です。
 
-## Current scope
+## Current Scope
 
 - Unity Editor専用
 - Minimum Unity: `6000.0`
-- Production Operational baseline: `unity_graphics_mcp`, `unity_agent_mcp`, `world_creator`
-- Production Tools: 45
-- Stage 2〜8 Integration Candidate: Profiler / Addressables / UI / Animation / Audio / Cinematic、計32 Tool
-- Candidate Status: `local_cg_runtime_verified_ci_unavailable`
-- Candidate Production Promotion: Human Gate pending
-- Player / Target Device上でのTool実行は対象外
-- Built-in PipelineのAPV Bakeは非対応
-- URP / HDRPのAPV BakeはProject固有Baking Set / Backend条件に依存
+- MCP for Unity Bridge dependency: `10.1.2`
+- All tools: `AutoRegister = false`
+- Build Domain: excluded
+- Addressables Content Build: excluded
+- MovieCreator runtime: excluded
+- LiveCreator runtime: excluded
 
-## Next production capability
+## Upgrade
 
-Stage 2〜8 CandidateはLocal CG Runtime Validationを完了していますが、自動昇格しません。次のActionはHuman Review後に`graph/myunitymcp-final-completion`を`delivery/stage2-8-integration`へPromotionすることです。PR Ready化と`main` Mergeも別Human Gateです。
+v1.0.xからはPackage参照を`v1.1.0`へ更新してください。公開済みTagはimmutableであり、既存v1.0.x Tagは変更しません。
+
+```text
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.1.0
+```
