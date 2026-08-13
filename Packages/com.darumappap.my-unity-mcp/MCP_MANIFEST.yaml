@@ -1,4 +1,4 @@
-schema_version: "2.3"
+schema_version: "2.4"
 package_id: com.darumappap.my-unity-mcp
 version: "1.1.0"
 implementation_status: editor_operational_direct_editor_verified_ci_unavailable
@@ -17,13 +17,14 @@ operational_domain:
 operational_control_plane:
   id: unity_agent_mcp
   status: editor_operational
-  runtime_catalog: Editor/Development/Agent/UnityAgentMcpCatalog.json
+  runtime_catalog: Editor/Operational/Agent/UnityAgentMcpCatalog.json
   capability_contract: ../../Catalog/unity-agent-capability-contracts.yaml
   direct_unity_mutation_allowed: false
 
 operational_creator:
   id: world_creator
   status: editor_operational
+  implementation: Editor/Operational/WorldCreator/UnityWorldCreatorMcp.cs
   specification: ../../Specs/UnityWorldCreatorMCP/spec.md
   capability_contract: ../../Catalog/world-creator-capability-contract.yaml
   direct_unity_mutation_allowed: false
@@ -117,7 +118,8 @@ safety:
 verification:
   release_evidence: ../../Tests/Compatibility/release-verification.yaml
   direct_editor_policy: ../../Tests/Compatibility/editor-first-verification-policy.yaml
-  promotion_evidence: ../../Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  production_surface_contract: ../../Catalog/production-surface-contract.yaml
+  production_evidence: ../../Tests/Compatibility/production-editor-acceptance.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
   unity_editor_compile: passed
   unity_editor_version: 6000.7.0a2
@@ -133,10 +135,8 @@ verification:
   fresh_project_sample_workflow: not_verified_non_blocking
   package_editor_test_runner: unavailable_not_verified_non_blocking
   automated_ci: unavailable_not_verified
-  automated_ci_required_for_promotion: false
+  automated_ci_required_for_release: false
   target_device_validation: not_verified_not_required_for_editor_only_release
-  human_promotion_gate: satisfied_by_explicit_release_request
-  production_promotion: completed
   release_human_gate: satisfied_by_explicit_release_request
   release_publication: pending
 
