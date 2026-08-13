@@ -2,41 +2,49 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
-## [1.1.0] - Unreleased
+## [1.1.0] - 2026-08-13
 
 ### Added
 
-- UnityAgentMCP Control Planeと10個の`agent.*` Tool
-- Workflow Validation、Graph Compile、Preview、Approval、Execution／Cancel／History Contract
-- UnityAgent Operational SpecとCapability Contract
-- WorldCreatorと3個の`world.*` Tool
-- Visual GoalからRead-only Graphics Preflightを組み立てる`world.compile_workflow`
-- Agent経由でPreflightを開始する`world.start_preflight`
-- Human Review必須の`world.create_review_handoff`
-- WorldCreator専用Editor ContractとProduction Spec
+- UnityAgentMCP Control Plane 10 Tool
+- WorldCreator 3 Tool
+- Profiler 8 Tool
+- Addressables Entry管理 4 Tool
+- UI 5 Tool
+- Animation 5 Tool
+- Audio 5 Tool
+- Cinematic 5 Tool
+- 6 Extended Domain専用Capability Contract
+- Direct Unity EditorをPrimary Verification AuthorityとするEditor-first Promotion Policy
 
 ### Changed
 
-- Current SourceのTool Surfaceを32 Graphics + 10 Agent + 3 WorldCreator = 45 Toolへ拡張するDelivery Candidateを追加
-- Fresh Project Tool DiscoveryとEditor Contract GateをWorldCreatorへ対応
-- WorldCreatorはGraph Engineering候補全体をMergeせず、3 ToolだけをCapability-scoped Deliveryとして移植
-- Source Versionを`1.1.0`へ移行し、GitHub Release Publicationとは分離
-- `VERSION`変更による暗黙Releaseを廃止し、明示Publish操作だけでReleaseする構成へ変更
-- Stage 2〜8 CandidateをExact 77 Toolへ確定し、Build DomainとAddressables Content BuildをRuntime Surfaceから撤去
-- Local Runtime ValidationとProduction Promotionを分離し、Candidate 6 Domainは`integration_candidate`を維持
+- Production Editor Surfaceを **77 Tool = 32 Graphics + 10 Agent + 3 WorldCreator + 32 Extended Domain** へ昇格
+- Profiler / Addressables / UI / Animation / Audio / Cinematicを`editor_operational`へ昇格
+- UnityAgent Runtime Catalogを77 Tool Operational Routingへ更新
+- Release前にCapability Contract / 77 Tool Promotion Contract / Stable Release Evidenceを検証するようPublication Workflowを強化
+- GitHub Actions CIはSupplemental Evidenceとし、Runner未開始・利用不能だけではReleaseをBlockしない
+- Fresh-project CIはSupplemental Validationとして扱う
+- Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeはv1.1.0 Surfaceから除外
 
 ### Verification
 
-- Graph Engineering Run #52でAgent SourceのUnity 6000.0 / 6000.4 / 6000.5 Contractを検証
-- Unity 6000.7.0a2 Manual CanaryでAgentを含むCombined Tool Discoveryを確認
-- Stage 0の42 Tool Production baselineは実Editor E2Eで`integration_verified_manual`
-- exact 42 Tool Production CIはGitHub Actions JobがRunner Step開始前にFailureするため`not_verified`を維持
-- WorldCreatorを含むProduction 45 Toolは実Editor Evidenceで`integration_verified_manual`
-- Stage 2〜8 Exact 77 CandidateはLocal CG / Unity `6000.7.0a2`でRuntime ValidationとProduction 45 RegressionをPASS
-- Addressables Package未導入時の明示`UNSUPPORTED`境界はPASS。Package Editor Test Runner、Fresh-project Sample Workflow、Positive Backend Matrix、Automated CI、External Transport Disconnect/Reconnectは`not_verified`
-- Candidate Production PromotionはHuman Gate pending
+Unity `6000.7.0a2` Direct Editor Evidence:
 
-`1.1.0`はCurrent Source Versionです。この変更自体ではTag／GitHub Releaseを作成しません。
+- Compile Error 0
+- Exact 77/77 Tool Discovery
+- Duplicate Tool 0
+- Read-only Domain Smoke PASS
+- Stale Revision / Approval / One-time Plan Safety PASS
+- Profiler Capture PASS
+- UI / Animation / Audio / Cinematic Scoped Mutation E2E PASS
+- Addressables Package未導入時の明示`UNSUPPORTED`境界 PASS
+- Agent Routing / Delegated Failure Propagation PASS
+- Cross-domain Workflow PASS
+- Timeout / Cancel / Domain Reload callbacks PASS
+- Previous Production 45 Regression PASS
+
+未検証範囲は削除せず保持します: Automated CI、Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Device。
 
 ## [1.0.0] - 2026-08-11
 
@@ -51,19 +59,9 @@
 
 ### Changed
 
-- Unity 6.4 / 6.5 / 6.7のAPI移行へ対応し、Object / Sceneの一時識別をMyUnityMCP Session Tokenへ分離
-- Unity 6.7でError化した`SceneHandle`暗黙変換、`GetInstanceID()`、`InstanceIDToObject(int)`依存を除去
-- Editor内部実装を`Core / Compatibility / Inspection / Planning / Mutation / Save / Bake / Capture / Execution / Tools`へ責務別整理
-- `UnityGraphicsMcp` namespaceは維持しつつ、内部型の冗長な`UnityGraphicsMcp` prefixを削除
-- Tool wrapperはDomain単位でまとめ、外部MCP Tool名`graphics.*`は維持
-- Package Assetの`.meta`契約とSemantic Naming GuardをCIへ追加
-
-### Verification
-
-- Unity `6000.0.75f1`: Compile / 32 Tool Discovery / 125以上のEditMode Contract PASS
-- Unity `6000.4.12f1`: Compatibility EditMode / Compile Verify PASS
-- Unity `6000.5.5f1`: Compatibility EditMode / Compile Verify PASS
-- Unity `6000.7.0a2`: Manual Package Import / Compile / 32 Tool Discovery / `graphics.inspect_project` / Compatibility Bucket確認 PASS
+- Unity 6.4 / 6.5 / 6.7のAPI移行へ対応
+- Editor内部実装を責務別に整理
+- Tool wrapperをDomain単位へ整理し、外部MCP Tool名`graphics.*`を維持
 
 ### Known limitations
 
