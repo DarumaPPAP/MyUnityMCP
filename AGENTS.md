@@ -2,14 +2,14 @@
 
 ## Repository role
 
-このRepositoryの実行可能製品Sourceは、Unity Editor向け`unity_graphics_mcp` Domainと`unity_agent_mcp` Control Plane、そのTool Schema、Safety Contract、Test、Sample、配布Templateです。
+このRepositoryの実行可能製品Sourceは、Unity Editor向けMyUnityMCP Tool Surface、そのControl Plane、Tool Schema、Safety Contract、Test、Sample、配布Templateです。
+
+Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各DomainのOperational / Promotion状態は`MCP_MANIFEST.yaml`、`Catalog/`、`Tests/Compatibility/`の現在Evidenceを正本とし、古い45 Tool / Candidate文言だけを根拠に現在状態を判断しません。
 
 実行可能な製品資産と将来設計は物理的・契約的に分離します。
 
 - 実行可能製品: `Packages/`、`Catalog/`、`Specs/`、`Tests/`、`SampleProjects/`、`Templates/`
 - Design Only / Historical Design: `Design/`
-
-`UnityAgentMCP`はCurrent mainで実行可能なControl Planeです。Creator Workflowと、Graphics以外でまだProduction DeliveryされていないDomain MCPは`Design/`配下の設計資産であり、Operational Domainとして扱いません。
 
 対象Unity Project固有のScene、Prefab、Material、Lighting Data、認証情報、組織情報、顧客情報をこのRepositoryへ保存しません。
 
@@ -24,6 +24,7 @@
 - UnityAgent capability contract: `Catalog/unity-agent-capability-contracts.yaml`
 - UnityAgent operational spec: `Specs/UnityAgentMCP/spec.md`
 - Support: `Tests/Compatibility/support-matrix.yaml`
+- Direct Editor verification policy: `Tests/Compatibility/editor-first-verification-policy.yaml`
 - Stable release evidence: `Tests/Compatibility/release-verification.yaml`
 - Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
 
@@ -63,6 +64,59 @@ inspect capabilities → validate workflow → compile graph → preview
 - `unavailable`は`passed`へ昇格しない。
 - Capture成功はVisual Acceptanceではなく、Compile成功はRuntime / target-device Acceptanceではない。
 - AgentまたはClientは現在選択されたCapability Contractだけを読み、全Tool Group契約を常時Contextへロードしない。
+
+## Verification authority
+
+MyUnityMCPの通常開発・Promotionでは、Codexが直接アクセス可能な実Unity EditorをPrimary Verification Authorityとします。
+
+```text
+Source change
+  → Static Contract Check
+  → Direct Unity Editor bind/import
+  → Unity compile
+  → Runtime / Tool discovery
+  → Read-only smoke
+  → Safety Contract
+  → Targeted Editor E2E
+  → Regression
+  → Cleanup / rollback confirmation
+  → Promotion Evidence
+  → Human Gate
+```
+
+Primary Gateでは、対象変更に応じて次を実観測します。
+
+- UnityによるImport / Compile完了とCompile Error 0
+- 契約されたTool / Runtime SurfaceのDiscoveryと重複0
+- 対象DomainのRead-only Smoke
+- Revision / Approval / one-time Plan / rejection-without-mutation等のSafety Contract
+- 承認済みScopeだけを変更するEditor E2E
+- Agent Delegation / Failure Propagationなど対象変更に関係する統合挙動
+- 既存Production SurfaceのRegression
+- Scene / Asset / Revisionのbefore/after Evidence
+- Validation Fixture / transient bindingのCleanupまたはRollback
+
+Codexは失敗を観測した場合、最小Root Cause Fix → Unity再Import/Compile → Failed Gate再実行 → Regressionの順で最大3回まで修復Loopを行えます。同一Failureが2回続く、Scope拡張が必要、またはProjectSettings等のHuman Gate対象へ踏み込む場合は停止します。
+
+### GitHub Actions / CI
+
+GitHub ActionsはPrimary GateではなくSupplemental Verificationです。
+
+- CIが利用不能、Runner未開始、`steps=null`の場合は`not_verified`として記録する。
+- `not_verified`だけを理由にDirect Unity EditorでPASSしたCandidateのPromotionを禁止しない。
+- CIを実行していないのにPASSと記録しない。
+- CIが実際にRunner Stepを実行し、Code / Contract起因のFailureを観測した場合は`conflicting_evidence`として扱い、解決またはHuman Reviewまで自動Promotionしない。
+- CI PASSは追加Regression Evidenceであり、Direct Unity Editor Evidenceを置き換えない。
+
+### Editor / Target Device separation
+
+Direct Unity Editor Validationを「実機検証」やTarget Device Validationとして記録しません。
+
+- Unity Editor: `direct_editor_validation`
+- GitHub Actions: `automated_ci`
+- Player / Switch / Android / Console等: `target_device_validation`
+
+Target Device検証は、GoalまたはRelease ContractがPlayer/Device挙動を要求する場合だけ別Gateとして追加します。
 
 ## Environment resolution
 
@@ -115,7 +169,9 @@ MyUnityMCPのC#、asmdef、Rendering、Build、UI Toolkit、ECS、XR/AR、Unity 
 ## Release rules
 
 - `VERSION`、Package、Manifest、Support Matrix、Changelogを一致させる。
-- Release PRではEditor CIとRelease Gateを両方成功させる。
+- Release / PromotionのPrimary GateはDirect Unity Editor Validationとする。
+- GitHub Actions Editor CI / Release GateはSupplemental Evidenceとし、利用不能だけではRelease / PromotionをBlockしない。
+- GitHub Actionsが実行済みCode / Contract Failureを返した場合は、Direct Editor PASSとのConflictを解消するかHuman Reviewを通すまでReleaseしない。
 - `Catalog/mcp-catalog.yaml`の全Operational Module／Tool Groupと各`capability_contract`を一致させる。
 - Known Issuesと未検証範囲を削除・婉曲化しない。
 - 一時Migration Script／WorkflowをRelease差分へ残さない。

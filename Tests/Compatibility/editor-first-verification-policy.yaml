@@ -1,0 +1,84 @@
+schema_version: "1.0"
+id: myunitymcp-editor-first-verification
+package_version: "1.1.0"
+
+verification_authority:
+  primary: direct_unity_editor_validation
+  supplemental: automated_ci
+  target_device: separate_conditional_gate
+
+primary_editor_validation:
+  executor: codex_with_direct_unity_editor_access
+  required_for_promotion: true
+  required_evidence:
+    - unity_version
+    - candidate_source_identity
+    - package_import_or_binding_result
+    - compile_error_count
+    - expected_tool_discovery
+    - duplicate_tool_count
+    - request_relevant_readonly_smoke
+    - request_relevant_safety_contract
+    - request_relevant_editor_e2e
+    - relevant_regression
+    - mutation_revision_before_after_when_applicable
+    - changed_scene_or_asset_scope_when_applicable
+    - cleanup_or_rollback_result
+    - unresolved_not_verified_items
+  repair_loop:
+    enabled: true
+    max_attempts: 3
+    identical_failure_limit: 2
+    strategy: minimal_observed_root_cause_fix_then_editor_revalidation
+
+promotion_semantics:
+  direct_editor_pass_required: true
+  static_contract_pass_required: true
+  automated_ci_pass_required: false
+  automated_ci_unavailable_blocks_promotion: false
+  human_gate_required: true
+
+ci:
+  role: supplemental_non_blocking
+  unavailable: not_verified
+  runner_not_started: not_verified
+  steps_null: not_verified
+  pass_without_executed_steps: prohibited
+  successful_run: additional_regression_evidence
+  executed_code_or_contract_failure:
+    status: conflicting_evidence
+    automatic_promotion: prohibited
+    human_review_required: true
+
+target_device:
+  editor_validation_counts_as_target_device: false
+  default_status_without_device_test: not_verified
+  required_when:
+    - request_explicitly_requires_player_or_device_behavior
+    - release_contract_explicitly_requires_target_device_acceptance
+
+quality_semantics:
+  pass_requires_observation: true
+  unavailable_is_not_pass: true
+  not_verified_is_not_failure: true
+  compile_pass_is_not_runtime_acceptance: true
+  capture_pass_is_not_visual_acceptance: true
+  editor_pass_is_not_target_device_acceptance: true
+
+recommended_workflow:
+  - static_contract_check
+  - bind_candidate_to_direct_unity_editor
+  - unity_import_and_compile
+  - runtime_tool_discovery
+  - readonly_smoke
+  - safety_contract
+  - targeted_editor_e2e
+  - regression
+  - cleanup_or_rollback
+  - promotion_evidence
+  - human_gate
+
+external_workflow_authority:
+  repository: DarumaPPAP/Unity-Graph-Engineering
+  policy: policies/unity-editor-first-verification.yaml
+  workflow: workflows/unity-editor-first-verification.yaml
