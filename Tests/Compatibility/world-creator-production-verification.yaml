@@ -1,0 +1,82 @@
+schema_version: "1.1"
+record: world_creator_production_verification
+status: historical_editor_verified
+recorded_at: "2026-08-12"
+
+production_snapshot:
+  package_version: "1.1.0"
+  production_tool_count: 45
+  composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+
+world_creator_tools:
+  - world.compile_workflow
+  - world.start_preflight
+  - world.create_review_handoff
+
+direct_editor_validation:
+  authority: direct_unity_editor_validation
+  editor: real_unity_editor
+  scene_scope: current_loaded_scene
+  scene_asset_mutation_allowed: false
+  direct_unity_api_allowed: false
+  force_or_safety_bypass_allowed: false
+  production_tool_discovery:
+    status: passed
+    expected: 45
+    observed: 45
+  world_compile_workflow:
+    status: passed
+    creator: world_creator
+    direct_unity_mutation: false
+    graph_step_count: 3
+    graph_steps:
+      - graphics.inspect_project
+      - graphics.inspect_scene
+      - graphics.validate_scene
+  readonly_preflight:
+    status: passed
+    terminal_status: SUCCEEDED
+    execution_succeeded: true
+    completed_steps: 3
+    total_steps: 3
+  review_handoff:
+    status: passed
+    handoff_status: HUMAN_REVIEW_REQUIRED
+    automatic_visual_acceptance: false
+    preflight_result_included: true
+  stale_revision_rejection:
+    status: passed
+    success: false
+    error_code: WORLD-REVISION-STALE
+  premature_handoff_rejection:
+    status: not_observed_due_to_timing
+    note: The Editor completed the three-step read-only graph before the handoff call was evaluated. The explicit terminal-SUCCEEDED guard remains covered by the dedicated regression test.
+  scene_state:
+    mutation_performed: false
+    save_performed: false
+    bake_performed: false
+    direct_unity_api_used: false
+    force_used: false
+    safety_bypass_used: false
+
+production_verdict:
+  decision: passed_with_direct_editor_evidence
+  world_creator_status: historical_editor_verified
+  production_integration_allowed: true
+  blocking_editor_failures: []
+  safety_contract_preserved:
+    direct_unity_mutation: prohibited
+    automatic_save: prohibited
+    automatic_bake: prohibited
+    automatic_visual_acceptance: prohibited
+    stale_revision_rejected: true
+    human_review_required: true
+
+automated_ci:
+  status: unavailable_not_verified
+  reason: GitHub Actions jobs terminated before workflow steps executed.
+  observed_behavior: steps_null
+  policy: Direct Unity Editor evidence does not convert unavailable automated CI into passed CI.

@@ -1,0 +1,71 @@
+schema_version: "1.1"
+record: production_editor_acceptance
+recorded_at: "2026-08-13"
+status: accepted_direct_unity_editor_ci_unavailable
+repository: DarumaPPAP/MyUnityMCP
+release_version: "1.1.0"
+
+surface:
+  total_tools: 77
+  previous_verified_baseline_tools: 45
+  expanded_domain_tools: 32
+  composition:
+    graphics: 32
+    agent: 10
+    world_creator: 3
+    profiler: 8
+    addressables: 4
+    ui: 5
+    animation: 5
+    audio: 5
+    cinematic: 5
+  excluded:
+    - unity_build_mcp
+    - addressables_content_build
+    - movie_creator_runtime
+    - live_creator_runtime
+
+direct_editor_validation:
+  accepted_by_repository_owner: true
+  authority: direct_unity_editor_validation
+  unity: 6000.7.0a2
+  environment: local_cg
+  compile_errors: 0
+  exact_tool_discovery: 77
+  duplicate_tool_names: 0
+  source_only_tools: 0
+  runtime_only_tools: 0
+  accepted_evidence:
+    - extended_domain_readonly_smoke
+    - stale_revision_rejection
+    - missing_or_wrong_approval_rejection
+    - one_time_plan_reuse_rejection
+    - profiler_capture
+    - ui_animation_audio_cinematic_scoped_mutation_e2e
+    - addressables_package_absent_boundary_returns_unsupported
+    - agent_operational_routing
+    - delegated_failure_propagation_without_false_success
+    - cross_domain_workflow
+    - timeout_cancel_domain_reload_callbacks
+    - previous_production_45_regression
+
+automated_ci:
+  role: supplemental
+  status: unavailable_not_verified
+  executed_code_failure: false
+  observed_behavior: steps_null_before_runner_execution
+  blocks_product_acceptance: false
+
+not_verified_non_blocking:
+  - package_editor_test_runner
+  - fresh_project_sample_workflow
+  - automated_ci
+  - addressables_positive_backend_matrix
+  - external_transport_disconnect_reconnect
+  - target_device_validation
+
+acceptance:
+  production_surface_accepted: true
+  product_source_integrated_to_main: true
+  ci_unavailability_explicitly_accepted_for_product_acceptance: true
+  direct_editor_validation_is_not_target_device_validation: true

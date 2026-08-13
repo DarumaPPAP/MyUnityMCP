@@ -1,0 +1,43 @@
+schema_version: "1.1"
+record: production_baseline_verification
+status: historical_editor_verified
+recorded_at: "2026-08-12"
+
+production_baseline:
+  branch: main
+  package_version: "1.1.0"
+  production_tool_count: 42
+  composition:
+    graphics: 32
+    agent: 10
+
+historical_editor_evidence:
+  authority: direct_unity_editor_validation
+  unity: 6000.7.0a2
+  compile_errors: 0
+  tool_discovery:
+    expected: 42
+    observed: 42
+  verified:
+    - graphics_readonly_smoke
+    - agent_orchestration_smoke
+    - approval_boundary
+    - light_mutation
+    - normal_undo
+  target_device_claim: false
+
+automated_ci:
+  status: unavailable_not_verified
+  reason: GitHub Actions jobs terminated before workflow steps executed.
+  observed_behavior: steps_null
+  policy: Direct Unity Editor evidence does not convert unavailable automated CI into passed CI.
+
+residual_not_verified:
+  - fresh_project_sample_workflow
+  - package_editor_test_runner
+  - target_device_validation
+
+verdict:
+  decision: passed_with_direct_editor_evidence
+  production_status: historical_verified_baseline
+  automated_ci: unavailable_not_verified

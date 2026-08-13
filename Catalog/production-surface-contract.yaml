@@ -1,0 +1,91 @@
+schema_version: "1.0"
+scope: production_editor_surface
+status: editor_operational
+release_version: "1.1.0"
+production_tool_count: 77
+previous_verified_baseline_tool_count: 45
+expanded_domain_tool_count: 32
+production_evidence: Tests/Compatibility/production-editor-acceptance.yaml
+
+shared_plan_contract:
+  expected_revision_required: true
+  one_time_plan_required: true
+  approval_required_for_mutation: true
+  automatic_save: prohibited
+  automatic_full_bake: prohibited
+  generic_serialized_property_mutation: prohibited
+  silent_fallback: prohibited
+  automatic_visual_acceptance: prohibited
+
+modules:
+  unity_profiler_mcp:
+    status: editor_operational
+    tools: 8
+    capability_contract: Catalog/profiler-capability-contract.yaml
+    mutation_scope: capture_control_only
+  unity_addressables_mcp:
+    status: editor_operational
+    tools: 4
+    capability_contract: Catalog/addressables-capability-contract.yaml
+    optional_package: com.unity.addressables
+    package_absent_result: UNSUPPORTED
+    content_build: excluded
+  unity_ui_mcp:
+    status: editor_operational
+    tools: 5
+    capability_contract: Catalog/ui-capability-contract.yaml
+    mutation_scope: rect_transform_only
+  unity_animation_mcp:
+    status: editor_operational
+    tools: 5
+    capability_contract: Catalog/animation-capability-contract.yaml
+    mutation_scope: animator_controller_parameter_only
+  unity_audio_mcp:
+    status: editor_operational
+    tools: 5
+    capability_contract: Catalog/audio-capability-contract.yaml
+    mutation_scope: audio_source_supported_properties_only
+  unity_cinematic_mcp:
+    status: editor_operational
+    tools: 5
+    capability_contract: Catalog/cinematic-capability-contract.yaml
+    mutation_scope: playable_director_supported_settings_only
+
+verification:
+  authority: direct_unity_editor_validation
+  direct_editor_status: passed
+  unity_version: 6000.7.0a2
+  exact_tool_discovery: 77
+  duplicate_tool_names: 0
+  verified:
+    - extended_domain_readonly_smoke
+    - stale_revision_rejection
+    - approval_boundary_rejection
+    - one_time_plan_reuse_rejection
+    - profiler_capture
+    - ui_animation_audio_cinematic_scoped_mutation_e2e
+    - addressables_package_absent_boundary
+    - agent_operational_routing
+    - delegated_failure_propagation
+    - cancellation_timeout_domain_reload_callbacks
+    - cross_domain_workflow
+    - previous_production_45_regression
+  not_verified_non_blocking:
+    - package_editor_test_runner
+    - fresh_project_sample_workflow
+    - automated_ci
+    - addressables_positive_backend_matrix
+    - external_transport_disconnect_reconnect
+    - target_device_validation
+
+release_contract:
+  production_operational_tools: 77
+  automated_ci_required: false
+  target_device_required_for_editor_only_release: false
+  human_gate: satisfied_by_explicit_release_request
+
+excluded_from_current_surface:
+  - unity_build_mcp
+  - addressables_content_build
+  - movie_creator_runtime
+  - live_creator_runtime

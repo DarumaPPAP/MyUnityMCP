@@ -1,4 +1,4 @@
-schema_version: "1.1"
+schema_version: "1.2"
 release_version: "1.1.0"
 verification_status: passed
 
@@ -14,7 +14,7 @@ required_gates:
   cross_domain_workflow: passed
   previous_production_45_regression: passed
   capability_contract: validated_at_publication
-  promotion_contract: validated_at_publication
+  production_surface_contract: validated_at_publication
   release_contract: validated_at_publication
   distribution_build: built_at_publication
   automated_ci: unavailable_not_verified_non_blocking
@@ -26,14 +26,14 @@ required_gates:
 
 editor_verification:
   authority: direct_unity_editor_validation
-  evidence: Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
+  evidence: Tests/Compatibility/production-editor-acceptance.yaml
   unity_version: "6000.7.0a2"
   result: passed
   tool_discovery: 77
   duplicate_tool_names: 0
   compile_errors: 0
   checks:
-    candidate_domain_readonly_smoke: passed
+    extended_domain_readonly_smoke: passed
     stale_revision_rejection: passed
     approval_boundary_rejection: passed
     one_time_plan_reuse_rejection: passed
@@ -61,6 +61,8 @@ compatibility_evidence:
     direct_editor_validation: passed
 
 operational_surface:
+  contract: Catalog/production-surface-contract.yaml
+  validation_evidence: Tests/Compatibility/production-validation-evidence.yaml
   total_tools: 77
   composition:
     graphics: 32
