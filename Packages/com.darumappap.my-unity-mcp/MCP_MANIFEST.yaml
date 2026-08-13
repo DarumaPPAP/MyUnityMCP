@@ -1,17 +1,17 @@
-schema_version: "2.2"
+schema_version: "2.3"
 package_id: com.darumappap.my-unity-mcp
 version: "1.1.0"
-implementation_status: local_cg_runtime_verified_ci_unavailable
-release_baseline: v1.0.0
-production_baseline_commit: c0c37669a1ee187022ff0664dfbf3f6d7c3da7fa
-production_verified_tool_count: 45
-integration_target_tool_count: 77
+implementation_status: editor_operational_direct_editor_verified_ci_unavailable
+release_baseline: v1.0.1
+production_verified_tool_count: 77
+source_surface_tool_count: 77
 
 operational_domain:
   id: unity_graphics_mcp
   status: editor_operational
   specification: ../../Specs/UnityGraphicsMCP/spec.md
   architecture: ../../Specs/UnityGraphicsMCP/architecture.md
+  capability_contract: ../../Catalog/capability-contracts.yaml
   support_matrix: ../../Tests/Compatibility/support-matrix.yaml
 
 operational_control_plane:
@@ -29,31 +29,38 @@ operational_creator:
   direct_unity_mutation_allowed: false
   orchestration_control_plane: unity_agent_mcp
 
-integration_candidate_domains:
+operational_extended_domains:
   - id: unity_profiler_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 8
+    capability_contract: ../../Catalog/profiler-capability-contract.yaml
     mutation_scope: capture_control_only
   - id: unity_addressables_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 4
+    capability_contract: ../../Catalog/addressables-capability-contract.yaml
     optional_package: com.unity.addressables
+    package_absent_result: UNSUPPORTED
     content_build: excluded_from_current_mcp_surface
   - id: unity_ui_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 5
+    capability_contract: ../../Catalog/ui-capability-contract.yaml
     approval_required_for_mutation: true
   - id: unity_animation_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 5
+    capability_contract: ../../Catalog/animation-capability-contract.yaml
     approval_required_for_mutation: true
   - id: unity_audio_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 5
+    capability_contract: ../../Catalog/audio-capability-contract.yaml
     approval_required_for_mutation: true
   - id: unity_cinematic_mcp
-    status: integration_candidate
+    status: editor_operational
     tools: 5
+    capability_contract: ../../Catalog/cinematic-capability-contract.yaml
     approval_required_for_mutation: true
 
 bridge:
@@ -62,7 +69,7 @@ bridge:
   command_entry: HandleCommand(JObject)
   command_dispatch: unity_main_thread
   discovered_tool_count: 77
-  discovery_evidence_scope: local_cg_runtime
+  discovery_evidence_scope: direct_unity_editor
   tools_enabled_by_default: false
   explicit_activation_required: true
 
@@ -73,58 +80,24 @@ production_tool_groups:
     tools: 10
   world_creator:
     tools: 3
-
-integration_tool_groups:
   profiler:
-    mutation: false
-    tools:
-      - profiler.inspect_environment
-      - profiler.inspect_counters
-      - profiler.prepare_capture
-      - profiler.start_capture
-      - profiler.get_capture_status
-      - profiler.cancel_capture
-      - profiler.summarize_capture
-      - profiler.compare_baseline
+    tools: 8
+    mutation: capture_control_only
   addressables:
+    tools: 4
     mutation: asset_entry_only
-    tools:
-      - addressables.inspect
-      - addressables.prepare_entry
-      - addressables.apply_entry
-      - addressables.get_support_matrix
   ui:
+    tools: 5
     mutation: scene_rect_transform
-    tools:
-      - ui.inspect
-      - ui.validate
-      - ui.prepare_rect_transform
-      - ui.apply_rect_transform
-      - ui.get_support_matrix
   animation:
+    tools: 5
     mutation: animator_controller_parameter
-    tools:
-      - animation.inspect
-      - animation.validate
-      - animation.prepare_parameter
-      - animation.apply_parameter
-      - animation.get_support_matrix
   audio:
-    mutation: scene_audio_source
-    tools:
-      - audio.inspect
-      - audio.validate
-      - audio.prepare_source
-      - audio.apply_source
-      - audio.get_support_matrix
+    tools: 5
+    mutation: scene_audio_source_supported_properties
   cinematic:
-    mutation: scene_playable_director
-    tools:
-      - cinematic.inspect
-      - cinematic.validate
-      - cinematic.prepare_director
-      - cinematic.apply_director
-      - cinematic.get_support_matrix
+    tools: 5
+    mutation: scene_playable_director_supported_settings
 
 safety:
   read_only_prepare: true
@@ -139,39 +112,35 @@ safety:
   automatic_execution_resume_after_restart: prohibited
   control_plane_direct_mutation: prohibited
   creator_direct_mutation: prohibited
-  integration_candidate_is_not_production_verified: true
+  optional_backend_unavailable_is_not_passed: true
 
 verification:
-  release_baseline_evidence: ../../Tests/Compatibility/release-verification.yaml
-  stage_0_evidence: ../../Tests/Compatibility/stage-0-production-baseline-verification.yaml
-  world_creator_evidence: ../../Tests/Compatibility/world-creator-production-promotion-verification.yaml
+  release_evidence: ../../Tests/Compatibility/release-verification.yaml
+  direct_editor_policy: ../../Tests/Compatibility/editor-first-verification-policy.yaml
+  promotion_evidence: ../../Tests/Compatibility/stage2-8-main-merge-acceptance.yaml
   current_support_matrix: ../../Tests/Compatibility/support-matrix.yaml
-  unity_editor_compile: passed_local_cg
+  unity_editor_compile: passed
   unity_editor_version: 6000.7.0a2
   tool_discovery_count: 77
-  production_verified_tool_count: 45
-  integration_candidate_tool_count: 32
-  stage2_8_validation_status: local_cg_runtime_verified_ci_unavailable
-  fresh_project_sample_workflow: not_verified
-  combined_domain_e2e: passed_local_cg
-  production_45_regression: passed_local_cg
+  duplicate_tool_names: 0
+  production_verified_tool_count: 77
+  direct_editor_validation: passed
+  combined_domain_e2e: passed
+  previous_production_45_regression: passed
   addressables_package_absent_boundary: passed_allowed_unsupported
-  addressables_positive_backend_matrix: not_verified
-  external_transport_disconnect_reconnect: not_verified
-  package_editor_test_runner: unavailable_not_verified
+  addressables_positive_backend_matrix: not_verified_non_blocking_optional_backend
+  external_transport_disconnect_reconnect: not_verified_non_blocking
+  fresh_project_sample_workflow: not_verified_non_blocking
+  package_editor_test_runner: unavailable_not_verified_non_blocking
   automated_ci: unavailable_not_verified
-  human_promotion_gate: pending
-  production_promotion: prohibited
+  automated_ci_required_for_promotion: false
+  target_device_validation: not_verified_not_required_for_editor_only_release
+  human_promotion_gate: satisfied_by_explicit_release_request
+  production_promotion: completed
+  release_human_gate: satisfied_by_explicit_release_request
+  release_publication: pending
 
-not_production_operational_until_human_promotion:
-  - unity_profiler_mcp
-  - unity_addressables_mcp
-  - unity_ui_mcp
-  - unity_animation_mcp
-  - unity_audio_mcp
-  - unity_cinematic_mcp
-
-excluded_from_stage2_8:
+excluded_from_current_surface:
   - unity_build_mcp
   - addressables_content_build
   - movie_creator_runtime
