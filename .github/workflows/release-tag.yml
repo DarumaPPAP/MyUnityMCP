@@ -44,6 +44,7 @@ jobs:
           tag="v${version}"
 
           # Static release contracts must pass before a new immutable tag is created.
+          python3 Tests/Release/verify_source_of_truth_consistency.py
           python3 Tests/Release/verify_capability_contract.py
           python3 Tests/Release/verify_production_surface_contract.py
           python3 Tests/Release/verify_release_contract.py --mode pr

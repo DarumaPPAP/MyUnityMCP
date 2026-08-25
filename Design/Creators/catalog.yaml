@@ -1,28 +1,35 @@
-schema_version: "1.1"
-release_version: "1.0.1"
+schema_version: "1.2"
+release_version: "1.1.0"
 
 creators:
   live_creator:
     kind: workflow_design
-    status: specified_not_executable
+    status: historical_design
+    current_status: not_implemented_current_wave
     workflow: Design/Creators/LiveCreator.yaml
+    runtime_catalog: Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json
     blocked_by:
-      - unity_agent_mcp_runtime_not_implemented
-      - unity_cinematic_mcp_not_implemented
+      - live_creator_runtime_not_implemented_current_wave
   movie_creator:
     kind: workflow_design
-    status: specified_not_executable
+    status: historical_design
+    current_status: not_implemented_current_wave
     workflow: Design/Creators/MovieCreator.yaml
+    runtime_catalog: Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json
     blocked_by:
-      - unity_agent_mcp_runtime_not_implemented
-      - unity_cinematic_mcp_not_implemented
+      - movie_creator_runtime_not_implemented_current_wave
   world_creator:
     kind: workflow_design
-    status: specified_not_executable
-    blocked_by:
-      - unity_agent_mcp_runtime_not_implemented
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    current_spec: Specs/UnityWorldCreatorMCP/spec.md
+    capability_contract: Catalog/world-creator-capability-contract.yaml
+    runtime_catalog: Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json
 
 rules:
   creator_does_not_mutate_unity_directly: true
   unavailable_creator_returns_blocking_domains: true
   unity_graphics_mcp_is_available_as_independent_domain: true
+  current_status_source: Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json
+  historical_design_status: historical_design

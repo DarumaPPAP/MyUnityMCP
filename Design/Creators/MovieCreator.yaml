@@ -1,10 +1,11 @@
 schema_version: "1.0"
 id: movie_creator
 kind: workflow
-status: specified_not_executable
+status: historical_design
+current_status: not_implemented_current_wave
+current_status_source: Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json
 blocked_by:
-  - unity_agent_mcp_runtime_not_implemented
-  - unity_cinematic_mcp_not_implemented
+  - movie_creator_runtime_not_implemented_current_wave
 
 use_when:
   - narrative cutscene production

@@ -1,43 +1,68 @@
-schema_version: "1.1"
+schema_version: "1.2"
+release_version: "1.1.0"
 
 modules:
   unity_cinematic_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/cinematic-capability-contract.yaml
 
   unity_ui_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/ui-capability-contract.yaml
 
   unity_addressables_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/addressables-capability-contract.yaml
 
   unity_animation_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/animation-capability-contract.yaml
 
   unity_audio_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/audio-capability-contract.yaml
 
   unity_profiler_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: editor_operational
+    operational_catalog: Catalog/mcp-catalog.yaml
+    capability_contract: Catalog/profiler-capability-contract.yaml
 
   unity_build_mcp:
     kind: domain
-    status: design_only_not_executable
+    status: historical_design
+    current_status: excluded_from_current_surface
+    current_status_source: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
 
 promoted_modules:
   unity_agent_mcp:
     kind: control_plane
-    status: promoted_to_operational_catalog
+    status: historical_design
+    current_status: editor_operational
     operational_catalog: Catalog/mcp-catalog.yaml
-    specification: Specs/UnityAgentMCP/spec.md
+    current_spec: Specs/UnityAgentMCP/spec.md
+    capability_contract: Catalog/unity-agent-capability-contracts.yaml
     historical_design: Design/UnityAgentMCP/spec.md
 
 rules:
   design_entries_are_not_runtime_capabilities: true
   runtime_promotion_requires_package_catalog_tests_and_docs: true
   promoted_modules_use_operational_catalog_and_specs_as_source_of_truth: true
+  current_operational_status_source: Catalog/mcp-catalog.yaml
+  historical_design_status: historical_design
