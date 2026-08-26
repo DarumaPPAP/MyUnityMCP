@@ -1,8 +1,11 @@
 #if UNITY_EDITOR
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityAgentMcp;
@@ -15,13 +18,19 @@ namespace MyUnityMcp.EditorTests
 		[SetUp]
 		public void SetUp()
 		{
+			AgentExecutionHistoryStore.StorageRootOverrideForTests = null;
+			AgentExecutionTraceStore.StorageRootOverrideForTests = null;
 			UnityAgentMcpRuntime.Instance.ResetExecutionsForTests();
+			UnityAgentMcpRuntime.Instance.ResetPersistenceForTests();
 		}
 
 		[TearDown]
 		public void TearDown()
 		{
 			UnityAgentMcpRuntime.Instance.ResetExecutionsForTests();
+			UnityAgentMcpRuntime.Instance.ResetPersistenceForTests();
+			AgentExecutionHistoryStore.StorageRootOverrideForTests = null;
+			AgentExecutionTraceStore.StorageRootOverrideForTests = null;
 		}
 
 		private static UnityAgentMcpStepInput GraphicsInspectStep(string stepId = "inspect", params string[] dependsOn)
@@ -119,10 +128,11 @@ namespace MyUnityMcp.EditorTests
 			{
 				JObject domain = (JObject)domains[index];
 				JObject catalogDomain = (JObject)catalogDomains[index];
-				Assert.That(domain.Properties().Select(value => value.Name).OrderBy(value => value).ToArray(), Is.EqualTo(expectedFields.OrderBy(value => value).ToArray()));
+				Assert.That(domain.Properties().Select(value => value.Name).ToArray(), Is.EqualTo(expectedFields));
 				Assert.That(domain["domainId"]?.Type, Is.EqualTo(JTokenType.String));
 				Assert.That(domain.Value<string>("domainId"), Is.EqualTo(expectedDomainIds[index]));
 				Assert.That(domain["status"]?.Type, Is.EqualTo(JTokenType.String));
+				Assert.That(domain.Value<string>("status"), Is.EqualTo(catalogDomain.Value<string>("status")));
 				Assert.That(domain["toolGroups"]?.Type, Is.EqualTo(JTokenType.Array));
 				Assert.That(domain["toolGroups"].All(value => value.Type == JTokenType.String), Is.True);
 				Assert.That(domain["toolGroups"].Values<string>().ToArray(), Is.EqualTo(expectedGroups[index]));
@@ -220,6 +230,480 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
+		public void CatalogV5_CreatorContractRemainsStringArrayAndOrdered()
+		{
+			JArray creators = (JArray)JObject.Parse(CatalogJson())["creators"];
+			string[] expectedIds = {"world_creator", "movie_creator", "live_creator"};
+			string[][] expectedTools =
+			{
+				new[] {"world.compile_workflow", "world.start_preflight", "world.create_review_handoff"},
+				new[] {"movie.compile_production", "movie.preview_production", "movie.create_review_handoff"},
+				new[] {"live.compile_show", "live.preview_show", "live.create_operator_handoff"}
+			};
+
+			Assert.That(creators.Count, Is.EqualTo(3));
+			for (int index = 0; index < creators.Count; index++)
+			{
+				JObject creator = (JObject)creators[index];
+				Assert.That(creator.Properties().Select(value => value.Name).ToArray(), Is.EqualTo(new[]
+					{"creatorId", "status", "tools", "directUnityMutationAllowed"}));
+				Assert.That(creator.Value<string>("creatorId"), Is.EqualTo(expectedIds[index]));
+				Assert.That(creator.Value<string>("status"), Is.Not.Empty);
+				Assert.That(creator["tools"]?.Type, Is.EqualTo(JTokenType.Array));
+				Assert.That(creator["tools"].All(value => value.Type == JTokenType.String), Is.True);
+				Assert.That(creator["tools"].Values<string>().ToArray(), Is.EqualTo(expectedTools[index]));
+				Assert.That(creator.Value<bool>("directUnityMutationAllowed"), Is.False);
+			}
+		}
+
+		[Test]
+		public void CatalogV5_FingerprintChangesWhenRawWhitespaceChanges()
+		{
+			byte[] original = Encoding.UTF8.GetBytes(CatalogJson());
+			byte[] changed = Encoding.UTF8.GetBytes(CatalogJson() + "\n");
+
+			Assert.That(AgentCatalogService.TryParse(
+				original,
+				UnityAgentMcpRuntime.RegisteredDomainDelegateNamesForTests,
+				out AgentCatalogSnapshot originalSnapshot,
+				out string originalError), Is.True, originalError);
+			Assert.That(AgentCatalogService.TryParse(
+				changed,
+				UnityAgentMcpRuntime.RegisteredDomainDelegateNamesForTests,
+				out AgentCatalogSnapshot changedSnapshot,
+				out string changedError), Is.True, changedError);
+
+			Assert.That(originalSnapshot.Fingerprint, Is.Not.EqualTo(changedSnapshot.Fingerprint));
+			Assert.That(originalSnapshot.SchemaVersion, Is.EqualTo(5));
+		}
+
+		[Test]
+		public void GraphBound_UsesNonNullStepsAndSharesValidatorForValidateAndCompile()
+		{
+			UnityAgentMcpStepInput[] sixtyFour = Enumerable.Range(0, 64)
+				.Select(index => GraphicsInspectStep("step-" + index))
+				.ToArray();
+			UnityAgentMcpStepInput[] sixtyFive = Enumerable.Range(0, 65)
+				.Select(index => GraphicsInspectStep("step-" + index))
+				.ToArray();
+			UnityAgentMcpStepInput[] sixtyFourAndNull = sixtyFour.Concat(new UnityAgentMcpStepInput[] {null}).ToArray();
+
+			JObject validateSixtyFour = UnityAgentMcpRuntime.Instance.ValidateWorkflow(sixtyFour);
+			JObject compileSixtyFour = UnityAgentMcpRuntime.Instance.CompileGraph(Session.Revision, sixtyFourAndNull);
+			JObject validateSixtyFive = UnityAgentMcpRuntime.Instance.ValidateWorkflow(sixtyFive);
+			JObject compileSixtyFive = UnityAgentMcpRuntime.Instance.CompileGraph(Session.Revision, sixtyFive);
+			JObject validateEmpty = UnityAgentMcpRuntime.Instance.ValidateWorkflow(new UnityAgentMcpStepInput[] {null, null});
+
+			Assert.That(validateSixtyFour.Value<bool>("success"), Is.True, validateSixtyFour.ToString());
+			Assert.That(validateSixtyFour.Value<int>("stepCount"), Is.EqualTo(64));
+			Assert.That(compileSixtyFour.Value<bool>("success"), Is.True, compileSixtyFour.ToString());
+			Assert.That(compileSixtyFour.Value<int>("stepCount"), Is.EqualTo(64));
+			Assert.That(validateSixtyFive.Value<string>("errorCode"), Is.EqualTo("AGENT-GRAPH-TOO-LARGE"));
+			Assert.That(compileSixtyFive.Value<string>("errorCode"), Is.EqualTo("AGENT-GRAPH-TOO-LARGE"));
+			Assert.That(validateEmpty.Value<string>("errorCode"), Is.EqualTo("AGENT-WORKFLOW-EMPTY"));
+		}
+
+		[Test]
+		public void CatalogFingerprintMismatch_FailsCompilePreviewAndStartClosed()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				long revision = Session.Revision;
+				JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+				Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
+
+				string changedPath = Path.Combine(temporaryDirectory, "catalog.json");
+				File.WriteAllText(changedPath, CatalogJson() + "\n", new UTF8Encoding(false));
+				UnityAgentMcpRuntime.CatalogPathOverrideForTests = changedPath;
+
+				JObject compileAfterChange = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep("compile-after-change")});
+				JObject previewAfterChange = UnityAgentMcpRuntime.Instance.PreviewExecution(compiled.Value<string>("graphId"));
+				JObject startAfterChange = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
+
+				Assert.That(compileAfterChange.Value<string>("errorCode"), Is.EqualTo("AGENT-CATALOG-CHANGED"));
+				Assert.That(previewAfterChange.Value<string>("errorCode"), Is.EqualTo("AGENT-CATALOG-CHANGED"));
+				Assert.That(startAfterChange.Value<string>("errorCode"), Is.EqualTo("AGENT-CATALOG-CHANGED"));
+			}
+			finally
+			{
+				UnityAgentMcpRuntime.CatalogPathOverrideForTests = null;
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void CatalogReadFailure_FailsBeforeDelegateExecution()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				long revision = Session.Revision;
+				JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+				string missingPath = Path.Combine(temporaryDirectory, "missing-catalog.json");
+				UnityAgentMcpRuntime.CatalogPathOverrideForTests = missingPath;
+
+				JObject result = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
+
+				Assert.That(result.Value<bool>("success"), Is.False);
+				Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-CATALOG-CHANGED"));
+				Assert.That(result["executionId"], Is.Null);
+			}
+			finally
+			{
+				UnityAgentMcpRuntime.CatalogPathOverrideForTests = null;
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void ResultNormalizer_FailsClosedForUnknownAndContradictoryShapes()
+		{
+			Assert.That(AgentResultNormalizer.Normalize((JToken)null).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+			Assert.That(AgentResultNormalizer.Normalize(JValue.CreateString("success")).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "UNKNOWN", ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "SUCCESS", ["success"] = false }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+		}
+
+		[Test]
+		public void ResultNormalizer_RecognizesKnownSuccessFailurePartialUnsupportedAndEnvelopeShapes()
+		{
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "SUCCESS", ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "SUCCEEDED", ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "FAILED", ["success"] = false }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "PARTIAL", ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.PARTIAL));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "UNSUPPORTED", ["success"] = false }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.UNSUPPORTED));
+
+			AgentNormalizedResult domainFailure = AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "FAILED",
+				["success"] = false,
+				["errorCode"] = "TEST_FAILURE",
+				["message"] = "failure",
+				["data"] = new JObject { ["details"] = true }
+			});
+			Assert.That(domainFailure.Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(domainFailure.ErrorCode, Is.EqualTo("TEST_FAILURE"));
+			Assert.That(domainFailure.Message, Is.EqualTo("failure"));
+
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "SUCCESS",
+				["success"] = true,
+				["data"] = new JObject { ["actualPayload"] = true }
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "PARTIAL",
+				["success"] = true,
+				["data"] = new JObject { ["partialPayload"] = true }
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.PARTIAL));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "UNSUPPORTED",
+				["success"] = false,
+				["data"] = new JObject { ["reason"] = "unsupported" }
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.UNSUPPORTED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "SUCCESS",
+				["success"] = true,
+				["data"] = new JObject
+				{
+					["status"] = "UNKNOWN_PAYLOAD_STATUS",
+					["success"] = false
+				}
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "SUCCESS",
+				["success"] = false,
+				["data"] = new JObject()
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+
+			Assert.That(AgentResultNormalizer.Normalize(new JObject
+			{
+				["success"] = true,
+				["message"] = "success envelope",
+				["data"] = new JObject { ["status"] = "SUCCESS", ["IsSuccessful"] = true }
+			}).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
+			AgentNormalizedResult bridgeFailure = AgentResultNormalizer.Normalize(new JObject
+			{
+				["success"] = false,
+				["code"] = "FAILED",
+				["error"] = "failed",
+				["data"] = new JObject { ["status"] = "FAILED", ["IsSuccessful"] = false }
+			});
+			Assert.That(bridgeFailure.Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(bridgeFailure.ErrorCode, Is.EqualTo("FAILED"));
+			Assert.That(bridgeFailure.Message, Is.EqualTo("failed"));
+		}
+
+		[Test]
+		public void HistoryProjection_RedactsRawExecutionData()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = temporaryDirectory;
+				AgentExecutionTraceStore.StorageRootOverrideForTests = temporaryDirectory;
+				UnityAgentMcpRuntime.Instance.ResetPersistenceForTests();
+				long revision = Session.Revision;
+				JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+				JObject started = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
+				UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+
+				JObject history = JObject.Parse(File.ReadLines(UnityAgentMcpRuntime.HistoryPathForTests).Single());
+				HashSet<string> allowed = new HashSet<string>(new[]
+				{
+					"schemaVersion", "executionId", "graphId", "status", "startedAtUtc", "completedAtUtc",
+					"timeoutSeconds", "completedStepCount", "totalStepCount", "expectedRevision", "errorCode", "stepSummaries"
+				}, StringComparer.Ordinal);
+
+				Assert.That(history.Properties().All(value => allowed.Contains(value.Name)), Is.True, history.ToString());
+				Assert.That(history["stepSummaries"].Children<JObject>().All(summary =>
+					summary.Properties().Select(value => value.Name).SequenceEqual(new[] {"stepId", "domainId", "toolName", "resultCode", "durationMs"})), Is.True);
+				Assert.That(history.ToString(), Does.Not.Contain("delegatedResult"));
+				Assert.That(history.ToString(), Does.Not.Contain("parameters"));
+				Assert.That(history.ToString(), Does.Not.Contain("approvalToken"));
+				Assert.That(started.Value<string>("status"), Is.EqualTo("RUNNING"));
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void LegacyHistory_IsSanitizedAndAtomicallyRewritten()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				string historyPath = Path.Combine(temporaryDirectory, "history.jsonl");
+				File.WriteAllText(historyPath, new JObject
+				{
+					["executionId"] = "legacy-execution",
+					["graphId"] = "legacy-graph",
+					["status"] = "SUCCEEDED",
+					["message"] = "C:\\secret\\input",
+					["approvalToken"] = "token",
+					["params"] = new JObject { ["password"] = "secret" },
+					["delegatedResult"] = new JObject { ["data"] = "raw" },
+					["stepResults"] = new JArray(new JObject { ["raw"] = "payload" }),
+					["stepSummaries"] = new JArray(new JObject
+					{
+						["stepId"] = "step",
+						["domainId"] = "domain",
+						["toolName"] = "tool",
+						["resultCode"] = "SUCCEEDED",
+						["durationMs"] = 1.0,
+						["nested"] = new JObject { ["secret"] = "value" }
+					})
+				}.ToString(Formatting.None) + Environment.NewLine);
+
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = temporaryDirectory;
+				AgentExecutionHistoryStore store = new AgentExecutionHistoryStore();
+				store.Load();
+				JObject migrated = JObject.Parse(File.ReadLines(historyPath).Single());
+				HashSet<string> allowed = new HashSet<string>(new[]
+				{
+					"schemaVersion", "executionId", "graphId", "status", "startedAtUtc", "completedAtUtc",
+					"timeoutSeconds", "completedStepCount", "totalStepCount", "expectedRevision", "errorCode", "stepSummaries"
+				}, StringComparer.Ordinal);
+
+				Assert.That(migrated.Properties().All(value => allowed.Contains(value.Name)), Is.True, migrated.ToString());
+				Assert.That(migrated.ToString(), Does.Not.Contain("approvalToken"));
+				Assert.That(migrated.ToString(), Does.Not.Contain("delegatedResult"));
+				Assert.That(migrated.ToString(), Does.Not.Contain("secret"));
+				Assert.That(store.Count, Is.EqualTo(1));
+				Assert.That(Directory.GetFiles(temporaryDirectory, "history.jsonl.tmp-*").Length, Is.Zero);
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void LegacyHistory_AllValidRowsMigrateWithoutLosingRows()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				string historyPath = Path.Combine(temporaryDirectory, "history.jsonl");
+				string[] legacyLines = Enumerable.Range(1, 3)
+					.Select(index => BuildLegacyHistoryLine(index, true))
+					.ToArray();
+				File.WriteAllText(historyPath, string.Join(Environment.NewLine, legacyLines) + Environment.NewLine);
+
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = temporaryDirectory;
+				AgentExecutionHistoryStore store = new AgentExecutionHistoryStore();
+				store.Load();
+
+				Assert.That(store.LastDiagnosticCode, Is.Null);
+				Assert.That(store.Count, Is.EqualTo(3));
+				string migratedText = File.ReadAllText(historyPath);
+				Assert.That(migratedText, Does.Not.Contain("approvalToken"));
+				Assert.That(migratedText, Does.Not.Contain("parameters"));
+				Assert.That(migratedText, Does.Not.Contain("delegatedResult"));
+				Assert.That(migratedText, Does.Not.Contain("message"));
+				Assert.That(File.ReadLines(historyPath).Count(), Is.EqualTo(3));
+				Assert.That(Directory.GetFiles(temporaryDirectory, "history.jsonl.tmp-*").Length, Is.Zero);
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[TestCase(0)]
+		[TestCase(2)]
+		[TestCase(4)]
+		public void LegacyHistory_CorruptedRowPreservesOriginalFile(int corruptedIndex)
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				string historyPath = Path.Combine(temporaryDirectory, "history.jsonl");
+				string[] legacyLines = Enumerable.Range(1, 5)
+					.Select(index => BuildLegacyHistoryLine(index, false))
+					.ToArray();
+				legacyLines[corruptedIndex] = "{ corrupted history row";
+				File.WriteAllText(historyPath, string.Join(Environment.NewLine, legacyLines) + Environment.NewLine);
+				string originalText = File.ReadAllText(historyPath);
+
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = temporaryDirectory;
+				AgentExecutionHistoryStore store = new AgentExecutionHistoryStore();
+				store.Load();
+
+				Assert.That(store.LastDiagnosticCode, Is.EqualTo("AGENT-HISTORY-PERSISTENCE-FAILED"));
+				Assert.That(store.Count, Is.Zero);
+				Assert.That(File.ReadAllText(historyPath), Is.EqualTo(originalText));
+				Assert.That(Directory.GetFiles(temporaryDirectory, "history.jsonl.tmp-*").Length, Is.Zero);
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void Trace_UsesAllowlistSequenceAndExactlyOneTerminalEvent()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			try
+			{
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = temporaryDirectory;
+				AgentExecutionTraceStore.StorageRootOverrideForTests = temporaryDirectory;
+				UnityAgentMcpRuntime.Instance.ResetPersistenceForTests();
+				long revision = Session.Revision;
+				JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+				JObject started = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
+				UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+
+				JObject[] events = File.ReadLines(UnityAgentMcpRuntime.TracePathForTests).Select(JObject.Parse).ToArray();
+				Assert.That(events.Select(value => value.Value<string>("event")).ToArray(), Is.EqualTo(new[]
+					{"EXECUTION_STARTED", "STEP_STARTED", "STEP_COMPLETED", "EXECUTION_COMPLETED"}));
+				HashSet<string> terminalEvents = new HashSet<string>(new[]
+					{"EXECUTION_COMPLETED", "EXECUTION_FAILED", "EXECUTION_PARTIAL", "EXECUTION_CANCELLED", "EXECUTION_INTERRUPTED"}, StringComparer.Ordinal);
+				Assert.That(events.Count(value => terminalEvents.Contains(value.Value<string>("event"))), Is.EqualTo(1));
+				HashSet<string> allowed = new HashSet<string>(new[]
+					{"schemaVersion", "timestampUtc", "executionId", "graphId", "stepId", "domainId", "toolName", "event", "revision", "resultCode", "durationMs"}, StringComparer.Ordinal);
+				Assert.That(events.All(value => value.Properties().All(property => allowed.Contains(property.Name))), Is.True);
+				Assert.That(events[0]["stepId"].Type, Is.EqualTo(JTokenType.Null));
+				Assert.That(events[0].Value<double>("durationMs"), Is.EqualTo(0.0));
+				Assert.That(events[0].Value<long>("revision"), Is.EqualTo(revision));
+				Assert.That(events[2].Value<double>("durationMs"), Is.GreaterThanOrEqualTo(0.0));
+				Assert.That(events[3].Value<double>("durationMs"), Is.GreaterThanOrEqualTo(0.0));
+				Assert.That(events[3].Value<string>("resultCode"), Is.EqualTo("SUCCEEDED"));
+				Assert.That(events.Select(value => value.ToString()).All(value => !value.Contains("approvalToken") && !value.Contains("parameters")), Is.True);
+				Assert.That(started.Value<string>("status"), Is.EqualTo("RUNNING"));
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		[Test]
+		public void PersistenceFailure_DoesNotRewriteSuccessfulExecutionAsPartial()
+		{
+			string temporaryDirectory = CreateTemporaryDirectory();
+			string blocker = Path.Combine(temporaryDirectory, "not-a-directory");
+			File.WriteAllText(blocker, "blocker");
+			try
+			{
+				AgentExecutionHistoryStore.StorageRootOverrideForTests = blocker;
+				AgentExecutionTraceStore.StorageRootOverrideForTests = blocker;
+				UnityAgentMcpRuntime.Instance.ResetPersistenceForTests();
+				long revision = Session.Revision;
+				JObject compiled = UnityAgentMcpRuntime.Instance.CompileGraph(revision, new[] {GraphicsInspectStep()});
+				JObject started = UnityAgentMcpRuntime.Instance.StartExecution(compiled.Value<string>("graphId"), revision, null);
+				UnityAgentMcpRuntime.Instance.ProcessPendingExecutionsForTests();
+				JObject status = UnityAgentMcpRuntime.Instance.GetExecutionStatus(started.Value<string>("executionId"));
+
+				Assert.That(status.Value<string>("status"), Is.EqualTo("SUCCEEDED"), status.ToString());
+				Assert.That(status.Value<bool>("executionSucceeded"), Is.True);
+				Assert.That(status.Value<bool>("success"), Is.True);
+			}
+			finally
+			{
+				DeleteTemporaryDirectory(temporaryDirectory);
+			}
+		}
+
+		private static string BuildLegacyHistoryLine(int index, bool includeUnsafeFields)
+		{
+			JObject entry = new JObject
+			{
+				["executionId"] = "legacy-execution-" + index,
+				["graphId"] = "legacy-graph-" + index,
+				["status"] = "SUCCEEDED",
+				["startedAtUtc"] = "2026-01-01T00:00:00.0000000Z",
+				["completedAtUtc"] = "2026-01-01T00:00:01.0000000Z",
+				["timeoutSeconds"] = 60,
+				["completedStepCount"] = 1,
+				["totalStepCount"] = 1,
+				["expectedRevision"] = 7,
+				["errorCode"] = null,
+				["stepSummaries"] = new JArray(new JObject
+				{
+					["stepId"] = "step-" + index,
+					["domainId"] = "domain",
+					["toolName"] = "tool",
+					["resultCode"] = "SUCCEEDED",
+					["durationMs"] = 1.0
+				})
+			};
+			if (includeUnsafeFields)
+			{
+				entry["message"] = "C:\\secret\\input";
+				entry["approvalToken"] = "token";
+				entry["params"] = new JObject { ["password"] = "secret" };
+				entry["delegatedResult"] = new JObject { ["raw"] = "payload" };
+				entry["stepResults"] = new JArray(new JObject { ["raw"] = "payload" });
+			}
+			return entry.ToString(Formatting.None);
+		}
+
+		private static string CreateTemporaryDirectory()
+		{
+			string path = Path.Combine(Path.GetTempPath(), "MyUnityMcpAgentTests-" + Guid.NewGuid().ToString("N"));
+			Directory.CreateDirectory(path);
+			return path;
+		}
+
+		private static void DeleteTemporaryDirectory(string path)
+		{
+			if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+			{
+				Directory.Delete(path, true);
+			}
+		}
+
+		[Test]
 		public void ValidateWorkflow_AcceptsIntegrationCandidateDomain()
 		{
 			JObject result = UnityAgentMcpRuntime.Instance.ValidateWorkflow(new[]
@@ -306,6 +790,8 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(compiled.Value<bool>("success"), Is.True, compiled.ToString());
 			Assert.That(completed.Value<string>("status"), Is.EqualTo("SUCCEEDED"), completed.ToString());
 			Assert.That(completed.Value<bool>("executionSucceeded"), Is.True);
+			Assert.That(completed.Value<bool>("success"), Is.True);
+			Assert.That(((JObject)completed["stepResults"][0]).Value<string>("resultCode"), Is.EqualTo("SUCCEEDED"), completed.ToString());
 		}
 
 		[Test]
@@ -428,6 +914,7 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(result.Value<string>("status"), Is.EqualTo("PARTIAL"), result.ToString());
 			Assert.That(result.Value<bool>("executionSucceeded"), Is.False);
+			Assert.That(result.Value<bool>("success"), Is.False);
 			Assert.That(result["stepResults"]?.Count(), Is.EqualTo(2));
 		}
 
@@ -451,6 +938,8 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(cancelled.Value<bool>("success"), Is.True);
 			Assert.That(cancelled.Value<string>("status"), Is.EqualTo("CANCELLED"));
 			Assert.That(status.Value<string>("status"), Is.EqualTo("CANCELLED"));
+			Assert.That(status.Value<bool>("success"), Is.False);
+			Assert.That(status.Value<bool>("executionSucceeded"), Is.False);
 			Assert.That(status.Value<int>("completedStepCount"), Is.Zero);
 		}
 
@@ -472,6 +961,7 @@ namespace MyUnityMcp.EditorTests
 
 			Assert.That(status.Value<string>("status"), Is.EqualTo("INTERRUPTED"));
 			Assert.That(status.Value<string>("errorCode"), Is.EqualTo("AGENT-EXECUTION-TIMEOUT"));
+			Assert.That(status.Value<bool>("success"), Is.False);
 			Assert.That(status.Value<int>("completedStepCount"), Is.Zero);
 		}
 

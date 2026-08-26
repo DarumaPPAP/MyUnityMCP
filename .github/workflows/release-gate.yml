@@ -37,6 +37,7 @@ jobs:
       - run: python3 Tests/Release/verify_capability_contract.py
       - run: python3 Tests/Release/verify_production_surface_contract.py
       - run: python3 Tests/Release/verify_agent_runtime_catalog.py
+      - run: python3 Tests/Release/verify_agent_harness_p1.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Resolve preview version

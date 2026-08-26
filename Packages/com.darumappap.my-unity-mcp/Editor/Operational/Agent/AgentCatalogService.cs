@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
 
 namespace UnityAgentMcp
 {
@@ -35,9 +37,9 @@ namespace UnityAgentMcp
             snapshot = null;
             error = null;
 
-            try
-            {
-                return TryParse(File.ReadAllText(path), registeredDelegates, out snapshot, out error);
+			try
+			{
+				return TryParse(File.ReadAllBytes(path), registeredDelegates, out snapshot, out error);
             }
             catch (Exception exception)
             {
@@ -46,8 +48,8 @@ namespace UnityAgentMcp
             }
         }
 
-        internal static bool TryParse(
-            string json,
+		internal static bool TryParse(
+			string json,
             IEnumerable<string> registeredDelegates,
             out AgentCatalogSnapshot snapshot,
             out string error)
@@ -55,23 +57,41 @@ namespace UnityAgentMcp
             snapshot = null;
             error = null;
 
-            if (registeredDelegates == null)
-            {
+			return TryParse(
+				json == null ? null : Encoding.UTF8.GetBytes(json),
+				registeredDelegates,
+				out snapshot,
+				out error);
+		}
+
+		internal static bool TryParse(
+			byte[] sourceBytes,
+			IEnumerable<string> registeredDelegates,
+			out AgentCatalogSnapshot snapshot,
+			out string error)
+		{
+			snapshot = null;
+			error = null;
+
+			if (registeredDelegates == null)
+			{
                 error = "Registered delegate names are required.";
                 return false;
             }
             HashSet<string> registeredDelegateNames = new HashSet<string>(registeredDelegates, StringComparer.Ordinal);
 
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                error = "Catalog JSON is empty.";
-                return false;
-            }
+			if (sourceBytes == null || sourceBytes.Length == 0)
+			{
+				error = "Catalog JSON is empty.";
+				return false;
+			}
+			string json = Encoding.UTF8.GetString(sourceBytes);
+			string parseText = json.TrimStart('\uFEFF');
 
             JObject root;
             try
             {
-                root = JObject.Parse(json);
+				root = JObject.Parse(parseText);
             }
             catch (Exception exception)
             {
@@ -341,8 +361,21 @@ namespace UnityAgentMcp
                 }
             }
 
-            snapshot = new AgentCatalogSnapshot(data, domains, toolIndex);
-            return true;
-        }
-    }
+			snapshot = new AgentCatalogSnapshot(data, domains, toolIndex, ComputeFingerprint(sourceBytes));
+			return true;
+		}
+
+		internal static string ComputeFingerprint(byte[] sourceBytes)
+		{
+			if (sourceBytes == null)
+			{
+				return string.Empty;
+			}
+			using (SHA256 sha256 = SHA256.Create())
+			{
+				byte[] hash = sha256.ComputeHash(sourceBytes);
+				return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
+			}
+		}
+	}
 }

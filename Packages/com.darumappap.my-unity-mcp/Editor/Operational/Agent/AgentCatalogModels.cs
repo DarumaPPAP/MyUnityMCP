@@ -52,21 +52,28 @@ namespace UnityAgentMcp
 
     internal sealed class AgentCatalogSnapshot
     {
-        internal AgentCatalogSnapshot(
-            AgentCatalogData data,
-            Dictionary<string, AgentCatalogDomainDefinition> domains,
-            Dictionary<string, AgentCatalogToolDefinition> toolIndex)
-        {
-            Data = data;
-            Domains = domains;
-            ToolIndex = toolIndex;
-        }
+		internal AgentCatalogSnapshot(
+			AgentCatalogData data,
+			Dictionary<string, AgentCatalogDomainDefinition> domains,
+			Dictionary<string, AgentCatalogToolDefinition> toolIndex,
+			string fingerprint)
+		{
+			Data = data;
+			Domains = domains;
+			ToolIndex = toolIndex;
+			SchemaVersion = data?.schemaVersion ?? 0;
+			Fingerprint = fingerprint;
+		}
 
         internal AgentCatalogData Data { get; }
 
         internal Dictionary<string, AgentCatalogDomainDefinition> Domains { get; }
 
-        internal Dictionary<string, AgentCatalogToolDefinition> ToolIndex { get; }
+		internal Dictionary<string, AgentCatalogToolDefinition> ToolIndex { get; }
+
+		internal int SchemaVersion { get; }
+
+		internal string Fingerprint { get; }
 
         internal bool TryGetDomain(string domainId, out AgentCatalogDomainDefinition domain)
         {
