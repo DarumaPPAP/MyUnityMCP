@@ -26,6 +26,7 @@ namespace UnityAgentMcp
 				return;
 			}
 
+			List<JObject> migratedEntries = new List<JObject>();
 			bool requiresRewrite = false;
 			try
 			{
@@ -41,15 +42,18 @@ namespace UnityAgentMcp
 					{
 						requiresRewrite = true;
 					}
-					_entries.Add(sanitized);
+					migratedEntries.Add(sanitized);
 				}
 			}
 			catch (Exception)
 			{
 				LastDiagnosticCode = "AGENT-HISTORY-PERSISTENCE-FAILED";
-				requiresRewrite = true;
+				_entries.Clear();
+				return;
 			}
 
+			_entries.Clear();
+			_entries.AddRange(migratedEntries);
 			if (requiresRewrite && !TryAtomicRewrite())
 			{
 				LastDiagnosticCode = "AGENT-HISTORY-PERSISTENCE-FAILED";

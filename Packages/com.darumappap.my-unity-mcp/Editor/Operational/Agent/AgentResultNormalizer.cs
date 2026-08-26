@@ -52,23 +52,26 @@ namespace UnityAgentMcp
 				return Ambiguous("AGENT-DELEGATE-RESULT-MALFORMED", "Delegate Resultのshapeを解釈できません。");
 			}
 
+			bool rootIsDomainResult = IsUnityDomainResult(root);
 			JObject candidate = root;
-			bool isEnvelope = root["result"] is JObject || root["data"] is JObject;
-			if (root["result"] is JObject resultObject)
+			bool isEnvelope = false;
+			bool? outerSuccess = null;
+			if (!rootIsDomainResult && IsToolBridgeEnvelope(root, out JObject envelopeData))
 			{
-				candidate = resultObject;
-			}
-			else if (root["data"] is JObject dataObject)
-			{
-				candidate = dataObject;
+				candidate = envelopeData ?? root;
+				isEnvelope = true;
+				outerSuccess = ReadSuccess(root);
 			}
 
-			bool? outerSuccess = isEnvelope ? ReadSuccess(root) : null;
 			string status = candidate.Value<string>("status");
 			bool? candidateSuccess = ReadSuccess(candidate);
+			if ((rootIsDomainResult || isEnvelope) && !candidateSuccess.HasValue)
+			{
+				return Ambiguous("AGENT-DELEGATE-RESULT-AMBIGUOUS", "既知Result Shapeにsuccess flagがありません。");
+			}
 			if (string.IsNullOrWhiteSpace(status) &&
 				outerSuccess == false &&
-				(root["error"] != null || root["errorCode"] != null || root["code"] != null))
+				HasEnvelopeError(root))
 			{
 				return new AgentNormalizedResult
 				{
@@ -108,6 +111,38 @@ namespace UnityAgentMcp
 				return Result(E_AGENT_STEP_OUTCOME.FAILED, root, candidate);
 			}
 			return Ambiguous("AGENT-DELEGATE-RESULT-AMBIGUOUS", "Delegate Resultのstatusが未知です: " + status);
+		}
+
+		private static bool IsUnityDomainResult(JObject root)
+		{
+			return root?.Value<string>("status") != null &&
+				root["success"]?.Type == JTokenType.Boolean;
+		}
+
+		private static bool IsToolBridgeEnvelope(JObject root, out JObject data)
+		{
+			data = null;
+			if (root?["success"]?.Type != JTokenType.Boolean)
+			{
+				return false;
+			}
+
+			if (root["data"] is JObject dataObject &&
+				dataObject.Value<string>("status") != null &&
+				ReadSuccess(dataObject).HasValue)
+			{
+				data = dataObject;
+				return true;
+			}
+
+			return root.Value<bool>("success") == false && HasEnvelopeError(root);
+		}
+
+		private static bool HasEnvelopeError(JObject root)
+		{
+			return root?["error"] != null ||
+				root?["errorCode"] != null ||
+				root?["code"] != null;
 		}
 
 		private static AgentNormalizedResult Result(E_AGENT_STEP_OUTCOME outcome, JObject root, JObject candidate)
@@ -150,6 +185,7 @@ namespace UnityAgentMcp
 		{
 			return candidate?.Value<string>("errorCode") ??
 				root?.Value<string>("errorCode") ??
+				root?.Value<string>("code") ??
 				(candidate?["error"] as JObject)?.Value<string>("code") ??
 				(root?["error"] as JObject)?.Value<string>("code");
 		}
@@ -158,8 +194,12 @@ namespace UnityAgentMcp
 		{
 			return candidate?.Value<string>("message") ??
 				candidate?.Value<string>("summary") ??
+				candidate?.Value<string>("errorMessage") ??
+				candidate?.Value<string>("error") ??
 				root?.Value<string>("message") ??
 				root?.Value<string>("summary") ??
+				root?.Value<string>("errorMessage") ??
+				root?.Value<string>("error") ??
 				(candidate?["error"] as JObject)?.Value<string>("message") ??
 				(root?["error"] as JObject)?.Value<string>("message");
 		}
