@@ -58,6 +58,8 @@ Workflow Stepは`stepId`、`domainId`、`toolName`、`toolGroup`、`dependsOn`�
 
 ValidationはDuplicate / Missing Step ID、Missing Dependency、Cycle、Undeclared Tool / Group、Non-operational Domain、Direct Control Plane Mutationを拒否します。
 
+Workflow Graphはnull Stepを除いた非null Step数を検証し、最大64 Stepです。0 Stepは`AGENT-WORKFLOW-EMPTY`、65 Step以上は`AGENT-GRAPH-TOO-LARGE`としてValidateとCompileの両方で拒否します。
+
 ## Runtime Catalog v5
 
 Runtime Catalogの永続化Schemaはv5です。各Operational Domainの`tools`は、Tool名、Canonical Group、Policyを持つObject配列です。Domain内の旧`toolGroups`配列は使用しません。Policyの許可値は、Effectが`none`、`scene_mutation`、`asset_mutation`、`save`、`bake`、`capture_control`、Revision Policyが`must_remain`または`may_advance`、Retry Policyが`none`です。`directUnityMutationAllowed`は常にfalseです。
@@ -65,6 +67,8 @@ Runtime Catalogの永続化Schemaはv5です。各Operational Domainの`tools`�
 RuntimeはCatalog検証後にOrdinalのTool Indexを構築し、重複Tool、欠落Tool、未知Tool、Policy不備、未登録DelegateをLoad Failureとして扱います。WorkflowはDomain存在、Domain内のTool存在、Domain由来Group、ToolのCanonical Group一致の順に検証します。未知Groupは`AGENT-TOOL-GROUP-MISSING`、既知だがCanonical Groupと異なるGroupは`AGENT-TOOL-GROUP-MISMATCH`です。
 
 `agent.inspect_capabilities`はPublic Compatibility Projectionです。内部Tool ObjectやPolicyを返さず、従来どおり`toolGroups`と`tools`を文字列配列としてDomain順、Tool順、Groupの初出順を維持して返します。`creators[].tools`もCatalog上は文字列配列のままです。ApprovalはRuntime内のTool名リストではなく、Catalog Tool DefinitionのPolicyだけを参照します。
+
+CatalogはRuntime起動時およびGraph Compile時に1回のFile byte readからSHA-256 FingerprintとParse結果を生成します。BOM、改行、Whitespaceを含むRaw byteの変更はFingerprintを変更します。Compiled GraphはCatalog schemaVersion、catalogFingerprint、expectedRevisionを保持し、Compile / Preview / Startで現在Catalogが起動時Snapshotと一致しない場合は`AGENT-CATALOG-CHANGED`としてFail Closedします。
 
 ## Revision and Approval Safety
 
@@ -98,6 +102,8 @@ Addressables Packageが存在しない場合はDomainの明示`UNSUPPORTED`を�
 
 Delegated FailureをSuccessとして表現しません。
 
+Delegate Resultは既知のGraphics / ToolBridge Envelopeまたは`UnityDomainMcpResult`だけを認識します。Step Outcomeは`SUCCEEDED`、`FAILED`、`UNSUPPORTED`、`PARTIAL`、`AMBIGUOUS`に限定し、null、Scalar、未知Object、未知Status、StatusとSuccess Flagの矛盾は`AMBIGUOUS`として扱います。`PARTIAL`と`UNSUPPORTED`はSuccessへ変換しません。Executionは全Step成功時だけ`SUCCEEDED`、先行成功なしのNon-successは`FAILED`、先行成功後のNon-successは`PARTIAL`です。Execution Payloadの`executionSucceeded`は`SUCCEEDED`だけtrueで、Cancel Commandの受理成功とExecution結果は別に扱います。
+
 - first-step failure → `FAILED`
 - failure after earlier successful steps → `PARTIAL`
 - revision / timeout / disconnect interruption → `INTERRUPTED`
@@ -105,6 +111,12 @@ Delegated FailureをSuccessとして表現しません。
 - all steps completed successfully → `SUCCEEDED`
 
 `unavailable` / `UNSUPPORTED` / failureはPASSへ変換しません。
+
+## History and Trace Integrity
+
+Persistent Historyは`Library/MyUnityMCP/AgentExecution/history.jsonl`にAllowlist Projectionだけを保存します。Execution MetadataとStep Summary（`stepId`、`domainId`、`toolName`、`resultCode`、`durationMs`）以外のraw parameters、delegated payload/result、Approval Token、Token Hash、Nested Data、Secret、Credential、Stack Trace、無条件Messageは保存しません。既存Historyは初期化時に同じAllowlistへMigrationし、同一DirectoryのTemporary FileをFlushした後にAtomic Replaceします。MigrationまたはAppendが失敗してもUnsafe EntryをAPIから返さず、`AGENT-HISTORY-PERSISTENCE-FAILED`をDiagnosticとして保持します。
+
+Execution Traceは`Library/MyUnityMCP/AgentExecution/trace.jsonl`へ保存し、固定11 Field（`schemaVersion`、`timestampUtc`、`executionId`、`graphId`、`stepId`、`domainId`、`toolName`、`event`、`revision`、`resultCode`、`durationMs`）だけを持ちます。ExecutionごとにSTART、Step Event、Terminal Eventを記録し、競合するCancel、Timeout、Disconnect、Reload、Compilation、Playmode、Quitが発生してもTerminal Eventは一度だけです。Trace Persistence Failureは`AGENT-TRACE-PERSISTENCE-FAILED`としてExecution Statusから分離し、Domain Resultを`PARTIAL`へ書き換えません。
 
 ## Evidence
 
