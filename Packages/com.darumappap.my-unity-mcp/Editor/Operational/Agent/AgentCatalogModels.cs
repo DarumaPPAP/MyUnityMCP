@@ -47,6 +47,7 @@ namespace UnityAgentMcp
         public string creatorId;
         public string status;
         public string[] tools;
+        public bool directUnityMutationAllowed;
     }
 
     internal sealed class AgentCatalogSnapshot
@@ -84,10 +85,16 @@ namespace UnityAgentMcp
                 return Array.Empty<string>();
             }
 
-            return domain.tools
-                .Select(tool => tool.group)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
+            var groups = new List<string>();
+            var seenGroups = new HashSet<string>(StringComparer.Ordinal);
+            foreach (AgentCatalogToolDefinition tool in domain.tools)
+            {
+                if (tool != null && seenGroups.Add(tool.group))
+                {
+                    groups.Add(tool.group);
+                }
+            }
+            return groups.ToArray();
         }
 
         internal UnityAgentMcpDomainData[] BuildPublicDomains()

@@ -28,16 +28,6 @@ namespace UnityAgentMcp
 
         internal static bool TryLoad(
             string path,
-            Func<string, bool> isRegisteredDelegate,
-            out AgentCatalogSnapshot snapshot,
-            out string error)
-        {
-            return TryLoad(path, isRegisteredDelegate, null, out snapshot, out error);
-        }
-
-        internal static bool TryLoad(
-            string path,
-            Func<string, bool> isRegisteredDelegate,
             IEnumerable<string> registeredDelegates,
             out AgentCatalogSnapshot snapshot,
             out string error)
@@ -47,7 +37,7 @@ namespace UnityAgentMcp
 
             try
             {
-                return TryParse(File.ReadAllText(path), isRegisteredDelegate, registeredDelegates, out snapshot, out error);
+                return TryParse(File.ReadAllText(path), registeredDelegates, out snapshot, out error);
             }
             catch (Exception exception)
             {
@@ -58,22 +48,19 @@ namespace UnityAgentMcp
 
         internal static bool TryParse(
             string json,
-            Func<string, bool> isRegisteredDelegate,
-            out AgentCatalogSnapshot snapshot,
-            out string error)
-        {
-            return TryParse(json, isRegisteredDelegate, null, out snapshot, out error);
-        }
-
-        internal static bool TryParse(
-            string json,
-            Func<string, bool> isRegisteredDelegate,
             IEnumerable<string> registeredDelegates,
             out AgentCatalogSnapshot snapshot,
             out string error)
         {
             snapshot = null;
             error = null;
+
+            if (registeredDelegates == null)
+            {
+                error = "Registered delegate names are required.";
+                return false;
+            }
+            HashSet<string> registeredDelegateNames = new HashSet<string>(registeredDelegates, StringComparer.Ordinal);
 
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -181,6 +168,15 @@ namespace UnityAgentMcp
                         error = "Catalog creator tools must contain only non-empty strings.";
                         return false;
                     }
+                }
+
+                if (creatorObject["creatorId"]?.Type != JTokenType.String ||
+                    creatorObject["status"]?.Type != JTokenType.String ||
+                    creatorObject["directUnityMutationAllowed"]?.Type != JTokenType.Boolean ||
+                    creatorObject.Value<bool?>("directUnityMutationAllowed") != false)
+                {
+                    error = "Catalog creator identity/status/direct mutation contract is invalid.";
+                    return false;
                 }
             }
 
@@ -293,7 +289,7 @@ namespace UnityAgentMcp
                         return false;
                     }
 
-                    if (isRegisteredDelegate != null && !isRegisteredDelegate(tool.name))
+                    if (!registeredDelegateNames.Contains(tool.name))
                     {
                         error = "Catalog tool has no registered delegate: " + tool.name;
                         return false;
@@ -331,17 +327,17 @@ namespace UnityAgentMcp
                     error = "Catalog creator tools are required: " + creator.creatorId;
                     return false;
                 }
-            }
 
-            if (registeredDelegates != null)
-            {
-                foreach (string registeredDelegate in registeredDelegates)
+                if (string.IsNullOrWhiteSpace(creator.status))
                 {
-                    if (!toolIndex.ContainsKey(registeredDelegate))
-                    {
-                        error = "Registered delegate is not declared in Catalog: " + registeredDelegate;
-                        return false;
-                    }
+                    error = "Catalog creator status is required: " + creator.creatorId;
+                    return false;
+                }
+
+                if (creator.directUnityMutationAllowed)
+                {
+                    error = "Catalog creators must not allow direct Unity mutation: " + creator.creatorId;
+                    return false;
                 }
             }
 

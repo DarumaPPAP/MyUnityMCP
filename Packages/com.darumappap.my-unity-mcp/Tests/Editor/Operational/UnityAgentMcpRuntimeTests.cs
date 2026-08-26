@@ -70,7 +70,11 @@ namespace MyUnityMcp.EditorTests
 
 		private static bool TryParseCatalog(JObject root, out AgentCatalogSnapshot snapshot, out string error)
 		{
-			return AgentCatalogService.TryParse(root.ToString(), _ => true, out snapshot, out error);
+			return AgentCatalogService.TryParse(
+				root.ToString(),
+				UnityAgentMcpRuntime.RegisteredDomainDelegateNamesForTests,
+				out snapshot,
+				out error);
 		}
 
 		[Test]
@@ -87,18 +91,47 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
-		public void CatalogV5_ProjectsLegacyInspectCapabilitiesShape()
+		public void CatalogV5_ProjectsLegacyInspectCapabilitiesShapeForAllDomains()
 		{
 			JObject result = UnityAgentMcpRuntime.Instance.InspectCapabilities();
 			JArray domains = (JArray)result["domains"];
+			JArray catalogDomains = (JArray)JObject.Parse(CatalogJson())["domains"];
+			string[] expectedDomainIds =
+			{
+				"unity_graphics_mcp", "unity_profiler_mcp", "unity_addressables_mcp", "unity_ui_mcp",
+				"unity_animation_mcp", "unity_audio_mcp", "unity_cinematic_mcp"
+			};
+			string[][] expectedGroups =
+			{
+				new[] {"inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"},
+				new[] {"profiler"},
+				new[] {"addressables"},
+				new[] {"ui"},
+				new[] {"animation"},
+				new[] {"audio"},
+				new[] {"cinematic"}
+			};
+			string[] expectedFields = {"domainId", "status", "toolGroups", "tools", "directUnityMutationAllowed"};
 
 			Assert.That(result.Value<bool>("success"), Is.True, result.ToString());
 			Assert.That(domains.Count, Is.EqualTo(7));
-			Assert.That(domains[0]["toolGroups"].Values<string>().ToArray(), Is.EqualTo(new[]
+			for (int index = 0; index < domains.Count; index++)
 			{
-				"inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"
-			}));
-			Assert.That(domains.All(value => value["tools"] is JArray tools && tools.All(tool => tool.Type == JTokenType.String)), Is.True);
+				JObject domain = (JObject)domains[index];
+				JObject catalogDomain = (JObject)catalogDomains[index];
+				Assert.That(domain.Properties().Select(value => value.Name).OrderBy(value => value).ToArray(), Is.EqualTo(expectedFields.OrderBy(value => value).ToArray()));
+				Assert.That(domain["domainId"]?.Type, Is.EqualTo(JTokenType.String));
+				Assert.That(domain.Value<string>("domainId"), Is.EqualTo(expectedDomainIds[index]));
+				Assert.That(domain["status"]?.Type, Is.EqualTo(JTokenType.String));
+				Assert.That(domain["toolGroups"]?.Type, Is.EqualTo(JTokenType.Array));
+				Assert.That(domain["toolGroups"].All(value => value.Type == JTokenType.String), Is.True);
+				Assert.That(domain["toolGroups"].Values<string>().ToArray(), Is.EqualTo(expectedGroups[index]));
+				Assert.That(domain["tools"]?.Type, Is.EqualTo(JTokenType.Array));
+				Assert.That(domain["tools"].All(value => value.Type == JTokenType.String), Is.True);
+				Assert.That(domain["tools"].Values<string>().ToArray(), Is.EqualTo(catalogDomain["tools"].Values<JObject>().Select(value => value.Value<string>("name")).ToArray()));
+				Assert.That(domain["directUnityMutationAllowed"]?.Type, Is.EqualTo(JTokenType.Boolean));
+				Assert.That(domain.Value<bool>("directUnityMutationAllowed"), Is.False);
+			}
 			Assert.That(result.ToString(), Does.Not.Contain("policy"));
 		}
 
@@ -136,17 +169,6 @@ namespace MyUnityMcp.EditorTests
 			((JObject)unknownTool["domains"][0]["tools"][0])["name"] = "graphics.unknown";
 			Assert.That(TryParseCatalog(unknownTool, out _, out string unknownError), Is.False);
 			Assert.That(unknownError, Does.Contain("registered delegate"));
-
-			JObject missingRegisteredTool = JObject.Parse(CatalogJson());
-			Assert.That(
-				AgentCatalogService.TryParse(
-					missingRegisteredTool.ToString(),
-					_ => true,
-					new[] {"graphics.inspect_project", "graphics.not_declared"},
-					out _,
-					out string missingError),
-				Is.False);
-			Assert.That(missingError, Does.Contain("not declared"));
 		}
 
 		[Test]
@@ -185,6 +207,16 @@ namespace MyUnityMcp.EditorTests
 			creatorObjects["creators"][0]["tools"][0] = new JObject { ["name"] = "world.compile_workflow" };
 			Assert.That(TryParseCatalog(creatorObjects, out _, out string creatorError), Is.False);
 			Assert.That(creatorError, Does.Contain("creator tools"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsCreatorDirectMutation()
+		{
+			JObject creatorMutation = JObject.Parse(CatalogJson());
+			creatorMutation["creators"][0]["directUnityMutationAllowed"] = true;
+
+			Assert.That(TryParseCatalog(creatorMutation, out _, out string error), Is.False);
+			Assert.That(error, Does.Contain("creator"));
 		}
 
 		[Test]

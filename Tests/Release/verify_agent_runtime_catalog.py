@@ -24,15 +24,23 @@ EXPECTED_DOMAINS = [
     "unity_cinematic_mcp",
 ]
 EXPECTED_CREATORS = ["world_creator", "movie_creator", "live_creator"]
-DELEGATED_PREFIXES = (
-    "graphics.",
-    "profiler.",
-    "addressables.",
-    "ui.",
-    "animation.",
-    "audio.",
-    "cinematic.",
-)
+EXPECTED_CREATOR_CONTRACTS = [
+    {
+        "creatorId": "world_creator",
+        "status": "editor_operational",
+        "tools": ["world.compile_workflow", "world.start_preflight", "world.create_review_handoff"],
+    },
+    {
+        "creatorId": "movie_creator",
+        "status": "not_implemented_current_wave",
+        "tools": ["movie.compile_production", "movie.preview_production", "movie.create_review_handoff"],
+    },
+    {
+        "creatorId": "live_creator",
+        "status": "not_implemented_current_wave",
+        "tools": ["live.compile_show", "live.preview_show", "live.create_operator_handoff"],
+    },
+]
 ALLOWED_EFFECTS = {"none", "scene_mutation", "asset_mutation", "save", "bake", "capture_control"}
 ALLOWED_REVISION_POLICIES = {"must_remain", "may_advance"}
 APPROVAL_SET = {
@@ -137,9 +145,19 @@ def main() -> int:
     creator_ids = [creator.get("creatorId") for creator in creators if isinstance(creator, dict)]
     if creator_ids != EXPECTED_CREATORS:
         fail(errors, f"creator order/identity changed: {creator_ids}")
+    if len(creators) != len(EXPECTED_CREATOR_CONTRACTS):
+        fail(errors, f"creator count changed: {len(creators)}")
+    for index, expected in enumerate(EXPECTED_CREATOR_CONTRACTS):
+        if index >= len(creators) or not isinstance(creators[index], dict):
+            continue
+        creator = creators[index]
+        for field in ("creatorId", "status", "tools"):
+            if creator.get(field) != expected[field]:
+                fail(errors, f"creator {field}/order changed at index {index}: {creator.get(field)}")
+        if creator.get("directUnityMutationAllowed") is not False:
+            fail(errors, f"creator directUnityMutationAllowed must be false: {creator.get('creatorId')}")
 
     all_tools: list[tuple[str, str, dict]] = []
-    domain_tool_names: list[str] = []
     for domain in domains:
         if not isinstance(domain, dict):
             fail(errors, "domain entries must be objects")
@@ -165,7 +183,6 @@ def main() -> int:
             name = tool.get("name")
             group = tool.get("group")
             policy = tool.get("policy")
-            domain_tool_names.append(name)
             all_tools.append((name, domain_id, tool))
             if not isinstance(name, str) or not name:
                 fail(errors, f"tool name is required: {domain_id}")
@@ -173,10 +190,10 @@ def main() -> int:
                 fail(errors, f"tool group is required: {name}")
             if group not in actual_groups:
                 actual_groups.append(group)
-            if isinstance(name, str) and name.startswith("graphics.") and GRAPHICS_GROUPS.get(name) != group:
+            if isinstance(name, str) and name in GRAPHICS_GROUPS and GRAPHICS_GROUPS.get(name) != group:
                 fail(errors, f"canonical graphics group mismatch: {name}={group}")
             domain_group = str(domain_id).replace("unity_", "", 1).replace("_mcp", "")
-            if isinstance(name, str) and name.startswith(DELEGATED_PREFIXES[1:]) and group != domain_group:
+            if isinstance(name, str) and name not in GRAPHICS_GROUPS and group != domain_group:
                 fail(errors, f"canonical domain group mismatch: {name}={group}")
             if not isinstance(policy, dict):
                 fail(errors, f"policy is required: {name}")
@@ -220,16 +237,26 @@ def main() -> int:
     source_text = "\n".join(path.read_text(encoding="utf-8") for path in EDITOR_PATH.rglob("*.cs"))
     tool_pattern = re.compile(r"\[\s*McpForUnityTool\s*\(\s*\"([^\"]+)\"")
     source_tools = tool_pattern.findall(source_text)
-    delegated_source_tools = {name for name in source_tools if name.startswith(DELEGATED_PREFIXES)}
     if len(source_tools) != 77:
         fail(errors, f"source Tool count must be 77, got {len(source_tools)}")
     agent_source = "\n".join(path.read_text(encoding="utf-8") for path in AGENT_PATH.rglob("*.cs"))
-    if len(re.findall(r"\[\s*McpForUnityTool\s*\(", agent_source)) != 10:
+    agent_source_tools = tool_pattern.findall(agent_source)
+    if len(agent_source_tools) != 10:
         fail(errors, "Agent public Tool count must remain 10")
     if "APPROVAL_TOOLS" in agent_source:
         fail(errors, "APPROVAL_TOOLS hard-code remains in Agent sources")
-    if delegated_source_tools != set(names):
-        fail(errors, "catalog delegated Tool identity differs from registered source Tool identity")
+    if len(source_tools) != len(set(source_tools)):
+        fail(errors, "duplicate registered source Tool identity exists")
+    creator_source_tools = {
+        tool
+        for creator in creators
+        if isinstance(creator, dict)
+        for tool in creator.get("tools", [])
+        if isinstance(tool, str)
+    }
+    operational_source_tools = set(source_tools) - set(agent_source_tools) - creator_source_tools
+    if operational_source_tools != set(names):
+        fail(errors, "catalog delegated Tool identity differs from registered operational source Tool identity")
 
     if errors:
         for error in errors:

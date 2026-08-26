@@ -108,6 +108,8 @@ namespace UnityAgentMcp
 
 		public static UnityAgentMcpRuntime Instance => _instance;
 
+		internal static string[] RegisteredDomainDelegateNamesForTests => DOMAIN_DELEGATES.Keys.ToArray();
+
 		static UnityAgentMcpRuntime()
 		{
 			EditorApplication.update += _instance.Tick;
@@ -769,24 +771,12 @@ namespace UnityAgentMcp
 			string absolutePath = Path.GetFullPath(CATALOG_PATH);
 			if (!AgentCatalogService.TryLoad(
 				absolutePath,
-				value => DOMAIN_DELEGATES.ContainsKey(value),
-				DOMAIN_DELEGATES.Keys.Where(IsRuntimeDomainTool),
+				DOMAIN_DELEGATES.Keys,
 				out _catalog,
 				out _catalogError))
 			{
 				_catalog = null;
 			}
-		}
-
-		private static bool IsRuntimeDomainTool(string toolName)
-		{
-			return (toolName ?? string.Empty).StartsWith("graphics.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("profiler.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("addressables.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("ui.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("animation.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("audio.", StringComparison.Ordinal) ||
-				(toolName ?? string.Empty).StartsWith("cinematic.", StringComparison.Ordinal);
 		}
 
 		private void LoadHistory()
