@@ -63,6 +63,20 @@ namespace MyUnityMcp.EditorTests
 			};
 		}
 
+		private static string CatalogJson()
+		{
+			return File.ReadAllText("Packages/com.darumappap.my-unity-mcp/Editor/Operational/Agent/UnityAgentMcpCatalog.json");
+		}
+
+		private static bool TryParseCatalog(JObject root, out AgentCatalogSnapshot snapshot, out string error)
+		{
+			return AgentCatalogService.TryParse(
+				root.ToString(),
+				UnityAgentMcpRuntime.RegisteredDomainDelegateNamesForTests,
+				out snapshot,
+				out error);
+		}
+
 		[Test]
 		public void InspectCapabilities_LoadsCatalogAndKeepsDirectMutationDisabled()
 		{
@@ -74,6 +88,135 @@ namespace MyUnityMcp.EditorTests
 			Assert.That(result.Value<bool>("integrationCandidateExecutionEnabled"), Is.True);
 			Assert.That(result.Value<int>("defaultExecutionTimeoutSeconds"), Is.GreaterThan(0));
 			Assert.That(result["domains"]?.Any(), Is.True);
+		}
+
+		[Test]
+		public void CatalogV5_ProjectsLegacyInspectCapabilitiesShapeForAllDomains()
+		{
+			JObject result = UnityAgentMcpRuntime.Instance.InspectCapabilities();
+			JArray domains = (JArray)result["domains"];
+			JArray catalogDomains = (JArray)JObject.Parse(CatalogJson())["domains"];
+			string[] expectedDomainIds =
+			{
+				"unity_graphics_mcp", "unity_profiler_mcp", "unity_addressables_mcp", "unity_ui_mcp",
+				"unity_animation_mcp", "unity_audio_mcp", "unity_cinematic_mcp"
+			};
+			string[][] expectedGroups =
+			{
+				new[] {"inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"},
+				new[] {"profiler"},
+				new[] {"addressables"},
+				new[] {"ui"},
+				new[] {"animation"},
+				new[] {"audio"},
+				new[] {"cinematic"}
+			};
+			string[] expectedFields = {"domainId", "status", "toolGroups", "tools", "directUnityMutationAllowed"};
+
+			Assert.That(result.Value<bool>("success"), Is.True, result.ToString());
+			Assert.That(domains.Count, Is.EqualTo(7));
+			for (int index = 0; index < domains.Count; index++)
+			{
+				JObject domain = (JObject)domains[index];
+				JObject catalogDomain = (JObject)catalogDomains[index];
+				Assert.That(domain.Properties().Select(value => value.Name).OrderBy(value => value).ToArray(), Is.EqualTo(expectedFields.OrderBy(value => value).ToArray()));
+				Assert.That(domain["domainId"]?.Type, Is.EqualTo(JTokenType.String));
+				Assert.That(domain.Value<string>("domainId"), Is.EqualTo(expectedDomainIds[index]));
+				Assert.That(domain["status"]?.Type, Is.EqualTo(JTokenType.String));
+				Assert.That(domain["toolGroups"]?.Type, Is.EqualTo(JTokenType.Array));
+				Assert.That(domain["toolGroups"].All(value => value.Type == JTokenType.String), Is.True);
+				Assert.That(domain["toolGroups"].Values<string>().ToArray(), Is.EqualTo(expectedGroups[index]));
+				Assert.That(domain["tools"]?.Type, Is.EqualTo(JTokenType.Array));
+				Assert.That(domain["tools"].All(value => value.Type == JTokenType.String), Is.True);
+				Assert.That(domain["tools"].Values<string>().ToArray(), Is.EqualTo(catalogDomain["tools"].Values<JObject>().Select(value => value.Value<string>("name")).ToArray()));
+				Assert.That(domain["directUnityMutationAllowed"]?.Type, Is.EqualTo(JTokenType.Boolean));
+				Assert.That(domain.Value<bool>("directUnityMutationAllowed"), Is.False);
+			}
+			Assert.That(result.ToString(), Does.Not.Contain("policy"));
+		}
+
+		[Test]
+		public void CatalogV5_PreservesApprovalSet()
+		{
+			Assert.That(TryParseCatalog(JObject.Parse(CatalogJson()), out AgentCatalogSnapshot snapshot, out string error), Is.True, error);
+			string[] expected =
+			{
+				"graphics.apply_plan", "graphics.undo_last_transaction", "graphics.apply_environment_plan",
+				"graphics.undo_last_environment_transaction", "graphics.apply_save_plan", "graphics.bake_dependencies",
+				"graphics.start_apv_bake", "graphics.get_apv_bake_status", "graphics.cancel_apv_bake",
+				"addressables.apply_entry", "ui.apply_rect_transform", "animation.apply_parameter",
+				"audio.apply_source", "cinematic.apply_director"
+			};
+
+			Assert.That(snapshot.ToolIndex.Values.Where(value => value.policy.approvalRequired).Select(value => value.name).ToArray(), Is.EqualTo(expected));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsDuplicateTool()
+		{
+			JObject root = JObject.Parse(CatalogJson());
+			JArray tools = (JArray)root["domains"][0]["tools"];
+			tools.Add(tools[0].DeepClone());
+
+			Assert.That(TryParseCatalog(root, out _, out string error), Is.False);
+			Assert.That(error, Does.Contain("duplicate tool"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsUnknownAndMissingRegisteredTools()
+		{
+			JObject unknownTool = JObject.Parse(CatalogJson());
+			((JObject)unknownTool["domains"][0]["tools"][0])["name"] = "graphics.unknown";
+			Assert.That(TryParseCatalog(unknownTool, out _, out string unknownError), Is.False);
+			Assert.That(unknownError, Does.Contain("registered delegate"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsMissingPolicy()
+		{
+			JObject root = JObject.Parse(CatalogJson());
+			((JObject)root["domains"][0]["tools"][0]).Remove("policy");
+
+			Assert.That(TryParseCatalog(root, out _, out string error), Is.False);
+			Assert.That(error, Does.Contain("policy"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsInvalidEffectAndRetryPolicy()
+		{
+			JObject invalidEffect = JObject.Parse(CatalogJson());
+			((JObject)invalidEffect["domains"][0]["tools"][0]["policy"])["effect"] = "execution_control";
+			Assert.That(TryParseCatalog(invalidEffect, out _, out string effectError), Is.False);
+			Assert.That(effectError, Does.Contain("effect"));
+
+			JObject invalidRetry = JObject.Parse(CatalogJson());
+			((JObject)invalidRetry["domains"][0]["tools"][0]["policy"])["retryPolicy"] = "safe_retry";
+			Assert.That(TryParseCatalog(invalidRetry, out _, out string retryError), Is.False);
+			Assert.That(retryError, Does.Contain("retryPolicy"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsLegacyDomainToolGroupsAndCreatorObjects()
+		{
+			JObject legacyDomain = JObject.Parse(CatalogJson());
+			legacyDomain["domains"][0]["toolGroups"] = new JArray("inspect");
+			Assert.That(TryParseCatalog(legacyDomain, out _, out string domainError), Is.False);
+			Assert.That(domainError, Does.Contain("toolGroups"));
+
+			JObject creatorObjects = JObject.Parse(CatalogJson());
+			creatorObjects["creators"][0]["tools"][0] = new JObject { ["name"] = "world.compile_workflow" };
+			Assert.That(TryParseCatalog(creatorObjects, out _, out string creatorError), Is.False);
+			Assert.That(creatorError, Does.Contain("creator tools"));
+		}
+
+		[Test]
+		public void CatalogV5_RejectsCreatorDirectMutation()
+		{
+			JObject creatorMutation = JObject.Parse(CatalogJson());
+			creatorMutation["creators"][0]["directUnityMutationAllowed"] = true;
+
+			Assert.That(TryParseCatalog(creatorMutation, out _, out string error), Is.False);
+			Assert.That(error, Does.Contain("creator"));
 		}
 
 		[Test]
@@ -103,6 +246,17 @@ namespace MyUnityMcp.EditorTests
 			JObject result = UnityAgentMcpRuntime.Instance.ValidateWorkflow(new[] {step});
 
 			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-TOOL-GROUP-MISSING"));
+		}
+
+		[Test]
+		public void ValidateWorkflow_RejectsKnownButWrongCanonicalToolGroup()
+		{
+			UnityAgentMcpStepInput step = GraphicsInspectStep();
+			step.toolGroup = "mutate";
+
+			JObject result = UnityAgentMcpRuntime.Instance.ValidateWorkflow(new[] {step});
+
+			Assert.That(result.Value<string>("errorCode"), Is.EqualTo("AGENT-TOOL-GROUP-MISMATCH"));
 		}
 
 		[Test]

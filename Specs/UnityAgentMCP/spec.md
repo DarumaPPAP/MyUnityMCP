@@ -58,6 +58,14 @@ Workflow Stepは`stepId`、`domainId`、`toolName`、`toolGroup`、`dependsOn`�
 
 ValidationはDuplicate / Missing Step ID、Missing Dependency、Cycle、Undeclared Tool / Group、Non-operational Domain、Direct Control Plane Mutationを拒否します。
 
+## Runtime Catalog v5
+
+Runtime Catalogの永続化Schemaはv5です。各Operational Domainの`tools`は、Tool名、Canonical Group、Policyを持つObject配列です。Domain内の旧`toolGroups`配列は使用しません。Policyの許可値は、Effectが`none`、`scene_mutation`、`asset_mutation`、`save`、`bake`、`capture_control`、Revision Policyが`must_remain`または`may_advance`、Retry Policyが`none`です。`directUnityMutationAllowed`は常にfalseです。
+
+RuntimeはCatalog検証後にOrdinalのTool Indexを構築し、重複Tool、欠落Tool、未知Tool、Policy不備、未登録DelegateをLoad Failureとして扱います。WorkflowはDomain存在、Domain内のTool存在、Domain由来Group、ToolのCanonical Group一致の順に検証します。未知Groupは`AGENT-TOOL-GROUP-MISSING`、既知だがCanonical Groupと異なるGroupは`AGENT-TOOL-GROUP-MISMATCH`です。
+
+`agent.inspect_capabilities`はPublic Compatibility Projectionです。内部Tool ObjectやPolicyを返さず、従来どおり`toolGroups`と`tools`を文字列配列としてDomain順、Tool順、Groupの初出順を維持して返します。`creators[].tools`もCatalog上は文字列配列のままです。ApprovalはRuntime内のTool名リストではなく、Catalog Tool DefinitionのPolicyだけを参照します。
+
 ## Revision and Approval Safety
 
 - Graph Compileは`Session.Revision`へ固定

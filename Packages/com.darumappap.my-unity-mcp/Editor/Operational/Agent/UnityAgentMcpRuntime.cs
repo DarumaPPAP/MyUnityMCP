@@ -93,29 +93,6 @@ namespace UnityAgentMcp
 		private const int DEFAULT_EXECUTION_TIMEOUT_SECONDS = 60;
 		private const int MAX_EXECUTION_TIMEOUT_SECONDS = 3600;
 
-		private static readonly HashSet<string> APPROVAL_GROUPS = new HashSet<string>(StringComparer.Ordinal)
-		{
-			"mutate",
-			"save",
-			"bake"
-		};
-
-		private static readonly HashSet<string> APPROVAL_TOOLS = new HashSet<string>(StringComparer.Ordinal)
-		{
-			"graphics.apply_plan",
-			"graphics.undo_last_transaction",
-			"graphics.apply_environment_plan",
-			"graphics.undo_last_environment_transaction",
-			"graphics.apply_save_plan",
-			"graphics.bake_dependencies",
-			"graphics.start_apv_bake",
-			"addressables.apply_entry",
-			"ui.apply_rect_transform",
-			"animation.apply_parameter",
-			"audio.apply_source",
-			"cinematic.apply_director"
-		};
-
 		private static readonly Dictionary<string, Func<JObject, object>> DOMAIN_DELEGATES = BuildDomainDelegates();
 		private static readonly UnityAgentMcpRuntime _instance = new UnityAgentMcpRuntime();
 
@@ -124,12 +101,14 @@ namespace UnityAgentMcp
 		private readonly Dictionary<string, UnityAgentMcpExecutionRecord> _executions =
 			new Dictionary<string, UnityAgentMcpExecutionRecord>(StringComparer.Ordinal);
 		private readonly List<JObject> _history = new List<JObject>();
-		private UnityAgentMcpCatalogData _catalog;
+		private AgentCatalogSnapshot _catalog;
 		private string _catalogError;
 
 		internal static Func<DateTime> UtcNowOverrideForTests { get; set; }
 
 		public static UnityAgentMcpRuntime Instance => _instance;
+
+		internal static string[] RegisteredDomainDelegateNamesForTests => DOMAIN_DELEGATES.Keys.ToArray();
 
 		static UnityAgentMcpRuntime()
 		{
@@ -164,7 +143,7 @@ namespace UnityAgentMcp
 			return Success(new JObject
 			{
 				["catalogPath"] = CATALOG_PATH,
-				["domains"] = JArray.FromObject(_catalog.domains ?? Array.Empty<UnityAgentMcpDomainData>()),
+				["domains"] = JArray.FromObject(_catalog.BuildPublicDomains()),
 				["directUnityMutation"] = false,
 				["defaultExecutionTimeoutSeconds"] = DEFAULT_EXECUTION_TIMEOUT_SECONDS,
 				["maxExecutionTimeoutSeconds"] = MAX_EXECUTION_TIMEOUT_SECONDS,
@@ -207,8 +186,7 @@ namespace UnityAgentMcp
 				createdAtUtc = UtcNow,
 				steps = normalized,
 				requiredApprovalGroups = new HashSet<string>(
-					normalized.Where(RequiresApproval)
-						.Select(value => value.toolGroup),
+					normalized.Select(GetApprovalGroup).Where(value => !string.IsNullOrEmpty(value)),
 					StringComparer.Ordinal)
 			};
 			_graphs[graphId] = graph;
@@ -505,7 +483,6 @@ namespace UnityAgentMcp
 				return false;
 			}
 
-			Dictionary<string, UnityAgentMcpDomainData> domains = _catalog.domains.ToDictionary(value => value.domainId, StringComparer.Ordinal);
 			HashSet<string> stepIds = new HashSet<string>(StringComparer.Ordinal);
 			foreach (UnityAgentMcpStepInput step in normalized)
 			{
@@ -514,24 +491,30 @@ namespace UnityAgentMcp
 					error = Error("AGENT-STEP-ID-INVALID", "Step IDが空または重複しています。");
 					return false;
 				}
-				if (!domains.TryGetValue(step.domainId ?? string.Empty, out UnityAgentMcpDomainData domain))
+				if (!_catalog.TryGetDomain(step.domainId, out AgentCatalogDomainDefinition domain))
 				{
 					error = Error("AGENT-DOMAIN-NOT-FOUND", $"DomainがCatalogにありません: {step.domainId}");
+					return false;
+				}
+				if (!_catalog.TryGetTool(step.toolName, out AgentCatalogToolDefinition tool) ||
+					!string.Equals(tool.domainId, domain.domainId, StringComparison.Ordinal))
+				{
+					error = Error("AGENT-TOOL-NOT-DECLARED", $"ToolがDomain Catalogにありません: {step.toolName}");
+					return false;
+				}
+				if (!_catalog.GetCanonicalGroups(domain).Contains(step.toolGroup, StringComparer.Ordinal))
+				{
+					error = Error("AGENT-TOOL-GROUP-MISSING", $"Tool GroupがDomainにありません: {step.toolGroup}");
+					return false;
+				}
+				if (!string.Equals(tool.group, step.toolGroup, StringComparison.Ordinal))
+				{
+					error = Error("AGENT-TOOL-GROUP-MISMATCH", $"Tool GroupがCatalog定義と一致しません: {step.toolName}");
 					return false;
 				}
 				if (!IsExecutableDomainStatus(domain.status))
 				{
 					error = Error("AGENT-DOMAIN-NOT-OPERATIONAL", $"Domainは実行可能ではありません: {step.domainId}");
-					return false;
-				}
-				if (!(domain.toolGroups ?? Array.Empty<string>()).Contains(step.toolGroup, StringComparer.Ordinal))
-				{
-					error = Error("AGENT-TOOL-GROUP-MISSING", $"Tool GroupがDomainにありません: {step.toolGroup}");
-					return false;
-				}
-				if (!(domain.tools ?? Array.Empty<string>()).Contains(step.toolName, StringComparer.Ordinal))
-				{
-					error = Error("AGENT-TOOL-NOT-DECLARED", $"ToolがDomain Catalogにありません: {step.toolName}");
 					return false;
 				}
 				if (domain.directUnityMutationAllowed)
@@ -693,11 +676,20 @@ namespace UnityAgentMcp
 				string.Equals(status, "integration_candidate", StringComparison.Ordinal);
 		}
 
-		private static bool RequiresApproval(UnityAgentMcpStepInput step)
+		private string GetApprovalGroup(UnityAgentMcpStepInput step)
 		{
-			return step != null &&
-				(APPROVAL_GROUPS.Contains(step.toolGroup ?? string.Empty) ||
-				 APPROVAL_TOOLS.Contains(step.toolName ?? string.Empty));
+			if (step == null || _catalog == null || !_catalog.TryGetTool(step.toolName, out AgentCatalogToolDefinition tool))
+			{
+				return null;
+			}
+			return tool.policy != null && tool.policy.approvalRequired
+				? tool.policy.approvalGroup
+				: null;
+		}
+
+		private bool RequiresApproval(UnityAgentMcpStepInput step)
+		{
+			return !string.IsNullOrEmpty(GetApprovalGroup(step));
 		}
 
 		private static bool HasCycle(List<UnityAgentMcpStepInput> steps)
@@ -776,19 +768,14 @@ namespace UnityAgentMcp
 
 		private void LoadCatalog()
 		{
-			try
-			{
-				string absolutePath = Path.GetFullPath(CATALOG_PATH);
-				_catalog = JsonConvert.DeserializeObject<UnityAgentMcpCatalogData>(File.ReadAllText(absolutePath));
-				if (_catalog?.domains == null || _catalog.domains.Length == 0)
-				{
-					throw new InvalidDataException("Catalog domain list is empty.");
-				}
-			}
-			catch (Exception exception)
+			string absolutePath = Path.GetFullPath(CATALOG_PATH);
+			if (!AgentCatalogService.TryLoad(
+				absolutePath,
+				DOMAIN_DELEGATES.Keys,
+				out _catalog,
+				out _catalogError))
 			{
 				_catalog = null;
-				_catalogError = exception.Message;
 			}
 		}
 

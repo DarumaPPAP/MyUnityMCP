@@ -1,65 +1,117 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "domains": [
     {
       "domainId": "unity_graphics_mcp",
       "status": "editor_operational",
-      "toolGroups": ["inspect", "plan", "mutate", "save", "bake", "capture", "evaluate_and_refine", "execution"],
       "tools": [
-        "graphics.inspect_project", "graphics.inspect_scene", "graphics.validate_scene",
-        "graphics.compile_direction", "graphics.preview_plan", "graphics.prepare_light_plan",
-        "graphics.prepare_environment_plan", "graphics.prepare_save_plan", "graphics.prepare_bake_plan",
-        "graphics.prepare_apv_bake_plan", "graphics.prepare_acceptance_profile",
-        "graphics.apply_plan", "graphics.undo_last_transaction", "graphics.apply_environment_plan",
-        "graphics.undo_last_environment_transaction", "graphics.apply_save_plan", "graphics.bake_dependencies",
-        "graphics.start_apv_bake", "graphics.get_apv_bake_status", "graphics.cancel_apv_bake",
-        "graphics.capture_evaluation", "graphics.capture_evidence", "graphics.refine_direction",
-        "graphics.submit_visual_review", "graphics.refine_from_visual_review", "graphics.evaluate_capture",
-        "graphics.refine_from_evaluation", "graphics.get_execution_status", "graphics.cancel_execution",
-        "graphics.get_execution_history", "graphics.get_error_catalog", "graphics.get_support_matrix"
+        { "name": "graphics.inspect_project", "group": "inspect", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.inspect_scene", "group": "inspect", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.validate_scene", "group": "inspect", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.compile_direction", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.preview_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_light_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_environment_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_save_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_bake_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_apv_bake_plan", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.prepare_acceptance_profile", "group": "plan", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.apply_plan", "group": "mutate", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "mutate", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.undo_last_transaction", "group": "mutate", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "mutate", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.apply_environment_plan", "group": "mutate", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "mutate", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.undo_last_environment_transaction", "group": "mutate", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "mutate", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.apply_save_plan", "group": "save", "policy": { "effect": "save", "approvalRequired": true, "approvalGroup": "save", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.bake_dependencies", "group": "bake", "policy": { "effect": "bake", "approvalRequired": true, "approvalGroup": "bake", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.start_apv_bake", "group": "bake", "policy": { "effect": "bake", "approvalRequired": true, "approvalGroup": "bake", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.get_apv_bake_status", "group": "bake", "policy": { "effect": "bake", "approvalRequired": true, "approvalGroup": "bake", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.cancel_apv_bake", "group": "bake", "policy": { "effect": "bake", "approvalRequired": true, "approvalGroup": "bake", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "graphics.capture_evaluation", "group": "capture", "policy": { "effect": "capture_control", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.capture_evidence", "group": "capture", "policy": { "effect": "capture_control", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.refine_direction", "group": "evaluate_and_refine", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.submit_visual_review", "group": "evaluate_and_refine", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.refine_from_visual_review", "group": "evaluate_and_refine", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.evaluate_capture", "group": "evaluate_and_refine", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.refine_from_evaluation", "group": "evaluate_and_refine", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.get_execution_status", "group": "execution", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.cancel_execution", "group": "execution", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.get_execution_history", "group": "execution", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.get_error_catalog", "group": "execution", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "graphics.get_support_matrix", "group": "execution", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
       ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_profiler_mcp",
       "status": "editor_operational",
-      "toolGroups": ["profiler"],
-      "tools": ["profiler.inspect_environment", "profiler.inspect_counters", "profiler.prepare_capture", "profiler.start_capture", "profiler.get_capture_status", "profiler.cancel_capture", "profiler.summarize_capture", "profiler.compare_baseline"],
+      "tools": [
+        { "name": "profiler.inspect_environment", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.inspect_counters", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.prepare_capture", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.start_capture", "group": "profiler", "policy": { "effect": "capture_control", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.get_capture_status", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.cancel_capture", "group": "profiler", "policy": { "effect": "capture_control", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.summarize_capture", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "profiler.compare_baseline", "group": "profiler", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_addressables_mcp",
       "status": "editor_operational",
-      "toolGroups": ["addressables"],
-      "tools": ["addressables.inspect", "addressables.prepare_entry", "addressables.apply_entry", "addressables.get_support_matrix"],
+      "tools": [
+        { "name": "addressables.inspect", "group": "addressables", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "addressables.prepare_entry", "group": "addressables", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "addressables.apply_entry", "group": "addressables", "policy": { "effect": "asset_mutation", "approvalRequired": true, "approvalGroup": "addressables", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "addressables.get_support_matrix", "group": "addressables", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_ui_mcp",
       "status": "editor_operational",
-      "toolGroups": ["ui"],
-      "tools": ["ui.inspect", "ui.validate", "ui.prepare_rect_transform", "ui.apply_rect_transform", "ui.get_support_matrix"],
+      "tools": [
+        { "name": "ui.inspect", "group": "ui", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "ui.validate", "group": "ui", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "ui.prepare_rect_transform", "group": "ui", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "ui.apply_rect_transform", "group": "ui", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "ui", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "ui.get_support_matrix", "group": "ui", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_animation_mcp",
       "status": "editor_operational",
-      "toolGroups": ["animation"],
-      "tools": ["animation.inspect", "animation.validate", "animation.prepare_parameter", "animation.apply_parameter", "animation.get_support_matrix"],
+      "tools": [
+        { "name": "animation.inspect", "group": "animation", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "animation.validate", "group": "animation", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "animation.prepare_parameter", "group": "animation", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "animation.apply_parameter", "group": "animation", "policy": { "effect": "asset_mutation", "approvalRequired": true, "approvalGroup": "animation", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "animation.get_support_matrix", "group": "animation", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_audio_mcp",
       "status": "editor_operational",
-      "toolGroups": ["audio"],
-      "tools": ["audio.inspect", "audio.validate", "audio.prepare_source", "audio.apply_source", "audio.get_support_matrix"],
+      "tools": [
+        { "name": "audio.inspect", "group": "audio", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "audio.validate", "group": "audio", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "audio.prepare_source", "group": "audio", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "audio.apply_source", "group": "audio", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "audio", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "audio.get_support_matrix", "group": "audio", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     },
     {
       "domainId": "unity_cinematic_mcp",
       "status": "editor_operational",
-      "toolGroups": ["cinematic"],
-      "tools": ["cinematic.inspect", "cinematic.validate", "cinematic.prepare_director", "cinematic.apply_director", "cinematic.get_support_matrix"],
+      "tools": [
+        { "name": "cinematic.inspect", "group": "cinematic", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "cinematic.validate", "group": "cinematic", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "cinematic.prepare_director", "group": "cinematic", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } },
+        { "name": "cinematic.apply_director", "group": "cinematic", "policy": { "effect": "scene_mutation", "approvalRequired": true, "approvalGroup": "cinematic", "revisionPolicy": "may_advance", "retryPolicy": "none" } },
+        { "name": "cinematic.get_support_matrix", "group": "cinematic", "policy": { "effect": "none", "approvalRequired": false, "approvalGroup": null, "revisionPolicy": "must_remain", "retryPolicy": "none" } }
+      ],
       "directUnityMutationAllowed": false
     }
   ],
