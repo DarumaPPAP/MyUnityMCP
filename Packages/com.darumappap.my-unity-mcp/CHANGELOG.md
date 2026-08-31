@@ -24,7 +24,6 @@
 - UnityAgent Runtime Catalogを77 Tool Operational Routingへ更新
 - Release前にCapability Contract / 77 Tool Promotion Contract / Stable Release Evidenceを検証するようPublication Workflowを強化
 - GitHub Actions CIはSupplemental Evidenceとし、Runner未開始・利用不能だけではReleaseをBlockしない
-- Fresh-project CIはSupplemental Validationとして扱う
 - Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeはv1.1.0 Surfaceから除外
 
 ### Verification
@@ -44,7 +43,7 @@ Unity `6000.7.0a2` Direct Editor Evidence:
 - Timeout / Cancel / Domain Reload callbacks PASS
 - Previous Production 45 Regression PASS
 
-未検証範囲は削除せず保持します: Automated CI、Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Device。
+未検証範囲は削除せず保持します: Automated CI、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Device。
 
 ## [1.0.0] - 2026-08-11
 

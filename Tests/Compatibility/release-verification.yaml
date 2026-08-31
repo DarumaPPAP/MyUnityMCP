@@ -18,7 +18,6 @@ required_gates:
   release_contract: validated_at_publication
   distribution_build: built_at_publication
   automated_ci: unavailable_not_verified_non_blocking
-  fresh_project_sample: not_verified_non_blocking
   support_matrix_documented: true
   known_issues_preserved: true
   version_manifest_changelog_aligned: true
@@ -86,14 +85,12 @@ supplemental_evidence:
     runner_steps_started: false
     code_failure_claimed: false
   package_editor_test_runner: unavailable_not_verified
-  fresh_project_sample_workflow: not_verified
   addressables_positive_backend_matrix: not_verified
   external_transport_disconnect_reconnect: not_verified
   target_device_validation: not_verified_not_required_for_editor_only_release
 
 release_distribution:
   package: com.darumappap.my-unity-mcp-1.1.0.tgz
-  sample_project: MyUnityMCP-SampleProject-1.1.0.zip
   templates: MyUnityMCP-Templates-1.1.0.zip
   checksums: SHA256SUMS.txt
   artifact_status: build_from_immutable_release_source_at_publication

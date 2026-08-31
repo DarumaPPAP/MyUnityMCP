@@ -29,8 +29,6 @@ verification_contract:
   production_validation_evidence: Tests/Compatibility/production-validation-evidence.yaml
   discovered_mcp_tools: 77
   duplicate_tool_names: 0
-  fresh_project_sample_required_for_v1_1_0: false
-  fresh_project_sample_status: not_verified_non_blocking
   target_device_required_for_editor_only_release: false
   automated_ci_required_for_release: false
 
@@ -205,6 +203,5 @@ not_verified:
   - every_render_pipeline_package_version
   - addressables_positive_backend_matrix
   - external_transport_disconnect_reconnect
-  - fresh_project_sample_workflow_for_v1_1_0
   - package_editor_test_runner_for_v1_1_0
   - automated_ci_for_v1_1_0

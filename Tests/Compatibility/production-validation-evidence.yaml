@@ -55,7 +55,6 @@ automated_ci:
 
 not_verified_non_blocking:
   - package_editor_test_runner
-  - fresh_project_sample_workflow
   - automated_ci
   - addressables_positive_backend_matrix
   - external_transport_disconnect_reconnect

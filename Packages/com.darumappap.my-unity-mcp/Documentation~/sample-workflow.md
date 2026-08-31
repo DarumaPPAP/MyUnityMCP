@@ -30,5 +30,3 @@ get_support_matrix
 - BakeはScene保存後に別承認します。
 - Evaluation MeasurementはUnity外で取得・判断した値を入力します。
 - Human Reviewなしに完了としません。
-
-`SampleProjects/MyUnityMCPGettingStarted`のEditor Testは、32 Tool Discovery、Project／Scene Inspection、Snapshot、Direction CompileのRead-only Workflowを新規Projectで検証します。

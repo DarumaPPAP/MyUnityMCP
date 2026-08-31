@@ -25,7 +25,6 @@
 - Release ContractのTool CountをManifest基準へ統一
 - Stable Release Publication前にCapability Contract、77 Tool Promotion Contract、Release Evidenceを検証するようRelease Workflowを強化
 - GitHub Actions CIはSupplemental Evidenceとし、利用不能だけではPromotion / ReleaseをBlockしない
-- Fresh-project CIをSupplemental Validationへ変更
 - Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeをv1.1.0 Surfaceから除外
 
 ### Verification
@@ -44,7 +43,7 @@ Unity `6000.7.0a2` Direct Editor Evidence:
 - Timeout / Cancel / Domain Reload callbacks PASS
 - Previous Production 45 Regression PASS
 
-Automated CI、Fresh-project Sample Workflow、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Player / Target Deviceは未検証範囲として明示的に保持します。
+Automated CI、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Player / Target Deviceは未検証範囲として明示的に保持します。
 
 ### Release
 

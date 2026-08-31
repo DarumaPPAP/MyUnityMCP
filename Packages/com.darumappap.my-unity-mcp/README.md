@@ -26,6 +26,6 @@ Unity EditorをMCP Clientから安全にInspection、Planning、Mutation、Save�
 
 Direct Unity Editor ValidationがPrimary Gateです。Unity `6000.7.0a2`でCompile Error 0、77/77 Discovery、重複0、Domain Smoke、Safety、Scoped Mutation、Agent Routing、Cross-domain Workflow、Production Regressionを確認済みです。
 
-Automated CIはSupplementalです。Runner未開始など利用不能な実行は`not_verified`として保持します。Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
+Automated CIはSupplementalです。Runner未開始など利用不能な実行は`not_verified`として保持します。Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
 
 導入は[Installation](Documentation~/installation.md)、全Tool一覧は[Tool Reference](Documentation~/tool-reference.md)、現在の77 Tool構成とEvidenceは[Production Surface](Documentation~/production-surface.md)を参照してください。

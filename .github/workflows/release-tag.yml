@@ -99,7 +99,6 @@ jobs:
           version="${{ steps.identity.outputs.version }}"
           mkdir -p artifacts
           (cd Packages/com.darumappap.my-unity-mcp && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
-          zip -qr "artifacts/MyUnityMCP-SampleProject-${version}.zip" SampleProjects/MyUnityMCPGettingStarted
           zip -qr "artifacts/MyUnityMCP-Templates-${version}.zip" Templates
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
 

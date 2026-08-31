@@ -47,7 +47,7 @@ Unity `6000.7.0a2`の実Editor Evidenceで以下を確認済みです。
 - Timeout / Cancel / Domain Reload callbacks
 - 従来Production 45 Tool Regression
 
-GitHub ActionsはSupplemental Evidenceです。Runner Step開始前に利用不能だった実行は`not_verified`のまま保持し、PASSにもCode Failureにも読み替えません。Fresh-project Sample、Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
+GitHub ActionsはSupplemental Evidenceです。Runner Step開始前に利用不能だった実行は`not_verified`のまま保持し、PASSにもCode Failureにも読み替えません。Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
 
 ## Safety Model
 
@@ -82,7 +82,6 @@ MyUnityMCP/
 ├─ Catalog/         # Operational Capability / Production Surface Contract
 ├─ Specs/           # 現行製品仕様
 ├─ Tests/           # Release / Compatibility / Editor Evidence
-├─ SampleProjects/  # Standalone Sample Project
 ├─ Templates/       # MCP Client / CI / Acceptance Profile配布物
 ├─ Design/          # 未実装Capabilityの設計資産
 └─ .github/         # Repository automation
@@ -104,7 +103,6 @@ Graph EngineeringのGoal / Workflow / Run Recordなどの開発制御資産は�
 
 - Latest published stable before v1.1.0: `v1.0.1`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
-- Standalone Sample Project: `SampleProjects/MyUnityMCPGettingStarted`
 - MCP Client Templates: `Templates/McpClients`
 
 公開済みTagはimmutableです。新しい製品内容は新Version / 新Tagで公開します。
