@@ -38,7 +38,7 @@ Save／Bake後の永続Assetに対するUnity Undoや自動Rollbackは保証し�
 
 ## Compatibility
 
-対応状況は`support-matrix.md`を正本とします。CI成功は検証環境におけるEvidenceであり、すべてのUnity Patch、SRP Package、Player、Target Deviceを保証しません。
+対応状況は`Tests/Compatibility/support-matrix.yaml`を正本とします。CI成功は検証環境におけるEvidenceであり、すべてのUnity Patch、SRP Package、Player、Target Deviceを保証しません。
 
 ## Evidence
 
