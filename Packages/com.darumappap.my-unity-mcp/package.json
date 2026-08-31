@@ -21,12 +21,5 @@
     "apv",
     "visual-acceptance"
   ],
-  "unity": "6000.0",
-  "samples": [
-    {
-      "displayName": "Getting Started",
-      "description": "Inspection、Tool allowlist、Acceptance Profileを確認するSample Sceneと設定例です。",
-      "path": "Samples~/Getting Started"
-    }
-  ]
+  "unity": "6000.0"
 }

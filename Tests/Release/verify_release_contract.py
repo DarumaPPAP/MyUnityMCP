@@ -30,8 +30,6 @@ required = [
     'Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md',
     'Specs/UnityWorldCreatorMCP/spec.md',
     'Catalog/world-creator-capability-contract.yaml',
-    'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json',
-    'SampleProjects/MyUnityMCPGettingStarted/Assets/Scenes/MyUnityMcpGettingStarted.unity',
     'Templates/McpClients/generic-http.json.example',
     'Templates/McpClients/codex.toml.example',
     'Templates/AcceptanceProfiles/balanced-graphics.json',
@@ -44,6 +42,8 @@ if missing: raise SystemExit('Missing release files:\n'+'\n'.join(missing))
 
 package=json.loads((ROOT/'Packages/com.darumappap.my-unity-mcp/package.json').read_text(encoding='utf-8'))
 if package['version'] != version: raise SystemExit('VERSION and package.json differ')
+if package.get('samples'):
+    raise SystemExit('Production package must not publish Samples')
 manifest=(ROOT/'Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml').read_text(encoding='utf-8')
 support=(ROOT/'Tests/Compatibility/support-matrix.yaml').read_text(encoding='utf-8')
 changelog=(ROOT/'CHANGELOG.md').read_text(encoding='utf-8')
@@ -64,7 +64,6 @@ if int(verification_tool_count_match.group(1)) != expected_tool_count:
     raise SystemExit('Manifest discovery counts disagree')
 
 for path in [
-    'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json',
     'Templates/McpClients/generic-http.json.example',
     'Templates/McpClients/recommended-readonly-allowlist.json',
     'Templates/AcceptanceProfiles/balanced-graphics.json',
@@ -95,6 +94,8 @@ for obsolete in [
     'Specs/UnityGraphicsMCP/plan.md',
     'Specs/UnityGraphicsMCP/tasks.md',
     'Specs/UnityGraphicsMCP/editor-tool-design.md',
+    'Packages/com.darumappap.my-unity-mcp/Samples~',
+    'SampleProjects',
 ]:
     if (ROOT/obsolete).exists(): raise SystemExit(f'Obsolete or temporary file remains: {obsolete}')
 

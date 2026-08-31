@@ -11,7 +11,6 @@ on:
       - Catalog/**
       - Design/**
       - Packages/com.darumappap.my-unity-mcp/**
-      - SampleProjects/MyUnityMCPGettingStarted/**
       - Templates/**
       - Specs/**
       - Tests/Compatibility/**
@@ -51,7 +50,6 @@ jobs:
           version="${{ steps.preview-version.outputs.version }}"
           mkdir -p artifacts
           (cd Packages/com.darumappap.my-unity-mcp && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
-          zip -qr "artifacts/MyUnityMCP-SampleProject-${version}.zip" SampleProjects/MyUnityMCPGettingStarted
           zip -qr "artifacts/MyUnityMCP-Templates-${version}.zip" Templates
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
@@ -59,81 +57,3 @@ jobs:
           name: MyUnityMCP-v${{ steps.preview-version.outputs.version }}-Distribution-Preview
           path: artifacts
           retention-days: 14
-
-  fresh-project:
-    name: Supplemental fresh project compile and sample workflow
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Require Unity license secrets
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-        run: |
-          set -euo pipefail
-          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
-          if [ -n "$UNITY_SERIAL" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then exit 0; fi
-          echo "::warning::Unity license secrets are incomplete; supplemental fresh-project evidence remains not_verified."
-          exit 1
-      - name: Free disk space
-        run: |
-          docker system prune --all --force || true
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /opt/hostedtoolcache/CodeQL
-      - uses: actions/cache@v4
-        with:
-          path: SampleProjects/MyUnityMCPGettingStarted/Library
-          key: MyUnityMCP-Sample-6000.0.75f1-${{ hashFiles('Packages/com.darumappap.my-unity-mcp/**', 'SampleProjects/MyUnityMCPGettingStarted/Packages/manifest.json') }}
-      - name: Run fresh-project sample workflow
-        id: tests
-        continue-on-error: true
-        uses: game-ci/unity-test-runner@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-        with:
-          projectPath: SampleProjects/MyUnityMCPGettingStarted
-          unityVersion: 6000.0.75f1
-          testMode: editmode
-          customParameters: -testFilter MyUnityMcpGettingStartedTests
-      - name: Verify sample result when available
-        if: always()
-        env:
-          ARTIFACTS_PATH: ${{ steps.tests.outputs.artifactsPath }}
-          TEST_OUTCOME: ${{ steps.tests.outcome }}
-        run: |
-          set -euo pipefail
-          if [ "$TEST_OUTCOME" != success ]; then
-            echo "::warning::Supplemental fresh-project run did not pass; this does not override Direct Unity Editor primary evidence."
-            exit 1
-          fi
-          log=$(find "$ARTIFACTS_PATH" -name editmode.log -type f | head -1)
-          [ -n "$log" ] || { echo "::warning::No editmode.log"; exit 1; }
-          if grep -Eq 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log"; then
-            grep -nE 'error CS[0-9]{4}|Script Compilation Error|Scripts have compiler errors' "$log" | tail -100
-            exit 1
-          fi
-          xml=$(find "$ARTIFACTS_PATH" -name '*.xml' -type f | head -1)
-          python3 - "$xml" <<'PY'
-          import sys, xml.etree.ElementTree as ET
-          root=ET.parse(sys.argv[1]).getroot()
-          total=int(root.attrib.get('total','0')); passed=int(root.attrib.get('passed','0'))
-          failed=int(root.attrib.get('failed','0')); skipped=int(root.attrib.get('skipped','0')); inconclusive=int(root.attrib.get('inconclusive','0'))
-          print(f'Sample results: total={total}, passed={passed}, failed={failed}, skipped={skipped}, inconclusive={inconclusive}')
-          if total < 1 or passed != total or failed or skipped or inconclusive: raise SystemExit(1)
-          PY
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: MyUnityMCP-Fresh-Project-Sample-Evidence
-          path: ${{ steps.tests.outputs.artifactsPath }}
-          if-no-files-found: warn
-          retention-days: 90

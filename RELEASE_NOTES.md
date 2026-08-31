@@ -66,7 +66,6 @@ v1.1.0で未検証の範囲:
 
 - Automated CI
 - Package Editor Test Runner
-- Fresh-project Sample Workflow
 - Addressables Positive Backend Matrix
 - External MCP Transport Disconnect/Reconnect
 - Player / Target Device Tool Execution

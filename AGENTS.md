@@ -2,13 +2,13 @@
 
 ## Repository role
 
-このRepositoryの実行可能製品Sourceは、Unity Editor向けMyUnityMCP Tool Surface、そのControl Plane、Tool Schema、Safety Contract、Test、Sample、配布Templateです。
+このRepositoryの実行可能製品Sourceは、Unity Editor向けMyUnityMCP Tool Surface、そのControl Plane、Tool Schema、Safety Contract、Test、配布Templateです。
 
 Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各DomainのOperational / Promotion状態は`MCP_MANIFEST.yaml`、`Catalog/`、`Tests/Compatibility/`の現在Evidenceを正本とし、古い45 Tool / Candidate文言だけを根拠に現在状態を判断しません。
 
 実行可能な製品資産と将来設計は物理的・契約的に分離します。
 
-- 実行可能製品: `Packages/`、`Catalog/`、`Specs/`、`Tests/`、`SampleProjects/`、`Templates/`
+- 実行可能製品: `Packages/`、`Catalog/`、`Specs/`、`Tests/`、`Templates/`
 - Design Only / Future Design: `Design/`
 
 対象Unity Project固有のScene、Prefab、Material、Lighting Data、認証情報、組織情報、顧客情報をこのRepositoryへ保存しません。
