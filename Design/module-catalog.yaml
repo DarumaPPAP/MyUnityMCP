@@ -50,19 +50,9 @@ modules:
     current_status: excluded_from_current_surface
     current_status_source: Packages/com.darumappap.my-unity-mcp/MCP_MANIFEST.yaml
 
-promoted_modules:
-  unity_agent_mcp:
-    kind: control_plane
-    status: historical_design
-    current_status: editor_operational
-    operational_catalog: Catalog/mcp-catalog.yaml
-    current_spec: Specs/UnityAgentMCP/spec.md
-    capability_contract: Catalog/unity-agent-capability-contracts.yaml
-    historical_design: Design/UnityAgentMCP/spec.md
-
 rules:
   design_entries_are_not_runtime_capabilities: true
   runtime_promotion_requires_package_catalog_tests_and_docs: true
-  promoted_modules_use_operational_catalog_and_specs_as_source_of_truth: true
   current_operational_status_source: Catalog/mcp-catalog.yaml
   historical_design_status: historical_design
+  historical_state_source: git_history_and_immutable_release_tags

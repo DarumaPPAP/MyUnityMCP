@@ -1,8 +1,8 @@
 # Design Assets
 
-`Design/` は、MyUnityMCP の将来構想・設計専用資産を隔離する領域です。
+`Design/` は、MyUnityMCP の **将来構想・未実装設計** を隔離する領域です。
 
-ここにあるファイルは **v1.0 の実行可能機能ではありません**。Unity Editor で実際に動作する製品コード、Tool Contract、Release Gate の正本とは分離して扱います。
+現在の実行可能製品、Operational Contract、Release Gate、昇格済み仕様の正本は `Packages/`、`Catalog/`、`Specs/`、`Tests/` に置きます。過去に昇格済みだったDesign baselineをcurrent `main`へ複製保持せず、Historical StateはGit historyとimmutable release tagsで参照します。
 
 ## Layout
 
@@ -10,8 +10,6 @@
 Design/
 ├─ README.md
 ├─ module-catalog.yaml
-├─ UnityAgentMCP/
-│  └─ spec.md
 └─ Creators/
    ├─ catalog.yaml
    ├─ LiveCreator.yaml
@@ -22,7 +20,9 @@ Design/
 
 - 実行可能な Unity Package は `Packages/com.darumappap.my-unity-mcp` に置く。
 - 実行可能 MCP の Catalog / Capability Contract は `Catalog/` に置く。
-- 現行製品の技術仕様は `Specs/UnityGraphicsMCP/` に置く。
-- 将来の Control Plane、未実装 Domain、Creator Workflow は `Design/` に置く。
+- 現行製品の技術仕様は `Specs/` に置く。
+- 将来のControl Plane、未実装Domain、未実装Creator Workflowは `Design/` に置く。
+- 昇格済みCapabilityのcurrent specやhistorical copyを `Design/` と `Specs/` の二重Source of Truthにしない。
 - `Design/` 内の存在だけを理由に、機能を実装済み・利用可能と表現しない。
-- Design 資産を実装へ昇格する場合は、Package / Catalog / Test / Documentation / Release Contract を同一変更で更新する。
+- Design資産を実装へ昇格する場合は、Package / Catalog / Test / Documentation / Current Spec / Release Contractを同一変更で更新する。
+- 昇格前の状態を後から確認する必要がある場合はGit historyまたはimmutable release tagを使用する。
