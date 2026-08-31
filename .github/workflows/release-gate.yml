@@ -13,7 +13,7 @@ on:
       - Packages/com.darumappap.my-unity-mcp/**
       - SampleProjects/MyUnityMCPGettingStarted/**
       - Templates/**
-      - Specs/UnityGraphicsMCP/**
+      - Specs/**
       - Tests/Compatibility/**
       - Tests/Release/**
       - Tests/Routing/**
@@ -37,7 +37,7 @@ jobs:
       - run: python3 Tests/Release/verify_capability_contract.py
       - run: python3 Tests/Release/verify_production_surface_contract.py
       - run: python3 Tests/Release/verify_agent_runtime_catalog.py
-      - run: python3 Tests/Release/verify_agent_harness_p1.py
+      - run: python3 Tests/Release/verify_agent_safety_contract.py
       - run: python3 Tests/Release/verify_release_contract.py --mode pr
       - run: python3 Tests/Release/verify_immutable_release_workflow.py
       - name: Resolve preview version
