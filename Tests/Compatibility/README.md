@@ -8,15 +8,10 @@
 - `support-matrix.yaml`: 現行77 Tool Support Contract
 - `release-verification.yaml`: v1.1.0 Stable Release Evidence
 
-## Historical Evidence
+現在のOperational / Release状態は、上記Current EvidenceとManifest / Catalogを正本として判定します。
 
-- `production-baseline-verification.yaml`: 42 Tool時点のDirect Editor統合Evidence
-- `world-creator-production-verification.yaml`: 45 Tool時点のWorldCreator Production Evidence
-- `integration-hardening-verification.yaml`: v0.8 Hardening Evidence
-- `apv-visual-acceptance-verification.yaml`: APV / Visual Acceptance実装時Evidence
-- `capture-evidence-verification.yaml`: Capture実装時Evidence
-- `verification-matrix.yaml`: 初期Implementation履歴
+## Historical State
 
-過去RecordのRun ID、Artifact ID、当時のTool Countは履歴として書き換えません。**現在のOperational / Release状態はSupport Matrix、Manifest、Catalog、Production Editor Acceptance、Release Verificationを正本**とします。
+過去Releaseや過去Tool SurfaceのEvidenceは、current `main` に重複保存せず、Git historyと公開済みimmutable release tagsで参照します。過去RecordのRun ID、Artifact ID、当時のTool Countを現在状態の判定根拠には使用しません。
 
 GitHub Actions runnerがStep実行前に停止した場合は`not_verified`です。Direct Unity Editor PASSはPrimary Evidenceですが、Target Device PASSや未実行CI PASSとしては扱いません。

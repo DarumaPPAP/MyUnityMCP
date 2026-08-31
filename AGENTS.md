@@ -9,7 +9,7 @@ Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各Domain
 実行可能な製品資産と将来設計は物理的・契約的に分離します。
 
 - 実行可能製品: `Packages/`、`Catalog/`、`Specs/`、`Tests/`、`SampleProjects/`、`Templates/`
-- Design Only / Historical Design: `Design/`
+- Design Only / Future Design: `Design/`
 
 対象Unity Project固有のScene、Prefab、Material、Lighting Data、認証情報、組織情報、顧客情報をこのRepositoryへ保存しません。
 
@@ -29,7 +29,7 @@ Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各Domain
 - Current production Editor evidence: `Tests/Compatibility/production-editor-acceptance.yaml`
 - Current production validation evidence: `Tests/Compatibility/production-validation-evidence.yaml`
 - Stable release evidence: `Tests/Compatibility/release-verification.yaml`
-- Historical evidence: `Tests/Compatibility/verification-matrix.yaml`および個別Verification Record
+- Historical release/product state: Git history / immutable release tags
 
 開発順を示す段階名を、現行型名、File名、Tool説明、Error Code、Test名、運用文書へ使用しません。
 
@@ -38,9 +38,9 @@ Current `main`にはExact 77 ToolのEditor Surfaceが存在します。各Domain
 - Design module registry: `Design/module-catalog.yaml`
 - Creator registry: `Design/Creators/catalog.yaml`
 - Creator workflows: `Design/Creators/`
-- UnityAgent historical design: `Design/UnityAgentMCP/spec.md`
+- Historical design state: Git history / immutable release tags
 
-Design資産はRelease対象の実装済みCapabilityとして数えません。実装へ昇格する場合は、Package、Operational Catalog、Capability Contract、Test、Documentation、Current Spec、Release Contractを同一Delivery変更で更新します。昇格後は`Catalog/`と`Specs/`を現在の実行契約の正本にし、`Design/`はHistorical Designとしてのみ保持できます。
+Design資産はRelease対象の実装済みCapabilityとして数えません。実装へ昇格する場合は、Package、Operational Catalog、Capability Contract、Test、Documentation、Current Spec、Release Contractを同一Delivery変更で更新します。昇格後は`Catalog/`と`Specs/`を現在の実行契約の正本にし、旧Design baselineはcurrent `main`へ二重保持せずGit history / immutable release tagsへ委ねます。
 
 ## Tool exposure
 
