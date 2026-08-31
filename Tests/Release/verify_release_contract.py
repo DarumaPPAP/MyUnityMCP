@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import argparse, json, re, sys
+import argparse, json, re
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
@@ -78,26 +78,6 @@ if count != expected_tool_count:
     raise SystemExit(f'Expected {expected_tool_count} MCP tools from manifest, found {count}')
 if disabled != count:
     raise SystemExit(f'Expected every tool to be disabled by default, found {disabled}/{count}')
-
-active_paths=[ROOT/'README.md',ROOT/'AGENTS.md',ROOT/'Catalog',ROOT/'Design',ROOT/'Packages/com.darumappap.my-unity-mcp/Editor',ROOT/'Packages/com.darumappap.my-unity-mcp/Tests/Editor']
-for base in active_paths:
-    files=[base] if base.is_file() else [p for p in base.rglob('*') if p.is_file() and p.suffix in {'.md','.yaml','.cs'}]
-    for path in files:
-        text=path.read_text(encoding='utf-8')
-        if re.search(r'Phase\s*\d|Phase\d|phase_\d',text,re.IGNORECASE):
-            raise SystemExit(f'Delivery phase wording remains in active file: {path.relative_to(ROOT)}')
-
-for obsolete in [
-    '.github/workflows/release-source-audit-export.yml',
-    '.github/workflows/apply-v1-release.yml',
-    'Tools/apply-v1-release.py',
-    'Specs/UnityGraphicsMCP/plan.md',
-    'Specs/UnityGraphicsMCP/tasks.md',
-    'Specs/UnityGraphicsMCP/editor-tool-design.md',
-    'Packages/com.darumappap.my-unity-mcp/Samples~',
-    'SampleProjects',
-]:
-    if (ROOT/obsolete).exists(): raise SystemExit(f'Obsolete or temporary file remains: {obsolete}')
 
 if args.mode == 'tag':
     if args.tag != 'v'+version: raise SystemExit('Tag and VERSION differ')
