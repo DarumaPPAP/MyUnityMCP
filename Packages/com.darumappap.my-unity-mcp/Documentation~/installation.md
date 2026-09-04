@@ -16,14 +16,14 @@ Unity Package Managerの`Add package from git URL`から、MCP for Unity Bridge�
 ### Git tag
 
 ```text
-https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.1.0
+https://github.com/DarumaPPAP/MyUnityMCP.git?path=/Packages/com.darumappap.my-unity-mcp#v1.1.1
 ```
 
 Private Repositoryの場合は、Unityを起動するOS UserのGit資格情報が必要です。
 
 ### Release `.tgz`
 
-Release Assetの`com.darumappap.my-unity-mcp-1.1.0.tgz`を取得し、Package ManagerからローカルTarballを追加します。
+Release Assetの`com.darumappap.my-unity-mcp-1.1.1.tgz`を取得し、Package ManagerからローカルTarballを追加します。
 
 ### Embedded package
 
@@ -46,4 +46,4 @@ Repository内の`Packages/com.darumappap.my-unity-mcp`を導入先Projectの`Pac
 
 ## Dependency note
 
-Unity `6000.7.0a2` Direct Editor VerificationではPackage Compile、Exact 77 Tool Discovery、`graphics.inspect_project`、Agent Routing、Safety / Scoped Mutation E2Eを確認しています。Bridgeを独自Versionへ変更した場合は77 Tool DiscoveryとHandler Invocationを再確認してください。
+v1.1.0 Unity `6000.7.0a2` Direct Editor Verificationをbaselineとして保持します。v1.1.1 Release CandidateはUnity `6000.0.75f1` Editor CI、およびUnity `6000.4.12f1` / `6000.5.5f1` Compatibility MatrixをPASSしています。Current Unity 6000.7 automated canaryはGameCI image unavailableのため未検証です。Bridgeを独自Versionへ変更した場合は77 Tool DiscoveryとHandler Invocationを再確認してください。

@@ -1,5 +1,5 @@
 schema_version: "2.2"
-release_version: "1.1.0"
+release_version: "1.1.1"
 
 capabilities:
   graphics:

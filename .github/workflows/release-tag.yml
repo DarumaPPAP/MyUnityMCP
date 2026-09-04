@@ -44,10 +44,14 @@ jobs:
           tag="v${version}"
 
           # Static release contracts must pass before a new immutable tag is created.
+          python3 Tests/Release/verify_repository_hygiene.py
           python3 Tests/Release/verify_source_of_truth_consistency.py
           python3 Tests/Release/verify_capability_contract.py
           python3 Tests/Release/verify_production_surface_contract.py
+          python3 Tests/Release/verify_agent_runtime_catalog.py
+          python3 Tests/Release/verify_agent_safety_contract.py
           python3 Tests/Release/verify_release_contract.py --mode pr
+          python3 Tests/Release/verify_immutable_release_workflow.py
 
           release_kind="stable"
           if [[ "$version" == *-* ]]; then
@@ -77,8 +81,12 @@ jobs:
 
           # Existing tags are revalidated from their immutable source, never from current main.
           if [ "$release_mode" = "verify_existing" ]; then
+            python3 Tests/Release/verify_repository_hygiene.py
             python3 Tests/Release/verify_capability_contract.py
             python3 Tests/Release/verify_production_surface_contract.py
+            python3 Tests/Release/verify_agent_runtime_catalog.py
+            python3 Tests/Release/verify_agent_safety_contract.py
+            python3 Tests/Release/verify_immutable_release_workflow.py
             if [ "$release_kind" = "stable" ]; then
               python3 Tests/Release/verify_release_contract.py --mode tag --tag "$tag"
             else

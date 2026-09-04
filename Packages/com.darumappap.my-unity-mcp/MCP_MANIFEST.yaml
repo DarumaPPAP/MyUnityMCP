@@ -1,6 +1,6 @@
 schema_version: "2.4"
 package_id: com.darumappap.my-unity-mcp
-version: "1.1.0"
+version: "1.1.1"
 implementation_status: editor_operational_direct_editor_verified_ci_unavailable
 release_baseline: v1.0.1
 production_verified_tool_count: 77
