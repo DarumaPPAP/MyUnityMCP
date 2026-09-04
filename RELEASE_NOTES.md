@@ -32,9 +32,11 @@ Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator r
 
 ## Verification
 
-v1.1.0のUnity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持します。
-
-v1.1.1はRelease PRでUnity `6000.0.75f1`のEditMode Contract、Compile、Production Tool Discovery、Agent Runtime / Safety Contractを再検証し、PASS後にのみstable tagを公開します。
+- v1.1.0 Unity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持
+- v1.1.1 Release CandidateをUnity `6000.0.75f1`でEditMode Contract / Compile / NUnit / Production Tool Discoveryまで再検証しPASS
+- Unity `6000.4.12f1` / `6000.5.5f1` Compatibility Matrixを再検証しPASS
+- Release static contracts / repository hygiene / source-of-truth / Agent Runtime / Safety validatorsをPASS
+- Current Unity 6000.7 automated canaryはGameCI image unavailableのため`not_verified`。v1.1.0の`6000.7.0a2` Direct Editor Evidenceを代替の新規PASSとは扱いません
 
 Target Device、Addressables Positive Backend Matrix、External MCP Transport Disconnect/Reconnectは引き続き未検証範囲です。
 

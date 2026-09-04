@@ -4,7 +4,7 @@ MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEdi
 
 ## v1.1.1 Production Surface
 
-Current `main` / v1.1.1 Release Candidateは **77 Tool** のEditor Operational Surfaceです。
+v1.1.1は **77 Tool** のEditor Operational Surfaceです。
 
 | Capability | Tools | Status |
 |---|---:|---|
@@ -30,9 +30,9 @@ Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator r
 
 ## Verification
 
-v1.1.0のUnity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持し、v1.1.1 Release PRではUnity `6000.0.75f1` EditMode / Compile / Production Tool Discovery / Agent Contractを再検証してから公開します。
+v1.1.0 Unity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持し、v1.1.1 Release CandidateはUnity `6000.0.75f1` EditMode / Compile / NUnit / Production Tool DiscoveryをPASSしています。Unity `6000.4.12f1` / `6000.5.5f1` Compatibility MatrixもPASSしています。
 
-GitHub ActionsのEditor Runnerが実行不能な場合はPASSに読み替えません。Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
+Current Unity 6000.7 automated canaryはGameCI image unavailableのため`not_verified`です。Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceも未検証範囲として明示します。
 
 ## Safety Model
 
@@ -86,7 +86,7 @@ Graph EngineeringのGoal / Workflow / Run Recordなどの開発制御資産は�
 
 ## Distribution
 
-- Latest published stable: `v1.1.0`
+- Latest stable: `v1.1.1`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
 - MCP Client Templates: `Templates/McpClients`
 

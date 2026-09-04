@@ -1,24 +1,24 @@
 schema_version: "1.2"
 release_version: "1.1.1"
-verification_status: pending_current_editor_ci
+verification_status: passed
 
 required_gates:
   direct_unity_editor_primary: baseline_v1_1_0_passed
-  current_unity_editor_ci: pending
-  unity_editor_compile: pending_current_release_pr
-  exact_tool_discovery_77: pending_current_release_pr
-  duplicate_tool_names_zero: pending_current_release_pr
+  current_unity_editor_ci: passed
+  unity_editor_compile: passed_current_release_pr
+  exact_tool_discovery_77: passed_current_release_pr
+  duplicate_tool_names_zero: passed_current_release_pr
   readonly_domain_smoke: baseline_passed
-  safety_contract: pending_current_release_pr
+  safety_contract: passed_current_release_pr
   scoped_mutation_e2e: baseline_passed
-  agent_routing_and_failure_propagation: pending_current_release_pr
+  agent_routing_and_failure_propagation: passed_current_release_pr
   cross_domain_workflow: baseline_passed
-  previous_production_45_regression: pending_current_release_pr
-  capability_contract: validated_at_publication
-  production_surface_contract: validated_at_publication
-  release_contract: validated_at_publication
-  distribution_build: built_at_publication
-  automated_ci: pending_current_release_pr
+  previous_production_45_regression: passed_current_release_pr
+  capability_contract: passed_current_release_pr
+  production_surface_contract: passed_current_release_pr
+  release_contract: passed_current_release_pr
+  distribution_build: passed_current_release_pr
+  automated_ci: passed_current_release_pr
   support_matrix_documented: true
   known_issues_preserved: true
   version_manifest_changelog_aligned: true
@@ -31,7 +31,7 @@ editor_verification:
   baseline_unity_version: "6000.7.0a2"
   baseline_result: passed
   current_release_ci_unity_version: "6000.0.75f1"
-  current_release_result: pending
+  current_release_result: passed
   tool_discovery: 77
   duplicate_tool_names: 0
 
@@ -40,14 +40,17 @@ compatibility_evidence:
   unity_6000_4:
     unity_version: "6000.4.12f1"
     historical_editor_ci: passed
+    current_release_ci: passed
     evidence_artifact_id: 9090981750
   unity_6000_5:
     unity_version: "6000.5.5f1"
     historical_editor_ci: passed
+    current_release_ci: passed
     evidence_artifact_id: 9090985384
   unity_6000_7:
     unity_version: "6000.7.0a2"
     direct_editor_validation: passed_baseline_v1_1_0
+    current_automated_canary: unavailable_not_verified_gameci_image
 
 operational_surface:
   contract: Catalog/production-surface-contract.yaml
@@ -71,10 +74,10 @@ operational_surface:
 
 supplemental_evidence:
   automated_ci:
-    status: pending_current_release_pr
-    runner_steps_started: false
+    status: passed_current_release_pr
+    runner_steps_started: true
     code_failure_claimed: false
-  package_editor_test_runner: pending_current_release_pr
+  package_editor_test_runner: passed_current_release_pr
   addressables_positive_backend_matrix: not_verified
   external_transport_disconnect_reconnect: not_verified
   target_device_validation: not_verified_not_required_for_editor_only_release

@@ -46,4 +46,4 @@ Repository内の`Packages/com.darumappap.my-unity-mcp`を導入先Projectの`Pac
 
 ## Dependency note
 
-v1.1.0 Unity `6000.7.0a2` Direct Editor Verificationをbaselineとして保持します。v1.1.1はRelease PRのUnity Editor CIを通過後にstableとして公開します。Bridgeを独自Versionへ変更した場合は77 Tool DiscoveryとHandler Invocationを再確認してください。
+v1.1.0 Unity `6000.7.0a2` Direct Editor Verificationをbaselineとして保持します。v1.1.1 Release CandidateはUnity `6000.0.75f1` Editor CI、およびUnity `6000.4.12f1` / `6000.5.5f1` Compatibility MatrixをPASSしています。Current Unity 6000.7 automated canaryはGameCI image unavailableのため未検証です。Bridgeを独自Versionへ変更した場合は77 Tool DiscoveryとHandler Invocationを再確認してください。

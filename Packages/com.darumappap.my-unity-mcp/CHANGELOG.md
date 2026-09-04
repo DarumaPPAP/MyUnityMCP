@@ -19,7 +19,10 @@
 ### Verification
 
 - Production Editor Surfaceは **77 Tool** を維持
-- v1.1.0 Direct Editor Evidenceをbaselineに、v1.1.1 PRでUnity Editor CIを再実行してから公開
+- v1.1.0 Unity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持
+- v1.1.1 Release PRのUnity `6000.0.75f1` EditMode / Compile / NUnit / Production Tool DiscoveryをPASS
+- Unity `6000.4.12f1` / `6000.5.5f1` Compatibility MatrixをPASS
+- Current 6000.7 automated canaryはGameCI image unavailableのため未検証のまま保持
 
 ## [1.1.0] - 2026-08-13
 

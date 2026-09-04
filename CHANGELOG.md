@@ -23,7 +23,9 @@
 
 - Production Surfaceは引き続き **77 Tool**
 - v1.1.0のUnity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持
-- v1.1.1 Release PRでUnity `6000.0.75f1` EditMode / Compile / Production Tool Discovery / Agent Contractを再検証してから公開
+- v1.1.1 Release PRでUnity `6000.0.75f1` EditMode Contract / Compile / NUnit / Production Tool Discoveryを再検証しPASS
+- Unity `6000.4.12f1` / `6000.5.5f1` Compatibility Matrixを再検証しPASS
+- Unity 6000.7 current canaryはGameCI image unavailableのため`not_verified`を維持
 - Target Device、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnectは引き続き未検証範囲
 
 ### Release
