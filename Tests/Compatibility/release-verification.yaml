@@ -1,49 +1,39 @@
 schema_version: "1.2"
-release_version: "1.1.0"
-verification_status: passed
+release_version: "1.1.1"
+verification_status: pending_current_editor_ci
 
 required_gates:
-  direct_unity_editor_primary: passed
-  unity_editor_compile: passed
-  exact_tool_discovery_77: passed
-  duplicate_tool_names_zero: passed
-  readonly_domain_smoke: passed
-  safety_contract: passed
-  scoped_mutation_e2e: passed
-  agent_routing_and_failure_propagation: passed
-  cross_domain_workflow: passed
-  previous_production_45_regression: passed
+  direct_unity_editor_primary: baseline_v1_1_0_passed
+  current_unity_editor_ci: pending
+  unity_editor_compile: pending_current_release_pr
+  exact_tool_discovery_77: pending_current_release_pr
+  duplicate_tool_names_zero: pending_current_release_pr
+  readonly_domain_smoke: baseline_passed
+  safety_contract: pending_current_release_pr
+  scoped_mutation_e2e: baseline_passed
+  agent_routing_and_failure_propagation: pending_current_release_pr
+  cross_domain_workflow: baseline_passed
+  previous_production_45_regression: pending_current_release_pr
   capability_contract: validated_at_publication
   production_surface_contract: validated_at_publication
   release_contract: validated_at_publication
   distribution_build: built_at_publication
-  automated_ci: unavailable_not_verified_non_blocking
+  automated_ci: pending_current_release_pr
   support_matrix_documented: true
   known_issues_preserved: true
   version_manifest_changelog_aligned: true
   temporary_release_assets_removed: true
 
 editor_verification:
-  authority: direct_unity_editor_validation
+  authority: direct_unity_editor_validation_baseline_plus_current_pr_ci
   evidence: Tests/Compatibility/production-editor-acceptance.yaml
-  unity_version: "6000.7.0a2"
-  result: passed
+  baseline_release: "1.1.0"
+  baseline_unity_version: "6000.7.0a2"
+  baseline_result: passed
+  current_release_ci_unity_version: "6000.0.75f1"
+  current_release_result: pending
   tool_discovery: 77
   duplicate_tool_names: 0
-  compile_errors: 0
-  checks:
-    extended_domain_readonly_smoke: passed
-    stale_revision_rejection: passed
-    approval_boundary_rejection: passed
-    one_time_plan_reuse_rejection: passed
-    profiler_capture: passed
-    ui_animation_audio_cinematic_scoped_mutation_e2e: passed
-    addressables_package_absent_boundary: passed_allowed_unsupported
-    agent_operational_routing: passed
-    delegated_failure_propagation: passed
-    cross_domain_workflow: passed
-    timeout_cancel_domain_reload_callbacks: passed
-    previous_production_45_regression: passed
 
 compatibility_evidence:
   minimum_unity: "6000.0"
@@ -57,7 +47,7 @@ compatibility_evidence:
     evidence_artifact_id: 9090985384
   unity_6000_7:
     unity_version: "6000.7.0a2"
-    direct_editor_validation: passed
+    direct_editor_validation: passed_baseline_v1_1_0
 
 operational_surface:
   contract: Catalog/production-surface-contract.yaml
@@ -81,23 +71,23 @@ operational_surface:
 
 supplemental_evidence:
   automated_ci:
-    status: unavailable_not_verified
+    status: pending_current_release_pr
     runner_steps_started: false
     code_failure_claimed: false
-  package_editor_test_runner: unavailable_not_verified
+  package_editor_test_runner: pending_current_release_pr
   addressables_positive_backend_matrix: not_verified
   external_transport_disconnect_reconnect: not_verified
   target_device_validation: not_verified_not_required_for_editor_only_release
 
 release_distribution:
-  package: com.darumappap.my-unity-mcp-1.1.0.tgz
-  templates: MyUnityMCP-Templates-1.1.0.zip
+  package: com.darumappap.my-unity-mcp-1.1.1.tgz
+  templates: MyUnityMCP-Templates-1.1.1.zip
   checksums: SHA256SUMS.txt
   artifact_status: build_from_immutable_release_source_at_publication
 
 release_identity:
   release_commit: resolved_from_main_at_publication
-  tag: v1.1.0
+  tag: v1.1.1
   release_channel: stable
   published_tag_policy: immutable
   published_tag_move_allowed: false

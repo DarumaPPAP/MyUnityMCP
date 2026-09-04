@@ -1,7 +1,7 @@
 schema_version: "1.0"
 scope: production_editor_surface
 status: editor_operational
-release_version: "1.1.0"
+release_version: "1.1.1"
 production_tool_count: 77
 previous_verified_baseline_tool_count: 45
 expanded_domain_tool_count: 32

@@ -1,6 +1,6 @@
 schema_version: "1.3"
-package_version: "1.1.0"
-source_channel: v1_1_release_candidate
+package_version: "1.1.1"
+source_channel: v1_1_1_release_candidate
 
 release_surface:
   status: release_ready
@@ -192,6 +192,7 @@ release_gates:
   direct_editor_validation: passed
   production_surface_contract: validated_at_publication
   static_contract: pending_pr_validation
+  automated_editor_ci: pending_current_release_pr
   automated_ci: unavailable_not_verified_non_blocking
   human_release_gate: satisfied_by_explicit_release_request
 
@@ -203,5 +204,4 @@ not_verified:
   - every_render_pipeline_package_version
   - addressables_positive_backend_matrix
   - external_transport_disconnect_reconnect
-  - package_editor_test_runner_for_v1_1_0
-  - automated_ci_for_v1_1_0
+  - package_editor_test_runner_for_v1_1_1

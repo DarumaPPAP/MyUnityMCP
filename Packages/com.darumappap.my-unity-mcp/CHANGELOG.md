@@ -2,6 +2,25 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [1.1.1] - 2026-09-05
+
+### Fixed
+
+- UnityAgent delegated result normalizationとHistory migrationを修正
+- `AgentDelegateRegistry`のReflection `Assembly`曖昧性を修正
+
+### Changed
+
+- UnityAgent Runtime Catalogをv5 Tool Objectへ移行
+- Control Plane RuntimeをCatalog / Approval / Graph / Execution / History / Trace / Result責務へ分離
+- Agent Runtime / Safety ValidatorとRepository Hygiene Gateを追加
+- Historical Evidence / Sample Surface / obsolete support matrixを現行Package配布面から除去
+
+### Verification
+
+- Production Editor Surfaceは **77 Tool** を維持
+- v1.1.0 Direct Editor Evidenceをbaselineに、v1.1.1 PRでUnity Editor CIを再実行してから公開
+
 ## [1.1.0] - 2026-08-13
 
 ### Added

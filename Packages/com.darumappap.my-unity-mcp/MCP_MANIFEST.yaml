@@ -1,6 +1,6 @@
 schema_version: "2.4"
 package_id: com.darumappap.my-unity-mcp
-version: "1.1.0"
+version: "1.1.1"
 implementation_status: editor_operational_direct_editor_verified_ci_unavailable
 release_baseline: v1.0.1
 production_verified_tool_count: 77
@@ -134,7 +134,7 @@ verification:
   external_transport_disconnect_reconnect: not_verified_non_blocking
   fresh_project_sample_workflow: not_verified_non_blocking
   package_editor_test_runner: unavailable_not_verified_non_blocking
-  automated_ci: unavailable_not_verified
+  automated_ci: pending_current_release_pr
   automated_ci_required_for_release: false
   target_device_validation: not_verified_not_required_for_editor_only_release
   release_human_gate: satisfied_by_explicit_release_request

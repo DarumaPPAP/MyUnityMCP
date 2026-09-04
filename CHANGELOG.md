@@ -2,6 +2,35 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [1.1.1] - 2026-09-05
+
+### Fixed
+
+- UnityAgent delegated resultの正規化を強化し、失敗結果を成功として扱うfalse-success経路を閉じた
+- Execution Historyの旧形式移行とResult migrationの欠落を修正
+- `AgentDelegateRegistry`のReflection `Assembly`曖昧性を解消
+
+### Changed
+
+- UnityAgent Runtime Catalogをv5 Tool Object形式へ移行し、Catalog / Approval / Graph Compile / Execution / History / Trace / Result Normalizationを責務別Serviceへ分離
+- Agent validator責務を整理し、Runtime Catalog / Safety Contract専用Release Validatorを追加
+- Compatibility / Production Source-of-Truthをcanonical registryへ統一
+- Historical Evidence、旧Sample Surface、obsolete Graphics Support MatrixをProduction `main`から除去
+- Repository Hygiene Gateを追加し、古いPhase資産・一時ファイル・historical evidenceの再混入をRelease前に検出
+- Release Publication WorkflowのStatic GateをRelease Gateと同期
+
+### Verification
+
+- Production Surfaceは引き続き **77 Tool**
+- v1.1.0のUnity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持
+- v1.1.1 Release PRでUnity `6000.0.75f1` EditMode / Compile / Production Tool Discovery / Agent Contractを再検証してから公開
+- Target Device、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnectは引き続き未検証範囲
+
+### Release
+
+- `VERSION` / Package / Manifest / Catalog / Support Matrix / Changelogを`1.1.1`へ整合
+- `v1.1.1` TagはRelease Workflowからimmutableに作成
+
 ## [1.1.0] - 2026-08-13
 
 ### Added

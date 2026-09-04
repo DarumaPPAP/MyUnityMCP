@@ -2,9 +2,9 @@
 
 MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEditor拡張Packageです。Project／Scene Inspection、構造化Planning、承認付きMutation／Save／Bake、Capture Evidence、Visual Evaluation／Refine、Profiler、Addressables Entry管理、UI、Animation、Audio、Cinematic、および複数Toolを統括するUnityAgentMCP Control PlaneとWorldCreatorを提供します。
 
-## v1.1.0 Production Surface
+## v1.1.1 Production Surface
 
-Current `main` / v1.1.0 Release Candidateは **77 Tool** のEditor Operational Surfaceです。
+Current `main` / v1.1.1 Release Candidateは **77 Tool** のEditor Operational Surfaceです。
 
 | Capability | Tools | Status |
 |---|---:|---|
@@ -19,7 +19,7 @@ Current `main` / v1.1.0 Release Candidateは **77 Tool** のEditor Operational S
 | Cinematic | 5 | Editor Operational |
 | **Total** | **77** | **Editor Operational** |
 
-Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeはv1.1.0 Surfaceに含めません。
+Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeはv1.1.1 Surfaceに含めません。
 
 - Unity Editor専用
 - Unity `6000.0`以上
@@ -30,24 +30,9 @@ Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator r
 
 ## Verification
 
-v1.1.0はDirect Unity Editor ValidationをPrimary Gateとして扱います。
+v1.1.0のUnity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持し、v1.1.1 Release PRではUnity `6000.0.75f1` EditMode / Compile / Production Tool Discovery / Agent Contractを再検証してから公開します。
 
-Unity `6000.7.0a2`の実Editor Evidenceで以下を確認済みです。
-
-- Compile Error 0
-- Exact 77/77 Tool Discovery
-- Duplicate Tool 0
-- Read-only Domain Smoke
-- Stale Revision / Approval / One-time Plan Safety
-- Profiler Capture
-- UI / Animation / Audio / Cinematic Scoped Mutation E2E
-- Addressables Package未導入時の明示`UNSUPPORTED`境界
-- Agent Routing / Delegated Failure Propagation
-- Cross-domain Workflow
-- Timeout / Cancel / Domain Reload callbacks
-- 従来Production 45 Tool Regression
-
-GitHub ActionsはSupplemental Evidenceです。Runner Step開始前に利用不能だった実行は`not_verified`のまま保持し、PASSにもCode Failureにも読み替えません。Package Editor Test Runner、Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
+GitHub ActionsのEditor Runnerが実行不能な場合はPASSに読み替えません。Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceは未検証範囲として明示します。
 
 ## Safety Model
 
@@ -101,7 +86,7 @@ Graph EngineeringのGoal / Workflow / Run Recordなどの開発制御資産は�
 
 ## Distribution
 
-- Latest published stable before v1.1.0: `v1.0.1`
+- Latest published stable: `v1.1.0`
 - UPM Package: `Packages/com.darumappap.my-unity-mcp`
 - MCP Client Templates: `Templates/McpClients`
 
