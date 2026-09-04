@@ -118,7 +118,7 @@ production_policy:
   exact_tool_surface: 77
   direct_editor_validation: passed
   direct_editor_evidence: Tests/Compatibility/production-editor-acceptance.yaml
-  automated_ci: pending_current_release_pr
+  automated_ci: unavailable_not_verified
   automated_ci_required_for_release: false
   human_release_gate: satisfied_by_explicit_release_request
   target_device_validation: not_verified_not_required_for_editor_only_release
