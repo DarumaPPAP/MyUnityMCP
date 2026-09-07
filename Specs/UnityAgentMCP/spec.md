@@ -100,6 +100,8 @@ Addressables Packageが存在しない場合はDomainの明示`UNSUPPORTED`を�
 
 ## Result Integrity
 
+Statusは文字列、成功根拠はBooleanの`success` / `IsSuccessful` / `isSuccessful`を要求します。成功StatusだけのResultや文字列`"true"`は`AMBIGUOUS`です。診断の文字列Fieldは型を検査し、Object / Arrayを暗黙変換しません。構造化された`error: { code, message }`は例外を発生させず診断へ展開します。
+
 Delegated FailureをSuccessとして表現しません。
 
 Delegate Resultは既知のGraphics / ToolBridge Envelopeまたは`UnityDomainMcpResult`だけを認識します。Step Outcomeは`SUCCEEDED`、`FAILED`、`UNSUPPORTED`、`PARTIAL`、`AMBIGUOUS`に限定し、null、Scalar、未知Object、未知Status、StatusとSuccess Flagの矛盾は`AMBIGUOUS`として扱います。`PARTIAL`と`UNSUPPORTED`はSuccessへ変換しません。Executionは全Step成功時だけ`SUCCEEDED`、先行成功なしのNon-successは`FAILED`、先行成功後のNon-successは`PARTIAL`です。Execution Payloadの`executionSucceeded`は`SUCCEEDED`だけtrueで、Cancel Commandの受理成功とExecution結果は別に扱います。

@@ -194,11 +194,16 @@ namespace UnityProfilerMcp
 			{
 				return UnityDomainMcpCommon.Error("profiler.prepare_capture", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "1～16個のCounterを指定してください。");
 			}
+			HashSet<string> counterIds = new HashSet<string>(StringComparer.Ordinal);
 			foreach (UnityProfilerMcpCounterInput counter in counters)
 			{
 				if (counter == null || string.IsNullOrWhiteSpace(counter.counterId) || string.IsNullOrWhiteSpace(counter.category) || string.IsNullOrWhiteSpace(counter.name))
 				{
 					return UnityDomainMcpCommon.Error("profiler.prepare_capture", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "Counter定義が不完全です。");
+				}
+				if (!counterIds.Add(counter.counterId))
+				{
+					return UnityDomainMcpCommon.Error("profiler.prepare_capture", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "Counter IDは重複できません。");
 				}
 			}
 			return UnityDomainMcpCommon.Prepare("profiler.prepare_capture", DOMAIN_ID, "capture", expectedRevision, false, new JObject
@@ -296,30 +301,50 @@ namespace UnityProfilerMcp
 			{
 				return UnityDomainMcpCommon.Error("profiler.compare_baseline", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "BaselineとCandidateが必要です。");
 			}
-			string baselineFingerprint = baseline.SelectToken("environment.fingerprint")?.Value<string>();
-			string candidateFingerprint = candidate.SelectToken("environment.fingerprint")?.Value<string>();
+			string baselineFingerprint = ReadString(baseline["environment"] as JObject, "fingerprint");
+			string candidateFingerprint = ReadString(candidate["environment"] as JObject, "fingerprint");
 			if (string.IsNullOrEmpty(baselineFingerprint) || baselineFingerprint != candidateFingerprint)
 			{
 				return UnityDomainMcpCommon.Error("profiler.compare_baseline", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, "異なるEnvironmentのCaptureは比較できません。");
 			}
 
-			JArray comparisons = new JArray();
-			foreach (JProperty candidateMetric in ((JObject)candidate["metrics"] ?? new JObject()).Properties())
+			if (!(baseline["metrics"] is JObject baselineMetrics) || baselineMetrics.Count == 0 ||
+				!(candidate["metrics"] is JObject candidateMetrics) || candidateMetrics.Count != baselineMetrics.Count)
 			{
-				JToken baselineMetric = baseline["metrics"]?[candidateMetric.Name];
-				if (baselineMetric == null)
+				return InvalidComparison("空でない同一Counter集合のmetricsが必要です。");
+			}
+
+			JArray comparisons = new JArray();
+			foreach (JProperty candidateMetric in candidateMetrics.Properties())
+			{
+				JObject baselineMetric = baselineMetrics[candidateMetric.Name] as JObject;
+				JObject currentMetric = candidateMetric.Value as JObject;
+				if (!TryReadMetric(baselineMetric, out double baselineP95) ||
+					!TryReadMetric(currentMetric, out double candidateP95))
 				{
-					continue;
+					return InvalidComparison("各Counterに正のsampleCountと有限・非負の数値p95が必要です。");
 				}
-				double baselineP95 = baselineMetric.Value<double>("p95");
-				double candidateP95 = candidateMetric.Value.Value<double>("p95");
+				foreach (string field in new[] { "category", "name", "unit" })
+				{
+					string identity = ReadString(baselineMetric, field);
+					if (string.IsNullOrWhiteSpace(identity) || identity != ReadString(currentMetric, field))
+					{
+						return InvalidComparison("Counterのcategory、name、unitが一致していません。");
+					}
+				}
+				double delta = candidateP95 - baselineP95;
+				double? deltaPercent = baselineP95 == 0.0 ? (double?)null : (delta / baselineP95) * 100.0;
+				if (deltaPercent.HasValue && (double.IsNaN(deltaPercent.Value) || double.IsInfinity(deltaPercent.Value)))
+				{
+					return InvalidComparison("差分率が有限数値の範囲を超えています。");
+				}
 				comparisons.Add(new JObject
 				{
 					["counterId"] = candidateMetric.Name,
 					["baselineP95"] = baselineP95,
 					["candidateP95"] = candidateP95,
-					["delta"] = candidateP95 - baselineP95,
-					["deltaPercent"] = baselineP95 == 0.0 ? null : ((candidateP95 - baselineP95) / baselineP95) * 100.0
+					["delta"] = delta,
+					["deltaPercent"] = deltaPercent
 				});
 			}
 			return UnityDomainMcpCommon.Result("profiler.compare_baseline", E_DOMAIN_TOOL_STATUS.SUCCESS, "同一EnvironmentのBaseline比較を完了しました。", new JObject
@@ -330,19 +355,49 @@ namespace UnityProfilerMcp
 			});
 		}
 
+		private static UnityDomainMcpResult InvalidComparison(string message)
+		{
+			return UnityDomainMcpCommon.Error("profiler.compare_baseline", E_DOMAIN_TOOL_STATUS.INVALID_REQUEST, message);
+		}
+
+		private static string ReadString(JObject value, string field)
+		{
+			return value?[field]?.Type == JTokenType.String ? value[field].Value<string>() : null;
+		}
+
+		private static bool TryReadMetric(JObject metric, out double p95)
+		{
+			p95 = 0.0;
+			if (metric?["sampleCount"]?.Type != JTokenType.Integer ||
+				(metric["p95"]?.Type != JTokenType.Integer && metric["p95"]?.Type != JTokenType.Float))
+			{
+				return false;
+			}
+			try
+			{
+				double count = metric.Value<double>("sampleCount");
+				p95 = metric.Value<double>("p95");
+				return count > 0 && !double.IsInfinity(count) && p95 >= 0 && !double.IsInfinity(p95) && !double.IsNaN(p95);
+			}
+			catch (OverflowException) { return false; }
+			catch (InvalidCastException) { return false; }
+		}
+
 		internal static JObject SummarizeValues(IEnumerable<long> values)
 		{
 			long[] sorted = (values ?? Enumerable.Empty<long>()).OrderBy(value => value).ToArray();
 			if (sorted.Length == 0)
 			{
-				return new JObject { ["sampleCount"] = 0, ["median"] = 0, ["p95"] = 0, ["max"] = 0 };
+				return new JObject { ["sampleCount"] = 0, ["median"] = null, ["p95"] = null, ["max"] = null };
 			}
 			int medianIndex = (sorted.Length - 1) / 2;
 			int p95Index = Math.Min(sorted.Length - 1, (int)Math.Ceiling(sorted.Length * 0.95) - 1);
 			return new JObject
 			{
 				["sampleCount"] = sorted.Length,
-				["median"] = sorted[medianIndex],
+				["median"] = sorted.Length % 2 == 0
+					? ((double)sorted[medianIndex] / 2.0) + ((double)sorted[medianIndex + 1] / 2.0)
+					: (double)sorted[medianIndex],
 				["p95"] = sorted[p95Index],
 				["max"] = sorted[sorted.Length - 1]
 			};

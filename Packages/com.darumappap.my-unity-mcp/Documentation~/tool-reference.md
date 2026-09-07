@@ -79,6 +79,10 @@ Canonical Preflightは`graphics.inspect_project` → `graphics.inspect_scene` �
 
 Profiler ResultはEditor Environment IdentityをEvidenceとして保持します。Target Device性能として扱うには別のDevice Evidenceが必要です。
 
+CaptureのCounter IDは重複不可です。SummaryのMedianは偶数サンプル時に中央2値の平均、p95はnearest-rank方式です。サンプルが空なら統計値は`null`となり、計測値0とは区別します。
+
+`profiler.compare_baseline`には両方の`profiler.summarize_capture`の`data`を渡してください。空でない同一Counter集合、同一のcategory / name / unit、正の整数sampleCount、有限・非負の数値p95を要求します。欠損Counterの省略比較や文字列数値の暗黙変換は行わず、`INVALID_REQUEST`を返します。Baseline p95が0ならdeltaPercentは`null`です。比較成功は入力の整合と差分計算の成功であり、性能予算への合格判定ではありません。
+
 ## Addressables Domain — 4
 
 - `addressables.inspect`

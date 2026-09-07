@@ -54,18 +54,16 @@ namespace UnityAgentMcp
 
 			bool rootIsDomainResult = IsUnityDomainResult(root);
 			JObject candidate = root;
-			bool isEnvelope = false;
 			bool? outerSuccess = null;
 			if (!rootIsDomainResult && IsToolBridgeEnvelope(root, out JObject envelopeData))
 			{
 				candidate = envelopeData ?? root;
-				isEnvelope = true;
 				outerSuccess = ReadSuccess(root);
 			}
 
-			string status = candidate.Value<string>("status");
+			string status = ReadString(candidate, "status");
 			bool? candidateSuccess = ReadSuccess(candidate);
-			if ((rootIsDomainResult || isEnvelope) && !candidateSuccess.HasValue)
+			if (!candidateSuccess.HasValue)
 			{
 				return Ambiguous("AGENT-DELEGATE-RESULT-AMBIGUOUS", "既知Result Shapeにsuccess flagがありません。");
 			}
@@ -115,7 +113,7 @@ namespace UnityAgentMcp
 
 		private static bool IsUnityDomainResult(JObject root)
 		{
-			return root?.Value<string>("status") != null &&
+			return ReadString(root, "status") != null &&
 				root["success"]?.Type == JTokenType.Boolean;
 		}
 
@@ -128,7 +126,7 @@ namespace UnityAgentMcp
 			}
 
 			if (root["data"] is JObject dataObject &&
-				dataObject.Value<string>("status") != null &&
+				ReadString(dataObject, "status") != null &&
 				ReadSuccess(dataObject).HasValue)
 			{
 				data = dataObject;
@@ -181,27 +179,32 @@ namespace UnityAgentMcp
 			return null;
 		}
 
+		private static string ReadString(JObject value, string field)
+		{
+			return value?[field]?.Type == JTokenType.String ? value[field].Value<string>() : null;
+		}
+
 		private static string ReadErrorCode(JObject root, JObject candidate)
 		{
-			return candidate?.Value<string>("errorCode") ??
-				root?.Value<string>("errorCode") ??
-				root?.Value<string>("code") ??
-				(candidate?["error"] as JObject)?.Value<string>("code") ??
-				(root?["error"] as JObject)?.Value<string>("code");
+			return ReadString(candidate, "errorCode") ??
+				ReadString(root, "errorCode") ??
+				ReadString(root, "code") ??
+				ReadString(candidate?["error"] as JObject, "code") ??
+				ReadString(root?["error"] as JObject, "code");
 		}
 
 		private static string ReadMessage(JObject root, JObject candidate)
 		{
-			return candidate?.Value<string>("message") ??
-				candidate?.Value<string>("summary") ??
-				candidate?.Value<string>("errorMessage") ??
-				candidate?.Value<string>("error") ??
-				root?.Value<string>("message") ??
-				root?.Value<string>("summary") ??
-				root?.Value<string>("errorMessage") ??
-				root?.Value<string>("error") ??
-				(candidate?["error"] as JObject)?.Value<string>("message") ??
-				(root?["error"] as JObject)?.Value<string>("message");
+			return ReadString(candidate, "message") ??
+				ReadString(candidate, "summary") ??
+				ReadString(candidate, "errorMessage") ??
+				ReadString(candidate, "error") ??
+				ReadString(root, "message") ??
+				ReadString(root, "summary") ??
+				ReadString(root, "errorMessage") ??
+				ReadString(root, "error") ??
+				ReadString(candidate?["error"] as JObject, "message") ??
+				ReadString(root?["error"] as JObject, "message");
 		}
 	}
 }

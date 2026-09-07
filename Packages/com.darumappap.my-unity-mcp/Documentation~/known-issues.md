@@ -24,6 +24,12 @@ Reflection Probeは既存Cubemap Assetが必要です。Lightmap／APVを含むB
 
 OBJECT_ID CaptureはRenderer単位です。Terrain、Decal Projector、Procedural Draw、Material固有Alpha Clip、頂点変形等はManifestのCoverage Limitationsへ記録されます。
 
-## Platforms
+## Profiler sampling and baseline scope
+
+Profiler Captureは`EditorApplication.update`で`ProfilerRecorder.LastValue`を取得します。Editor更新と描画フレームの一対一対応、新しいCounterサンプルの到着は保証していません。厳密なフレーム分布や自動性能合否の根拠にするには、実Editorでサンプル鮮度とフレーム同期を検証する必要があります。
+
+Environment fingerprintはUnity Version、OS、GPU名、Graphics API、Build Targetを含みますが、CPU、Scene、Quality設定、解像度、Play Mode等の同一性は保証しません。比較ツールは入力Summaryの整合性を検査しますが、計測条件の再現や外部から渡された値の真正性を証明するものではありません。
+
+## Target Device
 
 Player Runtime、PC／Console／Mobile／Nintendo Switch等のTarget Device上でToolを実行する機能はありません。
