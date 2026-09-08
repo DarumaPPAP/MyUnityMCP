@@ -21,12 +21,16 @@ capabilities:
       - current_editor_environment_identity
       - prepared_capture_scope_before_capture_control
       - same_environment_baseline_for_direct_comparison
+      - identical_nonempty_counter_sets_with_matching_category_name_and_unit
+      - positive_sample_count_and_finite_nonnegative_numeric_p95
     must_not:
       - mutate_project_assets
       - automatically_save
       - claim_target_device_performance_without_target_device_evidence
       - compare_incompatible_environments_as_equivalent
       - reinterpret_unavailable_counter_or_capture_backend_as_success
+      - silently_skip_missing_baseline_counters
+      - interpret_empty_samples_as_zero_cost
     success_evidence:
       - editor_environment_identity
       - requested_counter_or_capture_result

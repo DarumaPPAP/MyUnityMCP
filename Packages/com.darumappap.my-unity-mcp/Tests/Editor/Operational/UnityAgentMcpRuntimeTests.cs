@@ -367,6 +367,50 @@ namespace MyUnityMcp.EditorTests
 		}
 
 		[Test]
+		public void ResultNormalizer_ReadsStructuredErrorsWithoutThrowing()
+		{
+			JObject failure = new JObject
+			{
+				["success"] = false,
+				["error"] = new JObject { ["code"] = "BACKEND_FAILED", ["message"] = "Backend failed." }
+			};
+			AgentNormalizedResult result = AgentResultNormalizer.Normalize(failure);
+			Assert.That(result.Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(result.ErrorCode, Is.EqualTo("BACKEND_FAILED"));
+			Assert.That(result.Message, Is.EqualTo("Backend failed."));
+
+			failure["status"] = "FAILED";
+			result = AgentResultNormalizer.Normalize(failure);
+			Assert.That(result.Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(result.Message, Is.EqualTo("Backend failed."));
+		}
+
+		[TestCase("{\"status\":{},\"success\":true}")]
+		[TestCase("{\"status\":[],\"success\":true}")]
+		[TestCase("{\"status\":\"SUCCESS\"}")]
+		[TestCase("{\"status\":\"SUCCESS\",\"success\":\"true\"}")]
+		[TestCase("{\"success\":true,\"data\":{\"status\":{},\"IsSuccessful\":true}}")]
+		public void ResultNormalizer_RejectsMalformedStatusAndMissingBooleanEvidence(string json)
+		{
+			Assert.That(AgentResultNormalizer.Normalize(JObject.Parse(json)).Outcome,
+				Is.EqualTo(E_AGENT_STEP_OUTCOME.AMBIGUOUS));
+		}
+
+		[Test]
+		public void ResultNormalizer_IgnoresNonStringDiagnostics()
+		{
+			AgentNormalizedResult result = AgentResultNormalizer.Normalize(new JObject
+			{
+				["status"] = "FAILED", ["success"] = false,
+				["message"] = new JArray(), ["errorCode"] = new JObject(),
+				["error"] = new JObject { ["code"] = "FAILED_DETAIL", ["message"] = "detail" }
+			});
+			Assert.That(result.Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.FAILED));
+			Assert.That(result.ErrorCode, Is.EqualTo("FAILED_DETAIL"));
+			Assert.That(result.Message, Is.EqualTo("detail"));
+		}
+
+		[Test]
 		public void ResultNormalizer_RecognizesKnownSuccessFailurePartialUnsupportedAndEnvelopeShapes()
 		{
 			Assert.That(AgentResultNormalizer.Normalize(new JObject { ["status"] = "SUCCESS", ["success"] = true }).Outcome, Is.EqualTo(E_AGENT_STEP_OUTCOME.SUCCEEDED));
