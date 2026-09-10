@@ -21,15 +21,29 @@ direct_editor_validation:
   unity6_builtin_fixture:
     status: passed
     evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_fixture:
+    status: passed
+    evidence:
+      - Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+      - Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+  unity6_hdrp_fixture:
+    status: reduced_verified
+    evidence: Tests/Compatibility/unity6-hdrp-minimal-smoke-evidence.yaml
   remaining_matrix_rows:
     status: blocked_by_environment
-    reason: "The 2022.3 Pipeline gate is a concrete incompatibility and Unity 6 URP/HDRP fixtures were not available."
+    reason: "The 2022.3 official Pipeline gate is a concrete incompatibility; no fallback was selected. Unity 6 HDRP has reduced adapter evidence but its full authored primary visual scenario remains unobserved."
 e2e:
   status: partial_verified
   required_flow: "UnityAgent -> UnityArtistCLI -> Unity/Pipeline -> Capture/Evidence -> review"
   unity6_builtin_fixture:
     status: passed
     evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_primary_visual:
+    status: passed
+    evidence: Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+  unity6_urp_cinematic:
+    status: passed
+    evidence: Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
   remaining_scenario:
     status: blocked_by_environment
-    scenario: "wet dusk courtyard with visual intent, exact diff, before/after capture, timeline and three-shot review across all formal rows"
+    scenario: "2022.3 official Pipeline acceptance and full Unity 6 HDRP authored primary visual parity"

@@ -16,6 +16,16 @@ Supported command registrations:
 
 The package never exposes generic GameObject CRUD, arbitrary C# evaluation, automatic Save, automatic full Bake, or silent fallback. `artist.apply` requires an opaque UnityAgent approval token and an expected revision, registers Undo, and leaves saving to a separate approved operation.
 
+For Unity 6 URP LookDev, an intent may set `setVolumeLookDev: true` together with `volumePostExposure` and `volumeContrast`. The adapter resolves the scene's Volume and profile through the Unity Editor API, creates or reuses URP `ColorAdjustments`, records Undo, returns an exact diff, and fails closed outside URP. It does not save implicitly; call the separately approved `save_all` operation after reviewing the evidence.
+
+Example intent:
+
+```json
+{"workflow":"lookdev","targetName":"ArtistCourtyardVolume","setVolumeLookDev":true,"volumePostExposure":-0.6,"volumeContrast":15}
+```
+
+The URP Volume operation is a bounded Artist capability, not a generic component/property editor. Built-in and HDRP use their own supported adapters and reject this URP-specific intent before mutation.
+
 Use the host CLI from the repository root:
 
 ```text

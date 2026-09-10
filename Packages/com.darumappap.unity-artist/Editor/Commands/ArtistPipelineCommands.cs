@@ -24,6 +24,9 @@ namespace DarumaPPAP.UnityArtist
 		public string targetName;
 		public bool setFog;
 		public float fogDensity;
+		public bool setVolumeLookDev;
+		public float volumePostExposure;
+		public float volumeContrast;
 		public bool setLightIntensity;
 		public float lightIntensity;
 		public bool setCameraFieldOfView;
@@ -140,6 +143,21 @@ namespace DarumaPPAP.UnityArtist
 			foreach (ReflectionProbe probe in SceneObjects<ReflectionProbe>())
 			{
 				result.targets.Add(Target("reflection_probe", probe, probe.enabled));
+			}
+			if (support.renderPipeline == "urp")
+			{
+				if (TryFindUrpVolume(out Component volume, out object profile, out string reason))
+				{
+					bool enabled = volume is Behaviour behaviour && behaviour.enabled;
+					result.targets.Add(Target("volume", volume, enabled));
+					result.evidence.Add("urp_volume_inspection");
+					if (FindVolumeComponent(profile, FindType("UnityEngine.Rendering.Universal.ColorAdjustments", "Unity.RenderPipelines.Universal.Runtime")) != null)
+						result.evidence.Add("urp_color_adjustments");
+				}
+				else
+				{
+					result.evidence.Add("urp_volume_missing:" + reason);
+				}
 			}
 			foreach (PlayableDirector director in SceneObjects<PlayableDirector>())
 			{
@@ -469,6 +487,15 @@ namespace DarumaPPAP.UnityArtist
 					MarkScenesDirty();
 					result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = "observed", after = RenderSettings.fogDensity.ToString("0.####") });
 				}
+			}
+			if (intent.setVolumeLookDev)
+			{
+				if (DetectPipeline() != "urp")
+				{
+					Error(result, "URP_VOLUME_REQUIRED", "Volume LookDev intent requires a Unity 6 URP project.");
+					return false;
+				}
+				if (!ApplyUrpVolumeLookDev(intent, result)) return false;
 			}
 			if (intent.setLightIntensity)
 			{
@@ -876,6 +903,43 @@ namespace DarumaPPAP.UnityArtist
 			{
 				result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = RenderSettings.fogDensity.ToString("0.####"), after = Mathf.Clamp(intent.fogDensity, 0.0f, 1.0f).ToString("0.####") });
 			}
+			if (intent.setVolumeLookDev)
+			{
+				if (DetectPipeline() != "urp")
+				{
+					Error(result, "URP_VOLUME_REQUIRED", "Volume LookDev intent requires a Unity 6 URP project.");
+					return false;
+				}
+				if (!TryFindUrpVolume(out Component volume, out object profile, out string reason))
+				{
+					Error(result, "URP_VOLUME_REQUIRED", reason);
+					return false;
+				}
+				Type adjustmentType = FindType("UnityEngine.Rendering.Universal.ColorAdjustments", "Unity.RenderPipelines.Universal.Runtime");
+				if (adjustmentType == null)
+				{
+					Error(result, "URP_VOLUME_API_UNAVAILABLE", "The active URP project does not expose ColorAdjustments.");
+					return false;
+				}
+				object adjustment = FindVolumeComponent(profile, adjustmentType);
+				object postExposure = adjustment == null ? null : GetMemberValue(adjustment, "postExposure");
+				object contrast = adjustment == null ? null : GetMemberValue(adjustment, "contrast");
+				result.exactDiff.Add(new ArtistChange
+				{
+					target = volume.gameObject.name,
+					property = "URP.ColorAdjustments.postExposure",
+					before = postExposure == null ? "absent" : ValueText(GetMemberValue(postExposure, "value")),
+					after = Mathf.Clamp(intent.volumePostExposure, -10.0f, 10.0f).ToString("0.####")
+				});
+				result.exactDiff.Add(new ArtistChange
+				{
+					target = volume.gameObject.name,
+					property = "URP.ColorAdjustments.contrast",
+					before = contrast == null ? "absent" : ValueText(GetMemberValue(contrast, "value")),
+					after = Mathf.Clamp(intent.volumeContrast, -100.0f, 100.0f).ToString("0.####")
+				});
+				result.evidence.Add("urp_volume_plan");
+			}
 			if (intent.setLightIntensity) result.exactDiff.Add(new ArtistChange { target = intent.targetName ?? string.Empty, property = "intensity", before = "observed", after = Mathf.Max(0.0f, intent.lightIntensity).ToString("0.####") });
 			if (intent.setCameraFieldOfView) result.exactDiff.Add(new ArtistChange { target = intent.targetName ?? string.Empty, property = "fieldOfView", before = "observed", after = Mathf.Clamp(intent.cameraFieldOfView, 1.0f, 179.0f).ToString("0.####") });
 			return true;
@@ -883,7 +947,115 @@ namespace DarumaPPAP.UnityArtist
 
 		private static bool HasChange(ArtistIntent intent)
 		{
-			return intent.setFog || intent.setLightIntensity || intent.setCameraFieldOfView;
+			return intent.setFog || intent.setVolumeLookDev || intent.setLightIntensity || intent.setCameraFieldOfView;
+		}
+
+		private static bool ApplyUrpVolumeLookDev(ArtistIntent intent, ArtistResult result)
+		{
+			if (!TryFindUrpVolume(out Component volume, out object profile, out string reason))
+			{
+				Error(result, "URP_VOLUME_REQUIRED", reason);
+				return false;
+			}
+			Type adjustmentType = FindType("UnityEngine.Rendering.Universal.ColorAdjustments", "Unity.RenderPipelines.Universal.Runtime");
+			if (adjustmentType == null)
+			{
+				Error(result, "URP_VOLUME_API_UNAVAILABLE", "The active URP project does not expose ColorAdjustments.");
+				return false;
+			}
+			object adjustment = FindVolumeComponent(profile, adjustmentType) ?? AddVolumeComponent(profile, adjustmentType);
+			if (adjustment == null)
+			{
+				Error(result, "URP_VOLUME_COMPONENT_UNAVAILABLE", "The URP VolumeProfile could not create ColorAdjustments.");
+				return false;
+			}
+			object postExposure = GetMemberValue(adjustment, "postExposure");
+			object contrast = GetMemberValue(adjustment, "contrast");
+			if (postExposure == null || contrast == null)
+			{
+				Error(result, "URP_VOLUME_PARAMETER_UNAVAILABLE", "ColorAdjustments does not expose postExposure and contrast.");
+				return false;
+			}
+			Undo.IncrementCurrentGroup();
+			if (volume != null) Undo.RecordObject(volume, "UnityArtistCLI URP Volume LookDev");
+			if (profile is UnityEngine.Object profileObject) Undo.RecordObject(profileObject, "UnityArtistCLI URP Volume LookDev");
+			if (adjustment is UnityEngine.Object adjustmentObject) Undo.RecordObject(adjustmentObject, "UnityArtistCLI URP Volume LookDev");
+			object beforeExposure = GetMemberValue(postExposure, "value");
+			object beforeContrast = GetMemberValue(contrast, "value");
+			float afterExposure = Mathf.Clamp(intent.volumePostExposure, -10.0f, 10.0f);
+			float afterContrast = Mathf.Clamp(intent.volumeContrast, -100.0f, 100.0f);
+			if (!SetMemberValue(postExposure, "overrideState", true) || !SetMemberValue(postExposure, "value", afterExposure)
+				|| !SetMemberValue(contrast, "overrideState", true) || !SetMemberValue(contrast, "value", afterContrast))
+			{
+				Error(result, "URP_VOLUME_PARAMETER_UNAVAILABLE", "The URP ColorAdjustments parameters could not be overridden.");
+				return false;
+			}
+			SetMemberValue(adjustment, "active", true);
+			if (profile is UnityEngine.Object dirtyProfile) EditorUtility.SetDirty(dirtyProfile);
+			if (adjustment is UnityEngine.Object dirtyAdjustment) EditorUtility.SetDirty(dirtyAdjustment);
+			if (volume != null) EditorUtility.SetDirty(volume);
+			MarkScenesDirty();
+			result.exactDiff.Add(new ArtistChange { target = volume.gameObject.name, property = "URP.ColorAdjustments.postExposure", before = ValueText(beforeExposure), after = ValueText(afterExposure) });
+			result.exactDiff.Add(new ArtistChange { target = volume.gameObject.name, property = "URP.ColorAdjustments.contrast", before = ValueText(beforeContrast), after = ValueText(afterContrast) });
+			result.evidence.Add("urp_native_volume");
+			result.evidence.Add("urp_color_adjustments");
+			return true;
+		}
+
+		private static bool TryFindUrpVolume(out Component volume, out object profile, out string reason)
+		{
+			volume = null;
+			profile = null;
+			reason = string.Empty;
+			Type volumeType = FindType("UnityEngine.Rendering.Volume", "Unity.RenderPipelines.Core.Runtime");
+			if (volumeType == null)
+			{
+				reason = "The active URP project does not expose the Unity Volume type.";
+				return false;
+			}
+			volume = SceneObjects(volumeType).OfType<Component>().OrderBy(value => value.gameObject.name).FirstOrDefault();
+			if (volume == null)
+			{
+				reason = "An existing scene Volume is required for a scoped URP LookDev intent.";
+				return false;
+			}
+			profile = GetMemberValue(volume, "sharedProfile");
+			if (profile == null) profile = GetMemberValue(volume, "profile");
+			if (profile == null)
+			{
+				reason = "The exact URP Volume has no profile; create and assign one before planning LookDev.";
+				return false;
+			}
+			return true;
+		}
+
+		private static object FindVolumeComponent(object profile, Type componentType)
+		{
+			if (profile == null || componentType == null) return null;
+			System.Collections.IEnumerable components = GetMemberValue(profile, "components") as System.Collections.IEnumerable;
+			if (components == null) return null;
+			foreach (object component in components)
+			{
+				if (component != null && componentType.IsInstanceOfType(component)) return component;
+			}
+			return null;
+		}
+
+		private static object AddVolumeComponent(object profile, Type componentType)
+		{
+			if (profile == null || componentType == null) return null;
+			MethodInfo addGeneric = profile.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+				.FirstOrDefault(method => method.Name == "Add" && method.IsGenericMethodDefinition && method.GetGenericArguments().Length == 1 && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(bool));
+			if (addGeneric != null)
+			{
+				try { return addGeneric.MakeGenericMethod(componentType).Invoke(profile, new object[] { true }); }
+				catch (Exception) { return null; }
+			}
+			MethodInfo addType = profile.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+				.FirstOrDefault(method => method.Name == "Add" && !method.IsGenericMethod && method.GetParameters().Length == 2 && method.GetParameters()[0].ParameterType == typeof(Type) && method.GetParameters()[1].ParameterType == typeof(bool));
+			if (addType == null) return null;
+			try { return addType.Invoke(profile, new object[] { componentType, true }); }
+			catch (Exception) { return null; }
 		}
 
 		private static bool ApplyHdrpFog(ArtistIntent intent, ArtistResult result)
@@ -1134,6 +1306,18 @@ namespace DarumaPPAP.UnityArtist
 			{
 				object parameter = GetMemberValue(fog, "meanFreePath");
 				material.Append("|hdrp:").Append(volume.gameObject.name).Append(':').Append(ValueText(GetMemberValue(parameter, "value")));
+			}
+			if (DetectPipeline() == "urp" && TryFindUrpVolume(out Component urpVolume, out object urpProfile, out string urpReason))
+			{
+				Type adjustmentType = FindType("UnityEngine.Rendering.Universal.ColorAdjustments", "Unity.RenderPipelines.Universal.Runtime");
+				object adjustment = FindVolumeComponent(urpProfile, adjustmentType);
+				material.Append("|urp-volume:").Append(urpVolume.gameObject.name);
+				if (adjustment != null)
+				{
+					material.Append(':').Append(ValueText(GetMemberValue(GetMemberValue(adjustment, "postExposure"), "value")));
+					material.Append(':').Append(ValueText(GetMemberValue(GetMemberValue(adjustment, "contrast"), "value")));
+				}
+				else material.Append(":absent");
 			}
 			using (SHA256 sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(material.ToString()))).Replace("-", string.Empty).ToLowerInvariant();
 		}
