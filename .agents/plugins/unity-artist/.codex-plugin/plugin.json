@@ -1,0 +1,18 @@
+{
+  "name": "unity-artist",
+  "version": "2.0.0",
+  "description": "Skill-only Codex plugin for UnityArtistCLI visual-art and cinematic workflows.",
+  "author": {
+    "name": "DarumaPPAP"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Unity Artist",
+    "shortDescription": "Plan and refine Unity visual-art workflows.",
+    "longDescription": "UnityArtistCLI routes LookDev, lighting, environment, camera, cinematic, capture, evaluation and refinement through the official Unity CLI and Unity Pipeline.",
+    "developerName": "DarumaPPAP",
+    "category": "Productivity",
+    "capabilities": ["unity visual art", "lookdev", "cinematic timeline"],
+    "defaultPrompt": "Use UnityArtistCLI for a safe, evidence-backed visual-art workflow."
+  }
+}

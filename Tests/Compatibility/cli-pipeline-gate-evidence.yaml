@@ -1,0 +1,41 @@
+schema_version: "2.0"
+product: UnityArtistCLI
+release_version: "2.0.0"
+case: unity-2022.3-builtin
+status: partial_verified
+official_first_candidate:
+  transport: official_unity_cli_pipeline
+  cli:
+    executable: "C:/Users/RengameDskPc0019/AppData/Local/Unity/bin/unity.exe"
+    version: "1.0.0-beta.8"
+    identify_editors_command: "unity editors --format json --non-interactive"
+    identify_editors_status: passed
+    identified_editor: "2022.3.22f1"
+  pipeline:
+    install_command: "unity pipeline install --project-path <2022.3 Built-in fixture> --format json --non-interactive"
+    status: failed
+    exit_code: 1
+    error_code: COMMAND_FAILED
+    failure_class: concrete_cli_pipeline_gate_failure
+    message: "The installed official Unity Pipeline package reports that Unity 6.0 or later is required for the 2022.3 fixture."
+  connected_command_discovery:
+    command: "unity list --project-path <2022.3 Built-in fixture> --format json --non-interactive"
+    status: blocked_by_environment
+    reason: "No reachable licensed Editor/Pipeline instance was available after the install gate failure."
+artist_plugin:
+  version_command: "unity artist version --format json --non-interactive"
+  version_status: passed
+  help_command: "unity artist help --format json --non-interactive"
+  help_status: passed
+  standalone_help_command: "unity-artist --help --format json --non-interactive"
+  standalone_help_status: passed
+  global_help_command: "unity artist --help --format json --non-interactive"
+  global_help_status: blocked_by_official_cli_global_parser
+  global_help_reason: "The installed Unity CLI beta returns its top-level help before dispatching the artist plugin command."
+fallback_evaluation:
+  candidate: unity-cli-loop
+  selected: false
+  status: rejected_for_artist_contract
+  reason: "The candidate's documented execute-dynamic-code surface would violate UnityArtistCLI's no-arbitrary-eval contract; no fallback was silently selected."
+decision: "Keep Official Unity CLI + Pipeline as the formal primary transport and persist the concrete failure. Re-evaluate a bounded non-MCP fallback only after a separately approved contract and fixture exist."
+terminal_state: blocked_by_environment

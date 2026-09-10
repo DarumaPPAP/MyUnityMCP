@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "com.darumappap.unity-artist": {
+      "version": "file:../../../Packages/com.darumappap.unity-artist",
+      "depth": 0
+    },
+    "com.unity.test-framework": {
+      "version": "1.3.9",
+      "depth": 0
+    }
+  }
+}

@@ -2,6 +2,27 @@
 
 このProjectは[Semantic Versioning](https://semver.org/)に従います。
 
+## [2.0.0] - 2026-09-10
+
+### Added
+
+- UnityArtistCLI `unity-artist` host CLI and official Unity CLI + Unity Pipeline transport
+- Artist-only visual art, LookDev, Lighting, Environment, Camera, Cinematic, Timeline, Capture, Evaluate, and Refine command surface
+- UnityAgent `unity_artist_cli` Provider integration through the existing Registry / Resolver / Dispatcher / Evidence chain
+- Formal release matrix for Unity 2022.3 Built-in and Unity 6 Built-in / URP / HDRP
+- Skill-only Codex plugins and UnityAgent marketplace entry
+
+### Changed
+
+- Generic Unity operations are delegated to the official Unity CLI; no second Player framework or MCP transport is added
+- MyUnityMCP v1.1.1 package and client templates are preserved under `Legacy/MyUnityMCP-1.1.1/`
+- Unity 2022.3 URP/HDRP and Unity 2023 are rejected before mutation
+
+### Verification
+
+- Host CLI build and structured command contract are covered by the cutover validators
+- Direct Editor / Unity Pipeline and visual E2E remain environment-gated until a licensed connected Editor is available
+
 ## [1.1.1] - 2026-09-05
 
 ### Fixed

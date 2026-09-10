@@ -1,97 +1,77 @@
-# MyUnityMCP
+# UnityArtistCLI
 
-MyUnityMCPは、Unity EditorをMCP Clientから安全に操作するためのEditor拡張Packageです。Project／Scene Inspection、構造化Planning、承認付きMutation／Save／Bake、Capture Evidence、Visual Evaluation／Refine、Profiler、Addressables Entry管理、UI、Animation、Audio、Cinematic、および複数Toolを統括するUnityAgentMCP Control PlaneとWorldCreatorを提供します。
+UnityArtistCLI は、Unity Editor の世界観・雰囲気・LookDev・Lighting・Environment・Camera・Cinematic・Timeline・Visual Evaluation/Refine を、公式 Unity CLI と Unity Pipeline 経由で実行する CLI-first 製品です。
 
-## v1.1.1 Production Surface
+製品名は `UnityArtistCLI`、実行ファイルは `unity-artist`、UX は `unity artist <command>`、UPM Package は `com.darumappap.unity-artist`、C# namespace は `DarumaPPAP.UnityArtist` です。
 
-v1.1.1は **77 Tool** のEditor Operational Surfaceです。
+## Current contract
 
-| Capability | Tools | Status |
-|---|---:|---|
-| Graphics | 32 | Editor Operational |
-| Agent | 10 | Editor Operational |
-| WorldCreator | 3 | Editor Operational |
-| Profiler | 8 | Editor Operational |
-| Addressables | 4 | Editor Operational / Optional Backend |
-| UI | 5 | Editor Operational |
-| Animation | 5 | Editor Operational |
-| Audio | 5 | Editor Operational |
-| Cinematic | 5 | Editor Operational |
-| **Total** | **77** | **Editor Operational** |
+```text
+UnityAgent (Architect / Commander / Loop Owner)
+  CapabilityRequest → Policy / Approval / Scope
+  → Provider Registry → Resolver → Dispatcher
+  → unity_artist_cli Provider Adapter
+  → UnityArtistCLI → official Unity CLI / Unity Pipeline
+  → ProviderResult → Evidence Normalizer → Persistence
+```
 
-Build Domain、Addressables Content Build、MovieCreator runtime、LiveCreator runtimeはv1.1.1 Surfaceに含めません。
+UnityAgent に別の Player Framework や Registry は追加しません。Player は Provider の概念上の呼称であり、実装上の canonical name は `unity_artist_cli` です。
 
-- Unity Editor専用
-- Unity `6000.0`以上
-- Toolはすべて`AutoRegister = false`
-- UnityAgentMCPはControl PlaneでありUnity APIを直接Mutationしません
-- WorldCreatorはRead-only PreflightとHuman Review Handoffを担当します
-- AddressablesはOptional Packageです。未導入時は自動導入せず`UNSUPPORTED`を返します
+## Commands
+
+```text
+unity artist help
+unity-artist --help
+unity artist version --format json
+unity artist doctor --project-path <project> --format json --non-interactive
+unity artist capabilities --project-path <project> --format json
+unity artist install --project-path <project> --format json --non-interactive
+unity artist inspect|plan|preview|apply|capture|evaluate|refine|cinematic|history ...
+```
+
+`unity artist help` is the plugin help command and `unity-artist --help` is the standalone executable form. The installed Unity CLI beta currently intercepts `unity artist --help` as its own global help flag before plugin dispatch; this is recorded as an external CLI compatibility limitation rather than being presented as a successful Artist help invocation.
+
+Operational commands require an explicit project path and support `human`, `json`, and `ndjson` output. Mutation follows `Inspect → Plan → Exact Diff → Expected Revision → UnityAgent Approval → Apply → Evidence`; Apply never saves automatically and registers Unity Undo.
+
+UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/build/play/stop/log operations, arbitrary evaluation, generic Addressables/UI/Audio control, or a second Control Plane. Those concerns stay with the official Unity CLI or the existing UnityAgent Provider chain.
+
+## Release matrix
+
+| Unity | Pipeline | Tier | Transport |
+|---|---|---|---|
+| 2022.3 LTS | Built-in | primary | official Unity CLI + Unity Pipeline |
+| Unity 6.x+ | Built-in | primary | official Unity CLI + Unity Pipeline |
+| Unity 6.x+ | URP | primary | official Unity CLI + Unity Pipeline |
+| Unity 6.x+ | HDRP | primary | official Unity CLI + Unity Pipeline |
+
+2022.3 URP/HDRP、Unity 2023、URP 14–16 は正式対応外です。2022.3 も最初に公式 CLI + Pipeline の実接続を検証し、具体的な Gate Failure がない限り別 Backend へ切り替えません。
 
 ## Verification
 
-v1.1.0 Unity `6000.7.0a2` Direct Editor Evidenceをbaselineとして保持し、v1.1.1 Release CandidateはUnity `6000.0.75f1` EditMode / Compile / NUnit / Production Tool DiscoveryをPASSしています。Unity `6000.4.12f1` / `6000.5.5f1` Compatibility MatrixもPASSしています。
-
-Current Unity 6000.7 automated canaryはGameCI image unavailableのため`not_verified`です。Addressables Positive Backend Matrix、External Transport Disconnect/Reconnect、Target Deviceも未検証範囲として明示します。
-
-## Safety Model
-
-```text
-Direct Domain:
-Inspect → Prepare → Exact Diff → Revision → Approval → Apply
-
-Agent Control Plane:
-Inspect Capabilities → Validate Workflow → Compile Graph → Preview
-                    → Explicit Approval → Delegate
-                    → Status / Cancel / History
-
-WorldCreator:
-Visual Goal → Read-only Preflight → Human Review Handoff
+```powershell
+dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj
+python Tests/Release/verify_unity_artist_contract.py
+python Tests/Compatibility/verify-unity-api-compatibility.py
 ```
 
-自動Save、自動Full Bake、Generic SerializedProperty Mutation、Silent Fallback、自動Visual Acceptanceは禁止です。
+実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。
 
-## Quick Start
+## Migration
 
-1. Unity Package ManagerからMCP for Unity Bridgeを導入します。
-2. MyUnityMCPをGit URL、`.tgz`、またはEmbedded Packageとして導入します。
-3. Unityで `Window > MCP for Unity` を開きます。
-4. MCP Client側では必要なToolだけを許可します。
-5. 最初の確認は`graphics.inspect_project`または`agent.inspect_capabilities`から開始します。
+旧 MyUnityMCP v1.1.1 の Package と Client Template は `Legacy/MyUnityMCP-1.1.1/` に履歴付きで保持します。v1.1.1 Tag は変更せず、新しい production surface に MCP transport や `McpForUnityTool` を再導入しません。詳細は [MIGRATION_FROM_MYUNITYMCP.md](MIGRATION_FROM_MYUNITYMCP.md) を参照してください。
 
-## Repository Layout
+## Layout
 
 ```text
-MyUnityMCP/
-├─ Packages/        # 実行可能なUPM Package
-├─ Catalog/         # Operational Capability / Production Surface Contract
-├─ Specs/           # 現行製品仕様
-├─ Tests/           # Release / Compatibility / Editor Evidence
-├─ Templates/       # MCP Client / CI / Acceptance Profile配布物
-├─ Design/          # 未実装Capabilityの設計資産
-└─ .github/         # Repository automation
+src/UnityArtist.Cli/                         # unity-artist host CLI
+Packages/com.darumappap.unity-artist/        # Unity Pipeline command package
+Legacy/MyUnityMCP-1.1.1/Package/              # legacy package source, not production
+Tests/Compatibility/                         # matrix and compatibility gates
+Tests/Release/                               # production contract validators
+.agents/plugins/unity-artist/                # skill-only Codex plugin
+Legacy/MyUnityMCP-1.1.1/                     # immutable migration reference
 ```
 
-Graph EngineeringのGoal / Workflow / Run Recordなどの開発制御資産は、この製品RepositoryのProduction `main`には含めません。
+The UnityAgent repository owns the shared marketplace authority and its `unity-agent` plugin. The UnityArtistCLI repository owns only the `unity-artist` plugin.
 
-## Documentation
-
-- [Installation](Packages/com.darumappap.my-unity-mcp/Documentation~/installation.md)
-- [Quick Start](Packages/com.darumappap.my-unity-mcp/Documentation~/quick-start.md)
-- [Tool Reference](Packages/com.darumappap.my-unity-mcp/Documentation~/tool-reference.md)
-- [Production Surface](Packages/com.darumappap.my-unity-mcp/Documentation~/production-surface.md)
-- [Safety Model](Packages/com.darumappap.my-unity-mcp/Documentation~/safety-model.md)
-- [Troubleshooting](Packages/com.darumappap.my-unity-mcp/Documentation~/troubleshooting.md)
-- [Known Issues](Packages/com.darumappap.my-unity-mcp/Documentation~/known-issues.md)
-
-## Distribution
-
-- Latest stable: `v1.1.1`
-- UPM Package: `Packages/com.darumappap.my-unity-mcp`
-- MCP Client Templates: `Templates/McpClients`
-
-公開済みTagはimmutableです。新しい製品内容は新Version / 新Tagで公開します。
-
-## License
-
-MIT License。詳細は[LICENSE](LICENSE)を参照してください。
+MIT License. See [LICENSE](LICENSE).

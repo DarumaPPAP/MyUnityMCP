@@ -1,0 +1,171 @@
+schema_version: "1.0"
+module: unity_graphics_mcp
+status_values:
+  - passed
+  - failed
+  - unavailable
+
+principles:
+  progressive_disclosure: true
+  explicit_activation_required: true
+  unavailable_is_not_passed: true
+  capture_is_not_visual_acceptance: true
+  compile_is_not_runtime_acceptance: true
+  no_silent_fallback: true
+
+capabilities:
+  inspect:
+    mode: read_only
+    use_when:
+      - project, scene, renderer, lighting, material, camera, or graphics state must be observed
+      - a baseline must be established before planning or mutation
+    requires:
+      - explicit_target_scope
+    must_not:
+      - mutate_project_state
+      - save_assets
+      - start_bake
+      - claim_unobserved_runtime_state
+    success_evidence:
+      - inspected_target_identity
+      - observed_state_snapshot
+      - unresolved_bindings_reported
+
+  plan:
+    mode: read_only
+    use_when:
+      - observed graphics state must be converted into an approval-ready change plan
+      - mutation scope, diff intent, rollback, or validation must be defined
+    requires:
+      - inspection_or_equivalent_confirmed_context
+      - bounded_goal
+    must_not:
+      - mutate_project_state
+      - auto_approve_plan
+      - invent_unresolved_project_bindings
+    success_evidence:
+      - proposed_changes
+      - expected_revision_or_baseline
+      - validation_plan
+      - rollback_contract
+
+  mutate:
+    mode: write
+    use_when:
+      - an approved plan must be applied to bounded Unity project state
+    requires:
+      - approved_plan
+      - expected_revision
+      - explicit_mutation_permission
+      - exact_diff
+      - undo_contract
+      - baseline_revalidation
+    must_not:
+      - automatic_save
+      - automatic_bake
+      - mutate_outside_approved_scope
+      - silent_fallback
+    success_evidence:
+      - applied_diff
+      - resulting_revision
+      - undo_record
+      - mutation_validation_result
+
+  save:
+    mode: write
+    use_when:
+      - an already approved and applied mutation must be persisted
+    requires:
+      - explicit_save_permission
+      - known_dirty_assets
+      - current_revision
+    must_not:
+      - save_unrelated_assets
+      - imply_bake_approval
+      - automatic_full_project_save
+    success_evidence:
+      - saved_asset_set
+      - resulting_revision
+      - remaining_dirty_assets
+
+  bake:
+    mode: write_long_running
+    use_when:
+      - an approved dependency set is dirty and requires a Unity bake operation
+    requires:
+      - explicit_bake_permission
+      - dirty_dependency_set
+      - bake_scope
+    must_not:
+      - unconditional_full_bake
+      - automatic_save_without_permission
+      - hide_cancelled_or_unavailable_result
+    success_evidence:
+      - bake_scope_executed
+      - bake_result_status
+      - changed_baked_assets_or_no_change_reason
+      - remaining_dirty_dependencies
+
+  capture:
+    mode: read_only_output
+    use_when:
+      - visual, scene, or diagnostic evidence must be captured after a known state change
+    requires:
+      - capture_target
+      - capture_conditions
+    must_not:
+      - claim_visual_acceptance
+      - mutate_scene_to_make_capture_pass
+      - replace_runtime_validation_with_screenshot
+    success_evidence:
+      - capture_artifact
+      - capture_conditions
+      - source_revision
+
+  evaluate:
+    mode: read_only
+    use_when:
+      - captured or measured evidence must be compared with explicit acceptance criteria
+    requires:
+      - evidence_set
+      - acceptance_criteria
+    must_not:
+      - infer_missing_evidence
+      - convert_capture_success_into_visual_acceptance
+      - claim_target_device_success_from_editor_only_evidence
+    success_evidence:
+      - evaluation_findings
+      - passed_failed_unavailable_status
+      - missing_evidence
+
+  review_and_refine:
+    mode: gated_write
+    use_when:
+      - evaluated evidence identifies a bounded refinement and a human or client has approved another mutation cycle
+    requires:
+      - evaluation_findings
+      - explicit_refine_permission
+      - bounded_refinement_scope
+    must_not:
+      - silently_expand_scope
+      - self_approve_visual_acceptance
+      - loop_without_new_evidence
+    success_evidence:
+      - refinement_decision
+      - changed_scope_if_any
+      - new_validation_requirements
+
+  execution:
+    mode: observation
+    use_when:
+      - a long-running MCP operation needs status, cancellation, or terminal result tracking
+    requires:
+      - execution_id
+    must_not:
+      - reinterpret_unavailable_as_success
+      - fabricate_progress
+      - start_new_mutation_without_permission
+    success_evidence:
+      - execution_status
+      - terminal_result_or_current_progress
+      - error_or_unavailable_reason_when_applicable

@@ -1,17 +1,5 @@
-# Compatibility Evidence
+# UnityArtistCLI Compatibility Evidence
 
-## Current v1.1.0 Sources of Truth
+`support-matrix.yaml` is the authoritative four-row release matrix. `production-editor-acceptance.yaml` records Direct Editor evidence; `production-validation-evidence.yaml` records host/static and E2E evidence; `release-verification.yaml` records the release audit; `cli-pipeline-gate-evidence.yaml` records the concrete 2022.3 first-candidate gate result.
 
-- `production-editor-acceptance.yaml`: Unity `6000.7.0a2` Direct EditorでのExact 77 Tool Acceptance Evidence
-- `production-validation-evidence.yaml`: 現行77 ToolのValidation結果と残存`not_verified`範囲
-- `editor-first-verification-policy.yaml`: Direct Unity Editor Primary / CI SupplementalのVerification Authority
-- `support-matrix.yaml`: 現行77 Tool Support Contract
-- `release-verification.yaml`: v1.1.0 Stable Release Evidence
-
-現在のOperational / Release状態は、上記Current EvidenceとManifest / Catalogを正本として判定します。
-
-## Historical State
-
-過去Releaseや過去Tool SurfaceのEvidenceは、current `main` に重複保存せず、Git historyと公開済みimmutable release tagsで参照します。過去RecordのRun ID、Artifact ID、当時のTool Countを現在状態の判定根拠には使用しません。
-
-GitHub Actions runnerがStep実行前に停止した場合は`not_verified`です。Direct Unity Editor PASSはPrimary Evidenceですが、Target Device PASSや未実行CI PASSとしては扱いません。
+The official Unity CLI + Unity Pipeline is the first candidate for Unity 2022.3 Built-in as well as Unity 6 Built-in/URP/HDRP. The current host has Unity 2022.3.22f1 and Unity CLI 1.0.0-beta.8 installed. The 2022.3 Pipeline install command returned the concrete failure that the installed Pipeline package requires Unity 6.0 or later, and no connected licensed Editor/Pipeline instance was available for the remaining checks. Direct Editor and visual E2E are therefore explicitly `blocked_by_environment` rather than promoted to PASS.
