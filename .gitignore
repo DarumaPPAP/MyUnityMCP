@@ -115,3 +115,9 @@ InitTestScene*.unity*
 /TestProjects/UnityArtistVerification/Library/
 /TestProjects/UnityArtistVerification/Temp/
 /TestProjects/UnityArtistVerification/UserSettings/
+/TestProjects/UnityArtistVerification/Assets/MinimalSmoke.unity*
+/TestProjects/UnityArtistVerification/ProjectSettings/*
+!/TestProjects/UnityArtistVerification/ProjectSettings/ProjectVersion.txt
+# Temporary full-pipeline fixtures are kept out of the minimal smoke commit.
+/TestProjects/UnityArtistVerification-URP/
+/TestProjects/UnityArtistVerification-HDRP/

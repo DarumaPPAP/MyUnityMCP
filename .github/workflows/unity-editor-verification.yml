@@ -32,3 +32,5 @@ jobs:
         run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
       - name: Validate semantic naming
         run: python3 Tests/Compatibility/verify-semantic-names.py
+      - name: Validate minimal smoke runner contract
+        run: python3 -m unittest Tests/Minimal/test_minimal_smoke_contract.py

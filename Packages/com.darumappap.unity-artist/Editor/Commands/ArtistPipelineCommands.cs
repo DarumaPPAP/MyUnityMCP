@@ -285,7 +285,11 @@ namespace DarumaPPAP.UnityArtist
 			Texture2D texture = null;
 			try
 			{
-				capture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+				// Match the Official Unity Pipeline screenshot primitive. In SRP projects,
+				// the default RenderTexture descriptor is pipeline-compatible; explicitly
+				// forcing ARGB32/sRGB (or relying on a pooled descriptor) can produce a
+				// valid but all-black frame after a fog/post-processing mutation.
+				capture = new RenderTexture(width, height, 24);
 				capture.Create();
 				camera.targetTexture = capture;
 				camera.Render();
@@ -306,7 +310,11 @@ namespace DarumaPPAP.UnityArtist
 				camera.targetTexture = previousTarget;
 				RenderTexture.active = previousActive;
 				if (texture != null) UnityEngine.Object.DestroyImmediate(texture);
-				if (capture != null) UnityEngine.Object.DestroyImmediate(capture);
+				if (capture != null)
+				{
+					capture.Release();
+					UnityEngine.Object.DestroyImmediate(capture);
+				}
 			}
 		}
 

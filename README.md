@@ -52,9 +52,12 @@ UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/b
 dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj
 python Tests/Release/verify_unity_artist_contract.py
 python Tests/Compatibility/verify-unity-api-compatibility.py
+python -m unittest Tests/Minimal/test_minimal_smoke_contract.py
 ```
 
 実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。
+
+接続済みのUnity 6 Editorに対する最小ライブ検証は、`python scripts/run_minimal_live_smoke.py` で実行できます。これは一つのCubeとMain Cameraだけを使い、Artistの計画・承認・適用・PNG capture・評価・Refine・履歴を短時間で検証します。結果は `Tests/Compatibility/unity6-builtin-minimal-smoke-evidence.yaml` に記録します。
 
 ## Migration
 
