@@ -24,11 +24,18 @@ The marker factory is owned by `TrackAsset`, not `TimelineAsset`; using the
 public API on the marker track keeps the implementation compatible with the
 installed Timeline package without hard-linking optional Cinemachine types.
 
+The Cinemachine binding contract is also explicit: a `CinemachineTrack` is
+bound to the scene camera's `CinemachineBrain`, while each
+`CinemachineShot` clip stores its own virtual-camera reference. The bounded
+command therefore requires `bindingTargetName` for shot creation and rejects a
+binding target that lacks the required component.
+
 ## Evidence boundary
 
 The Unity 6 URP fixture was driven through the official Unity CLI/Pipeline:
-three Cinemachine tracks were inspected, three shot-camera bindings were
-planned/previewed/approval-gated/applied, a Timeline marker was applied, and
-the saved fixture was verified with `get_timeline`. This is product capability
-evidence; cinematic visual-quality review remains a separate human-review
-gate.
+three timed Cinemachine shot clips were created and inspected, three
+CinemachineBrain bindings were planned/previewed/approval-gated/applied, each
+clip's virtual-camera reference was verified, a Timeline marker was applied,
+and the saved fixture was verified with `get_timeline`. This is product
+capability evidence; cinematic visual-quality review remains a separate
+human-review gate.

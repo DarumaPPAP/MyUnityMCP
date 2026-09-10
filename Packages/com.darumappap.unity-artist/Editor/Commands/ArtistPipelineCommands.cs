@@ -41,6 +41,8 @@ namespace DarumaPPAP.UnityArtist
 		public string trackName;
 		public string bindingTargetName;
 		public float markerTime;
+		public float clipStart;
+		public float clipDuration;
 	}
 
 	[Serializable]
@@ -511,6 +513,11 @@ namespace DarumaPPAP.UnityArtist
 				Error(result, "INVALID_CINEMATIC_REQUEST", "An exact trackName is required for cinematic mutation.");
 				return false;
 			}
+			if ((kind == "cinemachine_shot" || kind == "shot") && string.IsNullOrWhiteSpace(request.bindingTargetName))
+			{
+				Error(result, "BINDING_TARGET_REQUIRED", "A Cinemachine shot requires an exact bindingTargetName for its virtual camera.");
+				return false;
+			}
 			return true;
 		}
 
@@ -539,8 +546,21 @@ namespace DarumaPPAP.UnityArtist
 					Error(result, "CINEMATIC_TARGET_NOT_FOUND", "The exact Timeline binding or target GameObject was not found.");
 					return false;
 				}
-				director.SetGenericBinding(bindingKey, target);
-				result.exactDiff.Add(new ArtistChange { target = request.trackName, property = "genericBinding", before = "observed", after = target.name });
+				UnityEngine.Object binding = target;
+				if (bindingKey.GetType().Name.IndexOf("CinemachineTrack", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					Type brainType = FindType("Unity.Cinemachine.CinemachineBrain", "Unity.Cinemachine")
+						?? FindType("Cinemachine.CinemachineBrain", "Cinemachine");
+					Component brain = brainType == null ? null : target.GetComponent(brainType);
+					if (brain == null)
+					{
+						Error(result, "CINEMATIC_TARGET_NOT_FOUND", "A CinemachineTrack requires a CinemachineBrain component on the binding target.");
+						return false;
+					}
+					binding = brain;
+				}
+				director.SetGenericBinding(bindingKey, binding);
+				result.exactDiff.Add(new ArtistChange { target = request.trackName, property = "genericBinding", before = "observed", after = binding.name });
 				result.evidence.Add("camera_binding");
 				return true;
 			}
@@ -573,6 +593,8 @@ namespace DarumaPPAP.UnityArtist
 				Error(result, "CAPABILITY_UNAVAILABLE", "The requested allowlisted Timeline or Cinemachine type is not installed in this Project.");
 				return false;
 			}
+			if (kind == "cinemachine_shot" || kind == "shot")
+				return TryCreateCinemachineShot(director, request, artifactType, result);
 			if (kind == "marker")
 			{
 				MethodInfo createMarkerTrack = director.playableAsset.GetType().GetMethod("CreateMarkerTrack", BindingFlags.Instance | BindingFlags.Public);
@@ -635,6 +657,138 @@ namespace DarumaPPAP.UnityArtist
 			}
 		}
 
+		private static bool TryCreateCinemachineShot(PlayableDirector director, CinematicRequest request, Type trackType, ArtistResult result)
+		{
+			Type shotType = FindType("Unity.Cinemachine.CinemachineShot", "Unity.Cinemachine")
+				?? FindType("Cinemachine.CinemachineShot", "Cinemachine");
+			if (shotType == null)
+			{
+				Error(result, "CAPABILITY_UNAVAILABLE", "The installed Cinemachine package does not expose a Timeline shot asset.");
+				return false;
+			}
+
+			object track = FindTimelineTrack(director.playableAsset, request.trackName, trackType);
+			if (track == null)
+			{
+				MethodInfo createTrack = director.playableAsset.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+					.FirstOrDefault(method => method.Name == "CreateTrack" && method.GetParameters().Length == 3 && method.GetParameters()[0].ParameterType == typeof(Type));
+				if (createTrack == null)
+				{
+					Error(result, "CAPABILITY_UNAVAILABLE", "The installed Timeline API does not expose bounded track creation.");
+					return false;
+				}
+				track = createTrack.Invoke(director.playableAsset, new object[] { trackType, null, request.trackName });
+			}
+			if (track == null)
+			{
+				Error(result, "CINEMATIC_CREATE_FAILED", "The Timeline API did not create the requested Cinemachine track.");
+				return false;
+			}
+
+			GameObject cameraObject = FindGameObject(request.bindingTargetName);
+			Type virtualCameraType = FindType("Unity.Cinemachine.CinemachineVirtualCameraBase", "Unity.Cinemachine")
+				?? FindType("Cinemachine.CinemachineVirtualCameraBase", "Cinemachine");
+			Component virtualCamera = virtualCameraType == null || cameraObject == null ? null : cameraObject.GetComponent(virtualCameraType);
+			if (virtualCamera == null)
+			{
+				Error(result, "CINEMATIC_TARGET_NOT_FOUND", "A Cinemachine shot requires a target GameObject with a Cinemachine camera component.");
+				return false;
+			}
+
+			object clip = FindTimelineClip(track, shotType, request.trackName);
+			bool clipWasAbsent = clip == null;
+			if (clip == null)
+			{
+				MethodInfo createClip = track.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+					.FirstOrDefault(method => method.Name == "CreateClip" && method.IsGenericMethodDefinition && method.GetGenericArguments().Length == 1 && method.GetParameters().Length == 0);
+				if (createClip == null)
+				{
+					Error(result, "CAPABILITY_UNAVAILABLE", "The installed Timeline API does not expose generic clip creation.");
+					return false;
+				}
+				try
+				{
+					clip = createClip.MakeGenericMethod(shotType).Invoke(track, null);
+				}
+				catch (Exception exception)
+				{
+					Error(result, "CINEMATIC_CREATE_FAILED", exception.InnerException == null ? exception.Message : exception.InnerException.Message);
+					return false;
+				}
+			}
+			if (clip == null)
+			{
+				Error(result, "CINEMATIC_CREATE_FAILED", "The Timeline API did not create the requested Cinemachine shot clip.");
+				return false;
+			}
+
+			float start = Mathf.Max(0.0f, request.clipStart);
+			float duration = request.clipDuration > 0.0f ? request.clipDuration : 0.5f;
+			SetMemberValue(clip, "start", (double)start);
+			SetMemberValue(clip, "duration", (double)duration);
+			object clipAsset = GetMemberValue(clip, "asset");
+			if (clipAsset != null)
+			{
+				SetMemberValue(clipAsset, "DisplayName", request.trackName);
+				FieldInfo virtualCameraField = clipAsset.GetType().GetField("VirtualCamera", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				if (virtualCameraField != null)
+				{
+					object exposedReference = virtualCameraField.GetValue(clipAsset);
+					if (!SetMemberValue(exposedReference, "defaultValue", virtualCamera))
+					{
+						Error(result, "CINEMATIC_CREATE_FAILED", "The Cinemachine shot asset does not expose a writable virtual-camera reference.");
+						return false;
+					}
+					virtualCameraField.SetValue(clipAsset, exposedReference);
+				}
+				else
+				{
+					Error(result, "CINEMATIC_CREATE_FAILED", "The installed Cinemachine shot asset does not expose VirtualCamera.");
+					return false;
+				}
+				if (clipAsset is UnityEngine.Object clipObject) EditorUtility.SetDirty(clipObject);
+			}
+			result.exactDiff.Add(new ArtistChange
+			{
+				target = request.trackName,
+				property = "cinemachineClip",
+				before = clipWasAbsent ? "absent" : "observed",
+				after = request.bindingTargetName + "@" + start.ToString("0.###") + "+" + duration.ToString("0.###")
+			});
+			result.evidence.Add("timeline_evidence");
+			result.evidence.Add("cinemachine_shot");
+			result.evidence.Add("cinemachine_clip");
+			result.evidence.Add("camera_reference:" + request.trackName + "->" + virtualCamera.name);
+			return true;
+		}
+
+		private static object FindTimelineTrack(UnityEngine.Object asset, string name, Type trackType)
+		{
+			if (asset == null || string.IsNullOrWhiteSpace(name)) return null;
+			MethodInfo getRootTracks = asset.GetType().GetMethod("GetRootTracks", BindingFlags.Instance | BindingFlags.Public);
+			if (getRootTracks == null) return null;
+			if (!(getRootTracks.Invoke(asset, null) is System.Collections.IEnumerable tracks)) return null;
+			foreach (object track in tracks)
+			{
+				if (track == null || !string.Equals(Convert.ToString(GetMemberValue(track, "name")), name, StringComparison.Ordinal)) continue;
+				if (trackType == null || trackType.IsAssignableFrom(track.GetType())) return track;
+			}
+			return null;
+		}
+
+		private static object FindTimelineClip(object track, Type clipType, string displayName)
+		{
+			if (track == null) return null;
+			MethodInfo getClips = track.GetType().GetMethod("GetClips", BindingFlags.Instance | BindingFlags.Public);
+			if (getClips == null || !(getClips.Invoke(track, null) is System.Collections.IEnumerable clips)) return null;
+			foreach (object clip in clips)
+			{
+				object asset = GetMemberValue(clip, "asset");
+				if (asset != null && (clipType == null || clipType.IsInstanceOfType(asset)) && string.Equals(Convert.ToString(GetMemberValue(clip, "displayName")), displayName, StringComparison.Ordinal)) return clip;
+			}
+			return null;
+		}
+
 		private static Type ResolveCinematicArtifactType(string kind, string typeName)
 		{
 			if (string.IsNullOrEmpty(typeName)) return null;
@@ -665,11 +819,33 @@ namespace DarumaPPAP.UnityArtist
 				UnityEngine.Object binding = director.GetGenericBinding(key);
 				if (binding != null) result.evidence.Add("binding:" + key.name + "->" + binding.name);
 				string lower = typeName.ToLowerInvariant();
-				if (lower.Contains("cinemachine")) result.evidence.Add("cinemachine_shot");
+				if (lower.Contains("cinemachine"))
+				{
+					result.evidence.Add("cinemachine_shot");
+					InspectCinemachineClips(key, result);
+				}
 				if (lower.Contains("activation")) result.evidence.Add("activation_track");
 				if (lower.Contains("signal")) result.evidence.Add("signal_marker");
 				if (lower.Contains("control")) result.evidence.Add("control_track");
 				if (lower.Contains("animation")) result.evidence.Add("animation_track");
+			}
+		}
+
+		private static void InspectCinemachineClips(UnityEngine.Object track, ArtistResult result)
+		{
+			if (track == null) return;
+			MethodInfo getClips = track.GetType().GetMethod("GetClips", BindingFlags.Instance | BindingFlags.Public);
+			if (getClips == null || !(getClips.Invoke(track, null) is System.Collections.IEnumerable clips)) return;
+			foreach (object clip in clips)
+			{
+				object asset = GetMemberValue(clip, "asset");
+				if (asset == null) continue;
+				object start = GetMemberValue(clip, "start");
+				object duration = GetMemberValue(clip, "duration");
+				result.evidence.Add("cinemachine_clip:" + track.name + "@" + TimelineTimeText(start) + "+" + TimelineTimeText(duration));
+				object exposedReference = GetMemberValue(asset, "VirtualCamera");
+				UnityEngine.Object virtualCamera = GetMemberValue(exposedReference, "defaultValue") as UnityEngine.Object;
+				if (virtualCamera != null) result.evidence.Add("camera_reference:" + track.name + "->" + virtualCamera.name);
 			}
 		}
 
@@ -848,6 +1024,13 @@ namespace DarumaPPAP.UnityArtist
 		{
 			if (value is float floatValue) return floatValue.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
 			return value == null ? string.Empty : Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+		}
+
+		private static string TimelineTimeText(object value)
+		{
+			if (value == null) return string.Empty;
+			try { return Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture); }
+			catch (Exception) { return ValueText(value); }
 		}
 
 		private static ArtistResult Base(string command, ArtistSupport support)
