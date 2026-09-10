@@ -523,6 +523,7 @@ namespace DarumaPPAP.UnityArtist
 				return false;
 			}
 			Undo.RecordObject(director, "UnityArtistCLI Cinematic Binding");
+			if (director.playableAsset != null) Undo.RecordObject(director.playableAsset, "UnityArtistCLI Timeline Artifact");
 			string kind = (request.trackKind ?? string.Empty).Trim().ToLowerInvariant();
 			if (kind == "binding")
 			{
@@ -566,11 +567,42 @@ namespace DarumaPPAP.UnityArtist
 				"cinemachine_shot" or "shot" => "Unity.Cinemachine.CinemachineTrack, Unity.Cinemachine.Runtime",
 				_ => string.Empty
 			};
-			Type artifactType = string.IsNullOrEmpty(typeName) ? null : Type.GetType(typeName, false);
+			Type artifactType = ResolveCinematicArtifactType(kind, typeName);
 			if (artifactType == null)
 			{
 				Error(result, "CAPABILITY_UNAVAILABLE", "The requested allowlisted Timeline or Cinemachine type is not installed in this Project.");
 				return false;
+			}
+			if (kind == "marker")
+			{
+				MethodInfo createMarkerTrack = director.playableAsset.GetType().GetMethod("CreateMarkerTrack", BindingFlags.Instance | BindingFlags.Public);
+				PropertyInfo markerTrackProperty = director.playableAsset.GetType().GetProperty("markerTrack", BindingFlags.Instance | BindingFlags.Public);
+				if (createMarkerTrack == null || markerTrackProperty == null)
+				{
+					Error(result, "CAPABILITY_UNAVAILABLE", "The installed Timeline API does not expose marker-track creation.");
+					return false;
+				}
+				try
+				{
+					createMarkerTrack.Invoke(director.playableAsset, null);
+					object markerTrack = markerTrackProperty.GetValue(director.playableAsset, null);
+					MethodInfo createMarker = markerTrack == null ? null : markerTrack.GetType().GetMethod("CreateMarker", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(Type), typeof(double) }, null);
+					object created = createMarker == null ? null : createMarker.Invoke(markerTrack, new object[] { artifactType, (double)request.markerTime });
+					if (created == null)
+					{
+						Error(result, "CINEMATIC_CREATE_FAILED", "The Timeline API did not create the requested marker.");
+						return false;
+					}
+					result.exactDiff.Add(new ArtistChange { target = director.name, property = kind, before = "absent", after = request.markerTime.ToString("0.###") });
+					result.evidence.Add("timeline_evidence");
+					result.evidence.Add("timeline_marker");
+					return true;
+				}
+				catch (Exception exception)
+				{
+					Error(result, "CINEMATIC_CREATE_FAILED", exception.InnerException == null ? exception.Message : exception.InnerException.Message);
+					return false;
+				}
 			}
 			int expectedParameterCount = kind == "marker" ? 2 : 3;
 			MethodInfo create = director.playableAsset.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
@@ -601,6 +633,22 @@ namespace DarumaPPAP.UnityArtist
 				Error(result, "CINEMATIC_CREATE_FAILED", exception.InnerException == null ? exception.Message : exception.InnerException.Message);
 				return false;
 			}
+		}
+
+		private static Type ResolveCinematicArtifactType(string kind, string typeName)
+		{
+			if (string.IsNullOrEmpty(typeName)) return null;
+			Type artifactType = Type.GetType(typeName, false);
+			if (artifactType != null) return artifactType;
+			if (kind == "cinemachine_shot" || kind == "shot")
+			{
+				// Cinemachine 3/6 moved the runtime assembly to Unity.Cinemachine;
+				// retain the legacy assembly candidate for older supported projects.
+				return FindType("Unity.Cinemachine.CinemachineTrack", "Unity.Cinemachine")
+					?? FindType("Cinemachine.CinemachineTrack", "Cinemachine")
+					?? FindType("Unity.Cinemachine.CinemachineTrack", "Unity.Cinemachine.Runtime");
+			}
+			return null;
 		}
 
 		private static void InspectCinematicDirector(PlayableDirector director, ArtistResult result)

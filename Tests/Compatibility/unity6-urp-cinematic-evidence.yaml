@@ -1,0 +1,99 @@
+schema_version: "2.0"
+product: UnityArtistCLI
+release_version: "2.0.0"
+case: unity-6-urp-cinematic-timeline
+status: passed
+fixture: TestProjects/UnityArtistVerification-URP
+scene: Assets/Scenes/ArtistVerification.unity
+timeline_asset: Assets/Cinematic/ThreeShot.playable
+editor:
+  version: "6000.6.0f1"
+  transport: official_unity_cli_pipeline
+  pipeline_server:
+    host: 127.0.0.1
+    port: 7800
+    status: reachable
+  safe_mode: false
+support:
+  tier: primary
+  render_pipeline: urp
+  compatibility_backend: urp_native_api
+timeline:
+  frame_rate: 24
+  duration_seconds: 1.5
+  director: ArtistCinematicDirector
+  tracks:
+    - name: CinemachineShot01
+      type: Cinemachine
+      binding: ShotCamera01
+    - name: CinemachineShot02
+      type: Cinemachine
+      binding: ShotCamera02
+    - name: CinemachineShot03
+      type: Cinemachine
+      binding: ShotCamera03
+  marker_track: Markers
+  marker_apply:
+    plan_id: artist-cinematic-plan-904949ced6d34147875e2997f57be74f
+    marker_time_seconds: 1.5
+    status: passed
+    evidence:
+      - timeline_evidence
+      - timeline_marker
+      - mutation_evidence
+      - undo_registration
+      - save_not_performed
+operations:
+  inspect:
+    status: passed
+    evidence:
+      - playable_asset:ThreeShot
+      - timeline_evidence
+      - binding:CinemachineShot01->ShotCamera01
+      - binding:CinemachineShot02->ShotCamera02
+      - binding:CinemachineShot03->ShotCamera03
+  shot_bindings:
+    - track: CinemachineShot01
+      target: ShotCamera01
+      plan_id: artist-cinematic-plan-43e8455dda034a279b9a11cafbc4dc2c
+      preview: passed
+      approval_guard: passed
+      apply: passed
+      evidence:
+        - camera_binding
+        - mutation_evidence
+        - undo_registration
+        - save_not_performed
+    - track: CinemachineShot02
+      target: ShotCamera02
+      plan_id: artist-cinematic-plan-2c6da102e10f4c60a870471e33d05d59
+      preview: passed
+      approval_guard: passed
+      apply: passed
+      evidence:
+        - camera_binding
+        - mutation_evidence
+        - undo_registration
+        - save_not_performed
+    - track: CinemachineShot03
+      target: ShotCamera03
+      plan_id: artist-cinematic-plan-f149c510bfa94ffc8c7a56f1eec15528
+      preview: passed
+      approval_guard: passed
+      apply: passed
+      evidence:
+        - camera_binding
+        - mutation_evidence
+        - undo_registration
+        - save_not_performed
+persistence:
+  fixture_save_command: save_all
+  status: passed
+  saved_scene: Assets/Scenes/ArtistVerification.unity
+  note: Product applies remain unsaved; this save is fixture preparation via the official Pipeline command.
+static_contract:
+  test: Tests/Compatibility/verify-cinematic-evidence.py
+  status: passed
+notes:
+  - Cinemachine 6.6 native types were resolved from the Unity.Cinemachine assembly.
+  - This proves the bounded Cinematic/Timeline capability and binding evidence; final visual-quality review remains human_review.
