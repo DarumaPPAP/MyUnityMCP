@@ -16,6 +16,12 @@ editor_verification:
   fallback_selected: false
   unity6_builtin_fixture: passed
   unity6_builtin_evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_fixture: passed
+  unity6_urp_primary_evidence: Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+  unity6_urp_cinematic_evidence: Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+  unity6_hdrp_fixture: passed
+  unity6_hdrp_primary_evidence: Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
+  unity6_hdrp_cinematic_evidence: Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
   connected_pipeline: partial_verified
   compile: passed_for_unity6_builtin
   safety_lifecycle: passed_for_unity6_builtin

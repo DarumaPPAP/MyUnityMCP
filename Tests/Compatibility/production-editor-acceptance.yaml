@@ -7,7 +7,7 @@ matrix:
   - { unity_version: "2022.3 LTS", render_pipeline: builtin, status: blocked_by_environment }
   - { unity_version: "Unity 6.x+", render_pipeline: builtin, status: passed, evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml }
   - { unity_version: "Unity 6.x+", render_pipeline: urp, status: passed, evidence: [Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml, Tests/Compatibility/unity6-urp-cinematic-evidence.yaml] }
-  - { unity_version: "Unity 6.x+", render_pipeline: hdrp, status: blocked_by_environment }
+  - { unity_version: "Unity 6.x+", render_pipeline: hdrp, status: passed, evidence: [Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml, Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml] }
 official_cli_first_2022_3:
   status: failed_concrete_gate
   observed_installed_editor: "2022.3.22f1"
@@ -21,9 +21,16 @@ direct_unity6_urp_fixture:
   evidence:
     - Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
     - Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+direct_unity6_hdrp_fixture:
+  status: passed
+  evidence:
+    - Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
+    - Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
 required_evidence:
   compile_error_count: passed_for_unity6_builtin
   pipeline_command_discovery: passed_for_unity6_builtin
   exact_diff_apply_undo: passed_for_unity6_builtin
   capture_evaluate_refine: passed_for_unity6_builtin
   timeline_binding_e2e: passed_for_unity6_urp
+  hdrp_primary_visual: passed_for_unity6_hdrp
+  hdrp_cinematic: passed_for_unity6_hdrp

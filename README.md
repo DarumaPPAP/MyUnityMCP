@@ -53,9 +53,13 @@ dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj
 python Tests/Release/verify_unity_artist_contract.py
 python Tests/Compatibility/verify-unity-api-compatibility.py
 python -m unittest Tests/Minimal/test_minimal_smoke_contract.py
+python Tests/Compatibility/verify-primary-urp-evidence.py
+python Tests/Compatibility/verify-cinematic-evidence.py
+python Tests/Compatibility/verify-hdrp-primary-evidence.py
+python Tests/Compatibility/verify-hdrp-cinematic-evidence.py
 ```
 
-実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。
+実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。現在の Unity 6 Built-in/URP/HDRP の live evidence は個別の compatibility contract で検証し、Unity 2022.3 は全ての列挙済み Official Pipeline 版を試した gate evidence を保持します。
 
 接続済みのUnity 6 Editorに対する最小ライブ検証は、`python scripts/run_minimal_live_smoke.py` で実行できます。これは一つのCubeとMain Cameraだけを使い、Artistの計画・承認・適用・PNG capture・評価・Refine・履歴を短時間で検証します。結果は `Tests/Compatibility/unity6-builtin-minimal-smoke-evidence.yaml` に記録します。
 

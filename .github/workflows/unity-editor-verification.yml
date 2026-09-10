@@ -34,3 +34,10 @@ jobs:
         run: python3 Tests/Compatibility/verify-semantic-names.py
       - name: Validate minimal smoke runner contract
         run: python3 -m unittest Tests/Minimal/test_minimal_smoke_contract.py
+      - name: Validate checked-in URP and HDRP evidence contracts
+        run: |
+          python3 Tests/Compatibility/verify-primary-urp-evidence.py
+          python3 Tests/Compatibility/verify-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-primary-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-cli-pipeline-gate-evidence.py

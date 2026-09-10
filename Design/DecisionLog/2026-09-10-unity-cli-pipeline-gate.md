@@ -5,11 +5,13 @@ Goal: `unity_artist_cli_cutover_v2`
 Decision: keep Official Unity CLI + Unity Pipeline as the formal primary transport.
 
 The installed Unity CLI was `1.0.0-beta.8` and could enumerate the installed
-2022.3.22f1 Editor. Running `unity pipeline install` against the disposable
-2022.3 Built-in fixture returned exit code 1 with `COMMAND_FAILED`; the official
-Pipeline package reported that Unity 6.0 or later is required. The follow-up
-connected command discovery was therefore blocked because no licensed connected
-Editor/Pipeline instance was available.
+2022.3.22f1 Editor. The CLI reported six available official Pipeline versions:
+`0.6.0-exp.1`, `0.5.0-exp.1`, `0.4.0-exp.1`, `0.3.1-exp.1`, `0.3.0-exp.1`, and
+`0.2.0-exp.2`. Each version was tested with `unity pipeline install` against the
+disposable 2022.3 Built-in fixture. Every candidate returned exit code 1 with
+`COMMAND_FAILED`; the official Pipeline package reported that Unity 6.0 or later
+is required. The follow-up connected command discovery was therefore blocked
+because no compatible licensed Editor/Pipeline instance was available.
 
 This is the concrete compatibility-gate failure required by the specification. It
 does not authorize a silent backend switch. The `unity-cli-loop` reference was
@@ -26,6 +28,7 @@ revision-gated apply. The result mapper was hardened to retain nested Editor
 Evidence and redacted plan provenance. The complete fixture record is fixed in
 `Tests/Compatibility/unity6-builtin-e2e-evidence.yaml`.
 
-The four-row release matrix remains unchanged. A future bounded non-MCP fallback
-requires an explicit contract, a real 2022.3 fixture, equivalent approval/scope/
-evidence behavior, and a separate decision.
+The four-row release matrix remains unchanged. This is an exhaustive probe of the
+currently listed official versions, not a partial smoke result. A future bounded
+non-MCP fallback requires an explicit contract, a real 2022.3 fixture, equivalent
+approval/scope/evidence behavior, and a separate decision.

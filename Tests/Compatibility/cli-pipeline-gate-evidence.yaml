@@ -12,12 +12,32 @@ official_first_candidate:
     identify_editors_status: passed
     identified_editor: "2022.3.22f1"
   pipeline:
+    available_versions_command: "unity pipeline list-versions --format json --no-pager"
+    available_versions_status: passed
+    available_versions:
+      - "0.6.0-exp.1"
+      - "0.5.0-exp.1"
+      - "0.4.0-exp.1"
+      - "0.3.1-exp.1"
+      - "0.3.0-exp.1"
+      - "0.2.0-exp.2"
     install_command: "unity pipeline install --project-path <2022.3 Built-in fixture> --format json --non-interactive"
     status: failed
     exit_code: 1
     error_code: COMMAND_FAILED
     failure_class: concrete_cli_pipeline_gate_failure
     message: "The installed official Unity Pipeline package reports that Unity 6.0 or later is required for the 2022.3 fixture."
+    exhaustive_version_probe:
+      fixture: TestProjects/UnityArtistVerification-2022.3
+      project_version: "2022.3.22f1"
+      status: all_available_versions_failed
+      results:
+        - { package_version: "0.6.0-exp.1", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
+        - { package_version: "0.5.0-exp.1", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
+        - { package_version: "0.4.0-exp.1", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
+        - { package_version: "0.3.1-exp.1", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
+        - { package_version: "0.3.0-exp.1", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
+        - { package_version: "0.2.0-exp.2", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
   connected_command_discovery:
     command: "unity list --project-path <2022.3 Built-in fixture> --format json --non-interactive"
     status: blocked_by_environment
@@ -47,5 +67,5 @@ fallback_evaluation:
   selected: false
   status: rejected_for_artist_contract
   reason: "The candidate's documented execute-dynamic-code surface would violate UnityArtistCLI's no-arbitrary-eval contract; no fallback was silently selected."
-decision: "Keep Official Unity CLI + Pipeline as the formal primary transport and persist the concrete failure. Re-evaluate a bounded non-MCP fallback only after a separately approved contract and fixture exist."
+decision: "Keep Official Unity CLI + Pipeline as the formal primary transport and persist the exhaustive concrete failure. All currently listed official Pipeline versions fail before connection on 2022.3; re-evaluate a bounded non-MCP fallback only after a separately approved contract and fixture exist."
 terminal_state: blocked_by_environment

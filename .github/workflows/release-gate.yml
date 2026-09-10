@@ -39,6 +39,13 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check pyyaml
       - run: python3 Tests/Release/verify_unity_artist_contract.py
       - run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
+      - name: Validate checked-in URP and HDRP evidence contracts
+        run: |
+          python3 Tests/Compatibility/verify-primary-urp-evidence.py
+          python3 Tests/Compatibility/verify-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-primary-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-cli-pipeline-gate-evidence.py
       - name: Build host CLI
         run: dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj --configuration Release
       - name: Resolve preview version
