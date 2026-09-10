@@ -2,7 +2,7 @@ schema_version: "2.0"
 product: UnityArtistCLI
 release_version: "2.0.0"
 case: unity-2022.3-builtin
-status: partial_verified
+status: passed_with_bounded_fallback
 official_first_candidate:
   transport: official_unity_cli_pipeline
   cli:
@@ -40,8 +40,12 @@ official_first_candidate:
         - { package_version: "0.2.0-exp.2", status: failed, error: "Pipeline package requires Unity 6.0 or later" }
   connected_command_discovery:
     command: "unity list --project-path <2022.3 Built-in fixture> --format json --non-interactive"
-    status: blocked_by_environment
-    reason: "No reachable licensed Editor/Pipeline instance was available after the install gate failure."
+    status: blocked_by_pipeline_gate
+    reason: "The official Pipeline install gate failed before a connected Pipeline instance could exist."
+  bounded_fallback_command_discovery:
+    command: "unity run <2022.3 Built-in fixture> --editor-version 2022.3.22f1 -- -executeMethod DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch"
+    status: passed
+    evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
 artist_plugin:
   version_command: "unity artist version --format json --non-interactive"
   version_status: passed
@@ -64,8 +68,12 @@ additional_verified_fixtures:
     terminal_state: verified_for_fixture
 fallback_evaluation:
   candidate: unity-cli-loop
-  selected: false
-  status: rejected_for_artist_contract
-  reason: "The candidate's documented execute-dynamic-code surface would violate UnityArtistCLI's no-arbitrary-eval contract; no fallback was silently selected."
-decision: "Keep Official Unity CLI + Pipeline as the formal primary transport and persist the exhaustive concrete failure. All currently listed official Pipeline versions fail before connection on 2022.3; re-evaluate a bounded non-MCP fallback only after a separately approved contract and fixture exist."
-terminal_state: blocked_by_environment
+  selected: true
+  status: verified_bounded_non_mcp
+  transport: official_unity_cli_bounded_batch_fallback
+  rejected_candidate_reason: "The candidate's documented execute-dynamic-code surface would violate UnityArtistCLI's no-arbitrary-eval Artist contract."
+  entrypoint: DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch
+  evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
+  selection_condition: "Only after the concrete Official Unity CLI/Pipeline compatibility gate failure above."
+decision: "Keep Official Unity CLI + Unity Pipeline as the formal primary transport. For the observed 2022.3 gate failure only, use the fixed Official Unity CLI batch entrypoint with the shared ArtistSession safety contract; reject dynamic-code and MCP fallbacks."
+terminal_state: verified_for_fixture

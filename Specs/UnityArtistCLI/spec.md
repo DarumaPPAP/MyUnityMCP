@@ -22,6 +22,8 @@ UnityAgent CapabilityRequest
 
 The adapter accepts typed argv only, always supplies an explicit project path, uses bounded cancellation, parses JSON only, and uses an allowlisted command map. It never calls arbitrary eval or chooses aesthetic intent.
 
+For Unity 2022.3 LTS + Built-in, the host always probes the Official Unity CLI/Pipeline install first. Only the recorded Unity 6.0-or-later Pipeline compatibility failure selects the bounded `official_unity_cli_bounded_batch_fallback`: `unity run` invokes the fixed `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch` method with base64-encoded structured JSON and a single JSON response file. The bridge reuses `ArtistSession`, allowlists the Artist commands, loads an exact scene, and does not auto-save or persist approval tokens. It is not a second Player Framework, MCP transport, dynamic-code executor, or generic Unity CRUD surface.
+
 ## Command contract
 
 Required commands are `help`, `version`, `doctor`, `capabilities`, `install`, `inspect`, `plan`, `preview`, `apply`, `capture`, `evaluate`, `refine`, `history`; `cinematic` is the explicit Timeline/Cinemachine specialist extension. Operational commands support `--project-path`, `--format human|json|ndjson`, `--non-interactive`, and `--verbose`. `unity artist help` and standalone `unity-artist --help` are the supported help entrypoints; the Unity CLI beta's global `unity artist --help` form is host-intercepted before plugin dispatch and is tracked as an external compatibility limitation.
@@ -51,10 +53,10 @@ The semantic surface includes LookDev and visual direction, Lighting, Environmen
 | Unity 6.x+ | URP | `urp_native_api` | primary |
 | Unity 6.x+ | HDRP | `hdrp_native_api` | primary |
 
-The 2022.3 row is verified with the official Unity CLI + Unity Pipeline first. A fallback requires a concrete CLI/Pipeline compatibility failure. 2022.3 URP/HDRP, Unity 2023, and URP 14–16 are rejected before mutation with a typed unsupported result.
+The 2022.3 row is verified with the official Unity CLI + Unity Pipeline first, followed by the bounded batch fallback after the observed concrete compatibility failure. 2022.3 URP/HDRP, Unity 2023, and URP 14–16 are rejected before mutation with a typed unsupported result.
 
 ## Error and terminal states
 
 The host uses structured codes including `PROJECT_PATH_REQUIRED`, `UNITY_CLI_UNAVAILABLE`, `PIPELINE_INSTALL_FAILED`, `CAPABILITY_UNAVAILABLE`, `UNSUPPORTED_UNITY_VERSION`, `UNSUPPORTED_RENDER_PIPELINE_VERSION`, `STALE_REVISION`, `APPROVAL_REQUIRED`, `PLAN_ID_REQUIRED`, `CAMERA_NOT_FOUND`, `INVALID_REVIEW_DECISION`, `TIMEOUT`, and `ARTIST_PIPELINE_COMMAND_FAILED`.
 
-Evidence terminal states are `verified`, `partial_verified`, and `blocked_by_environment`; `implemented_unverified` is not a completion state.
+Evidence terminal states are `verified`, `partial_verified`, and `blocked_by_environment`; `implemented_unverified` is not a completion state. The 2022.3 bounded fixture uses `verified_for_fixture` inside its evidence record and is rolled up to the release audit separately from the remaining host-level limitations.

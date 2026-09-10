@@ -181,4 +181,4 @@ notes:
   - The HDRP scene and assets were authored through official Unity CLI/Pipeline commands; no Unity YAML was edited.
   - UnityArtistCLI used the native HDRP Volume/Fog adapter and persisted the meanFreePath override through a bounded approval-gated mutation.
   - The visual review is an explicit human decision and is not inferred from image metrics alone.
-  - This fixture is complete for the Unity 6 HDRP row; the separate 2022.3 official Pipeline gate remains the full-matrix blocker.
+  - This fixture is complete for the Unity 6 HDRP row; the separate 2022.3 official Pipeline gate is retained as the concrete reason the bounded Built-in fallback is selected.

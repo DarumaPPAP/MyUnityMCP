@@ -2,7 +2,7 @@ schema_version: "2.0"
 product: UnityArtistCLI
 release_version: "2.0.0"
 verification_status: partial_verified
-terminal_state: blocked_by_environment
+terminal_state: partial_verified
 operational_surface:
   commands: 14
   package: com.darumappap.unity-artist
@@ -13,7 +13,9 @@ editor_verification:
   2022_3_builtin_first_candidate: true
   official_pipeline_gate: failed_concrete
   gate_evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
-  fallback_selected: false
+  fallback_selected: true
+  fallback_transport: official_unity_cli_bounded_batch_fallback
+  fallback_evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
   unity6_builtin_fixture: passed
   unity6_builtin_evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
   unity6_urp_fixture: passed
@@ -22,9 +24,10 @@ editor_verification:
   unity6_hdrp_fixture: passed
   unity6_hdrp_primary_evidence: Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
   unity6_hdrp_cinematic_evidence: Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
-  connected_pipeline: partial_verified
-  compile: passed_for_unity6_builtin
-  safety_lifecycle: passed_for_unity6_builtin
+  connected_pipeline: passed_for_unity6_builtin
+  2022_3_bounded_batch: passed
+  compile: passed_for_unity6_builtin_and_2022_3_bounded_batch
+  safety_lifecycle: passed_for_unity6_builtin_and_2022_3_bounded_batch
 unsupported_preflight:
   2022_3_urp: passed
   2022_3_hdrp: passed

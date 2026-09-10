@@ -15,8 +15,8 @@ The current implementation is `Packages/com.darumappap.unity-artist/Editor/Compa
 - 2022.3 URP/HDRP are unsupported and must be rejected before mutation.
 - Unity 2023 and URP 14–16 are outside the formal release matrix.
 - Package API availability is checked from both Unity version and package version; Editor version alone is not evidence.
-- No generic version-specific fallback, serialized raw mutation, or arbitrary evaluation is permitted.
+- No generic version-specific fallback, serialized raw mutation, or arbitrary evaluation is permitted. The one bounded exception is the fixed non-MCP Unity 2022.3 Built-in batch entrypoint, and only after the concrete Official CLI/Pipeline gate failure described below.
 
 ## Gate evidence
 
-The official Unity CLI is the first candidate, including the Unity 2022.3 Built-in case. A compatibility row is eligible only when the real fixture demonstrates: CLI identify/open/manage, Pipeline package install/availability, connected command discovery, bounded command execution, and structured safety-scope evidence. If a Gate fails, record the concrete failure before considering another backend.
+The official Unity CLI is the first candidate, including the Unity 2022.3 Built-in case. A compatibility row is eligible only when the real fixture demonstrates: CLI identify/open/manage, Pipeline package install/availability, connected command discovery, bounded command execution, and structured safety-scope evidence. If a Gate fails, record the concrete failure before considering another transport. For the observed 2022.3 failure, the allowed transport is the fixed `unity run` batch entrypoint `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch`; it is not a generic version fallback and must preserve the same ArtistSession safety lifecycle.

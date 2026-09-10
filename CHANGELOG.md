@@ -22,7 +22,7 @@
 
 - Host CLI build, structured command contract, and UnityAgent Provider routing are covered by the cutover validators
 - Unity 6000.6.0f1 Built-in direct Editor/Pipeline plus UnityAgent → UnityArtistCLI → Pipeline E2E passed; evidence is fixed in `Tests/Compatibility/unity6-builtin-e2e-evidence.yaml`
-- Unity 2022.3 Built-in remains an explicit Official Pipeline gate failure because the installed Pipeline package requires Unity 6.0 or later; Unity 6 URP/HDRP direct fixtures remain pending
+- Unity 2022.3 Built-in records the exhaustive Official Pipeline gate failure and verifies the fixed non-MCP `unity run` bounded fallback; Unity 6 URP/HDRP direct fixtures and Cinemachine/Timeline evidence are complete
 
 ## [1.1.1] - 2026-09-05
 

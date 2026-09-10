@@ -1,9 +1,7 @@
 {
   "name": "DarumaPPAP.UnityArtist.Editor",
   "rootNamespace": "DarumaPPAP.UnityArtist",
-  "references": [
-    "Unity.Pipeline"
-  ],
+  "references": [],
   "includePlatforms": [
     "Editor"
   ],
@@ -13,12 +11,6 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
-  "versionDefines": [
-    {
-      "name": "com.unity.pipeline",
-      "expression": "0.0.0",
-      "define": "UNITY_ARTIST_PIPELINE"
-    }
-  ],
+  "versionDefines": [],
   "noEngineReferences": false
 }

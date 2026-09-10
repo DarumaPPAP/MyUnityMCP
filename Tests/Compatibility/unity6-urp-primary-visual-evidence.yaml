@@ -170,4 +170,4 @@ persistence:
 notes:
   - The scene was authored through official Unity CLI/Pipeline commands; no Unity YAML was edited.
   - The visual review is an explicit human decision and is not inferred from image metrics alone.
-  - Unity 6 URP primary visual evidence is complete, including the native Volume transaction; the separate 2022.3 official Pipeline gate remains an environment blocker for the full four-row release audit.
+  - Unity 6 URP primary visual evidence is complete, including the native Volume transaction; the separate 2022.3 official Pipeline gate is retained as the concrete reason the bounded Built-in fallback is selected.

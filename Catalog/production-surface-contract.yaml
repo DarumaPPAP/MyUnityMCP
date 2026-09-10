@@ -7,6 +7,8 @@ status: cli_and_editor_operational
 package: com.darumappap.unity-artist
 executable: unity-artist
 transport: official_unity_cli_pipeline
+fallback_transport: official_unity_cli_bounded_batch_fallback
+fallback_policy: concrete_cli_pipeline_gate_failure_only
 command_count: 14
 commands: [help, version, doctor, capabilities, install, inspect, plan, preview, apply, capture, evaluate, refine, cinematic, history]
 artist_specific_capabilities: [visual_art, lookdev, lighting, environment, camera, cinematic, timeline, capture, evaluate, refine]

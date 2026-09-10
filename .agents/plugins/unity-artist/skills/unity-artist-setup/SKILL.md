@@ -15,4 +15,4 @@ unity artist doctor --project-path <project> --format json --non-interactive
 unity artist capabilities --project-path <project> --format json --non-interactive
 ```
 
-Do not auto-install an Editor, bypass a Unity license, create a fallback transport, or continue when the doctor reports an unsupported Unity version/pipeline. For Unity 2022.3, verify official CLI + Pipeline first; only a concrete connected Gate Failure permits considering another backend.
+Do not auto-install an Editor, bypass a Unity license, or silently switch transports. For Unity 2022.3 Built-in, verify official CLI + Pipeline first; only the concrete Unity 6-or-later Pipeline Gate Failure permits the documented fixed `unity run` batch fallback at `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch`. Do not use dynamic code, raw YAML, MCP, or generic CRUD through that fallback. Unsupported pipelines remain blocked before mutation.

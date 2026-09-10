@@ -86,8 +86,10 @@ def check_identity(errors: list[str]) -> None:
     if package.get("version") != version:
         error(errors, "VERSION and UnityArtist package version disagree")
     dependencies = package.get("dependencies") or {}
-    if set(dependencies) != {"com.unity.pipeline"}:
-        error(errors, f"current package dependencies must be Pipeline-only, got {sorted(dependencies)}")
+    if "com.unity.pipeline" in dependencies:
+        error(errors, "the core UnityArtist package must not force the Unity 6-only Pipeline dependency on Unity 2022.3")
+    if dependencies:
+        error(errors, f"current package dependencies must be empty so the bounded 2022.3 fallback can compile, got {sorted(dependencies)}")
     if package.get("unity") != "2022.3":
         error(errors, "package minimum Unity version must be 2022.3")
 
@@ -99,7 +101,7 @@ def check_cli_surface(errors: list[str]) -> None:
     missing = sorted(REQUIRED_COMMANDS - commands)
     if missing:
         error(errors, f"CLI is missing commands: {missing}")
-    if '"official_unity_cli_pipeline"' not in source:
+    if '"official_unity_cli_pipeline"' not in source or '"official_unity_cli_bounded_batch_fallback"' not in source:
         error(errors, "CLI does not declare official_unity_cli_pipeline transport")
     if '"pipeline", "install"' not in source or '"command"' not in source:
         error(errors, "CLI does not expose install and official Pipeline command delegation")
@@ -117,7 +119,7 @@ def check_editor_surface(errors: list[str]) -> None:
     for command in ("artist.inspect", "artist.plan", "artist.preview", "artist.apply", "artist.capture", "artist.evaluate", "artist.refine", "artist.cinematic", "artist.history"):
         if command not in sources:
             error(errors, f"missing Pipeline command registration: {command}")
-    for token in ("CinematicRequest", "InspectCinematicDirector", "CreateTrack", "CreateMarker", "SetGenericBinding", "Undo.RecordObject", "depth_channel", "object_id_channel"):
+    for token in ("CinematicRequest", "InspectCinematicDirector", "CreateTrack", "CreateMarker", "SetGenericBinding", "Undo.RecordObject", "depth_channel", "object_id_channel", "UnityArtistBatchCommands", "bounded_non_mcp_batch_fallback"):
         if token not in sources:
             error(errors, f"current Editor source is missing bounded Artist/Cinematic contract token: {token}")
     compatibility = EDITOR_ROOT / "Compatibility/ArtistCompatibility.cs"
@@ -157,8 +159,8 @@ def check_cli_pipeline_gate_evidence(errors: list[str]) -> None:
     if plugin.get("global_help_status") != "blocked_by_official_cli_global_parser":
         error(errors, "global unity artist --help behavior must remain explicitly recorded")
     fallback = evidence.get("fallback_evaluation") or {}
-    if fallback.get("selected") is not False:
-        error(errors, "2022.3 fallback must not be silently selected")
+    if fallback.get("selected") is not True or fallback.get("status") != "verified_bounded_non_mcp":
+        error(errors, "2022.3 bounded fallback selection/evidence is incomplete")
 
 
 def check_catalog(errors: list[str]) -> None:

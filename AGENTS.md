@@ -22,11 +22,13 @@ UnityArtistCLI is a specialist Provider. The canonical provider id is `unity_art
 
 Inspect and Plan are read-only. Mutations require an exact diff, current revision, explicit UnityAgent approval, expected revision, and a bounded allowlist. Apply uses Unity Undo and does not auto-save. Capture is evidence, not visual acceptance; Evaluate records a human decision; Refine links a new plan to that decision. Unknown, unsupported, stale, malformed, timeout, and unavailable states fail closed.
 
-The UnityArtistCLI adapter must use typed argv, an explicit project path, bounded timeout/cancellation, structured JSON only, and an allowlisted command map. It must not evaluate arbitrary code, mutate serialized assets generically, infer aesthetic decisions, or silently fall back to a different product.
+The UnityArtistCLI adapter must use typed argv, an explicit project path, bounded timeout/cancellation, structured JSON only, and an allowlisted command map. It must not evaluate arbitrary code, mutate serialized assets generically, infer aesthetic decisions, or silently switch transports. The only current fallback is the fixed `official_unity_cli_bounded_batch_fallback` for Unity 2022.3 LTS + Built-in, and it is selectable only after the concrete Official Unity CLI/Pipeline gate failure is recorded.
 
 ## Official Unity CLI first
 
 The official Unity CLI is the first transport for every supported matrix row, including Unity 2022.3 Built-in. The Pipeline package must be installed and reachable before editor command execution. A fallback is permitted only after a concrete compatibility Gate Failure is recorded with the Unity version, render pipeline, CLI/Pipeline observation, and failure class.
+
+The bounded 2022.3 fallback uses `unity run` with the fixed `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch` entrypoint and the shared `ArtistSession`; it accepts structured JSON only, rejects dynamic code/raw YAML/MCP/generic CRUD, reopens an exact scene, persists only redacted plan/capture/history metadata, and never auto-saves an Artist mutation. It is not a second Player Framework or a generic backend.
 
 Formal support is limited to:
 

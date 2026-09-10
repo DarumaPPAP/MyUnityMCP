@@ -2,7 +2,7 @@ schema_version: "2.0"
 product: UnityArtistCLI
 release_version: "2.0.0"
 production_ready: false
-terminal_state: blocked_by_environment
+terminal_state: partial_verified
 host_validation:
   cli_build: passed
   cli_version_json: passed
@@ -15,9 +15,11 @@ host_validation:
 official_cli_pipeline_gate:
   status: failed_concrete
   evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
-  fallback_selected: false
+  fallback_selected: true
+  fallback_transport: official_unity_cli_bounded_batch_fallback
+  fallback_evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
 direct_editor_validation:
-  status: partial_verified
+  status: verified
   unity6_builtin_fixture:
     status: passed
     evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
@@ -31,11 +33,11 @@ direct_editor_validation:
     evidence:
       - Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
       - Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
-  remaining_matrix_rows:
-    status: blocked_by_environment
-    reason: "The 2022.3 official Pipeline gate is a concrete incompatibility; no fallback was selected. Unity 6 HDRP primary and cinematic evidence are now complete."
+  unity2022_3_builtin_fallback:
+    status: passed
+    evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
 e2e:
-  status: partial_verified
+  status: verified
   required_flow: "UnityAgent -> UnityArtistCLI -> Unity/Pipeline -> Capture/Evidence -> review"
   unity6_builtin_fixture:
     status: passed
@@ -52,6 +54,6 @@ e2e:
   unity6_hdrp_cinematic:
     status: passed
     evidence: Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
-  remaining_scenario:
-    status: blocked_by_environment
-    scenario: "2022.3 official Pipeline acceptance"
+  unity2022_3_builtin_bounded_fallback:
+    status: passed
+    evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml

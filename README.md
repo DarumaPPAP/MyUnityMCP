@@ -44,7 +44,7 @@ UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/b
 | Unity 6.x+ | URP | primary | official Unity CLI + Unity Pipeline |
 | Unity 6.x+ | HDRP | primary | official Unity CLI + Unity Pipeline |
 
-2022.3 URP/HDRP、Unity 2023、URP 14–16 は正式対応外です。2022.3 も最初に公式 CLI + Pipeline の実接続を検証し、具体的な Gate Failure がない限り別 Backend へ切り替えません。
+2022.3 URP/HDRP、Unity 2023、URP 14–16 は正式対応外です。2022.3 Built-in も最初に公式 CLI + Pipeline の実接続を検証します。今回のホストでは全列挙版が Unity 6.0 要件で具体的に失敗したため、その証跡後に限り、固定 `unity run` バッチ入口 `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch` を限定フォールバックとして使用します。これは shared `ArtistSession` を再利用し、動的コード・MCP・汎用CRUD・自動保存を許可しません。
 
 ## Verification
 
@@ -59,7 +59,7 @@ python Tests/Compatibility/verify-hdrp-primary-evidence.py
 python Tests/Compatibility/verify-hdrp-cinematic-evidence.py
 ```
 
-実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。現在の Unity 6 Built-in/URP/HDRP の live evidence は個別の compatibility contract で検証し、Unity 2022.3 は全ての列挙済み Official Pipeline 版を試した gate evidence を保持します。
+実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。現在は Unity 6 Built-in/URP/HDRP の live evidence と、Unity 2022.3 Built-in の「公式 Pipeline 全列挙版の gate failure → 固定バッチ fallback」evidence を個別の compatibility contract で検証しています。
 
 接続済みのUnity 6 Editorに対する最小ライブ検証は、`python scripts/run_minimal_live_smoke.py` で実行できます。これは一つのCubeとMain Cameraだけを使い、Artistの計画・承認・適用・PNG capture・評価・Refine・履歴を短時間で検証します。結果は `Tests/Compatibility/unity6-builtin-minimal-smoke-evidence.yaml` に記録します。
 
@@ -71,7 +71,7 @@ python Tests/Compatibility/verify-hdrp-cinematic-evidence.py
 
 ```text
 src/UnityArtist.Cli/                         # unity-artist host CLI
-Packages/com.darumappap.unity-artist/        # Unity Pipeline command package
+Packages/com.darumappap.unity-artist/        # UnityArtist Editor API + optional Pipeline registrations
 Legacy/MyUnityMCP-1.1.1/Package/              # legacy package source, not production
 Tests/Compatibility/                         # matrix and compatibility gates
 Tests/Release/                               # production contract validators

@@ -32,3 +32,7 @@ The four-row release matrix remains unchanged. This is an exhaustive probe of th
 currently listed official versions, not a partial smoke result. A future bounded
 non-MCP fallback requires an explicit contract, a real 2022.3 fixture, equivalent
 approval/scope/evidence behavior, and a separate decision.
+
+That separate decision was made on 2026-09-11 after the bounded fixture and its
+equivalent lifecycle were implemented and verified; see
+`2026-09-11-unity2022-3-bounded-fallback.md`.

@@ -52,11 +52,16 @@ def main() -> int:
     for row in results:
         if row.get("status") != "failed" or row.get("error") != "Pipeline package requires Unity 6.0 or later":
             fail(f"unexpected 2022.3 probe result: {row}")
-    if data.get("fallback_evaluation", {}).get("selected") is not False:
-        fail("a fallback backend must not be silently selected")
-    if data.get("terminal_state") != "blocked_by_environment":
-        fail("the 2022.3 gate must remain blocked until an official compatible Pipeline is observed")
-    print("Unity 2022.3 Official Pipeline exhaustive gate evidence: PASS")
+    fallback = data.get("fallback_evaluation", {})
+    if fallback.get("selected") is not True or fallback.get("status") != "verified_bounded_non_mcp":
+        fail("the bounded non-MCP fallback must be explicitly selected only after the concrete gate failure")
+    if fallback.get("transport") != "official_unity_cli_bounded_batch_fallback":
+        fail("the selected fallback transport is not explicit")
+    if fallback.get("entrypoint") != "DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch":
+        fail("the selected fallback entrypoint is not fixed")
+    if data.get("terminal_state") != "verified_for_fixture":
+        fail("the 2022.3 bounded fallback fixture must be verified")
+    print("Unity 2022.3 Official Pipeline exhaustive gate and bounded fallback evidence: PASS")
     return 0
 
 

@@ -17,7 +17,7 @@ Migration is intentionally additive at the Provider boundary: UnityAgent gets `u
 Existing projects should:
 
 1. Install the official Unity CLI and verify `unity --version`.
-2. Add `com.unity.pipeline` through `unity pipeline install --project-path <project>`.
+2. Attempt `com.unity.pipeline` through `unity pipeline install --project-path <project>` as the first Editor transport. On Unity 2022.3 Built-in, if the concrete Unity 6-or-later compatibility gate is recorded, use the bounded `unity run` entrypoint documented in `Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml`; do not silently choose another backend.
 3. Add `com.darumappap.unity-artist` as the embedded/local package or Git package.
 4. Run `unity-artist doctor --project-path <project> --format json --non-interactive`.
 5. Replace old generic MCP calls with UnityAgent capabilities; use semantic `domain.workflow` qualifiers for Artist work.

@@ -4,6 +4,7 @@ product: UnityArtistCLI
 package_version: "2.0.0"
 transport: official_unity_cli_pipeline
 fallback_policy: concrete_cli_pipeline_gate_failure_only
+fallback_transport: official_unity_cli_bounded_batch_fallback
 rows:
   - id: unity-2022.3-builtin
     unity_version: "2022.3 LTS"

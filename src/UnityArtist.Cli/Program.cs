@@ -124,6 +124,14 @@ internal static class ArtistCli
         executable = "unity-artist",
         usage = "unity artist <command> --project-path <path> --format json --non-interactive",
         commands = SupportedCommands.OrderBy(value => value).ToArray(),
+        transport = "official_unity_cli_pipeline",
+        boundedFallback = new
+        {
+            transport = "official_unity_cli_bounded_batch_fallback",
+            policy = "concrete_cli_pipeline_gate_failure_only",
+            entrypoint = "DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch",
+            scope = "Unity 2022.3 LTS + Built-in only"
+        },
         artistOnlySurface = new[]
         {
             "lookdev.inspect", "lookdev.plan", "lighting.plan", "environment.plan", "camera.plan",
@@ -144,6 +152,8 @@ internal static class ArtistCli
         packageId = PackageId,
         executable = "unity-artist",
         transport = "official_unity_cli_pipeline",
+        boundedFallbackTransport = "official_unity_cli_bounded_batch_fallback",
+        fallbackPolicy = "concrete_cli_pipeline_gate_failure_only",
         compatibilityBackend = "builtin_editor_api_or_native_srp_adapter"
     });
 
@@ -154,6 +164,9 @@ internal static class ArtistCli
             ["product"] = Product,
             ["version"] = Version,
             ["commands"] = SupportedCommands.OrderBy(value => value).ToArray(),
+            ["transport"] = "official_unity_cli_pipeline",
+            ["fallbackPolicy"] = "concrete_cli_pipeline_gate_failure_only",
+            ["boundedFallbackTransport"] = "official_unity_cli_bounded_batch_fallback",
             ["capabilities"] = new[]
             {
                 "visual_art.inspect", "visual_art.lookdev_plan", "visual_art.lighting_plan",
@@ -181,6 +194,8 @@ internal static class ArtistCli
             ["officialUnityCli"] = new { available = unityPath is not null, executablePath = unityPath },
             ["packageId"] = PackageId,
             ["transport"] = "official_unity_cli_pipeline",
+            ["fallbackPolicy"] = "concrete_cli_pipeline_gate_failure_only",
+            ["boundedFallbackTransport"] = "official_unity_cli_bounded_batch_fallback",
             ["pipelinePackage"] = "observed_from_project_manifest",
             ["timeline"] = "observed_from_project_manifest",
             ["cinemachine"] = "observed_from_project_manifest",
@@ -287,13 +302,33 @@ internal static class ArtistCli
             }
         }
 
+        var mutationRequested = args.Command == "apply" || cinematicApply;
+        var timeout = ParseTimeout(args.Get("--timeout"));
         var cli = UnityCliTransport.ResolveExecutable();
         if (cli is null)
         {
             return ArtistResult.Blocked(args.Command, "UNITY_CLI_UNAVAILABLE", "Official Unity CLI was not found on PATH.");
         }
+
+        if (support.UnityVersion.StartsWith("2022.3.", StringComparison.OrdinalIgnoreCase) && support.RenderPipeline == "builtin")
+        {
+            var gate = UnityCliTransport.ProbePipelineInstall(cli, project);
+            if (gate.ExitCode != 0)
+            {
+                if (!gate.IsUnity6RequiredCompatibilityFailure)
+                {
+                    return ArtistResult.Blocked(args.Command, "OFFICIAL_PIPELINE_GATE_FAILED", "The Official Unity CLI/Pipeline gate failed without the known Unity 2022.3 compatibility result; fallback is refused.", new
+                    {
+                        officialPipelineGate = gate.ToEvidence(),
+                        projectPath = project,
+                        support
+                    });
+                }
+                return ExecuteBoundedBatchFallback(args, cli, project, support, timeout, gate);
+            }
+        }
+
         var pipelineCommand = $"artist.{args.Command}";
-        var mutationRequested = args.Command == "apply" || cinematicApply;
         var commandArguments = new List<string> { "command", pipelineCommand, "--project-path", project };
         AddOptional(commandArguments, args, "--request-json", "--request-json");
         AddOptional(commandArguments, args, "--intent-file", "--intent-file");
@@ -310,7 +345,6 @@ internal static class ArtistCli
         commandArguments.Add("--non-interactive");
         commandArguments.Add("--no-banner");
 
-        var timeout = ParseTimeout(args.Get("--timeout"));
         var outcome = UnityCliTransport.Run(cli, commandArguments, timeout);
         return outcome.ToArtistResult(args.Command, "ARTIST_PIPELINE_COMMAND_FAILED", new
         {
@@ -322,6 +356,119 @@ internal static class ArtistCli
             readOnly = !mutationRequested,
             mutation = mutationRequested ? "approval_and_revision_gated" : "none"
         });
+    }
+
+    private static ArtistResult ExecuteBoundedBatchFallback(CliArguments args, string cli, string project, SupportFacts support, int timeout, UnityCliOutcome gate)
+    {
+        if (!string.IsNullOrWhiteSpace(args.Get("--intent-file")))
+        {
+            return ArtistResult.Blocked(args.Command, "BATCH_FALLBACK_INTENT_FILE_UNSUPPORTED", "The bounded 2022.3 batch fallback accepts structured request JSON only; an intent file is not silently read or transformed.", new
+            {
+                officialPipelineGate = gate.ToEvidence(),
+                transport = "official_unity_cli_bounded_batch_fallback"
+            });
+        }
+
+        var request = new BatchRequest
+        {
+            Command = args.Command,
+            RequestJson = args.Get("--request-json") ?? "",
+            PlanId = args.Get("--plan-id") ?? "",
+            CaptureId = args.Get("--capture-id") ?? "",
+            EvaluationId = args.Get("--evaluation-id") ?? "",
+            ExpectedRevision = args.Get("--expected-revision") ?? "",
+            ApprovalToken = args.Get("--approval-token") ?? "",
+            Decision = args.Get("--decision") ?? "",
+            Notes = args.Get("--notes") ?? "",
+            Operation = args.Get("--operation") ?? "",
+            ScenePath = args.Get("--scene-path") ?? ""
+        };
+        var requestJson = JsonSerializer.Serialize(request, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var responsePath = Path.Combine(Path.GetTempPath(), $"unity-artist-{Guid.NewGuid():N}.json");
+        var environment = new Dictionary<string, string?>
+        {
+            ["UNITY_ARTIST_BATCH_REQUEST"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(requestJson)),
+            ["UNITY_ARTIST_BATCH_RESPONSE"] = responsePath
+        };
+        var commandArguments = new List<string>
+        {
+            "run", project,
+            "--editor-version", support.UnityVersion,
+            "--format", "json",
+            "--non-interactive",
+            "--no-banner",
+            "--timeout", timeout.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--",
+            "-screen-width", "1920",
+            "-screen-height", "1080",
+            "-screen-fullscreen", "0",
+            "-executeMethod", "DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch"
+        };
+
+        try
+        {
+            var outcome = UnityCliTransport.Run(cli, commandArguments, Math.Min(930, timeout + 30), environment);
+            if (File.Exists(responsePath))
+            {
+                var response = File.ReadAllText(responsePath);
+                return MapBatchResponse(args.Command, response, outcome, gate);
+            }
+
+            var detail = string.IsNullOrWhiteSpace(outcome.Stderr) ? outcome.Stdout.Trim() : outcome.Stderr.Trim();
+            var message = outcome.TimedOut ? "The bounded Unity CLI batch fallback exceeded its timeout." :
+                string.IsNullOrWhiteSpace(detail) ? "The bounded Unity CLI batch fallback did not produce structured Evidence." : detail;
+            return ArtistResult.Blocked(args.Command, outcome.TimedOut ? "TIMEOUT" : "BATCH_FALLBACK_FAILED", message, new
+            {
+                transport = "official_unity_cli_bounded_batch_fallback",
+                officialPipelineGate = gate.ToEvidence(),
+                fallbackExitCode = outcome.ExitCode
+            });
+        }
+        finally
+        {
+            try { if (File.Exists(responsePath)) File.Delete(responsePath); } catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    private static ArtistResult MapBatchResponse(string command, string response, UnityCliOutcome outcome, UnityCliOutcome gate)
+    {
+        JsonElement provider;
+        try
+        {
+            using var document = JsonDocument.Parse(response);
+            provider = document.RootElement.Clone();
+        }
+        catch (JsonException exception)
+        {
+            return ArtistResult.Blocked(command, "BATCH_FALLBACK_MALFORMED_RESULT", "The bounded Unity CLI batch fallback returned malformed JSON: " + exception.Message, new
+            {
+                officialPipelineGate = gate.ToEvidence(),
+                fallbackExitCode = outcome.ExitCode
+            });
+        }
+
+        var data = new
+        {
+            transport = "official_unity_cli_bounded_batch_fallback",
+            officialPipelineGate = gate.ToEvidence(),
+            provider
+        };
+        if (provider.ValueKind == JsonValueKind.Object && provider.TryGetProperty("status", out var status) &&
+            string.Equals(status.GetString(), "passed", StringComparison.OrdinalIgnoreCase))
+        {
+            return ArtistResult.Passed(command, data);
+        }
+
+        var code = "BATCH_FALLBACK_COMMAND_BLOCKED";
+        var message = "The bounded Unity CLI batch fallback returned a blocked result.";
+        if (provider.ValueKind == JsonValueKind.Object && provider.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array && errors.GetArrayLength() > 0)
+        {
+            var first = errors[0];
+            if (first.TryGetProperty("code", out var errorCode) && !string.IsNullOrWhiteSpace(errorCode.GetString())) code = errorCode.GetString()!;
+            if (first.TryGetProperty("message", out var errorMessage) && !string.IsNullOrWhiteSpace(errorMessage.GetString())) message = errorMessage.GetString()!;
+        }
+        return ArtistResult.Blocked(command, code, message, data);
     }
 
     private static void AddOptional(List<string> destination, CliArguments args, string option, string pipelineOption)
@@ -470,6 +617,21 @@ internal sealed record SupportFacts(
     string ErrorCode,
     string Reason);
 
+internal sealed class BatchRequest
+{
+    public string Command { get; init; } = "";
+    public string RequestJson { get; init; } = "";
+    public string PlanId { get; init; } = "";
+    public string CaptureId { get; init; } = "";
+    public string EvaluationId { get; init; } = "";
+    public string ExpectedRevision { get; init; } = "";
+    public string ApprovalToken { get; init; } = "";
+    public string Decision { get; init; } = "";
+    public string Notes { get; init; } = "";
+    public string Operation { get; init; } = "";
+    public string ScenePath { get; init; } = "";
+}
+
 internal static class SupportMatrix
 {
     public static object[] ReleaseMatrix => new object[]
@@ -513,6 +675,29 @@ internal static class SupportMatrix
 
 internal sealed record UnityCliOutcome(int ExitCode, bool TimedOut, string Stdout, string Stderr)
 {
+    public bool IsUnity6RequiredCompatibilityFailure
+    {
+        get
+        {
+            var text = (Stdout ?? "") + "\n" + (Stderr ?? "");
+            return text.IndexOf("Pipeline package requires Unity 6.0 or later", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   text.IndexOf("requires Unity 6.0", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   text.IndexOf("requires Unity 6", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   (text.IndexOf("Pipeline", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    text.IndexOf("Unity 6.0", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    (text.IndexOf("必要", StringComparison.Ordinal) >= 0 || text.IndexOf("以降", StringComparison.Ordinal) >= 0));
+        }
+    }
+
+    public object ToEvidence() => new
+    {
+        exitCode = ExitCode,
+        timedOut = TimedOut,
+        failureClass = IsUnity6RequiredCompatibilityFailure ? "concrete_cli_pipeline_gate_failure" : "official_cli_failure",
+        stdout = Stdout,
+        stderr = Stderr
+    };
+
     public ArtistResult ToArtistResult(string command, string failureCode, object? data = null)
     {
         if (TimedOut) return ArtistResult.Blocked(command, "TIMEOUT", "Official Unity CLI exceeded the bounded timeout.", data);
@@ -543,6 +728,15 @@ internal sealed record UnityCliOutcome(int ExitCode, bool TimedOut, string Stdou
 
 internal static class UnityCliTransport
 {
+    public static UnityCliOutcome ProbePipelineInstall(string executable, string project)
+    {
+        return Run(executable, new[]
+        {
+            "pipeline", "install", "--project-path", project,
+            "--format", "json", "--non-interactive", "--no-banner"
+        }, 120);
+    }
+
     public static string? ResolveExecutable()
     {
         var explicitPath = Environment.GetEnvironmentVariable("UNITY_CLI_PATH");
@@ -559,7 +753,7 @@ internal static class UnityCliTransport
         return null;
     }
 
-    public static UnityCliOutcome Run(string executable, IEnumerable<string> arguments, int timeoutSeconds)
+    public static UnityCliOutcome Run(string executable, IEnumerable<string> arguments, int timeoutSeconds, IReadOnlyDictionary<string, string?>? environment = null)
     {
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
@@ -572,6 +766,13 @@ internal static class UnityCliTransport
             CreateNoWindow = true
         };
         foreach (var argument in arguments) process.StartInfo.ArgumentList.Add(argument);
+        if (environment is not null)
+        {
+            foreach (var entry in environment)
+            {
+                process.StartInfo.Environment[entry.Key] = entry.Value ?? string.Empty;
+            }
+        }
         try
         {
             if (!process.Start()) return new UnityCliOutcome(-1, false, "", "Unable to start official Unity CLI.");
