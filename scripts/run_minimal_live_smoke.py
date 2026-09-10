@@ -14,6 +14,7 @@ through the official Pipeline commands exposed by the connected Editor.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import struct
 import subprocess
@@ -127,13 +128,23 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-path", type=Path, default=DEFAULT_PROJECT)
+    parser.add_argument(
+        "--reuse-scene",
+        action="store_true",
+        help="Reuse the currently open scene; useful for a prepared URP/HDRP fixture.",
+    )
     args = parser.parse_args()
     project = args.project_path.resolve()
 
-    command(project, "create_scene", path="Assets/MinimalSmoke.unity", template="default")
+    if not args.reuse_scene:
+        command(project, "create_scene", path="Assets/MinimalSmoke.unity", template="default")
     find_exit, find_payload = raw_command(project, "find_gameobjects", name="SmokeSubject")
     if find_exit != 0 or not find_payload.get("success"):
         raise SmokeFailure(f"find_gameobjects failed: {find_payload}")
@@ -234,9 +245,25 @@ def main() -> int:
             "artist.refine",
             "artist.history",
         ],
+        "proof": {
+            "inspect_revision": inspect["revision"],
+            "support": inspect["support"],
+            "plan_id": plan["planId"],
+            "plan_revision": plan["revision"],
+            "exact_diff": plan["exactDiff"],
+            "apply_revision": applied["revision"],
+            "apply_base_revision": applied["baseRevision"],
+            "apply_evidence": applied["evidence"],
+            "capture_id": capture["captureId"],
+            "capture_evidence": capture["evidence"],
+            "evaluation_id": evaluation["evaluationId"],
+            "evaluation_evidence": evaluation["evidence"],
+            "refine_evidence": refined["evidence"],
+        },
         "capture": {
             "path": str(capture_file),
             "bytes": capture_file.stat().st_size,
+            "sha256": sha256_file(capture_file),
             "resolution": f"{width}x{height}",
         },
     }

@@ -143,6 +143,20 @@ namespace DarumaPPAP.UnityArtist
 			{
 				result.targets.Add(Target("playable_director", director, director.enabled));
 			}
+			if (support.renderPipeline == "hdrp")
+			{
+				if (TryFindHdrpFog(false, out Component volume, out object fog, out string reason))
+				{
+					bool enabled = volume is Behaviour behaviour && behaviour.enabled;
+					result.targets.Add(Target("volume", volume, enabled));
+					result.evidence.Add("hdrp_volume_inspection");
+					result.evidence.Add("hdrp_fog_override");
+				}
+				else
+				{
+					result.evidence.Add("hdrp_volume_missing:" + reason);
+				}
+			}
 			result.evidence.Add("visual_art_inspection");
 			result.evidence.Add("pipeline_support_fact");
 			return result;
@@ -182,7 +196,7 @@ namespace DarumaPPAP.UnityArtist
 			result.approvalRequired = true;
 			result.savePerformed = false;
 			result.undoAvailable = true;
-			BuildDiff(result, intent);
+			if (!BuildDiff(result, intent)) return result;
 			result.evidence.Add("visual_direction_plan");
 			result.evidence.Add("exact_diff");
 			result.evidence.Add("expected_revision");
@@ -441,11 +455,18 @@ namespace DarumaPPAP.UnityArtist
 		{
 			if (intent.setFog)
 			{
-				Undo.IncrementCurrentGroup();
-				RenderSettings.fog = true;
-				RenderSettings.fogDensity = Mathf.Clamp(intent.fogDensity, 0.0f, 1.0f);
-				MarkScenesDirty();
-				result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = "observed", after = RenderSettings.fogDensity.ToString("0.####") });
+				if (DetectPipeline() == "hdrp")
+				{
+					if (!ApplyHdrpFog(intent, result)) return false;
+				}
+				else
+				{
+					Undo.IncrementCurrentGroup();
+					RenderSettings.fog = true;
+					RenderSettings.fogDensity = Mathf.Clamp(intent.fogDensity, 0.0f, 1.0f);
+					MarkScenesDirty();
+					result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = "observed", after = RenderSettings.fogDensity.ToString("0.####") });
+				}
 			}
 			if (intent.setLightIntensity)
 			{
@@ -608,16 +629,177 @@ namespace DarumaPPAP.UnityArtist
 
 		private static string CinematicValue(CinematicRequest request) => string.IsNullOrWhiteSpace(request.trackName) ? request.markerTime.ToString("0.###") : request.trackName;
 
-		private static void BuildDiff(ArtistResult result, ArtistIntent intent)
+		private static bool BuildDiff(ArtistResult result, ArtistIntent intent)
 		{
-			if (intent.setFog) result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = RenderSettings.fogDensity.ToString("0.####"), after = Mathf.Clamp(intent.fogDensity, 0.0f, 1.0f).ToString("0.####") });
+			if (intent.setFog && DetectPipeline() == "hdrp")
+			{
+				if (!TryFindHdrpFog(false, out Component volume, out object fog, out string reason))
+				{
+					Error(result, "HDRP_VOLUME_FOG_REQUIRED", reason);
+					return false;
+				}
+				object parameter = GetMemberValue(fog, "meanFreePath");
+				object before = GetMemberValue(parameter, "value");
+				result.exactDiff.Add(new ArtistChange
+				{
+					target = volume.gameObject.name,
+					property = "HDRP.Fog.meanFreePath",
+					before = ValueText(before),
+					after = ValueText(HdrpMeanFreePath(intent.fogDensity))
+				});
+			}
+			else if (intent.setFog)
+			{
+				result.exactDiff.Add(new ArtistChange { target = "RenderSettings", property = "fogDensity", before = RenderSettings.fogDensity.ToString("0.####"), after = Mathf.Clamp(intent.fogDensity, 0.0f, 1.0f).ToString("0.####") });
+			}
 			if (intent.setLightIntensity) result.exactDiff.Add(new ArtistChange { target = intent.targetName ?? string.Empty, property = "intensity", before = "observed", after = Mathf.Max(0.0f, intent.lightIntensity).ToString("0.####") });
 			if (intent.setCameraFieldOfView) result.exactDiff.Add(new ArtistChange { target = intent.targetName ?? string.Empty, property = "fieldOfView", before = "observed", after = Mathf.Clamp(intent.cameraFieldOfView, 1.0f, 179.0f).ToString("0.####") });
+			return true;
 		}
 
 		private static bool HasChange(ArtistIntent intent)
 		{
 			return intent.setFog || intent.setLightIntensity || intent.setCameraFieldOfView;
+		}
+
+		private static bool ApplyHdrpFog(ArtistIntent intent, ArtistResult result)
+		{
+			if (!TryFindHdrpFog(true, out Component volume, out object fog, out string reason))
+			{
+				Error(result, "HDRP_VOLUME_FOG_REQUIRED", reason);
+				return false;
+			}
+
+			UnityEngine.Object fogObject = fog as UnityEngine.Object;
+			Undo.IncrementCurrentGroup();
+			if (volume != null) Undo.RecordObject(volume, "UnityArtistCLI HDRP Volume Fog");
+			if (fogObject != null) Undo.RecordObject(fogObject, "UnityArtistCLI HDRP Volume Fog");
+			object parameter = GetMemberValue(fog, "meanFreePath");
+			object before = GetMemberValue(parameter, "value");
+			float after = HdrpMeanFreePath(intent.fogDensity);
+			if (!SetMemberValue(parameter, "overrideState", true) || !SetMemberValue(parameter, "value", after))
+			{
+				Error(result, "HDRP_FOG_PARAMETER_UNAVAILABLE", "The HDRP Fog.meanFreePath parameter could not be overridden.");
+				return false;
+			}
+			SetMemberValue(fog, "active", true);
+			if (fogObject != null) EditorUtility.SetDirty(fogObject);
+			if (volume != null) EditorUtility.SetDirty(volume);
+			MarkScenesDirty();
+			result.exactDiff.Add(new ArtistChange
+			{
+				target = volume.gameObject.name,
+				property = "HDRP.Fog.meanFreePath",
+				before = ValueText(before),
+				after = ValueText(after)
+			});
+			result.evidence.Add("hdrp_native_volume");
+			result.evidence.Add("hdrp_fog_mean_free_path");
+			return true;
+		}
+
+		private static bool TryFindHdrpFog(bool forApply, out Component volume, out object fog, out string reason)
+		{
+			volume = null;
+			fog = null;
+			reason = string.Empty;
+			Type volumeType = FindType("UnityEngine.Rendering.Volume", "Unity.RenderPipelines.Core.Runtime");
+			Type fogType = FindType("UnityEngine.Rendering.HighDefinition.Fog", "Unity.RenderPipelines.HighDefinition.Runtime");
+			if (volumeType == null || fogType == null)
+			{
+				reason = "The active HDRP project does not expose the Unity Volume and HDRP Fog types.";
+				return false;
+			}
+			volume = SceneObjects(volumeType).OfType<Component>().OrderBy(value => value.gameObject.name).FirstOrDefault();
+			if (volume == null)
+			{
+				reason = "An existing scene Volume with an HDRP Fog component is required for a scoped HDRP fog intent.";
+				return false;
+			}
+			object profile = GetMemberValue(volume, forApply ? "profile" : "profileRef");
+			if (profile == null) profile = GetMemberValue(volume, "sharedProfile");
+			if (profile == null)
+			{
+				reason = "The exact HDRP Volume has no profile; create and assign one before planning fog.";
+				return false;
+			}
+			System.Collections.IEnumerable components = GetMemberValue(profile, "components") as System.Collections.IEnumerable;
+			if (components != null)
+			{
+				foreach (object component in components)
+				{
+					if (component != null && component.GetType() == fogType)
+					{
+						fog = component;
+						break;
+					}
+				}
+			}
+			if (fog == null)
+			{
+				reason = "The exact HDRP Volume profile does not contain a Fog override.";
+				return false;
+			}
+			if (GetMemberValue(fog, "meanFreePath") == null)
+			{
+				reason = "The installed HDRP Fog API does not expose meanFreePath.";
+				return false;
+			}
+			return true;
+		}
+
+		private static Type FindType(string fullName, string assemblyName)
+		{
+			Type direct = Type.GetType(fullName + ", " + assemblyName, false);
+			if (direct != null) return direct;
+			return AppDomain.CurrentDomain.GetAssemblies().Select(assembly => assembly.GetType(fullName, false)).FirstOrDefault(type => type != null);
+		}
+
+		private static IEnumerable<UnityEngine.Object> SceneObjects(Type type)
+		{
+			if (type == null) return Enumerable.Empty<UnityEngine.Object>();
+			return Resources.FindObjectsOfTypeAll(type).Where(value =>
+			{
+				Component component = value as Component;
+				return component != null && component.gameObject.scene.IsValid() && !EditorUtility.IsPersistent(component);
+			});
+		}
+
+		private static object GetMemberValue(object target, string name)
+		{
+			if (target == null) return null;
+			Type type = target.GetType();
+			PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (property != null && property.GetMethod != null) return property.GetValue(target, null);
+			FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			return field == null ? null : field.GetValue(target);
+		}
+
+		private static bool SetMemberValue(object target, string name, object value)
+		{
+			if (target == null) return false;
+			Type type = target.GetType();
+			PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (property != null && property.SetMethod != null)
+			{
+				property.SetValue(target, value, null);
+				return true;
+			}
+			FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (field == null || field.IsInitOnly) return false;
+			field.SetValue(target, value);
+			return true;
+		}
+
+		private static float HdrpMeanFreePath(float fogDensity)
+		{
+			return Mathf.Clamp(1.0f / Mathf.Max(0.0001f, fogDensity), 1.0f, 10000.0f);
+		}
+
+		private static string ValueText(object value)
+		{
+			if (value is float floatValue) return floatValue.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+			return value == null ? string.Empty : Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
 		}
 
 		private static ArtistResult Base(string command, ArtistSupport support)
@@ -717,6 +899,11 @@ namespace DarumaPPAP.UnityArtist
 			for (int index = 0; index < SceneManager.sceneCount; index++) material.Append('|').Append(SceneManager.GetSceneAt(index).path);
 			foreach (Light light in SceneObjects<Light>().OrderBy(value => value.name)) material.Append('|').Append(light.name).Append(':').Append(light.intensity.ToString("R"));
 			foreach (Camera camera in SceneObjects<Camera>().OrderBy(value => value.name)) material.Append('|').Append(camera.name).Append(':').Append(camera.fieldOfView.ToString("R"));
+			if (DetectPipeline() == "hdrp" && TryFindHdrpFog(false, out Component volume, out object fog, out string reason))
+			{
+				object parameter = GetMemberValue(fog, "meanFreePath");
+				material.Append("|hdrp:").Append(volume.gameObject.name).Append(':').Append(ValueText(GetMemberValue(parameter, "value")));
+			}
 			using (SHA256 sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(material.ToString()))).Replace("-", string.Empty).ToLowerInvariant();
 		}
 
