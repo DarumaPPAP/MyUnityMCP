@@ -32,6 +32,16 @@ artist_plugin:
   global_help_command: "unity artist --help --format json --non-interactive"
   global_help_status: blocked_by_official_cli_global_parser
   global_help_reason: "The installed Unity CLI beta returns its top-level help before dispatching the artist plugin command."
+additional_verified_fixtures:
+  unity-6-builtin:
+    evidence_file: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+    editor_version: "6000.6.0f1"
+    pipeline_version: "0.6.0-exp.1"
+    pipeline_install_status: passed
+    connected_command_discovery_status: passed
+    artist_command_count: 9
+    unityagent_provider_e2e_status: passed
+    terminal_state: verified_for_fixture
 fallback_evaluation:
   candidate: unity-cli-loop
   selected: false

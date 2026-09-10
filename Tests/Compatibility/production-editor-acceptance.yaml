@@ -1,21 +1,24 @@
 schema_version: "2.0"
 product: UnityArtistCLI
 release_version: "2.0.0"
-verification_status: blocked_by_environment
+verification_status: partial_verified
 authority: direct_unity_editor
 matrix:
   - { unity_version: "2022.3 LTS", render_pipeline: builtin, status: blocked_by_environment }
-  - { unity_version: "Unity 6.x+", render_pipeline: builtin, status: blocked_by_environment }
+  - { unity_version: "Unity 6.x+", render_pipeline: builtin, status: passed, evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml }
   - { unity_version: "Unity 6.x+", render_pipeline: urp, status: blocked_by_environment }
   - { unity_version: "Unity 6.x+", render_pipeline: hdrp, status: blocked_by_environment }
 official_cli_first_2022_3:
-  status: blocked_by_environment
+  status: failed_concrete_gate
   observed_installed_editor: "2022.3.22f1"
   observed_cli: "1.0.0-beta.8"
-  reason: "No connected licensed Unity Editor or Unity Pipeline instance was available in this environment."
+  reason: "Official Pipeline install returned that the installed Pipeline package requires Unity 6.0 or later; no fallback was selected."
+direct_unity6_builtin_fixture:
+  status: passed
+  evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
 required_evidence:
-  compile_error_count: blocked
-  pipeline_command_discovery: blocked
-  exact_diff_apply_undo: blocked
-  capture_evaluate_refine: blocked
+  compile_error_count: passed_for_unity6_builtin
+  pipeline_command_discovery: passed_for_unity6_builtin
+  exact_diff_apply_undo: passed_for_unity6_builtin
+  capture_evaluate_refine: passed_for_unity6_builtin
   timeline_binding_e2e: blocked

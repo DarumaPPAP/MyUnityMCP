@@ -17,6 +17,15 @@ evaluated and not selected because its documented `execute-dynamic-code` surface
 does not satisfy UnityArtistCLI's no-arbitrary-eval Artist contract. The evidence is
 fixed in `Tests/Compatibility/cli-pipeline-gate-evidence.yaml`.
 
+The same official CLI was then verified against the disposable Unity `6000.6.0f1`
+Built-in fixture with proxy settings disabled. `unity pipeline install` installed
+`com.unity.pipeline` `0.6.0-exp.1`; the live server advertised all nine
+UnityArtistCLI commands. The existing UnityAgent ToolBroker → Resolver → Dispatcher
+→ `unity_artist_cli` Provider path was exercised for inspect, plan, and approval/
+revision-gated apply. The result mapper was hardened to retain nested Editor
+Evidence and redacted plan provenance. The complete fixture record is fixed in
+`Tests/Compatibility/unity6-builtin-e2e-evidence.yaml`.
+
 The four-row release matrix remains unchanged. A future bounded non-MCP fallback
 requires an explicit contract, a real 2022.3 fixture, equivalent approval/scope/
 evidence behavior, and a separate decision.

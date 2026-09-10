@@ -110,3 +110,8 @@ InitTestScene*.unity*
 **/bin/
 **/obj/
 **/__pycache__/
+
+# Disposable UnityArtistCLI verification fixture caches
+/TestProjects/UnityArtistVerification/Library/
+/TestProjects/UnityArtistVerification/Temp/
+/TestProjects/UnityArtistVerification/UserSettings/

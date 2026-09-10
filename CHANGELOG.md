@@ -20,8 +20,9 @@
 
 ### Verification
 
-- Host CLI build and structured command contract are covered by the cutover validators
-- Direct Editor / Unity Pipeline and visual E2E remain environment-gated until a licensed connected Editor is available
+- Host CLI build, structured command contract, and UnityAgent Provider routing are covered by the cutover validators
+- Unity 6000.6.0f1 Built-in direct Editor/Pipeline plus UnityAgent → UnityArtistCLI → Pipeline E2E passed; evidence is fixed in `Tests/Compatibility/unity6-builtin-e2e-evidence.yaml`
+- Unity 2022.3 Built-in remains an explicit Official Pipeline gate failure because the installed Pipeline package requires Unity 6.0 or later; Unity 6 URP/HDRP direct fixtures remain pending
 
 ## [1.1.1] - 2026-09-05
 

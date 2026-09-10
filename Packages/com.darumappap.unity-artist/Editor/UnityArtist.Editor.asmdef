@@ -1,7 +1,9 @@
 {
   "name": "DarumaPPAP.UnityArtist.Editor",
   "rootNamespace": "DarumaPPAP.UnityArtist",
-  "references": [],
+  "references": [
+    "Unity.Pipeline"
+  ],
   "includePlatforms": [
     "Editor"
   ],

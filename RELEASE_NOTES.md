@@ -21,6 +21,6 @@ UnityArtistCLI 2.0.0 moves the current product from the old MCP-first MyUnityMCP
 
 ## Verification status
 
-Host CLI build, structured envelopes, compatibility preflight and static contracts are covered. Direct Editor/Pipeline connection and visual E2E require an available licensed Editor and are recorded as `blocked_by_environment` when unavailable.
+Host CLI build, structured envelopes, compatibility preflight and static contracts are covered. Unity 6000.6.0f1 Built-in direct Editor/Pipeline and UnityAgent Provider E2E passed in the disposable fixture; the evidence is recorded in `Tests/Compatibility/unity6-builtin-e2e-evidence.yaml`. The 2022.3 Pipeline gate is a concrete incompatibility and Unity 6 URP/HDRP direct fixtures remain `blocked_by_environment` until supplied.
 
 MyUnityMCP v1.1.1 and its immutable tag remain available as migration history under `Legacy/MyUnityMCP-1.1.1/`.

@@ -250,10 +250,15 @@ namespace DarumaPPAP.UnityArtist
 			Camera camera = FindCamera(intent == null ? null : intent.captureCameraName);
 			if (camera == null) return Error(result, "CAMERA_NOT_FOUND", "Capture requires an exact camera target or a Main Camera.");
 			string captureId = "artist-capture-" + Guid.NewGuid().ToString("N");
-			string directory = Path.Combine("Library", "UnityArtist", "Captures", captureId);
+			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+			string directory = Path.Combine(projectRoot, "Library", "UnityArtist", "Captures", captureId);
 			Directory.CreateDirectory(directory);
 			string colorPath = Path.Combine(directory, "color.png").Replace('\\', '/');
-			ScreenCapture.CaptureScreenshot(colorPath);
+			string captureError;
+			if (!CaptureCameraFrame(camera, colorPath, out captureError))
+			{
+				return Error(result, "CAPTURE_FAILED", captureError);
+			}
 			result.captureId = captureId;
 			result.verified = true;
 			result.status = "passed";
@@ -267,6 +272,42 @@ namespace DarumaPPAP.UnityArtist
 			captures[captureId] = result;
 			history.Add(captureId);
 			return result;
+		}
+
+		private static bool CaptureCameraFrame(Camera camera, string path, out string error)
+		{
+			error = string.Empty;
+			int width = Mathf.Max(1, camera.pixelWidth);
+			int height = Mathf.Max(1, camera.pixelHeight);
+			RenderTexture previousTarget = camera.targetTexture;
+			RenderTexture previousActive = RenderTexture.active;
+			RenderTexture capture = null;
+			Texture2D texture = null;
+			try
+			{
+				capture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+				capture.Create();
+				camera.targetTexture = capture;
+				camera.Render();
+				RenderTexture.active = capture;
+				texture = new Texture2D(width, height, TextureFormat.RGB24, false, false);
+				texture.ReadPixels(new Rect(0, 0, width, height), 0, 0, false);
+				texture.Apply(false, false);
+				File.WriteAllBytes(path, texture.EncodeToPNG());
+				return File.Exists(path) && new FileInfo(path).Length > 0;
+			}
+			catch (Exception exception)
+			{
+				error = exception.Message;
+				return false;
+			}
+			finally
+			{
+				camera.targetTexture = previousTarget;
+				RenderTexture.active = previousActive;
+				if (texture != null) UnityEngine.Object.DestroyImmediate(texture);
+				if (capture != null) UnityEngine.Object.DestroyImmediate(capture);
+			}
 		}
 
 		public static ArtistResult Evaluate(string captureId, string decision, string notes)

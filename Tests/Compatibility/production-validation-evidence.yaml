@@ -17,9 +17,19 @@ official_cli_pipeline_gate:
   evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
   fallback_selected: false
 direct_editor_validation:
-  status: blocked_by_environment
-  reason: "Licensed connected Unity Editor and reachable Pipeline were not available."
+  status: partial_verified
+  unity6_builtin_fixture:
+    status: passed
+    evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  remaining_matrix_rows:
+    status: blocked_by_environment
+    reason: "The 2022.3 Pipeline gate is a concrete incompatibility and Unity 6 URP/HDRP fixtures were not available."
 e2e:
-  status: blocked_by_environment
+  status: partial_verified
   required_flow: "UnityAgent -> UnityArtistCLI -> Unity/Pipeline -> Capture/Evidence -> review"
-  scenario: "wet dusk courtyard with visual intent, exact diff, before/after capture, timeline and three-shot review"
+  unity6_builtin_fixture:
+    status: passed
+    evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  remaining_scenario:
+    status: blocked_by_environment
+    scenario: "wet dusk courtyard with visual intent, exact diff, before/after capture, timeline and three-shot review across all formal rows"

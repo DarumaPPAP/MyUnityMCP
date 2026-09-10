@@ -14,9 +14,11 @@ editor_verification:
   official_pipeline_gate: failed_concrete
   gate_evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
   fallback_selected: false
-  connected_pipeline: blocked_by_environment
-  compile: blocked_by_environment
-  safety_lifecycle: host_contract_passed_editor_e2e_blocked
+  unity6_builtin_fixture: passed
+  unity6_builtin_evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  connected_pipeline: partial_verified
+  compile: passed_for_unity6_builtin
+  safety_lifecycle: passed_for_unity6_builtin
 unsupported_preflight:
   2022_3_urp: passed
   2022_3_hdrp: passed
