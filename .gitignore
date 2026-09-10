@@ -44,6 +44,7 @@
 ExportedObj/
 .consulo/
 *.csproj
+!src/UnityArtist.Cli/UnityArtist.Cli.csproj
 *.unityproj
 *.sln
 *.slnx
