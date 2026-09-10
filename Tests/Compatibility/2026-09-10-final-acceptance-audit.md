@@ -1,7 +1,7 @@
 # UnityArtistCLI final acceptance audit
 
 Date: 2026-09-11 (JST)
-Audited revision: `migration/unity-artist-cli-v2` local HDRP evidence update
+Audited revision: `b4e5b75` (`migration/unity-artist-cli-v2`)
 Authority: `01_GOAL_AND_DEFINITION_OF_DONE.md`, `08_ACCEPTANCE_AND_TEST_PLAN.md`, `09_CODEX_MASTER_PROMPT.md`, `12_UNITY_VERSION_PIPELINE_SUPPORT.md`, and the repository contracts.
 
 ## Result
