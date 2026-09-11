@@ -24,6 +24,8 @@ Inspect and Plan are read-only. Mutations require an exact diff, current revisio
 
 The UnityArtistCLI adapter must use typed argv, an explicit project path, bounded timeout/cancellation, structured JSON only, and an allowlisted command map. It must not evaluate arbitrary code, mutate serialized assets generically, infer aesthetic decisions, or silently switch transports. The only current fallback is the fixed `official_unity_cli_bounded_batch_fallback` for Unity 2022.3 LTS + Built-in, and it is selectable only after the concrete Official Unity CLI/Pipeline gate failure is recorded.
 
+Project targeting must remain explicit, but production documentation and committed evidence must not contain a developer-machine absolute path. Prefer `--project-path .` from a project root, repository-relative fixture paths, or the task-specific `UNITY_ARTIST_PROJECT_PATH` input. Resolve paths only at the process boundary; record logical fixture paths and executable names in evidence.
+
 ## Official Unity CLI first
 
 The official Unity CLI is the first transport for every supported matrix row, including Unity 2022.3 Built-in. The Pipeline package must be installed and reachable before editor command execution. A fallback is permitted only after a concrete compatibility Gate Failure is recorded with the Unity version, render pipeline, CLI/Pipeline observation, and failure class.
@@ -52,6 +54,8 @@ dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj
 python Tests/Release/verify_unity_artist_contract.py
 python Tests/Compatibility/verify-unity-api-compatibility.py
 ```
+
+`python Tests/Release/verify_portable_paths.py` is the guard against reintroducing account- or machine-specific paths into the production surface.
 
 For C#/asmdef/Unity API changes, keep the package compatibility implementation and EditMode tests in the same change. Direct Editor, License, Pipeline, and visual E2E evidence must be labeled separately from static or host validation.
 

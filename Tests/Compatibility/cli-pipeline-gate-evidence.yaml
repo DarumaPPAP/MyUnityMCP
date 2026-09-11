@@ -6,7 +6,8 @@ status: passed_with_bounded_fallback
 official_first_candidate:
   transport: official_unity_cli_pipeline
   cli:
-    executable: "C:/Users/RengameDskPc0019/AppData/Local/Unity/bin/unity.exe"
+    executable: "unity"
+    executable_resolution: "PATH"
     version: "1.0.0-beta.8"
     identify_editors_command: "unity editors --format json --non-interactive"
     identify_editors_status: passed

@@ -18,6 +18,7 @@ on:
       - Tests/Compatibility/**
       - Tests/Release/**
       - Tests/Routing/**
+      - scripts/**
       - .github/workflows/release-gate.yml
       - .github/workflows/release-tag.yml
   workflow_dispatch: {}
@@ -39,6 +40,7 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check pyyaml
       - run: python3 Tests/Release/verify_unity_artist_contract.py
       - run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
+      - run: python3 Tests/Release/verify_portable_paths.py
       - name: Validate checked-in URP and HDRP evidence contracts
         run: |
           python3 Tests/Compatibility/verify-primary-urp-evidence.py

@@ -11,6 +11,7 @@ on:
       - Tests/**
       - Catalog/**
       - Specs/**
+      - scripts/**
       - .agents/plugins/**
 
 jobs:
@@ -32,6 +33,8 @@ jobs:
         run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
       - name: Validate semantic naming
         run: python3 Tests/Compatibility/verify-semantic-names.py
+      - name: Validate portable production paths
+        run: python3 Tests/Release/verify_portable_paths.py
       - name: Validate minimal smoke runner contract
         run: python3 -m unittest Tests/Minimal/test_minimal_smoke_contract.py
       - name: Validate checked-in URP and HDRP evidence contracts

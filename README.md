@@ -33,6 +33,18 @@ unity artist inspect|plan|preview|apply|capture|evaluate|refine|cinematic|histor
 
 Operational commands require an explicit project path and support `human`, `json`, and `ndjson` output. Mutation follows `Inspect → Plan → Exact Diff → Expected Revision → UnityAgent Approval → Apply → Evidence`; Apply never saves automatically and registers Unity Undo.
 
+Project paths are explicit for safe Editor targeting, but they do not need to be machine-specific absolute paths. Run from the Unity project root with `--project-path .`, or pass a repository-relative path such as `--project-path .\TestProjects\UnityArtistVerification-URP`. For repeatable external verification, the repository-provided script resolves the project and local Release host without changing the system PATH:
+
+```powershell
+# From this repository root; use the current directory when already inside a Unity project.
+.\scripts\verify-external-cli.ps1 -ProjectPath .\TestProjects\UnityArtistVerification-URP
+
+# From a real project root, no absolute user path is required.
+.\path\to\UnityArtistCLI\scripts\verify-external-cli.ps1 -ProjectPath .
+```
+
+The script accepts `UNITY_ARTIST_PROJECT_PATH` and `UNITY_ARTIST_CLI_PATH` when a caller needs configuration outside the current directory. It resolves those values only at the process boundary; committed commands and evidence use logical fixture paths, not a developer's home directory.
+
 UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/build/play/stop/log operations, arbitrary evaluation, generic Addressables/UI/Audio control, or a second Control Plane. Those concerns stay with the official Unity CLI or the existing UnityAgent Provider chain.
 
 ## Release matrix
@@ -61,7 +73,7 @@ python Tests/Compatibility/verify-hdrp-cinematic-evidence.py
 
 実 Editor / License / Pipeline 接続がない環境では、静的契約・CLI parser・unsupported preflight までを検証し、Direct Editor と E2E は `blocked_by_environment` として記録します。未観測を成功に昇格させません。現在は Unity 6 Built-in/URP/HDRP の live evidence と、Unity 2022.3 Built-in の「公式 Pipeline 全列挙版の gate failure → 固定バッチ fallback」evidence を個別の compatibility contract で検証しています。
 
-接続済みのUnity 6 Editorに対する最小ライブ検証は、`python scripts/run_minimal_live_smoke.py` で実行できます。これは一つのCubeとMain Cameraだけを使い、Artistの計画・承認・適用・PNG capture・評価・Refine・履歴を短時間で検証します。結果は `Tests/Compatibility/unity6-builtin-minimal-smoke-evidence.yaml` に記録します。
+接続済みのUnity 6 Editorに対する最小ライブ検証は、`python scripts/run_minimal_live_smoke.py --project-path .\TestProjects\UnityArtistVerification` で実行できます。これは一つのCubeとMain Cameraだけを使い、Artistの計画・承認・適用・PNG capture・評価・Refine・履歴を短時間で検証します。結果は `Tests/Compatibility/unity6-builtin-minimal-smoke-evidence.yaml` に記録します。Editorの対象指定は常に呼び出し側で行い、固定のユーザー別絶対パスを前提にしません。
 
 ## Migration
 
