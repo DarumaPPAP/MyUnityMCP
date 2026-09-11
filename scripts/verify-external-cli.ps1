@@ -22,7 +22,7 @@ function Resolve-HostExecutable {
 
     $candidates = @(
         (Join-Path $repoRoot "src\UnityArtist.Cli\bin\Release\net8.0\unity-artist.exe"),
-        (Join-Path $repoRoot "dist\unity-artist-2.0.0\unity-artist.exe")
+        (Join-Path $repoRoot "dist\unity-artist-0.0.1-beta\unity-artist.exe")
     )
     foreach ($candidate in $candidates) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) {

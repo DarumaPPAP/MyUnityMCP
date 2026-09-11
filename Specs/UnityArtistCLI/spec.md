@@ -1,4 +1,4 @@
-# UnityArtistCLI 2.0.0 Specification
+# UnityArtistCLI 0.0.1-beta Specification
 
 ## Product boundary
 

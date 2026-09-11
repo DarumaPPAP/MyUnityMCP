@@ -1,6 +1,6 @@
 schema_version: "2.0"
 product: UnityArtistCLI
-release_version: "2.0.0"
+release_version: "0.0.1-beta"
 case: unity-6-urp-minimal-smoke
 status: passed
 fixture: TestProjects/UnityArtistVerification-URP

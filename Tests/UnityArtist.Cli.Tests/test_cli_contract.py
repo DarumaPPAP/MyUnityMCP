@@ -35,7 +35,8 @@ class UnityArtistCliContractTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(payload["product"], "UnityArtistCLI")
         self.assertEqual(payload["status"], "passed")
-        self.assertEqual(payload["data"]["version"], "2.0.0")
+        self.assertEqual(payload["data"]["version"], "0.0.1-beta")
+        self.assertEqual(payload["data"]["semanticVersion"], "0.0.1-beta")
 
     def test_help_exposes_artist_surface_and_not_generic_crud(self):
         exit_code, payload = run_cli("help", "--format", "json", "--non-interactive")

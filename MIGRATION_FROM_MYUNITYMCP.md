@@ -1,6 +1,6 @@
 # Migration from MyUnityMCP v1.1.1
 
-This branch introduces UnityArtistCLI 2.0.0 as the current product surface. The published MyUnityMCP v1.1.1 tag remains immutable and its files are retained under `Legacy/MyUnityMCP-1.1.1/` for migration reference.
+This branch introduces UnityArtistCLI 0.0.1-beta as the current product surface. The published MyUnityMCP v1.1.1 tag remains immutable and its files are retained under `Legacy/MyUnityMCP-1.1.1/` for migration reference.
 
 | Former responsibility | Current owner |
 |---|---|

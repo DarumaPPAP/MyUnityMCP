@@ -1,6 +1,6 @@
 {
   "name": "unity-artist",
-  "version": "2.0.0",
+  "version": "0.0.1-beta",
   "description": "Skill-only Codex plugin for UnityArtistCLI visual-art and cinematic workflows.",
   "author": {
     "name": "DarumaPPAP"

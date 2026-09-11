@@ -1,7 +1,7 @@
 schema_version: "2.0"
 kind: unity_artist_release_matrix
 product: UnityArtistCLI
-package_version: "2.0.0"
+package_version: "0.0.1-beta"
 transport: official_unity_cli_pipeline
 fallback_policy: concrete_cli_pipeline_gate_failure_only
 fallback_transport: official_unity_cli_bounded_batch_fallback

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Canonical static contract gate for UnityArtistCLI 2.0.0."""
+"""Canonical static contract gate for UnityArtistCLI 0.0.1-beta."""
 from __future__ import annotations
 
 import json
@@ -79,8 +79,8 @@ def read_yaml(errors: list[str], path: Path) -> dict:
 def check_identity(errors: list[str]) -> None:
     version = VERSION_PATH.read_text(encoding="utf-8").strip() if VERSION_PATH.is_file() else ""
     package = read_json(errors, PACKAGE_PATH)
-    if version != "2.0.0":
-        error(errors, f"VERSION must be 2.0.0, got {version!r}")
+    if version != "0.0.1-beta":
+        error(errors, f"VERSION must be 0.0.1-beta, got {version!r}")
     if package.get("name") != "com.darumappap.unity-artist":
         error(errors, "current package name is not com.darumappap.unity-artist")
     if package.get("version") != version:
@@ -168,8 +168,8 @@ def check_catalog(errors: list[str]) -> None:
     surface = read_yaml(errors, SURFACE_PATH)
     if catalog.get("product") != "UnityArtistCLI" or surface.get("product") != "UnityArtistCLI":
         error(errors, "Catalog product identity is not UnityArtistCLI")
-    if catalog.get("release_version") != "2.0.0" or surface.get("release_version") != "2.0.0":
-        error(errors, "Catalog release version is not 2.0.0")
+    if catalog.get("release_version") != "0.0.1-beta" or surface.get("release_version") != "0.0.1-beta":
+        error(errors, "Catalog release version is not 0.0.1-beta")
     if surface.get("commands") and set(surface["commands"]) != REQUIRED_COMMANDS:
         error(errors, "production surface command set disagrees with CLI contract")
     if surface.get("mcp_transport") is not False or surface.get("second_player_framework") is not False:
@@ -181,7 +181,7 @@ def check_plugins(errors: list[str]) -> None:
         value = read_json(errors, manifest)
         if value.get("name") != "unity-artist":
             error(errors, f"plugin manifest has wrong name: {manifest.relative_to(ROOT)}")
-        if value.get("version") != "2.0.0":
+        if value.get("version") != "0.0.1-beta":
             error(errors, f"plugin manifest version mismatch: {manifest.relative_to(ROOT)}")
     if any(path.name == ".mcp.json" for path in PLUGIN_ROOT.rglob("*")):
         error(errors, "UnityArtist plugin must not contain .mcp.json")

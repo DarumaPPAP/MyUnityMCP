@@ -1,6 +1,6 @@
-# UnityArtistCLI 2.0.0
+# UnityArtistCLI 0.0.1-beta
 
-UnityArtistCLI 2.0.0 moves the current product from the old MCP-first MyUnityMCP surface to an official Unity CLI + Unity Pipeline Artist specialist.
+UnityArtistCLI 0.0.1-beta moves the current product from the old MCP-first MyUnityMCP surface to an official Unity CLI + Unity Pipeline Artist specialist.
 
 ## Production surface
 

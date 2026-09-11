@@ -1,6 +1,6 @@
 schema_version: "2.0"
 product: UnityArtistCLI
-release_version: "2.0.0"
+release_version: "0.0.1-beta"
 production_ready: false
 terminal_state: partial_verified
 host_validation:

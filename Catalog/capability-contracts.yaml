@@ -2,7 +2,7 @@ schema_version: "2.0"
 kind: unity_artist_capability_contracts
 authority: current_production
 product: UnityArtistCLI
-release_version: "2.0.0"
+release_version: "0.0.1-beta"
 principles:
   progressive_disclosure: true
   explicit_activation_required: true

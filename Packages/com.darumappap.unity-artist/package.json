@@ -1,6 +1,6 @@
 {
   "name": "com.darumappap.unity-artist",
-  "version": "2.0.0",
+  "version": "0.0.1-beta",
   "displayName": "UnityArtistCLI",
   "description": "CLI-first Unity visual-art workflows for LookDev, Lighting, Environment, Camera, Cinematic, Timeline, Capture, Evaluation and Refine.",
   "dependencies": {},

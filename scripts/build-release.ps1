@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$OutputRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) "dist\unity-artist-2.0.0"))
+param([string]$OutputRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) "dist\unity-artist-0.0.1-beta"))
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
