@@ -45,6 +45,10 @@ jobs:
           mkdir -p artifacts
           (cd Packages/com.darumappap.unity-artist && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
           (cd artifacts && sha256sum *.zip *.tgz > SHA256SUMS.txt)
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Create immutable tag
         env:
           REQUESTED_TAG: ${{ inputs.tag }}
