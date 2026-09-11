@@ -1,74 +1,59 @@
-schema_version: "1.6"
-record: production_validation_evidence
-status: editor_operational
-recorded_at: "2026-08-13"
-production_ready: true
-release_version: "1.1.0"
-production_tools: 77
-previous_verified_baseline_tools: 45
-expanded_domain_tools: 32
-
-composition:
-  graphics: 32
-  agent: 10
-  world_creator: 3
-  profiler: 8
-  addressables: 4
-  ui: 5
-  animation: 5
-  audio: 5
-  cinematic: 5
-
-validation_environment:
-  authority: direct_unity_editor_validation
-  unity: 6000.7.0a2
-  evidence: Tests/Compatibility/production-editor-acceptance.yaml
-  target_device_claim: false
-
+schema_version: "2.0"
+product: UnityArtistCLI
+release_version: "0.0.1-beta"
+production_ready: false
+terminal_state: partial_verified
+host_validation:
+  cli_build: passed
+  cli_version_json: passed
+  cli_help_json: passed
+  cli_global_help_flag: blocked_by_official_cli_global_parser
+  cli_capabilities_json: passed
+  unsupported_preflight: passed
+  provider_registry_contract: passed
+  plugin_manifest_contract: passed
+official_cli_pipeline_gate:
+  status: failed_concrete
+  evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
+  fallback_selected: true
+  fallback_transport: official_unity_cli_bounded_batch_fallback
+  fallback_evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
 direct_editor_validation:
-  compile_errors: 0
-  runtime_discovery:
-    total_my_unity_mcp_tools: 77
-    duplicate_tool_names: 0
-    source_only_tools: 0
-    runtime_only_tools: 0
-  passed:
-    - extended_domain_readonly_smoke
-    - stale_revision_rejection
-    - approval_boundary_rejection
-    - one_time_plan_reuse_rejection
-    - profiler_capture
-    - ui_animation_audio_cinematic_scoped_mutation_e2e
-    - addressables_package_absent_boundary
-    - agent_operational_routing
-    - delegated_failure_propagation
-    - cancellation_timeout_domain_reload_callbacks
-    - cross_domain_workflow
-    - previous_production_45_regression
-
-automated_ci:
-  role: supplemental
-  status: unavailable_not_verified
-  executed_code_failure: false
-  observed_behavior: steps_null_before_runner_execution
-  required_for_product_acceptance: false
-
-not_verified_non_blocking:
-  - package_editor_test_runner
-  - automated_ci
-  - addressables_positive_backend_matrix
-  - external_transport_disconnect_reconnect
-  - target_device_validation
-
-verdict:
-  production_surface_validation: passed_direct_editor
-  production_77_tool_surface: accepted
-  production_ready: true
-  automated_ci: unavailable_not_verified
-  target_device_validation: not_verified_not_required_for_editor_only_release
-
-excluded_from_current_surface:
-  - unity_build_mcp
-  - addressables_content_build
-  - movie_creator_runtime
-  - live_creator_runtime
+  status: verified
+  unity6_builtin_fixture:
+    status: passed
+    evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_fixture:
+    status: passed
+    evidence:
+      - Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+      - Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+  unity6_hdrp_fixture:
+    status: passed
+    evidence:
+      - Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
+      - Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
+  unity2022_3_builtin_fallback:
+    status: passed
+    evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
+e2e:
+  status: verified
+  required_flow: "UnityAgent -> UnityArtistCLI -> Unity/Pipeline -> Capture/Evidence -> review"
+  unity6_builtin_fixture:
+    status: passed
+    evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_primary_visual:
+    status: passed
+    evidence: Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+  unity6_urp_cinematic:
+    status: passed
+    evidence: Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+  unity6_hdrp_primary_visual:
+    status: passed
+    evidence: Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
+  unity6_hdrp_cinematic:
+    status: passed
+    evidence: Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
+  unity2022_3_builtin_bounded_fallback:
+    status: passed
+    evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml

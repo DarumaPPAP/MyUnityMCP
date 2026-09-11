@@ -1,110 +1,38 @@
-schema_version: "1.2"
-release_version: "1.1.1"
-verification_status: passed
-
-required_gates:
-  direct_unity_editor_primary: baseline_v1_1_0_passed
-  current_unity_editor_ci: passed
-  unity_editor_compile: passed_current_release_pr
-  exact_tool_discovery_77: passed_current_release_pr
-  duplicate_tool_names_zero: passed_current_release_pr
-  readonly_domain_smoke: baseline_passed
-  safety_contract: passed_current_release_pr
-  scoped_mutation_e2e: baseline_passed
-  agent_routing_and_failure_propagation: passed_current_release_pr
-  cross_domain_workflow: baseline_passed
-  previous_production_45_regression: passed_current_release_pr
-  capability_contract: passed_current_release_pr
-  production_surface_contract: passed_current_release_pr
-  release_contract: passed_current_release_pr
-  distribution_build: passed_current_release_pr
-  automated_ci: passed_current_release_pr
-  support_matrix_documented: true
-  known_issues_preserved: true
-  version_manifest_changelog_aligned: true
-  temporary_release_assets_removed: true
-
-editor_verification:
-  authority: direct_unity_editor_validation_baseline_plus_current_pr_ci
-  evidence: Tests/Compatibility/production-editor-acceptance.yaml
-  baseline_release: "1.1.0"
-  baseline_unity_version: "6000.7.0a2"
-  baseline_result: passed
-  current_release_ci_unity_version: "6000.0.75f1"
-  current_release_result: passed
-  tool_discovery: 77
-  duplicate_tool_names: 0
-
-compatibility_evidence:
-  minimum_unity: "6000.0"
-  unity_6000_4:
-    unity_version: "6000.4.12f1"
-    historical_editor_ci: passed
-    current_release_ci: passed
-    evidence_artifact_id: 9090981750
-  unity_6000_5:
-    unity_version: "6000.5.5f1"
-    historical_editor_ci: passed
-    current_release_ci: passed
-    evidence_artifact_id: 9090985384
-  unity_6000_7:
-    unity_version: "6000.7.0a2"
-    direct_editor_validation: passed_baseline_v1_1_0
-    current_automated_canary: unavailable_not_verified_gameci_image
-
+schema_version: "2.0"
+product: UnityArtistCLI
+release_version: "0.0.1-beta"
+verification_status: partial_verified
+terminal_state: partial_verified
 operational_surface:
-  contract: Catalog/production-surface-contract.yaml
-  validation_evidence: Tests/Compatibility/production-validation-evidence.yaml
-  total_tools: 77
-  composition:
-    graphics: 32
-    agent: 10
-    world_creator: 3
-    profiler: 8
-    addressables: 4
-    ui: 5
-    animation: 5
-    audio: 5
-    cinematic: 5
-  excluded:
-    - unity_build_mcp
-    - addressables_content_build
-    - movie_creator_runtime
-    - live_creator_runtime
-
-supplemental_evidence:
-  automated_ci:
-    status: passed_current_release_pr
-    runner_steps_started: true
-    code_failure_claimed: false
-  package_editor_test_runner: passed_current_release_pr
-  addressables_positive_backend_matrix: not_verified
-  external_transport_disconnect_reconnect: not_verified
-  target_device_validation: not_verified_not_required_for_editor_only_release
-
-release_distribution:
-  package: com.darumappap.my-unity-mcp-1.1.1.tgz
-  templates: MyUnityMCP-Templates-1.1.1.zip
-  checksums: SHA256SUMS.txt
-  artifact_status: build_from_immutable_release_source_at_publication
-
-release_identity:
-  release_commit: resolved_from_main_at_publication
-  tag: v1.1.1
-  release_channel: stable
-  published_tag_policy: immutable
-  published_tag_move_allowed: false
-  tag_must_point_to_published_release_commit: true
-  main_must_point_to_release_commit_at_publication: true
-  main_may_advance_after_publication: true
-  existing_tag_rerun_source: tagged_commit
-  future_product_change_requires_new_version: true
-  publication_triggers:
-    - workflow_dispatch
-    - guarded_issue_comment
-  issue_comment_command: /publish-myunitymcp-release
-  human_release_gate: satisfied_by_explicit_user_request
-  allowed_comment_associations:
-    - OWNER
-    - MEMBER
-    - COLLABORATOR
+  commands: 14
+  package: com.darumappap.unity-artist
+  executable: unity-artist
+  generic_operations: delegated
+editor_verification:
+  transport: official_unity_cli_pipeline
+  2022_3_builtin_first_candidate: true
+  official_pipeline_gate: failed_concrete
+  gate_evidence: Tests/Compatibility/cli-pipeline-gate-evidence.yaml
+  fallback_selected: true
+  fallback_transport: official_unity_cli_bounded_batch_fallback
+  fallback_evidence: Tests/Compatibility/unity2022-3-builtin-bounded-fallback-evidence.yaml
+  unity6_builtin_fixture: passed
+  unity6_builtin_evidence: Tests/Compatibility/unity6-builtin-e2e-evidence.yaml
+  unity6_urp_fixture: passed
+  unity6_urp_primary_evidence: Tests/Compatibility/unity6-urp-primary-visual-evidence.yaml
+  unity6_urp_cinematic_evidence: Tests/Compatibility/unity6-urp-cinematic-evidence.yaml
+  unity6_hdrp_fixture: passed
+  unity6_hdrp_primary_evidence: Tests/Compatibility/unity6-hdrp-primary-visual-evidence.yaml
+  unity6_hdrp_cinematic_evidence: Tests/Compatibility/unity6-hdrp-cinematic-evidence.yaml
+  connected_pipeline: passed_for_unity6_builtin
+  2022_3_bounded_batch: passed
+  compile: passed_for_unity6_builtin_and_2022_3_bounded_batch
+  safety_lifecycle: passed_for_unity6_builtin_and_2022_3_bounded_batch
+unsupported_preflight:
+  2022_3_urp: passed
+  2022_3_hdrp: passed
+  unity_2023: passed
+legacy:
+  product: MyUnityMCP
+  version: "1.1.1"
+  immutable_tag_required: true

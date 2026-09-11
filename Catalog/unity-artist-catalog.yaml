@@ -1,0 +1,62 @@
+schema_version: "2.0"
+kind: unity_artist_capability_catalog
+authority: current_production
+product: UnityArtistCLI
+release_version: "0.0.1-beta"
+package: com.darumappap.unity-artist
+executable: unity-artist
+transport: official_unity_cli_pipeline
+editor_bridge: com.unity.pipeline
+fallback_transport: official_unity_cli_bounded_batch_fallback
+fallback_policy: concrete_cli_pipeline_gate_failure_only
+
+capabilities:
+  visual_art:
+    status: editor_operational
+    workflows: [inspect, lookdev_refine, lighting, environment, camera, capture, evaluate, refine]
+    owner: unity_artist_cli
+  cinematic:
+    status: editor_operational
+    workflows: [timeline, shot, binding, marker, signal, activation, control, animation]
+    owner: unity_artist_cli
+
+commands:
+  - help
+  - version
+  - doctor
+  - capabilities
+  - install
+  - inspect
+  - plan
+  - preview
+  - apply
+  - capture
+  - evaluate
+  - refine
+  - cinematic
+  - history
+
+delegated_generic_operations:
+  - project.inspect
+  - project.test
+  - project.build
+  - compile.observe
+  - editor.status
+  - pipeline.install
+  - command.discovery
+
+forbidden_surface:
+  - generic_gameobject_crud
+  - generic_hierarchy_crud
+  - arbitrary_eval
+  - automatic_save
+  - automatic_full_bake
+  - silent_fallback
+  - new_player_framework
+  - mcp_transport
+
+legacy_reference:
+  product: MyUnityMCP
+  version: "1.1.1"
+  path: Legacy/MyUnityMCP-1.1.1
+  production_enabled: false

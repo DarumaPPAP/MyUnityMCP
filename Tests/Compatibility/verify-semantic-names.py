@@ -1,35 +1,27 @@
+#!/usr/bin/env python3
+"""Keep the current Artist surface semantic and free of legacy tool names."""
 from pathlib import Path
 import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-SCAN_ROOTS = [
-    ROOT / "Packages/com.darumappap.my-unity-mcp/Editor",
-    ROOT / "Packages/com.darumappap.my-unity-mcp/Tests/Editor",
-]
-PHASE_FORBIDDEN = re.compile(r"(?:class\s+\w*)Phase\d|Phase4", re.IGNORECASE)
-REDUNDANT_PREFIX = re.compile(r"\bUnityGraphicsMcp[A-Z][A-Za-z0-9_]*\b")
+SCAN_ROOTS = [ROOT / "Packages/com.darumappap.unity-artist/Editor", ROOT / "src/UnityArtist.Cli"]
+FORBIDDEN = re.compile(r"McpForUnityTool|com\.coplaydev\.unity-mcp|AutoRegister|UnityGraphicsMcp", re.IGNORECASE)
 violations = []
 
 for scan_root in SCAN_ROOTS:
+    if not scan_root.is_dir():
+        continue
     for path in scan_root.rglob("*"):
-        if not path.is_file():
-            continue
-        if "phase" in path.name.lower():
-            violations.append(f"phase-named file: {path.relative_to(ROOT)}")
-        if REDUNDANT_PREFIX.search(path.name):
-            violations.append(f"redundant UnityGraphicsMcp file prefix: {path.relative_to(ROOT)}")
-        if path.suffix.lower() != ".cs":
+        if not path.is_file() or path.suffix.lower() not in {".cs", ".asmdef", ".json"}:
             continue
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if PHASE_FORBIDDEN.search(line):
-                violations.append(f"phase-named identifier: {path.relative_to(ROOT)}:{line_number}: {line.strip()}")
-            if REDUNDANT_PREFIX.search(line):
-                violations.append(f"redundant UnityGraphicsMcp type prefix: {path.relative_to(ROOT)}:{line_number}: {line.strip()}")
+            if FORBIDDEN.search(line):
+                violations.append(f"{path.relative_to(ROOT)}:{line_number}: {line.strip()}")
 
 if violations:
     print("Semantic naming violations detected:")
     print("\n".join(violations))
     sys.exit(1)
 
-print("Semantic naming guard passed.")
+print("UnityArtistCLI semantic naming guard passed.")

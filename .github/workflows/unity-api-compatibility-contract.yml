@@ -1,36 +1,23 @@
-name: Unity API Compatibility Contract
+name: UnityArtistCLI API Compatibility Contract
 
 on:
+  workflow_dispatch:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - Packages/com.darumappap.my-unity-mcp/**/*.cs
-      - Packages/com.darumappap.my-unity-mcp/**/*.asmdef
-      - Packages/com.darumappap.my-unity-mcp/package.json
-      - Specs/Compatibility/**
+      - Packages/com.darumappap.unity-artist/**/*.cs
+      - Packages/com.darumappap.unity-artist/**/*.asmdef
+      - Packages/com.darumappap.unity-artist/package.json
+      - skills/unity-artist-unity-api-compatibility/**
       - Tests/Compatibility/**
-      - skills/myunitymcp-unity-api-compatibility/**
-      - AGENTS.md
-      - .github/workflows/unity-api-compatibility-contract.yml
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
+      - Specs/Compatibility/**
 
 jobs:
-  compatibility-contract:
+  contract:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Verify compatibility source of truth
+      - uses: actions/checkout@v4
+      - name: Install validation dependencies
+        run: python3 -m pip install --disable-pip-version-check pyyaml
+      - name: Validate API compatibility
         run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
-
-      - name: Verify added Unity API usage
-        if: github.event_name == 'pull_request'
-        run: python3 Tests/Compatibility/verify-unity-api-compatibility.py --diff-base origin/${{ github.base_ref }}

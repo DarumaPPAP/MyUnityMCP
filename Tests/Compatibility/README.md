@@ -1,17 +1,7 @@
-# Compatibility Evidence
+# UnityArtistCLI Compatibility Evidence
 
-## Current v1.1.0 Sources of Truth
+The Unity 6 URP primary visual scenario is recorded in `unity6-urp-primary-visual-evidence.yaml` and validated by `verify-primary-urp-evidence.py`. The Unity 6 HDRP primary visual scenario is recorded in `unity6-hdrp-primary-visual-evidence.yaml` and validated by `verify-hdrp-primary-evidence.py`. Both use Official Pipeline-authored courtyard fixtures, pipeline-native Volume evidence, before/after captures, a needs-refine review, a guarded refinement, and an accepted final review. Capture PNGs remain local fixture artifacts; their paths and SHA-256 digests are recorded in the evidence files.
 
-- `production-editor-acceptance.yaml`: Unity `6000.7.0a2` Direct EditorでのExact 77 Tool Acceptance Evidence
-- `production-validation-evidence.yaml`: 現行77 ToolのValidation結果と残存`not_verified`範囲
-- `editor-first-verification-policy.yaml`: Direct Unity Editor Primary / CI SupplementalのVerification Authority
-- `support-matrix.yaml`: 現行77 Tool Support Contract
-- `release-verification.yaml`: v1.1.0 Stable Release Evidence
+`support-matrix.yaml` is the authoritative four-row release matrix. `production-editor-acceptance.yaml` records Direct Editor evidence; `production-validation-evidence.yaml` records host/static and E2E evidence; `release-verification.yaml` records the release audit; `cli-pipeline-gate-evidence.yaml` records the concrete 2022.3 first-candidate gate result and `verify-cli-pipeline-gate-evidence.py` checks that every currently listed official version was actually probed.
 
-現在のOperational / Release状態は、上記Current EvidenceとManifest / Catalogを正本として判定します。
-
-## Historical State
-
-過去Releaseや過去Tool SurfaceのEvidenceは、current `main` に重複保存せず、Git historyと公開済みimmutable release tagsで参照します。過去RecordのRun ID、Artifact ID、当時のTool Countを現在状態の判定根拠には使用しません。
-
-GitHub Actions runnerがStep実行前に停止した場合は`not_verified`です。Direct Unity Editor PASSはPrimary Evidenceですが、Target Device PASSや未実行CI PASSとしては扱いません。
+The official Unity CLI + Unity Pipeline is the first candidate for Unity 2022.3 Built-in as well as Unity 6 Built-in/URP/HDRP. The current host has Unity 2022.3.22f1, Unity 6000.6.0f1, and Unity CLI 1.0.0-beta.8 installed. The 2022.3 Pipeline install command returned the concrete failure that the installed Pipeline package requires Unity 6.0 or later; the fixed `official_unity_cli_bounded_batch_fallback` was then verified against the disposable Built-in fixture. Its lifecycle, safety guard, 1920×1080 capture, review, refinement, and history evidence are recorded in `unity2022-3-builtin-bounded-fallback-evidence.yaml`. The shortest connected-editor check is `scripts/run_minimal_live_smoke.py --project-path .\TestProjects\UnityArtistVerification`; its Unity 6 Built-in result is recorded in `unity6-builtin-minimal-smoke-evidence.yaml`. The same runner supports `--reuse-scene` for prepared URP/HDRP fixtures. For CLI help, host resolution, and a read-only Editor inspect without a machine-specific path, use `scripts/verify-external-cli.ps1 -ProjectPath .\TestProjects\UnityArtistVerification-URP`. The full Unity 6 URP and HDRP Cinemachine/Timeline acceptance results are recorded in their corresponding evidence files and validated by their dedicated verifiers. The fuller Unity 6 Built-in evidence is in `unity6-builtin-e2e-evidence.yaml`; no release-matrix row remains unverified by direct evidence on this host.

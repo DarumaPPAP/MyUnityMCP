@@ -1,4 +1,4 @@
-name: MyUnityMCP Release Gate
+name: UnityArtistCLI Release Gate
 
 on:
   pull_request:
@@ -10,18 +10,21 @@ on:
       - RELEASE_NOTES.md
       - Catalog/**
       - Design/**
-      - Packages/com.darumappap.my-unity-mcp/**
+      - Packages/com.darumappap.unity-artist/**
+      - src/UnityArtist.Cli/**
+      - .agents/plugins/**
       - Templates/**
       - Specs/**
       - Tests/Compatibility/**
       - Tests/Release/**
       - Tests/Routing/**
+      - scripts/**
       - .github/workflows/release-gate.yml
       - .github/workflows/release-tag.yml
   workflow_dispatch: {}
 
 concurrency:
-  group: myunitymcp-release-${{ github.head_ref || github.ref }}
+  group: unity-artist-release-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,16 +33,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Install contract validator dependencies
         run: python3 -m pip install --disable-pip-version-check pyyaml
-      - run: python3 Tests/Release/verify_repository_hygiene.py
-      - run: python3 Tests/Release/verify_source_of_truth_consistency.py
-      - run: python3 Tests/Release/verify_capability_contract.py
-      - run: python3 Tests/Release/verify_production_surface_contract.py
-      - run: python3 Tests/Release/verify_agent_runtime_catalog.py
-      - run: python3 Tests/Release/verify_agent_safety_contract.py
-      - run: python3 Tests/Release/verify_release_contract.py --mode pr
-      - run: python3 Tests/Release/verify_immutable_release_workflow.py
+      - run: python3 Tests/Release/verify_unity_artist_contract.py
+      - run: python3 Tests/Compatibility/verify-unity-api-compatibility.py
+      - run: python3 Tests/Release/verify_portable_paths.py
+      - run: python3 Tests/Release/verify_remote_installer_contract.py
+      - name: Validate checked-in URP and HDRP evidence contracts
+        run: |
+          python3 Tests/Compatibility/verify-primary-urp-evidence.py
+          python3 Tests/Compatibility/verify-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-primary-evidence.py
+          python3 Tests/Compatibility/verify-hdrp-cinematic-evidence.py
+          python3 Tests/Compatibility/verify-cli-pipeline-gate-evidence.py
+      - name: Build host CLI
+        run: dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj --configuration Release
       - name: Resolve preview version
         id: preview-version
         shell: bash
@@ -50,11 +61,11 @@ jobs:
           set -euo pipefail
           version="${{ steps.preview-version.outputs.version }}"
           mkdir -p artifacts
-          (cd Packages/com.darumappap.my-unity-mcp && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
-          zip -qr "artifacts/MyUnityMCP-Templates-${version}.zip" Templates
+          (cd Packages/com.darumappap.unity-artist && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
+          zip -qr "artifacts/UnityArtistCLI-Templates-${version}.zip" Templates
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: MyUnityMCP-v${{ steps.preview-version.outputs.version }}-Distribution-Preview
+          name: UnityArtistCLI-v${{ steps.preview-version.outputs.version }}-Distribution-Preview
           path: artifacts
           retention-days: 14

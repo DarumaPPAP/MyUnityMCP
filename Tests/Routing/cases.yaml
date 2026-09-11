@@ -1,191 +1,50 @@
-version: 1
+version: 2
+authority: UnityAgent semantic routing
 cases:
-  - id: MYMCP-ROUTE-001
-    prompt: "華やかなアイドルライブを作って。キャラを背景に埋もれさせないで。"
-    expected_primary_kind: creator
-    expected_primary: live_creator
-    expected_required_domains:
-      - unity_graphics_mcp
-      - unity_cinematic_mcp
-    expected_initial_tool_groups:
-      - inspect
-      - plan
-    must_not_expose:
-      - mutate
-      - bake
-    must_not_load:
-      - package_source
-      - every_domain_manifest
-
-  - id: MYMCP-ROUTE-002
-    prompt: "このSceneのLightmapとProbe構成を変更せずに調査して。"
-    expected_primary_kind: domain
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - inspect
-    must_not_load:
-      - live_creator
-      - movie_creator
-      - package_source
-
-  - id: MYMCP-ROUTE-003
-    prompt: "このShaderのCompile Errorを直して。"
-    expected_primary: none
-    reason: "Shader-only作業は現在のMyUnityMCP Domain範囲外でありUnityAgent既存Routeを使用する。"
-    must_not_load:
-      - unity_graphics_mcp
-      - creator_workflows
-
-  - id: MYMCP-ROUTE-004
-    prompt: "承認済みPlanをSceneへ適用して。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - mutate
-    requires:
-      - approved_plan
-      - expected_revision
-      - explicit_mutation_permission
+  - id: ARTIST-ROUTE-001
+    prompt: "夕暮れの中庭のLookDevを作り、光と霧を調整して比較したい。"
+    expected_primary_route: artist-lookdev
+    expected_capabilities:
+      - project.inspect
+      - domain.workflow
+      - visual.capture
+    expected_qualifiers:
+      domain: visual_art
+      workflows:
+        - lookdev_refine
+        - capture
+    must_not_select_as_production_provider:
+      - myunitymcp
+    required_evidence:
+      - visual_direction_plan
       - exact_diff
-      - undo_contract
-      - baseline_revalidation
-    success_evidence:
-      - applied_diff
-      - resulting_revision
-      - undo_record
-      - mutation_validation_result
-    must_not:
-      - automatic_save
-      - automatic_bake
-      - mutate_outside_approved_scope
+      - expected_revision
+      - visual_capture
 
-  - id: MYMCP-ROUTE-005
-    prompt: "変更でDirtyになったLightingだけBakeして。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - bake
-    requires:
-      - explicit_bake_permission
-      - dirty_dependency_set
-      - bake_scope
-    success_evidence:
-      - bake_scope_executed
-      - bake_result_status
-      - remaining_dirty_dependencies
-    must_not:
-      - unconditional_full_bake
-      - automatic_save_without_permission
+  - id: ARTIST-ROUTE-002
+    prompt: "三つのCinemachine ShotとTimeline Markerを含む短いカットのPlanを作る。"
+    expected_primary_route: artist-cinematic
+    expected_capabilities:
+      - project.inspect
+      - domain.workflow
+      - visual.capture
+    expected_qualifiers:
+      domain: cinematic
+      workflows:
+        - cinematic
+        - capture
+    must_not_select_as_production_provider:
+      - myunitymcp
+    required_evidence:
+      - cinematic_plan
+      - timeline_evidence
+      - camera_binding
 
-  - id: MYMCP-ROUTE-006
-    prompt: "映画的な8秒の振り返りカットを作るPlanを出して。"
-    expected_primary_kind: creator
-    expected_primary: movie_creator
-    expected_required_domains:
-      - unity_graphics_mcp
-      - unity_cinematic_mcp
-    expected_initial_tool_groups:
-      - inspect
-      - plan
-    must_not_expose:
-      - mutate
-      - bake
-
-  - id: MYMCP-ROUTE-007
-    prompt: "参考画像に合わせたScene Planを作って。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - inspect
-      - plan
-    must_not_load:
-      - package_source
-      - unselected_tool_schemas
-      - unrelated_domain_knowledge
-
-  - id: MYMCP-ROUTE-008
-    prompt: "さっき承認して適用したMaterial変更だけ保存して。Bakeはしないで。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - save
-    requires:
-      - explicit_save_permission
-      - known_dirty_assets
-      - current_revision
-    success_evidence:
-      - saved_asset_set
-      - resulting_revision
-      - remaining_dirty_assets
-    must_not:
-      - save_unrelated_assets
-      - automatic_bake
-      - automatic_full_project_save
-
-  - id: MYMCP-ROUTE-009
-    prompt: "変更後のGame ViewをCaptureして。Captureできたら自動的に見た目OKにはしないで。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - capture
-    requires:
-      - capture_target
-      - capture_conditions
-    success_evidence:
-      - capture_artifact
-      - capture_conditions
-      - source_revision
-    must_not:
-      - claim_visual_acceptance
-      - mutate_scene_to_make_capture_pass
-      - replace_runtime_validation_with_screenshot
-
-  - id: MYMCP-ROUTE-010
-    prompt: "Captureと計測結果をAcceptance Criteriaに照らして評価して。足りないEvidenceは足りないまま報告して。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - evaluate
-    requires:
-      - evidence_set
-      - acceptance_criteria
-    success_evidence:
-      - evaluation_findings
-      - passed_failed_unavailable_status
-      - missing_evidence
-    must_not:
-      - infer_missing_evidence
-      - convert_capture_success_into_visual_acceptance
-      - claim_target_device_success_from_editor_only_evidence
-
-  - id: MYMCP-ROUTE-011
-    prompt: "実機検証環境が今ないけど、Editorで通ったから実機もpassed扱いにして。"
-    expected_primary: unity_graphics_mcp
-    expected_tool_groups:
-      - evaluate
-    expected_status: unavailable
-    requires:
-      - evidence_set
-      - acceptance_criteria
-    must_not:
-      - reinterpret_unavailable_as_success
-      - claim_target_device_success_from_editor_only_evidence
-    reason: "Capability-independent validationでは未利用環境をpassedへ昇格しない。"
-
-  - id: MYMCP-ROUTE-012
-    prompt: "このSceneを森の遺跡っぽいWorldにしたい。まず現状を壊さずに調べて、制作前レビューまで作って。"
-    expected_primary_kind: creator
-    expected_primary: world_creator
-    expected_required_domains:
-      - unity_graphics_mcp
-    expected_initial_tools:
-      - world.compile_workflow
-      - world.start_preflight
-      - world.create_review_handoff
-    delegated_preflight_tools:
-      - graphics.inspect_project
-      - graphics.inspect_scene
-      - graphics.validate_scene
-    requires:
-      - current_revision
-      - visual_goal
-      - human_review_handoff
-    must_not:
-      - direct_unity_mutation
-      - automatic_save
-      - automatic_bake
-      - automatic_visual_acceptance
+  - id: GENERIC-DELEGATION-001
+    prompt: "このProjectをCompileしてTestする。"
+    expected_primary_route: generic-planning
+    expected_provider_family: unity_cli_or_native_editor
+    must_not_route_to_artist_command:
+      - compile
+      - test
+      - build

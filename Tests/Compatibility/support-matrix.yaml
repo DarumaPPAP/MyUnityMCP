@@ -1,210 +1,49 @@
-schema_version: "1.3"
-package_version: "1.1.1"
-source_channel: v1_1_1_release
-
-release_surface:
-  status: release_ready
-  production_tool_count: 77
-  contract: Catalog/production-surface-contract.yaml
-  composition:
-    graphics: 32
-    agent: 10
-    world_creator: 3
-    profiler: 8
-    addressables: 4
-    ui: 5
-    animation: 5
-    audio: 5
-    cinematic: 5
-  excluded:
-    - unity_build_mcp
-    - addressables_content_build
-    - movie_creator_runtime
-    - live_creator_runtime
-
+schema_version: "2.0"
+kind: unity_artist_release_matrix
+product: UnityArtistCLI
+package_version: "0.0.1-beta"
+transport: official_unity_cli_pipeline
+fallback_policy: concrete_cli_pipeline_gate_failure_only
+fallback_transport: official_unity_cli_bounded_batch_fallback
+rows:
+  - id: unity-2022.3-builtin
+    unity_version: "2022.3 LTS"
+    render_pipeline: builtin
+    support_tier: primary
+    supported: true
+    compatibility_backend: builtin_editor_api
+    transport: official_unity_cli_pipeline
+  - id: unity-6-builtin
+    unity_version: "Unity 6.x+"
+    render_pipeline: builtin
+    support_tier: primary
+    supported: true
+    compatibility_backend: builtin_editor_api
+    transport: official_unity_cli_pipeline
+  - id: unity-6-urp
+    unity_version: "Unity 6.x+"
+    render_pipeline: urp
+    support_tier: primary
+    supported: true
+    compatibility_backend: urp_native_api
+    transport: official_unity_cli_pipeline
+  - id: unity-6-hdrp
+    unity_version: "Unity 6.x+"
+    render_pipeline: hdrp
+    support_tier: primary
+    supported: true
+    compatibility_backend: hdrp_native_api
+    transport: official_unity_cli_pipeline
+unsupported_rows:
+  - "Unity 2022.3 + URP"
+  - "Unity 2022.3 + HDRP"
+  - "Unity 2023 (all pipelines)"
+  - "URP 14-16 formal release rows"
 verification_contract:
-  primary_authority: direct_unity_editor_validation
-  supplemental_authority: automated_ci
-  direct_editor_evidence: Tests/Compatibility/production-editor-acceptance.yaml
-  production_validation_evidence: Tests/Compatibility/production-validation-evidence.yaml
-  discovered_mcp_tools: 77
-  duplicate_tool_names: 0
-  target_device_required_for_editor_only_release: false
-  automated_ci_required_for_release: false
-
-operational_modules:
-  unity_graphics_mcp: editor_operational
-  unity_agent_mcp: editor_operational
-  world_creator: editor_operational
-  unity_profiler_mcp: editor_operational
-  unity_addressables_mcp: editor_operational_optional_backend
-  unity_ui_mcp: editor_operational
-  unity_animation_mcp: editor_operational
-  unity_audio_mcp: editor_operational
-  unity_cinematic_mcp: editor_operational
-
-execution_surface:
-  unity_editor: supported
-  player_runtime: unsupported
-  target_device: not_verified_not_required
-
-unity:
-  minimum_version: "6000.0"
-  direct_editor_verified_version: "6000.7.0a2"
-  current_release_ci_version: "6000.0.75f1"
-  current_release_ci: passed
-  all_6000_patches_verified: false
-  api_compatibility:
-    source_of_truth: Packages/com.darumappap.my-unity-mcp/Editor/Compatibility/ApiCompatibility.cs
-    maintenance_skill: skills/myunitymcp-unity-api-compatibility/SKILL.md
-    maintenance_buckets:
-      - BASE
-      - UNITY_6000_4
-      - UNITY_6000_5
-      - UNITY_6000_7
-    base_policy: modernize_when_replacement_is_available_without_waiting_for_deprecation
-    unity_6000_4:
-      rule_status: confirmed
-      historical_editor_ci: passed
-      current_release_ci: passed
-      verified_version: "6000.4.12f1"
-      evidence_artifact_id: 9090981750
-    unity_6000_5:
-      rule_status: confirmed
-      historical_editor_ci: passed
-      current_release_ci: passed
-      verified_version: "6000.5.5f1"
-      evidence_artifact_id: 9090985384
-    unity_6000_6:
-      patch_bucket: UNITY_6000_7
-      rule_status: planned_or_confirmed_per_rule
-      editor_validation: not_verified
-    unity_6000_7:
-      rule_status: planned_or_confirmed_per_rule
-      direct_editor_validation: passed
-      verified_version: "6000.7.0a2"
-      evidence:
-        package_compile: passed
-        compile_errors: 0
-        exact_tool_discovery_77: passed
-        duplicate_tool_names: 0
-        readonly_domain_smoke: passed
-        safety_contract: passed
-        scoped_mutation_e2e: passed
-        agent_routing_and_failure_propagation: passed
-        cross_domain_workflow: passed
-        previous_production_45_regression: passed
-      automated_canary: unavailable_not_verified_current_release_gameci_image
-    package_versions_required_for_package_api_decisions: true
-
-domain_evidence:
-  graphics:
-    status: editor_operational
-    baseline: previously_production_verified
-  agent:
-    status: editor_operational
-    direct_unity_mutation: prohibited
-    operational_delegate_domains:
-      - unity_graphics_mcp
-      - unity_profiler_mcp
-      - unity_addressables_mcp
-      - unity_ui_mcp
-      - unity_animation_mcp
-      - unity_audio_mcp
-      - unity_cinematic_mcp
-    delegated_failure_propagation: passed
-    false_success: prohibited
-  world_creator:
-    status: editor_operational
-    direct_unity_mutation: prohibited
-    human_review_required: true
-  profiler:
-    status: editor_operational
-    capture_e2e: passed
-    target_device_performance_claim: not_verified_not_claimed
-  addressables:
-    status: editor_operational_optional_backend
-    package_absent_boundary: passed_allowed_unsupported
-    positive_backend_matrix: not_verified_non_blocking
-    settings_or_group_auto_creation: prohibited
-    content_build: excluded
-  ui:
-    status: editor_operational
-    scoped_mutation_e2e: passed
-  animation:
-    status: editor_operational
-    scoped_mutation_e2e: passed
-  audio:
-    status: editor_operational
-    scoped_mutation_e2e: passed
-  cinematic:
-    status: editor_operational
-    scoped_mutation_e2e: passed
-
-safety:
-  expected_revision: required_for_mutation
-  approval_token: required_for_mutation
-  one_time_plan: required
-  stale_revision_rejection: passed
-  missing_or_wrong_approval_rejection: passed
-  plan_reuse_rejection: passed
-  automatic_save: prohibited
-  automatic_full_bake: prohibited
-  generic_serialized_property_mutation: prohibited
-  silent_fallback: prohibited
-  automatic_visual_acceptance: prohibited
-
-pipelines:
-  built_in:
-    inspection_planning: supported
-    graphics_mutation: supported
-    volume_mutation: conditional_volume_api
-    explicit_save: supported
-    dependency_bake: conditional_explicit_backend
-    capture_evidence: conditional_graphics_device
-    apv_bake: unsupported
-    visual_evaluation_refine: supported
-  urp:
-    inspection_planning: supported
-    graphics_mutation: supported
-    volume_mutation: conditional_volume_api
-    explicit_save: supported
-    dependency_bake: conditional_explicit_backend
-    capture_evidence: conditional_graphics_device
-    apv_bake: conditional_apv_backend
-    visual_evaluation_refine: supported
-  hdrp:
-    inspection_planning: supported
-    graphics_mutation: supported
-    volume_mutation: conditional_volume_api
-    explicit_save: supported
-    dependency_bake: conditional_explicit_backend
-    capture_evidence: conditional_graphics_device
-    apv_bake: conditional_apv_backend
-    visual_evaluation_refine: supported
-
-execution_services:
-  timeout: cooperative_1_to_3600_seconds_default_60
-  cancellation: cooperative_native_backend_when_available
-  progress: polling_and_jsonl_trace
-  execution_history: 30_days_maximum_1000
-  runtime_artifact_retention: 14_days
-  ci_evidence_retention: 90_days
-  automatic_resume_after_restart: prohibited
-
-release_gates:
-  direct_editor_validation: passed
-  production_surface_contract: passed_current_release_pr
-  static_contract: passed_current_release_pr
-  automated_editor_ci: passed_current_release_pr
-  automated_ci: unavailable_not_verified_non_blocking
-  human_release_gate: satisfied_by_explicit_release_request
-
-not_verified:
-  - player_runtime_tool_execution
-  - target_device_tool_execution
-  - every_unity_6000_patch
-  - unity_6000_6_editor_compile_for_current_registry
-  - every_render_pipeline_package_version
-  - addressables_positive_backend_matrix
-  - external_transport_disconnect_reconnect
+  required_real_fixture_evidence:
+    - cli_identify_open_manage
+    - pipeline_install_or_existing_available
+    - connected_command_discovery
+    - bounded_command_execution
+    - structured_safety_scope_evidence
+  unsupported_result_before_mutation: true
