@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA "UnityArtistCLI\2.0.0"),
+    [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA "UnityArtistCLI\Beta"),
     [switch]$AddToUserPath
 )
 

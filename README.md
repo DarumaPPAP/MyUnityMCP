@@ -45,6 +45,8 @@ Project paths are explicit for safe Editor targeting, but they do not need to be
 
 The script accepts `UNITY_ARTIST_PROJECT_PATH` and `UNITY_ARTIST_CLI_PATH` when a caller needs configuration outside the current directory. It resolves those values only at the process boundary; committed commands and evidence use logical fixture paths, not a developer's home directory.
 
+The Windows installer defaults to `%LOCALAPPDATA%\UnityArtistCLI\Beta`; the Unix installer defaults to `~/.local/lib/unity-artist/Beta`. Override the destination explicitly with `-InstallRoot` on PowerShell or the first argument on Unix when a different installation scope is required. The product and package version remain `2.0.0`; `Beta` is only the installation channel directory.
+
 UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/build/play/stop/log operations, arbitrary evaluation, generic Addressables/UI/Audio control, or a second Control Plane. Those concerns stay with the official Unity CLI or the existing UnityAgent Provider chain.
 
 ## Release matrix

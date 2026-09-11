@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-install_root="${1:-${HOME}/.local/lib/unity-artist/2.0.0}"
+install_root="${1:-${HOME}/.local/lib/unity-artist/Beta}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 project="${repo_root}/src/UnityArtist.Cli/UnityArtist.Cli.csproj"
 

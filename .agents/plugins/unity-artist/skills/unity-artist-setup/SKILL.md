@@ -17,4 +17,6 @@ unity artist capabilities --project-path <project> --format json --non-interacti
 
 For repeatable verification from this repository, use `scripts/verify-external-cli.ps1 -ProjectPath .\TestProjects\UnityArtistVerification-URP`. The script resolves the local host executable and passes `--project-path .` after entering the selected project, so the same command works on another Windows account or checkout location. `UNITY_ARTIST_PROJECT_PATH` and `UNITY_ARTIST_CLI_PATH` are optional configuration inputs for automation.
 
+The default PowerShell installation target is `%LOCALAPPDATA%\UnityArtistCLI\Beta`; pass `-InstallRoot` to choose another location. `Beta` identifies the installation channel directory and does not change the product/package version.
+
 Do not auto-install an Editor, bypass a Unity license, or silently switch transports. For Unity 2022.3 Built-in, verify official CLI + Pipeline first; only the concrete Unity 6-or-later Pipeline Gate Failure permits the documented fixed `unity run` batch fallback at `DarumaPPAP.UnityArtist.UnityArtistBatchCommands.Dispatch`. Do not use dynamic code, raw YAML, MCP, or generic CRUD through that fallback. Unsupported pipelines remain blocked before mutation.
