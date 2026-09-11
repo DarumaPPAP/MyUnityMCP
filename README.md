@@ -47,6 +47,20 @@ The script accepts `UNITY_ARTIST_PROJECT_PATH` and `UNITY_ARTIST_CLI_PATH` when 
 
 The Windows installer defaults to `%LOCALAPPDATA%\UnityArtistCLI\Beta`; the Unix installer defaults to `~/.local/lib/unity-artist/Beta`. Override the destination explicitly with `-InstallRoot` on PowerShell or the first argument on Unix when a different installation scope is required. The current product, package, and plugin version is `0.0.1-beta`; `Beta` is the installation channel directory.
 
+For a Windows machine without a repository checkout, the published beta can be installed with a single PowerShell command:
+
+```powershell
+irm https://raw.githubusercontent.com/DarumaPPAP/UnityArtistCLI/main/scripts/install-remote.ps1 | iex
+```
+
+This downloads the self-contained Windows host archive from the `v0.0.1-beta` GitHub Release, verifies its SHA-256 sidecar, installs it into `%LOCALAPPDATA%\UnityArtistCLI\Beta`, and verifies `unity-artist version`. The bootstrap does not require the .NET SDK/runtime, a Unity project, administrator privileges, or a source checkout. To pin the bootstrap itself to a release ref, use:
+
+```powershell
+irm https://raw.githubusercontent.com/DarumaPPAP/UnityArtistCLI/v0.0.1-beta/scripts/install-remote.ps1 | iex
+```
+
+Set `UNITY_ARTIST_VERSION` or `UNITY_ARTIST_INSTALL_ROOT` before invoking the command when a different release or destination is required. The remote command becomes usable after the human-gated release workflow has published the matching host archive; the local checkout installer remains `.\scripts\install.ps1`.
+
 UnityArtistCLI does not expose generic GameObject/hierarchy CRUD, compile/test/build/play/stop/log operations, arbitrary evaluation, generic Addressables/UI/Audio control, or a second Control Plane. Those concerns stay with the official Unity CLI or the existing UnityAgent Provider chain.
 
 ## Release matrix

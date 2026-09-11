@@ -33,12 +33,18 @@ jobs:
           python3 Tests/Release/verify_unity_artist_contract.py
           python3 Tests/Compatibility/verify-unity-api-compatibility.py
       - name: Build host CLI
-        run: dotnet build src/UnityArtist.Cli/UnityArtist.Cli.csproj --configuration Release
+        run: dotnet publish src/UnityArtist.Cli/UnityArtist.Cli.csproj --configuration Release --runtime win-x64 --self-contained true --output build/host-windows-x64
+      - name: Package Windows host CLI
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          (cd build/host-windows-x64 && zip -qr "$GITHUB_WORKSPACE/artifacts/UnityArtistCLI-host-windows-x64.zip" .)
+          sha256sum artifacts/UnityArtistCLI-host-windows-x64.zip > artifacts/UnityArtistCLI-host-windows-x64.zip.sha256
       - name: Pack Unity package
         run: |
           mkdir -p artifacts
           (cd Packages/com.darumappap.unity-artist && npm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
-          (cd artifacts && sha256sum * > SHA256SUMS.txt)
+          (cd artifacts && sha256sum *.zip *.tgz > SHA256SUMS.txt)
       - name: Create immutable tag
         env:
           REQUESTED_TAG: ${{ inputs.tag }}
@@ -47,6 +53,19 @@ jobs:
         env:
           REQUESTED_TAG: ${{ inputs.tag }}
         run: git push origin "$REQUESTED_TAG"
+      - name: Create GitHub Release with host archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$REQUESTED_TAG" \
+            --verify-tag \
+            --title "UnityArtistCLI $REQUESTED_TAG" \
+            --notes-file RELEASE_NOTES.md \
+            artifacts/UnityArtistCLI-host-windows-x64.zip \
+            artifacts/UnityArtistCLI-host-windows-x64.zip.sha256 \
+            artifacts/SHA256SUMS.txt \
+            artifacts/*.tgz
       - uses: actions/upload-artifact@v4
         with:
           name: UnityArtistCLI-${{ inputs.tag }}-Distribution
